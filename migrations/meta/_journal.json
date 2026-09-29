@@ -29,6 +29,13 @@
       "when": 1790704341995,
       "tag": "0003_workflow_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790704342500,
+      "tag": "0004_lock_data_api",
+      "breakpoints": true
     }
   ]
 }

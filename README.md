@@ -41,3 +41,13 @@ Read `docs/ARCHITECTURE.md` first, then `docs/SCREEN-MAP.csv` for how the 217 de
 ## Interface design notes
 
 The front end follows the UI UX Pro Max guidance (data-dense dashboard direction): self-hosted Fira Sans and Fira Code, Lucide SVG icons, 150ms motion with reduced-motion support, 44px touch targets on touch devices, a bottom tab bar on phones, a light/dark/system theme toggle, badge icons so status never relies on colour alone, and a `/` shortcut to focus search.
+
+## Deploying on Supabase
+
+Supabase is used as a plain Postgres host only. The app keeps its own login, MFA and role checks.
+
+1. Create a project. Copy the Direct (or Session pooler, port 5432) and Transaction pooler (port 6543) connection strings.
+2. Migrate and seed with the direct string: `DATABASE_URL=<direct> npm run db:migrate`, then `SEED_ADMIN_EMAIL=you@example.com DATABASE_URL=<direct> npm run db:seed`.
+3. Run the app with `DATABASE_URL=<transaction pooler>` and `DB_POOL_MAX=5`.
+4. Migration `0004_lock_data_api.sql` enables Row Level Security on every table and revokes the `anon` and `authenticated` roles, so Supabase's auto-generated REST API cannot read your data. It is harmless on other Postgres hosts.
+5. Enable backups (paid plan for point-in-time recovery) and test a restore before go-live.
