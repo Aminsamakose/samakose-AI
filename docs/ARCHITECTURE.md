@@ -1,0 +1,135 @@
+# Samakose platform: architecture
+
+The Business Doctor as a production web application. Next.js (App Router) and TypeScript on PostgreSQL, with one REST API that the browser, the worker and future clients all use.
+
+## 1. What is built and what is not
+
+| Area | State |
+|---|---|
+| Auth: sign in, lockout, MFA (TOTP), reset, invite, sessions | Built and tested |
+| RBAC: 9 roles, 24 resources, 7 actions, row scoping | Built and tested (113 security tests) |
+| Organisations, programmes, cohorts, cases, lifecycle state machine | Built and tested |
+| Diagnostic with evidence classes, quality gate, scoring, rescoring | Built and tested |
+| AI drafts: diagnosis, prescription, coaching brief, report (async jobs) | Built; tested against a mock model and an injectable transport. Not run against the live Claude API |
+| Four-eyes review of prescriptions and reports | Built and tested |
+| Actions, risks, KPIs, coaching sessions, reports and release | Built and tested |
+| Finance: plans, contracts, invoices, payments, Paystack | Built; Paystack tested in mock mode and with a stubbed transport. Not run against live Paystack |
+| KoboToolbox intake (webhook and pull) | Webhook tested. The pull job follows the documented API shape and has not run against a live server |
+| Dashboards per role, funder views with small-cell suppression | Built and tested |
+| Audit trail, events, notifications, email outbox, global search, CSV export | Built and tested |
+| Admin: users, audit, rules, question bank, intervention library, system status | Built |
+| Web UI for all of the above (41 routes) | Built. Exercised by four browser journeys (section 8) |
+| Screens in the design set | 46 built, 37 partly built, 67 deferred, 67 reference boards. See `docs/SCREEN-MAP.csv` |
+
+Not done, on purpose or for lack of time:
+- No load or soak testing. Sizing advice in section 7 is reasoned, not measured.
+- No antivirus hook on uploads (type allowlist, magic bytes, size cap and hash check only).
+- No MFA recovery codes: an administrator resets MFA for a locked-out user.
+- No partial payments. An invoice is paid in full or not at all.
+- No SMS or WhatsApp notifications. Email (SMTP) and in-app only.
+- Deferred design areas: marketplaces, digital twin and scenario engine, benchmarking, ESO command centres, workflow builder, offline field mode.
+
+## 2. System shape
+
+```mermaid
+flowchart LR
+  B[Browser<br/>Next.js pages] -->|REST /api/v1| D[Dispatcher<br/>auth, CSRF, RBAC, validation, tx]
+  D --> S[Services<br/>domain rules]
+  S --> P[(PostgreSQL 16)]
+  S -->|enqueue| J[(jobs table)]
+  W[Worker<br/>FOR UPDATE SKIP LOCKED] --> J
+  W --> AI[Claude API]
+  W --> M[SMTP]
+  S --> PS[Paystack]
+  K[KoboToolbox] -->|webhook| D
+  PS -->|webhook| D
+```
+
+- **One route registry.** `defineRoute` declares method, path, permission, zod schemas and handler once. The catch-all `/api/v1/[...path]` dispatches it and the OpenAPI 3.1 file is generated from the same list (`npm run openapi`, output in `docs/openapi.json`, 122 operations).
+- **The dispatcher does the cross-cutting work** so no handler can forget it: origin check on writes (CSRF), session lookup, MFA and forced-password gates, permission check, per-user and per-route rate limits, input validation, one transaction per write (data, audit and events commit together), error envelope `{error:{code,message,details,requestId}}`.
+- **Pages are client components** that call the same API. There is no second data path, so what the UI shows is exactly what the API allows. The `(app)` layout enforces session, MFA and password gates on the server before any page renders.
+- **Jobs run in Postgres** (`jobs` table, `FOR UPDATE SKIP LOCKED`, retries with backoff, terminal failures do not retry). The worker is a separate process; in-process draining also runs for small deployments. `POST /api/internal/cron` (Bearer `CRON_SECRET`) can drive scheduled work from an external scheduler.
+
+## 3. Module map
+
+| Module | Files |
+|---|---|
+| Framework | `src/api/framework.ts`, `list.ts`, `openapi.ts`, `schemas.ts` |
+| Routes | `src/api/routes/auth.ts`, `work.ts`, `platform.ts` |
+| Services | `src/services/*.ts`: auth, users, orgs, programmes, cases, diagnostics, evidence, clinical, delivery, reports, finance, dashboards, admin, kobo, ai |
+| Domain rules | `src/domain/logic.ts` (scoring, state machine, gate), `scope.ts`, `events.ts`, `notify.ts`, `jobs.ts`, `job-handlers.ts`, `mockai.ts` |
+| Security | `src/lib/rbac.ts`, `crypto.ts`, `session.ts`, `audit.ts`, `errors.ts` |
+| Data | `src/db/schema.ts`, `migrations/*.sql`, `seed.ts` |
+| UI | `src/app/(auth)`, `src/app/(app)`, `src/app/pay`, `src/components/**` |
+
+## 4. Data model
+
+35 tables. Identity: `users`, `sessions`, `user_tokens`, `user_programmes`. Portfolio: `organisations`, `programmes`, `cohorts`, `cases`. Assessment: `questions`, `diagnostics`, `responses`, `documents`, `evidence`, `health_scores`. Clinical: `diagnoses`, `library_items`, `prescriptions`, `interventions`. Delivery: `actions`, `risks`, `kpis`, `kpi_readings`, `coaching_sessions`, `reports`, `approvals`. Finance: `plans`, `contracts`, `invoices`, `payments`, `webhook_events`. Platform: `events`, `audit_log`, `notifications`, `outbox_emails`, `rules`, `jobs`, `rate_limits`, `ai_requests`, `ai_attempts`.
+
+```mermaid
+erDiagram
+  ORGANISATIONS ||--o{ CASES : has
+  PROGRAMMES ||--o{ COHORTS : has
+  PROGRAMMES ||--o{ CASES : enrols
+  CASES ||--o{ DIAGNOSTICS : versions
+  DIAGNOSTICS ||--o{ RESPONSES : answers
+  CASES ||--o{ EVIDENCE : supports
+  DOCUMENTS ||--o{ EVIDENCE : backs
+  CASES ||--o{ HEALTH_SCORES : scored
+  CASES ||--o{ DIAGNOSES : versions
+  CASES ||--o{ PRESCRIPTIONS : versions
+  PRESCRIPTIONS ||--o{ INTERVENTIONS : lists
+  CASES ||--o{ ACTIONS : plans
+  CASES ||--o{ KPIS : tracks
+  KPIS ||--o{ KPI_READINGS : readings
+  CASES ||--o{ COACHING_SESSIONS : holds
+  CASES ||--o{ REPORTS : reports
+  ORGANISATIONS ||--o{ CONTRACTS : signs
+  ORGANISATIONS ||--o{ INVOICES : billed
+  INVOICES ||--o{ PAYMENTS : settled_by
+```
+
+Integrity is enforced by the database, not only the app:
+- **Append-only** (triggers refuse update and delete): `audit_log`, `events`, `kpi_readings`, `health_scores`, `approvals`, `responses`, `ai_attempts`. Diagnostics are fully immutable.
+- **Versioned with a workflow column**: diagnoses (only `status` may change) and prescriptions (`status`, `reviewer_note`). A new version points at the old one through `supersedes_id`; the current version is the one nothing supersedes.
+- **Constraints**: the reviewer of a case cannot be its consultant; one successful payment per invoice (partial unique index); owners must belong to an organisation; ranges and enums are CHECKed; codes come from sequences and are never reused.
+
+## 5. Workflows
+
+Case states: PROSPECT, ONBOARDING, PROFILED, DIAGNOSTIC, DIAGNOSED (scored and diagnosis approved), PRESCRIBED, APPROVAL, IN EXECUTION, COACHING, MONITORING, MIDLINE, ENDLINE, FOLLOW-UP, GRADUATED, RE-ENTRY.
+- Moves whose conditions are facts (a validated diagnostic exists, a score exists, an approved diagnosis, a prescription in review or approved, a started action, three held sessions) happen automatically after the change that made them true. The case page shows what is still missing.
+- Moves that need judgement (for example ENDLINE to FOLLOW-UP) are manual, need a confirm step and are limited to the right role.
+- **Scoring is synchronous** on submission and again when evidence is verified or rejected. A change of 5 points or more emits an event.
+- **AI steps are asynchronous jobs.** Each call sends only minimal context (no names or contacts), validates the reply against a schema, retries once with the validation errors, and logs every request and attempt. A person always approves: diagnoses by the consultant, prescriptions and reports by the case reviewer (four-eyes: not the author, not the consultant, and not an administrator).
+- **Approving a prescription** turns its interventions into actions and KPIs with owners and due dates.
+- **Payments:** initialise with Paystack (or the labelled test checkout when no key is set), verify on return, and reconcile from the signed webhook (HMAC-SHA512, idempotent by event id, amount and currency checked). A second payment for a paid invoice is recorded as Failed and raises an event for a person to refund or reconcile.
+
+## 6. Security
+
+- Passwords hashed (scrypt); policy of 12 or more characters that is not the name or email; lockout after 5 failures for 15 minutes; one message for wrong password and unknown user.
+- Sessions in HttpOnly, SameSite=Lax cookies (`__Host-` prefix and Secure in production), server-side revocation, idle and absolute expiry.
+- TOTP MFA with the secret encrypted at rest (AES-GCM). `MFA_REQUIRED_ROLES` forces setup for chosen roles.
+- CSRF by Origin check on writes; strict CSP, frame denial, nosniff and HSTS headers in `next.config.ts`.
+- Row scoping in `src/domain/scope.ts`: out-of-scope records answer 404, so existence is not revealed. Non-UUID ids answer 404.
+- Uploads: type allowlist, magic-byte check, size cap, sanitised names, SHA-256 verified on download, served as attachments.
+- Every write is audited with actor, IP, before and after. Funder views suppress groups under the minimum size (`privacy.min_cell_size`, default 5), including secondary suppression so a hidden cell cannot be derived by subtraction. Programme counts are suppressed for funders too.
+- Rate limits are stored in the database so they hold across instances.
+
+Known limits: permissions at the service level are narrower than the matrix in `rbac.ts` in a few places (for example owners can pay invoices but not list payments); organisations that no case has claimed are visible to programme managers and consultants so a case can be opened for them.
+
+## 7. Deployment and scale
+
+- **Cloud PaaS (Render, Railway, Fly):** deploy the `web` and `worker` Docker targets and a managed Postgres. Set `DATABASE_URL`, `SESSION_SECRET`, `CRON_SECRET`, `APP_URL`, and mount a volume at `STORAGE_DIR` for both.
+- **Own VPS or a Ghana data centre:** `docker compose up --build` gives db, migrations, web and worker. Put Caddy or nginx in front for TLS and set `TRUST_PROXY=1` only when the proxy sets `X-Forwarded-For`. Back up the Postgres volume and the file volume together.
+- **Scaling path:** the web tier is stateless, so add instances behind a load balancer. Workers scale the same way because job claiming is safe under concurrency. Move file storage to S3-compatible object storage by replacing the small functions in `src/services/evidence.ts` before running more than one web host without a shared volume. Add a read replica for dashboards if they become heavy. These points are design reasoning; no load test has been run.
+- **Configuration:** see `.env.example`. With no keys the system runs in safe modes: `AI_MODE=mock`, Paystack test checkout, email logged only. `/admin/system` shows which mode is active.
+
+## 8. Test evidence
+
+- `npm test`: 5 suites, 223 tests against a real PostgreSQL 16 (logic, auth, full journey, security and RBAC matrix, integrations and database rules). The database is dropped and rebuilt from the real migrations for each run.
+- `npm run test:e2e`: four Chromium journeys against a running production build with demo data: a role-by-role sweep (every page each of the nine roles can reach, at 1280px and 375px, no errors, no horizontal overflow), the case lifecycle through the UI to reviewer approval and generated actions, finance to owner payment with the test checkout, and KPI reading, coaching session and report release.
+- Not covered: screen-reader testing, load, live Claude, live Paystack, live Kobo, real SMTP delivery.
+
+## 9. Moving from the Google Workspace MVP
+
+Everything the MVP did is in this platform (see the comparison in the delivery note): the 18-question form, quality gate, deterministic scoring, four agents, four-eyes review, actions and KPIs, coaching brief, report and release. The Kobo form does not need to change: `q_Q01`, `e_Q01`, `ref_Q01` and `case_id` are read as well as `Q01`, `Q01_evidence`, `Q01_ref` and `case_code`. The webhook expects the case code (for example `CASE-2026-000001`) in that field. The MVP's sheet data is not migrated automatically; at pilot scale re-enter organisations and open cases through the UI or import through the API.

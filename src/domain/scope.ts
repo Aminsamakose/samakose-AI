@@ -1,0 +1,70 @@
+/**
+ * Row-level scoping. Every read of client data goes through these conditions,
+ * so a person only ever reaches the records their role and assignments allow.
+ * A record outside the scope is reported as not found, never as forbidden.
+ */
+import { and, eq, inArray, or, sql, type SQL } from 'drizzle-orm';
+import { schema } from '@/db/client';
+import type { AuthUser, Ctx } from '@/lib/context';
+import { notFound } from '@/lib/errors';
+
+const { cases, organisations } = schema;
+const NONE = sql`false`;
+
+/** Condition on the cases table for what this user may see. */
+export function caseScope(u: AuthUser): SQL {
+  switch (u.role) {
+    case 'ADMIN': case 'EXECUTIVE': return sql`true`;
+    case 'PROGRAMME_MANAGER': return u.programmeIds.length ? inArray(cases.programmeId, u.programmeIds) : NONE;
+    case 'CONSULTANT': return eq(cases.consultantId, u.id);
+    case 'REVIEWER': return eq(cases.reviewerId, u.id);
+    case 'COACH': return eq(cases.coachId, u.id);
+    case 'OWNER': return u.orgId ? eq(cases.orgId, u.orgId) : NONE;
+    default: return NONE;
+  }
+}
+
+/** Condition on the organisations table. */
+export function orgScope(u: AuthUser): SQL {
+  switch (u.role) {
+    case 'ADMIN': case 'EXECUTIVE': case 'FINANCE': return sql`true`;
+    case 'OWNER': return u.orgId ? eq(organisations.id, u.orgId) : NONE;
+    case 'FUNDER': return NONE;
+    case 'PROGRAMME_MANAGER': case 'CONSULTANT':
+      // Their own registrations, organisations on their cases, and registry entries no case has claimed yet.
+      return or(eq(organisations.createdBy, u.id), inArray(organisations.id, sql`(select org_id from cases where ${caseScope(u)})`),
+        sql`not exists (select 1 from cases x where x.org_id = ${organisations.id})`)!;
+    default:
+      return inArray(organisations.id, sql`(select org_id from cases where ${caseScope(u)})`);
+  }
+}
+
+/** Programmes the user can see. */
+export function programmeScope(u: AuthUser): SQL {
+  const p = schema.programmes;
+  if (['ADMIN', 'EXECUTIVE'].includes(u.role)) return sql`true`;
+  if (['PROGRAMME_MANAGER', 'FUNDER'].includes(u.role)) return u.programmeIds.length ? inArray(p.id, u.programmeIds) : NONE;
+  return NONE;
+}
+
+export async function assertCase(ctx: Ctx, caseId: string) {
+  if (!ctx.user) throw notFound('Case not found');
+  const [c] = await ctx.db.select().from(cases).where(and(eq(cases.id, caseId), caseScope(ctx.user))).limit(1);
+  if (!c) throw notFound('Case not found');
+  return c;
+}
+export async function assertOrg(ctx: Ctx, orgId: string) {
+  if (!ctx.user) throw notFound('Organisation not found');
+  const [o] = await ctx.db.select().from(organisations).where(and(eq(organisations.id, orgId), orgScope(ctx.user), sql`${organisations.deletedAt} is null`)).limit(1);
+  if (!o) throw notFound('Organisation not found');
+  return o;
+}
+export async function assertProgramme(ctx: Ctx, id: string) {
+  if (!ctx.user) throw notFound('Programme not found');
+  const [p] = await ctx.db.select().from(schema.programmes).where(and(eq(schema.programmes.id, id), programmeScope(ctx.user))).limit(1);
+  if (!p) throw notFound('Programme not found');
+  return p;
+}
+
+/** Staff are the people who see internal workings. Owners and funders never see AI drafts, evidence internals or risks. */
+export const isInternal = (u: AuthUser) => !['OWNER', 'FUNDER'].includes(u.role);

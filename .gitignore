@@ -1,0 +1,8 @@
+node_modules
+.next
+.env
+.test-storage
+storage
+tsconfig.tsbuildinfo
+e2e/shots
+*.log

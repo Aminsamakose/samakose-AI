@@ -1,0 +1,218 @@
+Board,Status,Module,Notes
+1 Landing and sign in,Built,Auth,"/login, MFA, reset, invite"
+3 Choose platform,Partly built,Organisations,Enterprise type is a field on the organisation; no separate platform chooser page
+4 Business profile,Built,Organisations,/organisations/[id]
+5 360 diagnostic with evidence,Built,Diagnostic,Case > Diagnostic tab with evidence class per answer and quality gate
+6 Health score,Built,Scoring,"Case > Score tab, dimensions, confidence, history"
+7 AI diagnosis,Built,Clinical,"Case > Diagnosis tab, AI draft job, review"
+8 AI prescription,Built,Clinical,Case > Prescription tab; intervention library in Settings
+9 90-day action plan,Built,Delivery,"Case > Actions tab, /actions"
+10 Coach workspace,Built,Delivery,"Case > Coaching tab, /sessions, session brief job"
+11 KPI and transformation tracking,Built,Delivery,Case > KPIs tab with readings and charts
+12 Report,Built,Reports,"/reports/[id], review, release, print"
+2 Main dashboard,Built,Dashboards,"/dashboard, one variant per role"
+13 Programme manager dashboard,Built,Programmes,"/programmes, cohorts, programme dashboard"
+14 Intervention library,Built,Settings,/admin/settings > Library
+Mobile home,Partly built,Responsive layouts,Every page works at phone width; no separate mobile app
+Mobile diagnostic,Partly built,Responsive layouts,Every page works at phone width; no separate mobile app
+Mobile health score,Partly built,Responsive layouts,Every page works at phone width; no separate mobile app
+Mobile action plan,Partly built,Responsive layouts,Every page works at phone width; no separate mobile app
+15 Journey map,Partly built,Cases,Lifecycle stepper on the case page; no separate journey map page
+16 Onboarding,Partly built,Auth and cases,Invite and accept flow plus case opening; no guided onboarding wizard
+17 Evidence intelligence,Partly built,Evidence,"Evidence classes, verification and rescoring; no automated document reading"
+18 Transformation command centre,Deferred,,Not in this release; needs data or product decisions first
+19 Coaching brief and record,Built,Delivery,"Case > Coaching tab, /sessions, session brief job"
+20 Opportunity matching,Deferred,,Not in this release; needs data or product decisions first
+21 AgriFood360 value chain map,Deferred,,Not in this release; needs data or product decisions first
+22 ESO command centre,Deferred,,Not in this release; needs data or product decisions first
+23 ESO business model lab,Deferred,,Not in this release; needs data or product decisions first
+24 Portfolio intelligence,Partly built,Programmes,Programme dashboard with aggregates and CSV export; no cross-programme portfolio view
+25 Ecosystem intelligence,Deferred,,Not in this release; needs data or product decisions first
+26 MEL and impact,Partly built,Programmes,Programme dashboard with aggregates and CSV export; no cross-programme portfolio view
+27 Alerts centre,Partly built,Notifications,In-app alerts and email queue; no template or workflow builder
+28 Role-based views,Built,RBAC,"Nine roles, 24 resources, row scoping, role dashboards"
+29 Business health record,Built,Cases,/cases/[id] workspace as the digital case file
+30 AI activity log,Built,Audit,"/admin/audit, per-case activity, events"
+31 Team and access,Built,Users,/admin/users
+32 Programme centre,Built,Programmes,"/programmes, cohorts, programme dashboard"
+33 Digital case file,Built,Cases,/cases/[id] workspace as the digital case file
+34 Document intelligence,Partly built,Documents,"Upload with type and integrity checks, download, verify; no OCR or extraction"
+35 Intervention marketplace,Deferred,,Marketplaces need a partner model and payments split
+36 Risk centre,Partly built,Delivery,Risks tab; simple severity and status
+37 AI quality control,Partly built,AI control,Every AI call logged with attempts and validation; human approval on prescriptions and reports; no quality dashboard
+38 Knowledge centre,Deferred,,Not in this release; needs data or product decisions first
+39 Audit and data governance,Built,Audit,"/admin/audit, per-case activity, events"
+40 Pricing and plans,Built,Finance,/finance/plans
+41 Programme quote builder,Partly built,Finance,Contracts and invoices; no multi-line quote builder
+42 Enterprise contracts,Built,Finance,/finance/contracts with expiry alerts
+43 Revenue dashboard,Partly built,Dashboards,"Finance dashboard with invoice status, overdue and expiring contracts; no revenue forecast"
+44 AI cost dashboard,Deferred,,Not in this release; needs data or product decisions first
+45 Unit economics,Deferred,,Not in this release; needs data or product decisions first
+46 Pricing controls,Deferred,,Not in this release; needs data or product decisions first
+47 Sponsored access,Deferred,,Not in this release; needs data or product decisions first
+48 Upgrade journey,Deferred,,Not in this release; needs data or product decisions first
+49 Commercial model,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+50 Commercial flywheel,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+51 Checkout,Built,Finance,Invoice pay flow with Paystack (test checkout when no key)
+52 Institutional procurement,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+53 Expert and partner marketplace,Deferred,,Marketplaces need a partner model and payments split
+54 Customer success,Deferred,,Not in this release; needs data or product decisions first
+55 Renewals and expansion,Deferred,,Not in this release; needs data or product decisions first
+56 Customer value and outcomes,Deferred,,Not in this release; needs data or product decisions first
+57 Discounts and scholarships,Deferred,,Not in this release; needs data or product decisions first
+58 Collections,Built,Finance,"Overdue scan, invoice list and reminders"
+59 Commercial access,Built,RBAC,"Nine roles, 24 resources, row scoping, role dashboards"
+60 Commercial alerts,Partly built,Notifications,In-app alerts and email queue; no template or workflow builder
+61 Business Health Intelligence,Deferred,,Not in this release; needs data or product decisions first
+62 Digital twin,Deferred,,Simulation features need validated outcome data first
+63 Decision intelligence,Deferred,,Not in this release; needs data or product decisions first
+64 Goals and OKRs,Deferred,,Not in this release; needs data or product decisions first
+65 Scenario engine,Deferred,,Simulation features need validated outcome data first
+66 Intervention sequencing,Deferred,,Not in this release; needs data or product decisions first
+67 Resource allocation,Deferred,,Not in this release; needs data or product decisions first
+68 Outcome attribution,Deferred,,Not in this release; needs data or product decisions first
+69 Longitudinal memory,Deferred,,Not in this release; needs data or product decisions first
+70 Benchmarking,Deferred,,Benchmarking needs a pool of scored cases first
+71 Learning engine,Deferred,,Not in this release; needs data or product decisions first
+72 Human in the loop,Partly built,AI control,Every AI call logged with attempts and validation; human approval on prescriptions and reports; no quality dashboard
+73 Integration hub,Partly built,Integrations,KoboToolbox intake webhook and pull job; Paystack; no other connectors
+74 Field mode,Partly built,Integrations,KoboToolbox intake webhook and pull job; Paystack; no other connectors
+75 Data governance,Partly built,Security,"Encryption, MFA, rate limits, audit, consent on organisations; no data-subject request portal"
+76 Command centre,Deferred,,Not in this release; needs data or product decisions first
+77 Health ontology,Deferred,,Not in this release; needs data or product decisions first
+78 Intervention engine,Deferred,,Not in this release; needs data or product decisions first
+79 Decision matrix,Deferred,,Not in this release; needs data or product decisions first
+80 Delivery and experts,Deferred,,Not in this release; needs data or product decisions first
+81 90 day plan,Built,Delivery,"Case > Actions tab, /actions"
+82 Case management,Built,Cases,/cases/[id] workspace as the digital case file
+83 Financial health,Partly built,Scoring,Finance is one scored dimension; no separate financial model
+84 Early warning,Partly built,Events,Overdue and score-decline events and alerts; no predictive model
+85 Intervention effectiveness,Deferred,,Not in this release; needs data or product decisions first
+86 Knowledge provenance,Deferred,,Not in this release; needs data or product decisions first
+87 Rules engine,Partly built,Settings,Scoring and process rules editable and audited; no visual rules engine
+88 AI decision control,Partly built,AI control,Every AI call logged with attempts and validation; human approval on prescriptions and reports; no quality dashboard
+89 Portfolio interventions,Deferred,,Not in this release; needs data or product decisions first
+90 Programme setup,Built,Programmes,"/programmes, cohorts, programme dashboard"
+91 Architecture,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+92 Knowledge graph,Deferred,,Not in this release; needs data or product decisions first
+93 Maturity engine,Deferred,,Not in this release; needs data or product decisions first
+94 Change management,Deferred,,Not in this release; needs data or product decisions first
+95 Twin simulation,Deferred,,Simulation features need validated outcome data first
+96 Intervention marketplace,Deferred,,Marketplaces need a partner model and payments split
+97 AI governance,Deferred,,Not in this release; needs data or product decisions first
+98 Certification,Deferred,,Not in this release; needs data or product decisions first
+99 Case studies,Deferred,,Not in this release; needs data or product decisions first
+100 Product analytics,Deferred,,Not in this release; needs data or product decisions first
+105. Today's business health,Partly built,Dashboards,Role dashboard shows next steps and work waiting; no recommendation engine
+106. Next best action,Partly built,Dashboards,Role dashboard shows next steps and work waiting; no recommendation engine
+107. What should I do now,Partly built,Dashboards,Role dashboard shows next steps and work waiting; no recommendation engine
+108. Event engine,Deferred,,Not in this release; needs data or product decisions first
+109. Workflow builder,Deferred,,Not in this release; needs data or product decisions first
+110. Communication centre,Partly built,Notifications,In-app alerts and email queue; no template or workflow builder
+111. Human override,Partly built,AI control,Every AI call logged with attempts and validation; human approval on prescriptions and reports; no quality dashboard
+112. Data quality centre,Deferred,,Not in this release; needs data or product decisions first
+113. Document lifecycle,Partly built,Documents,"Upload with type and integrity checks, download, verify; no OCR or extraction"
+114. AI model control centre,Deferred,,Not in this release; needs data or product decisions first
+115. AI quality monitor,Partly built,AI control,Every AI call logged with attempts and validation; human approval on prescriptions and reports; no quality dashboard
+116. Delivery capacity,Deferred,,Not in this release; needs data or product decisions first
+117. SLA and escalation,Deferred,,Not in this release; needs data or product decisions first
+118. Transaction ledger,Deferred,,Not in this release; needs data or product decisions first
+119. Programme operations,Deferred,,Not in this release; needs data or product decisions first
+120. Experimentation engine,Deferred,,Not in this release; needs data or product decisions first
+121. Data rights centre,Partly built,Security,"Encryption, MFA, rate limits, audit, consent on organisations; no data-subject request portal"
+122. Business continuity,Deferred,,Not in this release; needs data or product decisions first
+123. Localisation engine,Deferred,,English only
+124. Accessibility and field mode,Deferred,,Layouts are responsive and keyboard accessible; no offline field mode
+125. Canonical data model,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+126. Transformation state machine,Built,Cases,State machine with automatic and manual transitions; graduation and re-entry states
+127. AI orchestrator,Deferred,,"Only four single-purpose AI steps are built (diagnosis, prescription, brief, report)"
+128. Specialist agents,Deferred,,Only four single-purpose AI steps are built
+129. Context and memory,Deferred,,Only four single-purpose AI steps are built
+130. Evidence confidence,Partly built,Evidence,"Evidence classes, verification and rescoring; no automated document reading"
+131. AI evaluation centre,Deferred,,Only four single-purpose AI steps are built
+132. AI testing workbench,Deferred,,Only four single-purpose AI steps are built
+133. Intervention library,Built,Clinical,Case > Prescription tab; intervention library in Settings
+134. Graduation and re-entry,Built,Cases,State machine with automatic and manual transitions; graduation and re-entry states
+135. Client feedback,Deferred,,Not in this release; needs data or product decisions first
+136. System health,Built,Admin,"/admin/system, failed jobs with retry, health endpoint"
+137. Workflow recovery,Built,Admin,"/admin/system, failed jobs with retry, health endpoint"
+138. Technical architecture,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+139. MVP build map,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+140. Build roadmap,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+141. Intelligence flywheel,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+142. Final system view,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+143. Operating model,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+144. Operating workflow,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+145. AI and human matrix,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+146. Source of truth,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+147. Data quality gate,Built,Diagnostic,Data quality gate before scoring
+148. Record lifecycle,Built,Data,Append-only versioned records with supersedes chain
+149. Version control,Built,Data,Append-only versioned records with supersedes chain
+150. Audit centre,Built,Audit,"/admin/audit, per-case activity, events"
+151. AI decision pipeline,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+152. AI output contract,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+153. Exception centre,Built,Admin,"/admin/system, failed jobs with retry, health endpoint"
+154. Service catalogue,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+155. Measurement dictionary,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+156. Baseline and change,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+157. Attribution control,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+158. Product governance,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+159. Release centre,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+160. AI operations,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+161. Data export,Built,Reports,CSV export from every list and programme export
+162. Role workspaces,Built,RBAC,"Nine roles, 24 resources, row scoping, role dashboards"
+163. Control tower,Deferred,,Not in this release; needs data or product decisions first
+164. Architecture package,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+165. Master architecture,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+166. Data dictionary and IDs,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+167. Google Workspace MVP,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+168. Master Sheets design,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+169. Drive structure,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+170. Claude API design,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+171. Agent specifications,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+172. Quality centre,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+173. Data governance,Partly built,Security,"Encryption, MFA, rate limits, audit, consent on organisations; no data-subject request portal"
+174. Security layer,Partly built,Security,"Encryption, MFA, rate limits, audit, consent on organisations; no data-subject request portal"
+175. API layer,Built,API,REST /api/v1 with OpenAPI 3.1
+176. Observability,Built,Admin,"/admin/system, failed jobs with retry, health endpoint"
+177. Meta-intelligence,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+178. MVP acceptance,Built,Tests,Automated suites in tests/ and e2e/
+179. Concept to scale,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+180. Value creation model,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+181. Validation centre,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+182. Diagnostic validation,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+183. Prescription validation,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+184. Intervention test lab,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+185. Outcome verification,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+186. Value and ROI,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+187. MVP control centre,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+188. MVP acceptance tests,Built,Tests,Automated suites in tests/ and e2e/
+189. Pilot control centre,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+190. Customer onboarding,Partly built,Auth and cases,Invite and accept flow plus case opening; no guided onboarding wizard
+191. Customer success,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+192. Commercial flow,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+193. Delivery control tower,Deferred,,Not in this release; needs data or product decisions first
+194. Coach operating model,Built,Delivery,"Case > Coaching tab, /sessions, session brief job"
+195. AI release gate,Deferred,,Not in this release; needs data or product decisions first
+196. Knowledge and IP,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+197. Marketplace trust,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+198. Partner model,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+199. Offer architecture,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+200. Unit economics by segment,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+201. Go-to-market,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+202. Company health,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+203. Scale readiness,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+204. Migration path,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+205. 90-day build plan,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+206. Go or no-go gate,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+207. Audit conclusion,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+208. Architecture inventory,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+209. Journey audit,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+210. Data and workflow audit,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+211. AI and intelligence audit,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+212. Governance and security audit,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+213. UX and duplication audit,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+214. Critical path and boundary,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+215. Dependency map and scorecard,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+216. Gap register,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+217. Pre-build resolutions,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
