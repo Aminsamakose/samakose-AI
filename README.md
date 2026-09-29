@@ -37,3 +37,7 @@ With no keys set: `AI_MODE=mock` (deterministic drafts, clearly marked), Paystac
 | `npm run test:e2e` | browser journeys against `E2E_BASE` (default `http://localhost:3100`) seeded with demo data |
 
 Read `docs/ARCHITECTURE.md` first, then `docs/SCREEN-MAP.csv` for how the 217 design boards map to what is built.
+
+## Design skill
+
+`.claude/skills/ui-ux-pro-max` is the UI UX Pro Max skill (MIT licence, https://github.com/nextlevelbuilder/ui-ux-pro-max-skill), installed here so Claude Code sessions in this repository can use it for UI and UX review. It is local data and a Python search script with no network access.
