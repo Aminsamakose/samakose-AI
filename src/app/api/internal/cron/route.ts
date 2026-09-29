@@ -7,9 +7,10 @@ import { drainJobs, registerJob } from '@/domain/jobs';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 /** Called by a scheduler (cron, systemd timer or the PaaS scheduler) with the CRON_SECRET. Queues the recurring jobs, then runs what is due. */
-export async function POST(req: Request) {
+async function run(req: Request) {
   const given = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!env.cronSecret || !safeEqual(given, env.cronSecret)) return NextResponse.json({ error: { code: 'unauthorized', message: 'Bad secret' } }, { status: 401 });
   void registerJob;
@@ -20,3 +21,7 @@ export async function POST(req: Request) {
   const ran = await drainJobs();
   return NextResponse.json({ ok: true, ran });
 }
+
+// Vercel Cron issues GET with `Authorization: Bearer $CRON_SECRET`; other schedulers can POST.
+export const GET = run;
+export const POST = run;

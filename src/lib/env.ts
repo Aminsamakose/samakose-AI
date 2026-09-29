@@ -26,5 +26,13 @@ export const env = {
   get smtpPass() { return str('SMTP_PASS'); },
   get mailFrom() { return str('MAIL_FROM', 'Samakose <no-reply@samakose.com>'); },
   get storageDir() { return str('STORAGE_DIR', './storage'); },
-  get maxUploadBytes() { return Number(str('MAX_UPLOAD_MB', '10')) * 1024 * 1024; }
+  get storageDriver() { return str('STORAGE_DRIVER', 'disk'); },
+  get s3Bucket() { return str('S3_BUCKET'); },
+  get s3Region() { return str('S3_REGION', 'auto'); },
+  get s3Endpoint() { return str('S3_ENDPOINT'); },
+  get s3AccessKey() { return str('S3_ACCESS_KEY_ID'); },
+  get s3SecretKey() { return str('S3_SECRET_ACCESS_KEY'); },
+  get s3PathStyle() { return str('S3_FORCE_PATH_STYLE', '1') !== '0'; },
+  /** Vercel rejects request bodies over 4.5 MB, so the default limit is lower there. */
+  get maxUploadBytes() { return Number(str('MAX_UPLOAD_MB', process.env.VERCEL ? '4' : '10')) * 1024 * 1024; }
 };

@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gte, lte, sql } from 'drizzle-orm';
-import fs from 'node:fs/promises';
+import { storage as fileStorage } from '@/lib/storage';
 import { db, schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -126,15 +126,14 @@ export async function systemStatus(ctx: Ctx) {
   const jobs = (await ctx.db.execute(sql`select status, count(*)::int n from jobs group by status`)).rows as { status: string; n: number }[];
   const failed = await ctx.db.select().from(schema.jobs).where(eq(schema.jobs.status, 'failed')).orderBy(desc(schema.jobs.updatedAt)).limit(20);
   const mail = (await ctx.db.execute(sql`select status, count(*)::int n from outbox_emails group by status`)).rows as { status: string; n: number }[];
-  let storage = 'ok';
-  try { await fs.mkdir(env.storageDir, { recursive: true }); await fs.access(env.storageDir); } catch { storage = 'not writable'; }
+  const storageStatus = await fileStorage().health();
   return {
     database: { ok: true, latencyMs: latency }, jobs: Object.fromEntries(jobs.map((j) => [j.status, j.n])), failedJobs: failed.map((j) => ({ id: j.id, kind: j.kind, attempts: j.attempts, lastError: j.lastError, updatedAt: j.updatedAt })),
     email: { mode: mailConfigured() ? 'smtp' : 'log-only', queue: Object.fromEntries(mail.map((m) => [m.status, m.n])) },
     ai: { mode: aiIsMock() ? 'mock' : 'claude', model: aiIsMock() ? null : env.claudeModel },
     payments: { provider: 'paystack', mode: paystackIsMock() ? 'mock' : 'live' },
     kobo: { configured: !!env.koboSecret, pullConfigured: !!(env.koboToken && env.koboAsset), server: env.koboServer },
-    storage: { dir: env.storageDir, status: storage, maxUploadMb: env.maxUploadBytes / 1048576 },
+    storage: { driver: env.storageDriver, location: fileStorage().location, status: storageStatus, maxUploadMb: env.maxUploadBytes / 1048576 },
     security: { mfaRequiredRoles: env.mfaRequiredRoles, trustProxy: env.trustProxy, https: env.appUrl.startsWith('https://') },
     runtime: { node: process.version, uptimeSec: Math.round(process.uptime()), env: env.nodeEnv }
   };

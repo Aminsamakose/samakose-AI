@@ -3,6 +3,7 @@
  * workers can run safely. Failed jobs retry with backoff, then stay as failed for review.
  */
 import { eq, sql } from 'drizzle-orm';
+import { waitUntil } from '@vercel/functions';
 import { db, schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { NonRetryable } from '@/services/ai';
@@ -24,9 +25,11 @@ let kicking = false;
 export function kick() {
   if (kicking || process.env.DISABLE_INPROCESS_JOBS === '1') return;
   kicking = true;
-  setImmediate(async () => {
+  const run = async () => {
     try { while ((await runOnce(5)) > 0) { /* drain */ } } catch (e) { console.error('job runner', e); } finally { kicking = false; }
-  });
+  };
+  // Serverless hosts freeze the function once the response is sent, so keep it alive until the jobs finish.
+  if (process.env.VERCEL) waitUntil(run()); else setImmediate(run);
 }
 
 export async function runOnce(limit = 5): Promise<number> {

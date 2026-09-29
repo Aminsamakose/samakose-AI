@@ -1,5 +1,5 @@
 import { and, desc, eq } from 'drizzle-orm';
-import fs from 'node:fs/promises';
+import { storage } from '@/lib/storage';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { schema } from '@/db/client';
@@ -94,10 +94,8 @@ export async function uploadDocument(ctx: Ctx, form: FormData) {
   else if (orgId) await assertOrg(ctx, orgId);
   if (!orgId) throw fieldError({ orgId: 'Choose the organisation this document belongs to' });
   const now = new Date();
-  const key = path.join(String(now.getUTCFullYear()), String(now.getUTCMonth() + 1).padStart(2, '0'), crypto.randomUUID());
-  const full = path.join(env.storageDir, key);
-  await fs.mkdir(path.dirname(full), { recursive: true });
-  await fs.writeFile(full, buf, { mode: 0o600 });
+  const key = [String(now.getUTCFullYear()), String(now.getUTCMonth() + 1).padStart(2, '0'), crypto.randomUUID()].join('/');
+  await storage().put(key, buf, type.mime);
   const [row] = await ctx.db.insert(schema.documents).values({ orgId, caseId, filename: name, mime: type.mime, size: buf.length, sha256: sha256(buf), storageKey: key, uploadedBy: u.id }).returning({ id: schema.documents.id, code: schema.documents.code, filename: schema.documents.filename, size: schema.documents.size });
   await audit(ctx, 'document.uploaded', 'document', row.id, undefined, { filename: name, size: buf.length, sha256: sha256(buf) }, caseId);
   if (caseId) await emitEvent(ctx, 'DocumentUploaded', { caseId, payload: { filename: name } });
@@ -124,8 +122,8 @@ export async function downloadDocument(ctx: Ctx, id: string) {
   if (d.caseId) await assertCase(ctx, d.caseId);
   else await assertOrg(ctx, d.orgId);
   if (u.role === 'OWNER' && u.orgId !== d.orgId) throw notFound('Document not found');
-  let data: Buffer;
-  try { data = await fs.readFile(path.join(env.storageDir, d.storageKey)); } catch { throw new ApiError(410, 'file_missing', 'The stored file is no longer available'); }
+  const data = await storage().get(d.storageKey);
+  if (!data) throw new ApiError(410, 'file_missing', 'The stored file is no longer available');
   if (sha256(data) !== d.sha256) throw new ApiError(500, 'integrity_failed', 'The stored file failed its integrity check');
   await audit(ctx, 'document.downloaded', 'document', d.id, undefined, { filename: d.filename }, d.caseId);
   return new Response(new Uint8Array(data), { status: 200, headers: {
