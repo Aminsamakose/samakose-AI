@@ -1,4 +1,5 @@
 'use client';
+import { Icon } from './Icon';
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { api, ApiFail, errText, qs, titleCase } from '@/lib/client/api';
@@ -34,7 +35,7 @@ export const Loading = ({ rows = 3 }: { rows?: number }) => (
   </div>
 );
 export const Empty = ({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) => (
-  <div className="empty"><strong style={{ color: 'var(--fg)' }}>{title}</strong>{hint && <span className="small">{hint}</span>}{action}</div>
+  <div className="empty"><Icon name="inbox" className="lg" /><strong style={{ color: 'var(--fg)' }}>{title}</strong>{hint && <span className="small">{hint}</span>}{action}</div>
 );
 export const ErrorState = ({ message, retry }: { message: string; retry?: () => void }) => (
   <div className="errbox" role="alert"><strong>{message}</strong>{retry && <button className="btn sm" onClick={retry}>Try again</button>}</div>
@@ -71,7 +72,8 @@ const TONES: Record<string, string> = {
 };
 export const Badge = ({ children, tone }: { children: ReactNode; tone?: string }) => {
   const t = tone ?? (typeof children === 'string' ? TONES[children] : '') ?? '';
-  return <span className={`badge ${t}`}>{children}</span>;
+  const g = t === 'ok' ? 'ok' : t === 'warn' ? 'warn' : t === 'bad' ? 'bad' : t === 'info' ? 'pending' : null;
+  return <span className={`badge ${t}`}>{g && <Icon name={g} />}{children}</span>;
 };
 export const Card = ({ title, actions, children, className }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) => (
   <section className={`card ${className ?? ''}`}>{(title || actions) && <div className="card-head">{title && <h2>{title}</h2>}{actions && <div className="row">{actions}</div>}</div>}{children}</section>

@@ -38,6 +38,6 @@ With no keys set: `AI_MODE=mock` (deterministic drafts, clearly marked), Paystac
 
 Read `docs/ARCHITECTURE.md` first, then `docs/SCREEN-MAP.csv` for how the 217 design boards map to what is built.
 
-## Design skill
+## Interface design notes
 
-`.claude/skills/ui-ux-pro-max` is the UI UX Pro Max skill (MIT licence, https://github.com/nextlevelbuilder/ui-ux-pro-max-skill), installed here so Claude Code sessions in this repository can use it for UI and UX review. It is local data and a Python search script with no network access.
+The front end follows the UI UX Pro Max guidance (data-dense dashboard direction): self-hosted Fira Sans and Fira Code, Lucide SVG icons, 150ms motion with reduced-motion support, 44px touch targets on touch devices, a bottom tab bar on phones, a light/dark/system theme toggle, badge icons so status never relies on colour alone, and a `/` shortcut to focus search.

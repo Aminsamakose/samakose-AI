@@ -54,7 +54,7 @@ function Workspace() {
           title={<span className="row"><span className="mono">{cd.code}</span><StateBadge state={cd.status} /></span>}
           sub={<>{role !== 'FUNDER' ? <Link href={`/organisations/${cd.orgId}`}>{cd.orgName}</Link> : cd.orgName}{cd.region ? `, ${cd.region}` : ''}{cd.programmeName ? ` | ${cd.programmeName}` : ''}</>} />
         <div className="grid">
-          <Tile label="Health score" value={cd.score ? one(cd.score.overall) : '-'} hint={cd.score ? `Confidence ${cd.score.confidenceClass}` : 'Not scored yet'} />
+          <div className="tile meter"><span className="l" id="hs-l">Health score</span>{cd.score ? <><span className="v">{one(cd.score.overall)}<span className="small muted"> / 100</span></span><div className="track" role="meter" aria-labelledby="hs-l" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Number(cd.score.overall)}><div className={`fill ${Number(cd.score.overall) < 40 ? 'bad' : Number(cd.score.overall) < 60 ? 'warn' : ''}`} style={{ width: `${Math.max(0, Math.min(100, Number(cd.score.overall)))}%` }} /></div><span className="small muted">Confidence {cd.score.confidenceClass}</span></> : <><span className="v">-</span><span className="small muted">Not scored yet</span></>}</div>
           <Tile label="Maturity" value={cd.score ? <MaturityBadge value={cd.score.maturity} /> : '-'} />
           <Tile label="Consultant" value={<span style={{ fontSize: '1.1rem' }}>{cd.consultantName ?? 'Unassigned'}</span>} />
           <div className="tile"><span className="l">People</span>
