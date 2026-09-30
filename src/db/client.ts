@@ -5,10 +5,17 @@ import * as schema from './schema';
 type Db = NodePgDatabase<typeof schema>;
 const g = globalThis as unknown as { __pool?: Pool; __db?: Db; __poolUrl?: string };
 
+/** Forgives the usual paste mistakes: spaces, line breaks, surrounding quotes, or a leading "DATABASE_URL=". */
+export function cleanDatabaseUrl(raw: string): string {
+  return raw.trim().replace(/^DATABASE_URL\s*=\s*/i, '').trim().replace(/^['"]+|['"]+$/g, '').trim();
+}
+
 export function databaseUrl(): string {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL is not set');
-  return url;
+  const clean = cleanDatabaseUrl(url);
+  if (!/^postgres(ql)?:\/\//i.test(clean)) throw new Error('DATABASE_URL must start with postgresql://');
+  return clean;
 }
 
 export function pool(): Pool {
