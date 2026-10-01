@@ -587,3 +587,19 @@ export const contentVersions = pgTable('content_versions', {
   authorId: uuid('author_id'),
   createdAt: created()
 }, (t) => [uniqueIndex('content_versions_doc_ver_uq').on(t.docId, t.version)]);
+
+/** Images and documents uploaded for the public website. The file itself lives in file storage; visitors reach it at /media/<id>. */
+export const mediaAssets = pgTable('media_assets', {
+  id: id(),
+  name: text('name').notNull(),
+  filename: text('filename').notNull(),
+  category: text('category').notNull().default('Image'),
+  mime: text('mime').notNull(),
+  size: integer('size').notNull(),
+  sha256: text('sha256').notNull(),
+  storageKey: text('storage_key').notNull(),
+  altText: text('alt_text'),
+  uploadedBy: uuid('uploaded_by'),
+  createdAt: created(),
+  updatedAt: updated()
+}, (t) => [index('media_assets_cat_idx').on(t.category, t.createdAt)]);

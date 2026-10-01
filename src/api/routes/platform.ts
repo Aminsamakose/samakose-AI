@@ -100,3 +100,12 @@ defineRoute({ method: 'POST', path: '/admin/content/:id/unarchive', tag: CM, sum
 defineRoute({ method: 'DELETE', path: '/admin/content/:id', tag: CM, summary: 'Delete an archived item', permission: ['content', 'delete'], handler: ({ ctx, params }) => cms.remove(ctx, params.id) });
 defineRoute({ method: 'GET', path: '/admin/content/:id/versions', tag: CM, summary: 'Published versions of an item', permission: ['content', 'read'], handler: ({ ctx, params }) => cms.versions(ctx, params.id) });
 defineRoute({ method: 'POST', path: '/admin/content/:id/restore', tag: CM, summary: 'Put an earlier version back in the working copy', permission: ['content', 'edit'], body: z.object({ version: z.number().int().min(1) }), handler: ({ ctx, params, body }) => cms.restore(ctx, params.id, body) });
+
+/* ------------------------------- media library ------------------------------- */
+import * as media from '@/services/media';
+import { badRequest } from '@/lib/errors';
+defineRoute({ method: 'GET', path: '/admin/media', tag: CM, summary: 'Media library', permission: ['media', 'read'], query: z.object({ q: z.string().max(80).optional(), category: z.string().max(40).optional() }).passthrough(), handler: ({ ctx, query }) => media.listMedia(ctx, query) });
+defineRoute({ method: 'POST', path: '/admin/media', tag: CM, summary: 'Upload an image or PDF (multipart: file, name, altText, category)', permission: ['media', 'create'], multipart: true, handler: async ({ ctx, req }) => { let form: FormData; try { form = await req.formData(); } catch { throw badRequest('Send the file as multipart form data'); } return status(201, await media.uploadMedia(ctx, form)); } });
+defineRoute({ method: 'PATCH', path: '/admin/media/:id', tag: CM, summary: 'Rename or re-describe a file', permission: ['media', 'edit'], body: z.object({ name: z.string().trim().min(1).max(120).optional(), altText: z.string().trim().max(200).nullish(), category: z.string().max(40).optional() }), handler: ({ ctx, params, body }) => media.updateMedia(ctx, params.id, body as any) });
+defineRoute({ method: 'DELETE', path: '/admin/media/:id', tag: CM, summary: 'Delete a file that no page uses', permission: ['media', 'delete'], handler: ({ ctx, params }) => media.deleteMedia(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/admin/command-centre', tag: AD, summary: 'Administrator Command Centre figures', permission: ['users', 'create'], handler: ({ ctx }) => adm.commandCentre(ctx) });

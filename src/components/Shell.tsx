@@ -32,6 +32,7 @@ const GROUPS: Group[] = [
     { icon: 'plans', href: '/finance/plans', label: 'Plans', need: ['plans', 'read'] }
   ] },
   { title: 'Administration', items: [
+    { icon: 'dashboard', href: '/admin', label: 'Command Centre', need: ['users', 'create'] },
     { icon: 'users', href: '/admin/users', label: 'Users', need: ['users', 'create'] },
     { icon: 'users', href: '/admin/registrations', label: 'Pending approvals', need: ['users', 'edit'] },
     { icon: 'inbox', href: '/admin/website', label: 'Website and content', need: ['content', 'read'] },
@@ -49,7 +50,7 @@ export function Shell({ user, children }: { user: { name: string; role: Role; em
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => { const h = (e: KeyboardEvent) => { const t = e.target as HTMLElement; if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(t.tagName) && !t.isContentEditable) { e.preventDefault(); searchRef.current?.focus(); } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
   const primary = groups.flatMap((g) => g.items).slice(0, 4);
-  const current = (h: string) => path === h || path.startsWith(h + '/');
+  const current = (h: string) => path === h || (h !== '/admin' && path.startsWith(h + '/'));
   return <ToastProvider>
     <a href="#main" className="skip">Skip to content</a>
     <div className="shell">

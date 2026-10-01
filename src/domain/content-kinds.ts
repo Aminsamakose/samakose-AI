@@ -82,7 +82,7 @@ export const KINDS: Kind[] = [
       { key: 'indexing', label: 'Let search engines index the site', type: 'bool' },
       url('shareImage', 'Default sharing image address', 'A full https:// address of an image about 1200 by 630 pixels.')
     ],
-    defaults: { description: 'Diagnose the health of your business, get a prescription, and track the change. Business health assessment, coaching and programme intelligence for SMEs, agribusinesses and support organisations in Africa.', indexing: true, shareImage: '' }
+    defaults: { description: 'Diagnose the health of your business, get a prescription, and track the change. Business health assessment and coaching for SMEs, agribusinesses and support organisations in Africa.', indexing: true, shareImage: '' }
   },
   {
     id: 'home', label: 'Home page', plural: 'Home page', group: 'site_settings', singleton: true,

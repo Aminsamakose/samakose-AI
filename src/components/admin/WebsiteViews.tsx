@@ -27,6 +27,7 @@ export function WebsiteHub() {
     </Link>;
     return <div className="stack">
       {g('site_settings').length > 0 && <section aria-labelledby="h-set"><h2 id="h-set" style={{ marginBottom: 10 }}>Site settings</h2><div className="grid">{g('site_settings').map(card)}</div></section>}
+      <section aria-labelledby="h-med"><h2 id="h-med" style={{ marginBottom: 10 }}>Files</h2><div className="grid"><Link href="/admin/website/media" className="tile" style={{ textDecoration: 'none', color: 'inherit', gap: 8 }}><span className="l">Media library</span><span className="small muted">Logos, photos and PDFs for the website. Every image carries a description for screen readers.</span></Link></div></section>
       {g('content').length > 0 && <section aria-labelledby="h-con"><h2 id="h-con" style={{ marginBottom: 10 }}>Content</h2><div className="grid">{g('content').map(card)}</div></section>}
     </div>;
   }}</Async>;

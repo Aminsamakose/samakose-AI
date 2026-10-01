@@ -206,3 +206,36 @@ export async function globalSearch(ctx: Ctx, term: string) {
   return out;
 }
 export { ApiError };
+
+/** The Administrator Command Centre: what needs attention, in one place. Counts only, no client detail. */
+export async function commandCentre(ctx: Ctx) {
+  allow(ctx, 'users', 'create');
+  const one = async (q: ReturnType<typeof sql>) => ((await ctx.db.execute(q)).rows[0] ?? {}) as Record<string, any>;
+  const t0 = Date.now(); await ctx.db.execute(sql`select 1`); const latency = Date.now() - t0;
+  const c = await one(sql`select
+    (select count(*)::int from organisations where deleted_at is null) organisations,
+    (select count(*)::int from organisations where deleted_at is null and status = 'Pending verification') pending_orgs,
+    (select count(*)::int from users where approval_status = 'pending' and email_verified) pending_registrations,
+    (select count(*)::int from users where active) active_users,
+    (select count(*)::int from health_scores) assessments_completed,
+    (select count(*)::int from prescriptions p where p.status = 'IN REVIEW' and not exists (select 1 from prescriptions x where x.supersedes_id = p.id)) awaiting_review,
+    (select count(*)::int from reports where status = 'Released') reports_released,
+    (select count(*)::int from reports where status <> 'Released') reports_draft,
+    (select count(*)::int from jobs where status = 'failed') failed_jobs,
+    (select count(*)::int from outbox_emails where status = 'Failed') failed_emails,
+    (select count(*)::int from inquiries where status = 'New') new_enquiries,
+    (select count(*)::int from content_docs where status = 'In review') content_in_review,
+    (select count(*)::int from content_docs where status = 'Scheduled') content_scheduled,
+    (select coalesce(sum(size),0)::bigint from documents) + (select coalesce(sum(size),0)::bigint from media_assets) storage_bytes`);
+  const recent = (await ctx.db.execute(sql`select at, actor_email, action, entity from audit_log where action not like 'export.%' order by id desc limit 8`)).rows;
+  const alerts: { tone: string; text: string; href: string }[] = [];
+  if (c.pending_orgs > 0) alerts.push({ tone: 'warn', text: `${c.pending_orgs} organisation${c.pending_orgs === 1 ? '' : 's'} waiting for verification`, href: '/organisations' });
+  if (c.pending_registrations > 0) alerts.push({ tone: 'warn', text: `${c.pending_registrations} registration${c.pending_registrations === 1 ? '' : 's'} waiting for approval`, href: '/admin/registrations' });
+  if (c.failed_jobs > 0) alerts.push({ tone: 'bad', text: `${c.failed_jobs} background job${c.failed_jobs === 1 ? '' : 's'} failed`, href: '/admin/system' });
+  if (c.failed_emails > 0) alerts.push({ tone: 'bad', text: `${c.failed_emails} email${c.failed_emails === 1 ? '' : 's'} could not be sent`, href: '/admin/system' });
+  if (c.content_in_review > 0) alerts.push({ tone: 'info', text: `${c.content_in_review} website item${c.content_in_review === 1 ? '' : 's'} waiting for review`, href: '/admin/website' });
+  if (c.new_enquiries > 0) alerts.push({ tone: 'info', text: `${c.new_enquiries} new website enquir${c.new_enquiries === 1 ? 'y' : 'ies'}`, href: '/admin/inquiries' });
+  const mailMode = mailConfigured() ? 'smtp' : 'log-only';
+  const store = await fileStorage().health();
+  return { counts: c, alerts, recent, health: { database: latency, email: mailMode, storage: store, https: env.appUrl.startsWith('https://') } };
+}

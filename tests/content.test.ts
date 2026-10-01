@@ -121,3 +121,59 @@ describe('content rules', () => {
     expect((await mk(manager, 'article', art('Two'))).status).toBe(400);
   });
 });
+
+const png = () => Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000001e221bc330000000049454e44ae426082', 'hex');
+const upload = (s: Session, name: string, bytes: Buffer, fields: Record<string, string> = {}) => {
+  const f = new FormData(); f.set('file', new File([new Uint8Array(bytes)], name)); for (const [k, v] of Object.entries(fields)) f.set(k, v);
+  return call('POST', '/admin/media', { cookie: s.cookie, form: f });
+};
+
+describe('media library', () => {
+  it('uploads an image with a description and serves it publicly', async () => {
+    const r = await upload(editor, 'logo.png', png(), { altText: 'Samakose logo', category: 'Logo' });
+    expect(r.status).toBe(201); expect(r.data.url).toMatch(/^\/media\//);
+    const { readMedia } = await import('@/services/media');
+    const f = await readMedia(r.data.id);
+    expect(f?.mime).toBe('image/png'); expect(f?.data.length).toBe(png().length);
+  });
+  it('requires a description for images and rejects wrong or unsafe files', async () => {
+    expect((await upload(manager, 'a.png', png())).status).toBe(400);
+    expect((await upload(manager, 'fake.png', Buffer.from('not an image at all'), { altText: 'x' })).status).toBe(400);
+    expect((await upload(manager, 'x.svg', Buffer.from('<svg onload="alert(1)"/>'), { altText: 'x' })).status).toBe(400);
+    expect((await upload(manager, 'run.html', Buffer.from('<script>1</script>'), { altText: 'x' })).status).toBe(400);
+  });
+  it('the editor can add files but not delete them; a file in use cannot be deleted', async () => {
+    const r = (await upload(manager, 'use.png', png(), { altText: 'Used picture' })).data;
+    expect((await api(editor).del(`/admin/media/${r.id}`)).status).toBe(403);
+    const doc = (await api(manager).get('/admin/content/kind/seo')).data.items[0];
+    const put = await api(manager).put(`/admin/content/${doc.id}`, { data: { ...doc.data, shareImage: r.url } });
+    expect(put.status, JSON.stringify(put.error)).toBe(200);
+    const blocked = await api(manager).del(`/admin/media/${r.id}`);
+    expect(blocked.status).toBe(422);
+    await api(manager).put(`/admin/content/${doc.id}`, { data: { ...doc.data, shareImage: '' } });
+    expect((await api(manager).del(`/admin/media/${r.id}`)).status).toBe(200);
+  });
+  it('clients and other staff cannot reach the library', async () => {
+    expect((await api(owner).get('/admin/media')).status).toBe(403);
+    expect((await api(coach).get('/admin/media')).status).toBe(403);
+  });
+});
+
+describe('command centre', () => {
+  it('is for administrators only and reports counts without client detail', async () => {
+    const r = await api(admin).get('/admin/command-centre');
+    expect(r.status).toBe(200);
+    expect(r.data.counts).toHaveProperty('pending_orgs'); expect(r.data.health).toHaveProperty('database');
+    for (const s of [manager, editor, coach, owner]) expect((await api(s).get('/admin/command-centre')).status).toBe(403);
+  });
+});
+
+describe('built-in text', () => {
+  it('every default passes its own rules, so a first edit never fails on text the editor did not write', async () => {
+    const { KINDS, validateData } = await import('@/domain/content-kinds');
+    for (const k of KINDS.filter((x) => x.singleton)) {
+      const v = validateData(k, k.defaults);
+      expect(v.ok, `${k.id}: ${JSON.stringify((v as any).fields)}`).toBe(true);
+    }
+  });
+});
