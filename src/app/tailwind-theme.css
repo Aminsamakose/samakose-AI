@@ -1,0 +1,22 @@
+/* Maps the shared CSS variables into Tailwind so the site and portal use one palette. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-ink: var(--ink);
+  --color-forest: var(--forest);
+  --color-leaf: var(--leaf);
+  --color-lime: var(--lime);
+  --color-gold: var(--gold);
+  --color-clay: var(--clay);
+  --font-sans: var(--font);
+  --font-display: var(--display);
+  --font-mono: var(--mono);
+  --radius-card: 20px;
+}

@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import '@fontsource/fira-sans/400.css';
-import '@fontsource/fira-sans/500.css';
-import '@fontsource/fira-sans/600.css';
-import '@fontsource/fira-sans/700.css';
-import '@fontsource/fira-code/400.css';
+import '@fontsource-variable/public-sans';
+import '@fontsource-variable/bricolage-grotesque';
+import '@fontsource/dm-mono/400.css';
+import '@fontsource/dm-mono/500.css';
 import './globals.css';
 
 export const metadata: Metadata = { title: { default: 'Samakose | The Business Doctor', template: '%s | Samakose' }, description: 'Diagnose, prescribe and track the health of enterprises.' };
