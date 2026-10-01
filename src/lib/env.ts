@@ -19,7 +19,8 @@ export const env = {
   get koboServer() { return str('KOBO_SERVER', 'https://kf.kobotoolbox.org'); },
   get koboToken() { return str('KOBO_TOKEN'); },
   get koboAsset() { return str('KOBO_ASSET_UID'); },
-  get paystackSecret() { return str('PAYSTACK_SECRET_KEY'); },
+  // Trim whitespace and stray quotes: a pasted key often carries a trailing space or newline.
+  get paystackSecret() { return str('PAYSTACK_SECRET_KEY').trim().replace(/^["']|["']$/g, '').trim(); },
   get smtpHost() { return str('SMTP_HOST'); },
   get smtpPort() { return Number(str('SMTP_PORT', '587')); },
   get smtpUser() { return str('SMTP_USER'); },
