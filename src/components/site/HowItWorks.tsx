@@ -4,13 +4,13 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import clsx from 'clsx';
 
 const STEPS = [
-  { k: 'Diagnose', t: 'Measure the health of the whole business', d: 'A guided assessment covers strategy, finance, sales, operations, people, governance and more. Evidence you upload is read alongside your answers.' },
-  { k: 'Prioritise', t: 'Find the few conditions that matter most', d: 'Findings are ranked by risk and by how much fixing them would change the business, so you see where to start rather than a long list.' },
+  { k: 'Diagnose', t: 'Measure the health of the whole business', d: 'A guided assessment covers finance, market and sales, operations, people and governance, records and systems, and compliance and access to finance. Evidence you upload is graded alongside your answers.' },
+  { k: 'Prioritise', t: 'Find the few conditions that matter most', d: 'The score places the business in a band, from Critical to Strong, and shows which dimensions pull it down, so you see where to start rather than a long list.' },
   { k: 'Prescribe', t: 'Match each condition to an intervention', d: 'Every priority gets a specific prescription: what to do, who owns it, what it needs and what it should achieve.' },
-  { k: 'Execute', t: 'Turn the prescription into a dated plan', d: 'Prescriptions become a 90-day action plan with owners, deadlines and evidence of completion.' },
+  { k: 'Execute', t: 'Turn the prescription into a dated plan', d: 'Prescriptions become an action plan with owners, deadlines and evidence of completion.' },
   { k: 'Coach', t: 'Get support while you act', d: 'Coaches and advisers work from the same record, so each session builds on the last one.' },
-  { k: 'Measure', t: 'Re-check and track change', d: 'Scores and KPIs are re-measured so improvement, or the lack of it, is visible and can be reported to partners.' },
-  { k: 'Scale', t: 'Move to growth and investment readiness', d: 'When the basics are healthy, the same record supports financing conversations, new markets and wider programmes.' }
+  { k: 'Measure', t: 'Re-check and track change', d: 'Scores and KPIs are re-measured so improvement, or the lack of it, is visible and can be reported to programme partners.' },
+  { k: 'Scale', t: 'Build on a healthier base', d: 'When the basics are healthy, the same record supports conversations with lenders and partners and reporting to programmes.' }
 ];
 
 export function HowItWorks() {

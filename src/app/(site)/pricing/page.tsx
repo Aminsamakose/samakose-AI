@@ -9,7 +9,7 @@ const TIERS = [
   { name: 'Discovery', who: 'Owners who want to see where they stand.', pts: ['A basic assessment', 'A limited health score', 'Basic recommendations'] },
   { name: 'Diagnostic', who: 'Owners who want a full picture and clear priorities.', pts: ['Full 360 assessment', 'AI-assisted diagnosis, reviewed against evidence', 'Detailed health report'] },
   { name: 'Transform', who: 'Owners ready to act on the diagnosis with support.', pts: ['Everything in Diagnostic', 'Action plan and KPI tracking', 'Coaching sessions', 'Monthly progress review'], featured: true },
-  { name: 'Growth', who: 'Growing firms that need finance, markets or investment readiness.', pts: ['Everything in Transform', 'Opportunity matching', 'Investment readiness pack', 'Expert hours and priority support'] },
+  { name: 'Growth', who: 'Growing firms that need finance, markets or investment readiness.', pts: ['Everything in Transform', 'Priority support', 'Planned: opportunity matching and investment readiness pack'] },
   { name: 'Programme', who: 'Programmes, partners and institutions supporting many organisations.', pts: ['Cohorts and many users', 'Coach management', 'Portfolio intelligence and reporting', 'Priced per participant by agreement'] }
 ];
 

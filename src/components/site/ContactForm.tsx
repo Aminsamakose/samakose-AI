@@ -1,5 +1,6 @@
 'use client';
 import { useId, useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
 
 const INTERESTS = [
@@ -75,7 +76,7 @@ export function ContactForm({ source = 'contact-page' }: { source?: string }) {
       {/* Honeypot: hidden from people and assistive tech. Bots tend to fill it. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
       <div>
-        <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="consent" required className="mt-1 size-5 flex-none" {...a11y('consent')} /><span>I agree that Samakose may use these details to reply to me. <span aria-hidden="true">*</span></span></label>
+        <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="consent" required className="mt-1 size-5 flex-none" {...a11y('consent')} /><span>I agree that Samakose may use these details to reply to me, as described in the <Link href="/privacy" className="font-semibold text-leaf underline">privacy notice</Link>. <span aria-hidden="true">*</span></span></label>
         {err('consent')}
       </div>
       <button type="submit" disabled={state === 'sending'} className="inline-flex min-h-12 w-fit items-center justify-center rounded-full bg-forest px-7 font-semibold text-white transition duration-200 hover:bg-leaf active:scale-[0.97] disabled:opacity-60">

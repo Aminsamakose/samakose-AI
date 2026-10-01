@@ -6,7 +6,7 @@ import { REGISTER_HREF } from '@/components/site/config';
 export const metadata: Metadata = { title: 'Solutions', description: 'How business owners, coaches, programme managers and partners use Samakose.' };
 
 const AUDIENCES = [
-  { who: 'Business owners', line: 'Know where the business stands and what to fix first.', pts: ['Guided health assessment, usually in one sitting', 'A ranked list of priorities with a 90-day plan', 'Coaching and progress tracking in one place', 'Control over who can see your results'] },
+  { who: 'Business owners', line: 'Know where the business stands and what to fix first.', pts: ['Guided health assessment you can complete step by step', 'A clear list of priorities and an action plan with dates', 'Coaching and progress tracking in one place', 'Results stay within your organisation and the advisers assigned to you'] },
   { who: 'Consultants and coaches', line: 'Work from one record instead of scattered notes.', pts: ['A case file for each business you support', 'Review, adjust and approve diagnoses and prescriptions', 'Session notes tied to actions and KPIs', 'Clear hand-offs between advisers'] },
   { who: 'Programme managers', line: 'See the health of a whole portfolio, not one business at a time.', pts: ['Cohorts and programmes with portfolio views', 'Baseline, midline and endline comparisons', 'Reports for boards and partners', 'Consistent method across coaches'] },
   { who: 'Partners and donors', line: 'Follow results with evidence behind them.', pts: ['Portfolio dashboards for the programmes you fund', 'Scores shown with how well they are evidenced', 'Exports for your own reporting', 'Access limited to the programmes you support'] }

@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 };
 
 const PRODUCTS = [
-  { name: 'SME360', who: 'Owner-managed businesses in trade, services and light manufacturing.', pts: ['Eight health dimensions, from strategy and finance to digital readiness', 'A Business Health Score with a 90-day action plan', 'Coaching history and a growth roadmap'], tone: 'bg-leaf text-white' },
-  { name: 'AgriFood360', who: 'Farms, aggregators, processors, cooperatives and agrifood exporters.', pts: ['Twelve dimensions, from production and farmer networks to climate resilience', 'A value-chain view of where value and cash leak', 'Prescriptions matched to seasonal cycles'], tone: 'bg-gold text-ink' },
-  { name: 'ESO360', who: 'Accelerators, incubators, hubs and enterprise support programmes.', pts: ['Ten dimensions, from governance to programme excellence', 'A transformation plan and business model lab', 'Entrepreneur outcomes linked to the programme’s own health'], tone: 'bg-clay text-white' }
+  { name: 'SME360', who: 'Owner-managed businesses in trade, services and light manufacturing.', pts: ['Scored across six health dimensions, from finance and sales to records and compliance', 'A Business Health Score with a plan of dated actions', 'Coaching sessions and progress tracking on one record'], tone: 'bg-leaf text-white' },
+  { name: 'AgriFood360', who: 'Farms, aggregators, processors, cooperatives and agrifood exporters.', pts: ['The same six-dimension health check, set up for farms, aggregators and processors', 'Evidence upload and review for records and compliance', 'Agrifood-specific modules such as value-chain mapping are planned'], tone: 'bg-gold text-ink' },
+  { name: 'ESO360', who: 'Accelerators, incubators, hubs and enterprise support programmes.', pts: ['Cohorts, programmes and portfolio views for the businesses you support', 'Baseline, midline and endline tracking', 'Programme-health modules such as a business model lab are planned'], tone: 'bg-clay text-white' }
 ];
 
 const SOLUTIONS = [
@@ -115,6 +115,7 @@ export default function Home() {
             <Placeholder label="Verified headline result" />
           </div>
           <div className="mt-4"><Placeholder label="Testimonials and case studies go here, with consent from each person or organisation quoted." /></div>
+          <div className="mt-8"><ButtonLink href="/impact" variant="ghost-dark">How we measure impact</ButtonLink></div>
         </Reveal>
       </Section>
 
@@ -122,7 +123,7 @@ export default function Home() {
         <Reveal>
           <Eyebrow>Resources and insights</Eyebrow>
           <h2 className="mt-3 max-w-2xl font-display text-3xl font-bold tracking-tight text-balance sm:text-4xl">Practical guidance for enterprise growth.</h2>
-          <div className="mt-8"><Placeholder label="Articles, guides and tools will be listed here as they are published." /></div>
+          <div className="mt-8"><ButtonLink href="/resources" variant="ghost">Browse the guides <ArrowRight className="size-4" aria-hidden="true" /></ButtonLink></div>
         </Reveal>
       </Section>
 

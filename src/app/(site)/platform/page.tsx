@@ -7,14 +7,14 @@ import { REGISTER_HREF } from '@/components/site/config';
 export const metadata: Metadata = { title: 'Platform', description: 'SME360, AgriFood360 and ESO360: three business health products on one shared core.' };
 
 const PRODUCTS = [
-  { name: 'SME360', tone: 'bg-leaf text-white', who: 'Owner-managed businesses in trade, services and light manufacturing.', dims: 'Strategy, finance, sales, operations, people, governance, digital and growth readiness (8 dimensions).', gets: ['Business Health Score and report', '90-day action plan', 'Coaching history and growth roadmap'] },
-  { name: 'AgriFood360', tone: 'bg-gold text-ink', who: 'Farms, aggregators, processors, cooperatives and agrifood exporters.', dims: 'From production and farmer networks to climate resilience and investment readiness (12 dimensions).', gets: ['Value-chain view of where value and cash leak', 'Prescriptions matched to seasonal cycles', 'Evidence upload and review'] },
-  { name: 'ESO360', tone: 'bg-clay text-white', who: 'Accelerators, incubators, hubs, cooperatives and enterprise support programmes.', dims: 'Strategic identity, governance, business model, financial sustainability and programme excellence (10 dimensions).', gets: ['ESO transformation plan', 'Business model lab', 'Entrepreneur outcomes linked to the programme’s own health'] }
+  { name: 'SME360', tone: 'bg-leaf text-white', who: 'Owner-managed businesses in trade, services and light manufacturing.', dims: 'Scored across six dimensions: finance, market and sales, operations, people and governance, records and systems, and compliance and access to finance.', gets: ['Business Health Score and report', 'Action plan with owners and dates', 'Coaching sessions and KPI tracking'] },
+  { name: 'AgriFood360', tone: 'bg-gold text-ink', who: 'Farms, aggregators, processors, cooperatives and agrifood exporters.', dims: 'The same six-dimension health check, set up for agrifood organisations. Agrifood-specific modules are planned.', gets: ['Evidence upload and review', 'Prescriptions and action plans', 'Planned: value-chain view and seasonal prescriptions'] },
+  { name: 'ESO360', tone: 'bg-clay text-white', who: 'Accelerators, incubators, hubs, cooperatives and enterprise support programmes.', dims: 'Programme and portfolio tools for the organisations that support enterprises. Programme-health modules are planned.', gets: ['Cohorts, programmes and portfolio views', 'Baseline, midline and endline tracking', 'Planned: transformation plan and business model lab'] }
 ];
 const CORE = [
   { icon: Database, t: 'Evidence engine', d: 'Answers and uploaded documents are graded for reliability, so scores show how well each finding is supported.' },
-  { icon: Gauge, t: 'Scoring model', d: 'Deterministic scoring with published rules that administrators can review and adjust.' },
-  { icon: Library, t: 'Intervention library', d: 'A growing library of prescriptions matched to the conditions the diagnosis finds.' },
+  { icon: Gauge, t: 'Scoring model', d: 'Rule-based scoring with bands from Critical to Strong. Administrators can review and adjust the rules.' },
+  { icon: Library, t: 'Intervention library', d: 'Prescriptions matched to the conditions the diagnosis finds, which administrators can extend.' },
   { icon: MessagesSquare, t: 'Coaching engine', d: 'Coaches and advisers work from the same record, with notes and actions in one place.' },
   { icon: Scale, t: 'Review and approval', d: 'AI-assisted diagnoses and prescriptions are reviewed by a person before they reach the business.' }
 ];

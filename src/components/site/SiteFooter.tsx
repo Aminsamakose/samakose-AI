@@ -16,7 +16,7 @@ export function SiteFooter() {
           <nav aria-label="Explore" className="flex flex-col gap-2 text-sm">
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-lime">Explore</p>
             {NAV.map((n) => <Link key={n.href} href={n.href} className={a}>{n.label}</Link>)}
-            <Link href="/#resources" className={a}>Resources</Link>
+            <Link href="/#how-it-works" className={a}>How it works</Link>
           </nav>
           <nav aria-label="Account" className="flex flex-col gap-2 text-sm">
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-lime">Account</p>
@@ -32,7 +32,7 @@ export function SiteFooter() {
         </div>
         <div className="flex flex-col gap-2 border-t border-white/15 py-6 text-xs text-white/60 sm:flex-row sm:justify-between">
           <p>&copy; {new Date().getFullYear()} Samakose. All rights reserved.</p>
-          <p>Illustrations and sample figures on this site are labelled as examples.</p>
+          <p className="flex flex-wrap gap-x-4 gap-y-1"><Link href="/privacy" className="text-white/70 underline underline-offset-2">Privacy notice</Link><Link href="/terms" className="text-white/70 underline underline-offset-2">Terms of use</Link><span>Illustrations and sample figures are labelled as examples.</span></p>
         </div>
       </Container>
       <div className="h-2 w-full" style={{ background: 'repeating-linear-gradient(90deg,#c6f26b 0 24px,#e2a93b 24px 36px,#c4553a 36px 48px,#0f4a3f 48px 72px)' }} aria-hidden="true" />

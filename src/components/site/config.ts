@@ -19,8 +19,8 @@ export type NavItem = { label: string; href: string };
 export const NAV: NavItem[] = [
   { label: 'Platform', href: '/platform' },
   { label: 'Solutions', href: '/solutions' },
-  { label: 'How it works', href: '/#how-it-works' },
-  { label: 'Impact', href: '/#impact' },
+  { label: 'Impact', href: '/impact' },
+  { label: 'Resources', href: '/resources' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' }
