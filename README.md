@@ -42,7 +42,7 @@ Read `docs/ARCHITECTURE.md` first, then `docs/SCREEN-MAP.csv` for how the 217 de
 
 Vercel's disk is temporary and its functions are short-lived, so three things differ from a container host.
 
-1. **File storage.** Set `STORAGE_DRIVER=s3` plus `S3_BUCKET`, `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`. Any S3-compatible bucket works: Supabase Storage (create a private bucket, then use the S3 connection details in Storage settings), Cloudflare R2 or AWS S3. Keep the bucket private. Files still go through the API, so access checks and integrity hashes apply.
+1. **File storage.** Easiest: in Vercel open the Storage tab, create a **Blob** store (private) and connect it to the project. Vercel adds `BLOB_READ_WRITE_TOKEN` and the app switches to it automatically, with no keys to handle. Alternatively set `STORAGE_DRIVER=s3` plus `S3_BUCKET`, `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`. Any S3-compatible bucket works: Supabase Storage (create a private bucket, then use the S3 connection details in Storage settings), Cloudflare R2 or AWS S3. Keep the bucket private. Files still go through the API, so access checks and integrity hashes apply.
 2. **Upload size.** Vercel rejects request bodies over 4.5 MB, so the default limit is 4 MB there. Larger files need a direct-to-bucket upload flow, which is not built.
 3. **Background jobs.** Jobs started by a request keep the function alive until they finish (up to 60 seconds). `vercel.json` also calls `/api/internal/cron` once a day, which suits the Hobby plan. On Pro, change the schedule to `*/5 * * * *` so retries, overdue scans and emails run promptly. Set `CRON_SECRET`; Vercel sends it as a bearer token.
 

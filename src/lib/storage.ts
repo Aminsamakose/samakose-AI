@@ -1,12 +1,15 @@
 /**
  * File storage for uploaded evidence. Two drivers behind one interface:
  *  - disk: a local directory (STORAGE_DIR). Use a persistent volume on a VPS or container host.
- *  - s3:   any S3-compatible bucket (AWS S3, Cloudflare R2, Supabase Storage). Required on Vercel, whose disk is temporary.
+ *  - s3:   any S3-compatible bucket (AWS S3, Cloudflare R2, Supabase Storage).
+ *  - blob: Vercel Blob (private store). Chosen automatically when Vercel provides BLOB_READ_WRITE_TOKEN. No keys to manage.
+ * Vercel's own disk is temporary, so use blob or s3 there.
  * Files always pass through the API, so access checks and integrity hashes are unchanged.
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { S3Client, PutObjectCommand, GetObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import { put as blobPut, get as blobGet, list as blobList } from '@vercel/blob';
 import { env } from './env';
 
 export interface FileStorage {
@@ -56,6 +59,27 @@ class S3Storage implements FileStorage {
   }
 }
 
+class BlobStorage implements FileStorage {
+  get location() { return 'vercel-blob (private)'; }
+  async put(key: string, data: Buffer, contentType: string) {
+    await blobPut(key, data, { access: 'private', contentType, addRandomSuffix: false, allowOverwrite: true });
+  }
+  async get(key: string) {
+    try {
+      const r = await blobGet(key, { access: 'private', useCache: false });
+      if (!r || !r.stream) return null;
+      return Buffer.from(await new Response(r.stream).arrayBuffer());
+    } catch (e: any) {
+      if (/not.?found|404/i.test(String(e?.name ?? '') + String(e?.message ?? ''))) return null;
+      throw e;
+    }
+  }
+  async health() {
+    try { await blobList({ limit: 1 }); return 'ok'; } catch (e: any) { return `unreachable: ${e?.name ?? 'error'}`; }
+  }
+}
+
 const disk = new DiskStorage();
 const s3 = new S3Storage();
-export const storage = (): FileStorage => (env.storageDriver === 's3' ? s3 : disk);
+const blob = new BlobStorage();
+export const storage = (): FileStorage => (env.storageDriver === 'blob' ? blob : env.storageDriver === 's3' ? s3 : disk);

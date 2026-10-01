@@ -26,7 +26,7 @@ export const env = {
   get smtpPass() { return str('SMTP_PASS'); },
   get mailFrom() { return str('MAIL_FROM', 'Samakose <no-reply@samakose.com>'); },
   get storageDir() { return str('STORAGE_DIR', './storage'); },
-  get storageDriver() { return str('STORAGE_DRIVER', 'disk'); },
+  get storageDriver() { return str('STORAGE_DRIVER', process.env.BLOB_READ_WRITE_TOKEN ? 'blob' : 'disk'); },
   get s3Bucket() { return str('S3_BUCKET'); },
   get s3Region() { return str('S3_REGION', 'auto'); },
   get s3Endpoint() { return str('S3_ENDPOINT'); },
