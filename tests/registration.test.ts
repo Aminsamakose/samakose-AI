@@ -70,3 +70,67 @@ describe('self-registration', () => {
     expect((await call('POST', '/auth/login', { body: { email: b.email, password: PASSWORD } })).status).toBe(401);
   });
 });
+
+describe('required business profile for new owners', () => {
+  const profile = (o: Record<string, unknown> = {}) => ({ name: 'Boateng Shea Ltd', type: 'AGRIFOOD', sector: 'Shea processing', region: 'Northern', district: 'Tamale', size: '11-50', contactPhone: '+233 55 858 9254', consent: true, ...o });
+  it('blocks every data route until the profile is complete, then opens them', async () => {
+    const b = reg(); await call('POST', '/auth/register', { body: b }); await verify(b.email);
+    const { r, cookie } = await signIn(b.email);
+    expect(r.data.next).toBe('profile');
+    for (const p of ['/cases', '/organisations', '/actions']) { const x = await call('GET', p, { cookie }); expect(x.status, p).toBe(403); expect(x.error.code).toBe('profile_incomplete'); }
+    expect((await call('GET', '/auth/me', { cookie })).data.next).toBe('profile');
+    const missing = await call('PUT', '/auth/profile', { cookie, body: profile({ contactPhone: '123' }) });
+    expect(missing.status).toBe(400); expect(missing.error.details.contactPhone).toBeTruthy();
+    expect((await call('PUT', '/auth/profile', { cookie, body: profile() })).status).toBe(200);
+    expect((await call('GET', '/cases', { cookie })).status).not.toBe(403);
+    expect((await call('GET', '/auth/me', { cookie })).data.next).toBe('ok');
+  });
+  it('only business owners can use the profile endpoint', async () => {
+    const coach = await makeUser('COACH');
+    expect((await api(coach).get('/auth/profile')).status).toBe(403);
+  });
+});
+
+describe('Google sign-in rules', () => {
+  const claims = (o: Record<string, unknown> = {}) => ({ sub: `g-${uniq()}`, email: `g.${uniq()}@example.org`, email_verified: true, name: 'Esi Owusu', aud: 'client-123', iss: 'https://accounts.google.com', exp: Math.floor(Date.now() / 1000) + 600, ...o });
+  const ctx = () => ({ user: null, ip: '10.0.0.1', requestId: 'r', db: db(), after: () => {} }) as any;
+  beforeAll(() => { process.env.GOOGLE_CLIENT_ID = 'client-123'; process.env.GOOGLE_CLIENT_SECRET = 'secret'; });
+
+  it('rejects unverified emails, wrong audience and expired tokens', async () => {
+    const { claimsOk } = await import('@/services/google');
+    expect(claimsOk(claims())).toBe(true);
+    expect(claimsOk(claims({ email_verified: false }))).toBe(false);
+    expect(claimsOk(claims({ aud: 'someone-else' }))).toBe(false);
+    expect(claimsOk(claims({ exp: 1 }))).toBe(false);
+    expect(claimsOk(claims({ iss: 'https://evil.example' }))).toBe(false);
+  });
+  it('creates a new owner who still has to complete the profile and whose organisation is unverified', async () => {
+    const { signInWithGoogle } = await import('@/services/google');
+    const c = claims(); const r: any = await signInWithGoogle(ctx(), c, 'test');
+    expect(r.step).toBe('profile'); expect(r.token).toBeTruthy();
+    const [u] = await db().select().from(schema.users).where(eq(schema.users.googleSub, c.sub));
+    expect(u.role).toBe('OWNER'); expect(u.profileRequired).toBe(true); expect(u.emailVerified).toBe(true);
+    const [o] = await db().select().from(schema.organisations).where(eq(schema.organisations.id, u.orgId!));
+    expect(o.status).toBe('Pending verification');
+  });
+  it('never signs staff or partners in with Google', async () => {
+    const { signInWithGoogle } = await import('@/services/google');
+    const staff = await makeUser('CONSULTANT');
+    const r: any = await signInWithGoogle(ctx(), claims({ email: staff.email }), 'test');
+    expect(r.error).toBe('google_not_allowed'); expect(r.token).toBeUndefined();
+  });
+  it('links an existing owner by verified email and signs them in', async () => {
+    const { signInWithGoogle } = await import('@/services/google');
+    const org = await db().insert(schema.organisations).values({ name: 'Linked Co ' + uniq(), consentAt: new Date(), consentBy: 'x' }).returning();
+    const owner = await makeUser('OWNER', { orgId: org[0].id });
+    const c = claims({ email: owner.email }); const r: any = await signInWithGoogle(ctx(), c, 'test');
+    expect(r.step).toBe('ok');
+    const [u] = await db().select().from(schema.users).where(eq(schema.users.id, owner.userId));
+    expect(u.googleSub).toBe(c.sub);
+  });
+  it('rejects a callback with a missing or wrong state', async () => {
+    const r = await call('GET', '/auth/google/callback?code=abc&state=nope');
+    expect([302, 307]).toContain(r.status);
+    expect(r.headers.get('location')).toContain('/login?error=google_failed');
+  });
+});

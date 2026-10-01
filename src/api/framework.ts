@@ -119,6 +119,7 @@ export async function dispatch(req: Request, basePath = '/api/v1'): Promise<Resp
         if (env.mfaRequiredRoles.includes(user.role) && !user.mfaEnabled) throw new ApiError(403, 'mfa_setup_required', 'Set up two-step verification to continue');
         if (user.mfaEnabled && !user.mfaVerified) throw new ApiError(403, 'mfa_required', 'Enter your two-step verification code');
         if (user.approvalStatus !== 'approved') throw new ApiError(403, 'approval_pending', 'Your registration is waiting for approval');
+        if (user.profileRequired) throw new ApiError(403, 'profile_incomplete', 'Complete your business profile to continue');
         if (user.mustChangePassword) throw new ApiError(403, 'password_change_required', 'Change your password to continue');
       }
       if (def.permission && !can(user.role, def.permission[0], def.permission[1])) throw forbidden();

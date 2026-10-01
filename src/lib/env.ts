@@ -3,6 +3,8 @@ const str = (k: string, d = '') => process.env[k] ?? d;
 export const env = {
   get nodeEnv() { return str('NODE_ENV', 'development'); },
   get isProd() { return str('NODE_ENV') === 'production'; },
+  get googleClientId() { return str('GOOGLE_CLIENT_ID'); },
+  get googleClientSecret() { return str('GOOGLE_CLIENT_SECRET'); },
   get appUrl() { return str('APP_URL', 'http://localhost:3000').replace(/\/$/, ''); },
   get sessionSecret() {
     const s = str('SESSION_SECRET');

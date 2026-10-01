@@ -82,10 +82,12 @@ export const users = pgTable('users', {
   // Self-registration: existing and invited users are 'approved' and verified. Self-registered users start pending.
   approvalStatus: text('approval_status').notNull().default('approved'), // approved | pending | rejected
   emailVerified: boolean('email_verified').notNull().default(true),
+  googleSub: text('google_sub'),
+  profileRequired: boolean('profile_required').notNull().default(false), // self-registered owners must finish their profile first
   signupOrgName: text('signup_org_name'),
   signupNote: text('signup_note'),
   createdAt: created(), updatedAt: updated()
-}, (t) => [uniqueIndex('users_email_uq').on(sql`lower(${t.email})`), index('users_role_idx').on(t.role), index('users_org_idx').on(t.orgId)]);
+}, (t) => [uniqueIndex('users_email_uq').on(sql`lower(${t.email})`), uniqueIndex('users_google_sub_uq').on(t.googleSub), index('users_role_idx').on(t.role), index('users_org_idx').on(t.orgId)]);
 
 export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(), // sha256 of the cookie token
@@ -114,6 +116,7 @@ export const organisations = pgTable('organisations', {
   type: orgTypeEnum('type').notNull().default('SME'),
   sector: text('sector'), region: text('region'), district: text('district'),
   size: text('size'),
+  registrationNumber: text('registration_number'),
   contactName: text('contact_name'), contactEmail: text('contact_email'), contactPhone: text('contact_phone'),
   consentAt: timestamp('consent_at', { withTimezone: true }),
   consentBy: text('consent_by'),

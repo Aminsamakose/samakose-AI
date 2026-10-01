@@ -3,6 +3,8 @@ import { defineRoute, parseCookies, status } from '../framework';
 import { COOKIE } from '@/lib/session';
 import * as auth from '@/services/auth';
 import * as users from '@/services/users';
+import { googleCallback, googleEnabled, startGoogle } from '@/services/google';
+import { env } from '@/lib/env';
 import { listQuery } from '../list';
 import { email, name, password, role, uuid, empty } from '../schemas';
 
@@ -42,3 +44,10 @@ defineRoute({ method: 'POST', path: '/auth/verify-email', tag: T, summary: 'Conf
 defineRoute({ method: 'POST', path: '/auth/resend-verification', tag: T, summary: 'Send the confirmation email again', auth: 'public', rateLimit: { key: 'resendv:ip:{ip}', limit: 10, windowSec: 3600 }, body: z.object({ email }), handler: ({ ctx, body }) => auth.resendVerification(ctx, body.email) });
 defineRoute({ method: 'POST', path: '/users/:id/approve', tag: U, summary: 'Approve a self-registered user', permission: ['users', 'edit'], body: z.object({ role: role.optional(), orgId: uuid.nullish() }), handler: ({ ctx, params, body }) => users.approveRegistration(ctx, params.id, body) });
 defineRoute({ method: 'POST', path: '/users/:id/reject', tag: U, summary: 'Reject a self-registered user', permission: ['users', 'edit'], body: z.object({ reason: z.string().max(300).optional() }), handler: ({ ctx, params, body }) => users.rejectRegistration(ctx, params.id, body.reason) });
+defineRoute({ method: 'GET', path: '/auth/profile', tag: T, summary: 'Own business profile (business owners)', gateExempt: true, handler: ({ ctx }) => auth.getProfile(ctx) });
+defineRoute({ method: 'PUT', path: '/auth/profile', tag: T, summary: 'Complete or update the business profile. Required before a new owner can use the platform', gateExempt: true,
+  body: z.object({ name: z.string().trim().max(160), type: z.enum(['SME', 'AGRIFOOD', 'ESO']), sector: z.string().trim().max(120), region: z.string().trim().max(80), district: z.string().trim().max(120), size: z.string().trim().max(40), contactPhone: z.string().trim().max(40), registrationNumber: z.string().trim().max(60).optional(), consent: z.boolean() }), handler: ({ ctx, body }) => auth.saveProfile(ctx, body) });
+defineRoute({ method: 'GET', path: '/auth/providers', tag: T, summary: 'Which sign-in options are switched on', auth: 'public', handler: async () => ({ google: googleEnabled() }) });
+defineRoute({ method: 'GET', path: '/auth/google/start', tag: T, summary: 'Begin Google sign-in (business owners)', auth: 'public', transactional: false, rateLimit: { key: 'gstart:ip:{ip}', limit: 30, windowSec: 600 }, handler: async () => startGoogle() });
+defineRoute({ method: 'GET', path: '/auth/google/callback', tag: T, summary: 'Google returns here after sign-in', auth: 'public', transactional: false, query: z.object({ code: z.string().optional(), state: z.string().optional(), error: z.string().optional() }).passthrough(),
+  handler: ({ ctx, query, req }) => googleCallback(ctx, query, parseCookies(req.headers.get('cookie'))[env.isProd ? '__Host-sk-oauth' : 'sk_oauth'], req.headers.get('user-agent')) });

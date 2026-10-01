@@ -3,7 +3,7 @@
 export class ApiFail extends Error {
   constructor(public status: number, public code: string, message: string, public fields?: Record<string, string>, public requestId?: string) { super(message); }
 }
-const GATES: Record<string, string> = { mfa_required: '/mfa', mfa_setup_required: '/mfa-setup', password_change_required: '/change-password', approval_pending: '/pending' };
+const GATES: Record<string, string> = { mfa_required: '/mfa', mfa_setup_required: '/mfa-setup', password_change_required: '/change-password', approval_pending: '/pending', profile_incomplete: '/complete-profile' };
 
 async function call<T>(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData;

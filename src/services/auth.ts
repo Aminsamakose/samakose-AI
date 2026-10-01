@@ -15,9 +15,10 @@ const LOCK_AFTER = 5;
 const LOCK_MINUTES = 15;
 const GENERIC = 'Email or password is incorrect';
 
-export type NextStep = 'ok' | 'mfa' | 'mfa_setup' | 'change_password' | 'pending';
-export function nextStep(u: { mfaEnabled: boolean; mfaVerified: boolean; mustChangePassword: boolean; role: string; approvalStatus?: string }): NextStep {
+export type NextStep = 'ok' | 'mfa' | 'mfa_setup' | 'change_password' | 'pending' | 'profile';
+export function nextStep(u: { mfaEnabled: boolean; mfaVerified: boolean; mustChangePassword: boolean; role: string; approvalStatus?: string; profileRequired?: boolean }): NextStep {
   if (u.approvalStatus && u.approvalStatus !== 'approved') return 'pending';
+  if (u.profileRequired) return 'profile';
   if (u.mfaEnabled && !u.mfaVerified) return 'mfa';
   if (u.mustChangePassword) return 'change_password';
   if (env.mfaRequiredRoles.includes(u.role) && !u.mfaEnabled) return 'mfa_setup';
@@ -51,7 +52,7 @@ export async function login(ctx: Ctx, email: string, password: string, userAgent
   await clearRateLimit(key);
   const token = await createSession(u.id, ctx.ip, userAgent, !u.mfaEnabled);
   await audit({ ...ctx, user: { id: u.id, email: u.email } as any, db: db() }, 'auth.login', 'user', u.id);
-  const step = nextStep({ mfaEnabled: u.mfaEnabled, mfaVerified: !u.mfaEnabled, mustChangePassword: u.mustChangePassword, role: u.role, approvalStatus: u.approvalStatus });
+  const step = nextStep({ mfaEnabled: u.mfaEnabled, mfaVerified: !u.mfaEnabled, mustChangePassword: u.mustChangePassword, role: u.role, approvalStatus: u.approvalStatus, profileRequired: u.profileRequired });
   return json({ user: publicUser(u), next: step }, cookieHeader(token));
 }
 
@@ -70,7 +71,7 @@ export async function verifyMfa(ctx: Ctx, code: string) {
   await markMfaVerified(c.user.id === u.id ? c.user.sessionId : '');
   await clearRateLimit('mfa:' + c.user.id);
   await audit(ctx, 'auth.mfa_verified', 'user', u.id);
-  return { next: nextStep({ mfaEnabled: true, mfaVerified: true, mustChangePassword: u.mustChangePassword, role: u.role }) };
+  return { next: nextStep({ mfaEnabled: true, mfaVerified: true, mustChangePassword: u.mustChangePassword, role: u.role, approvalStatus: u.approvalStatus, profileRequired: u.profileRequired }) };
 }
 
 export async function mfaSetup(ctx: Ctx) {
@@ -207,7 +208,7 @@ export async function register(ctx: Ctx, b: { name: string; email: string; passw
   }
   const [row] = await ctx.db.insert(schema.users).values({
     email, name, role: b.role, orgId, passwordHash: await hashPassword(b.password), mustChangePassword: false,
-    emailVerified: false, approvalStatus: 'pending', signupOrgName: orgName, signupNote: b.note?.trim().slice(0, 1000) || null
+    emailVerified: false, approvalStatus: 'pending', profileRequired: b.role === 'OWNER', signupOrgName: orgName, signupNote: b.note?.trim().slice(0, 1000) || null
   }).returning({ id: schema.users.id });
   await issueVerification(ctx, row.id, email, name);
   await audit({ ...ctx, user: { id: row.id, email } as any }, 'auth.registered', 'user', row.id, undefined, { role: b.role, orgId });
@@ -234,4 +235,36 @@ export async function verifyEmail(ctx: Ctx, token: string) {
   await ctx.db.update(schema.userTokens).set({ usedAt: new Date() }).where(eq(schema.userTokens.id, t.id));
   await audit({ ...ctx, user: { id: u.id, email: u.email } as any }, 'auth.email_verified', 'user', u.id, undefined, { autoApproved: approve });
   return { ok: true, next: approve ? 'ok' : 'pending' };
+}
+
+/* ------------------------ business profile (owners) ------------------------ */
+export async function getProfile(ctx: Ctx) {
+  const c = need(ctx);
+  if (c.user.role !== 'OWNER' || !c.user.orgId) throw forbidden();
+  const [o] = await ctx.db.select().from(schema.organisations).where(eq(schema.organisations.id, c.user.orgId)).limit(1);
+  return { required: c.user.profileRequired, name: o.name, type: o.type, sector: o.sector, region: o.region, district: o.district, size: o.size, contactPhone: o.contactPhone, registrationNumber: o.registrationNumber, consentGiven: !!o.consentAt };
+}
+
+const DIGITS = /\d/g;
+export async function saveProfile(ctx: Ctx, b: { name: string; type: 'SME' | 'AGRIFOOD' | 'ESO'; sector: string; region: string; district: string; size: string; contactPhone: string; registrationNumber?: string; consent: boolean }) {
+  const c = need(ctx);
+  if (c.user.role !== 'OWNER' || !c.user.orgId) throw forbidden();
+  const [o] = await ctx.db.select().from(schema.organisations).where(eq(schema.organisations.id, c.user.orgId)).for('update').limit(1);
+  const errs: Record<string, string> = {};
+  if (b.name.trim().length < 2) errs.name = 'Enter your business name';
+  if (!b.sector.trim()) errs.sector = 'Choose or type your sector';
+  if (!b.region.trim()) errs.region = 'Choose your region';
+  if (!b.district.trim()) errs.district = 'Enter your district or town';
+  if (!b.size.trim()) errs.size = 'Choose the number of people';
+  if ((b.contactPhone.match(DIGITS) ?? []).length < 9) errs.contactPhone = 'Enter a phone number we can reach you on';
+  if (!b.consent && !o.consentAt) errs.consent = 'Please agree so we can use your business information';
+  if (Object.keys(errs).length) throw fieldError(errs);
+  await ctx.db.update(schema.organisations).set({
+    name: b.name.trim(), type: b.type, sector: b.sector.trim(), region: b.region.trim(), district: b.district.trim(), size: b.size.trim(),
+    contactPhone: b.contactPhone.trim(), registrationNumber: b.registrationNumber?.trim() || null,
+    ...(o.consentAt ? {} : { consentAt: new Date(), consentBy: c.user.email }), updatedAt: new Date()
+  }).where(eq(schema.organisations.id, o.id));
+  await ctx.db.update(schema.users).set({ profileRequired: false, updatedAt: new Date() }).where(eq(schema.users.id, c.user.id));
+  await audit(ctx, 'user.profile_completed', 'organisation', o.id);
+  return { ok: true };
 }

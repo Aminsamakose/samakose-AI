@@ -1,11 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { api, ApiFail } from '@/lib/client/api';
 import { Button, Field, FormError, useForm } from './ui';
+import { REGIONS, SECTORS, SIZES } from './portfolio/shared';
 
-const dest = (next: string, fallback: string) => ({ ok: fallback, mfa: '/mfa', mfa_setup: '/mfa-setup', change_password: '/change-password', pending: '/pending' } as Record<string, string>)[next] ?? fallback;
+const dest = (next: string, fallback: string) => ({ ok: fallback, mfa: '/mfa', mfa_setup: '/mfa-setup', change_password: '/change-password', pending: '/pending', profile: '/complete-profile' } as Record<string, string>)[next] ?? fallback;
 const safeNext = (n: string | null) => (n && n.startsWith('/') && !n.startsWith('//') ? n : '/dashboard');
 
 export function LoginForm() {
@@ -13,6 +14,8 @@ export function LoginForm() {
   const f = useForm({ email: '', password: '' }, (v) => api.post('/auth/login', v), { onDone: (d) => { window.location.href = dest(d.next, safeNext(sp.get('next'))); } });
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
     <h1>Sign in</h1>
+    <GoogleNotice />
+    <GoogleButton />
     <FormError message={f.formError} />
     <Field label="Email" name="email" error={f.errors.email} required>{(p) => <input {...p} type="email" autoComplete="username" autoFocus {...f.input('email')} />}</Field>
     <Field label="Password" name="password" error={f.errors.password} required>{(p) => <input {...p} type="password" autoComplete="current-password" {...f.input('password')} />}</Field>
@@ -110,6 +113,8 @@ export function RegisterForm() {
   const owner = f.values.role === 'OWNER';
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
     <h1>Create your account</h1>
+    <GoogleNotice />
+    <GoogleButton label="Sign up with Google" />
     <FormError message={f.formError} />
     <Field label="I am a" name="role">{(p) => <select {...p} {...f.input('role')}>{SELF.map(([v, l, h]) => <option key={v} value={v}>{l} ({h})</option>)}</select>}</Field>
     <Field label="Your name" name="name" error={f.errors.name} required>{(p) => <input {...p} autoComplete="name" {...f.input('name')} />}</Field>
@@ -147,4 +152,67 @@ export function PendingNotice() {
   return <div className="stack"><h1>Waiting for approval</h1>
     <p className="muted">Your registration is with the Samakose team. You will get an email when it is approved. Until then you cannot see any organisation, programme or report data.</p>
     <button type="button" className="btn ghost" onClick={async () => { await api.post('/auth/logout').catch(() => {}); window.location.href = '/login'; }}>Sign out</button></div>;
+}
+
+const GOOGLE_ERR: Record<string, string> = {
+  google_failed: 'Google sign-in did not work. Please try again or use your email and password.',
+  google_off: 'Google sign-in is not switched on yet. Use your email and password.',
+  google_not_allowed: 'Google sign-in is for business owners. Staff and partners sign in with their email and password.'
+};
+
+/** "Continue with Google" appears only when the platform has Google keys. Owners only. */
+export function GoogleButton({ label = 'Continue with Google' }: { label?: string }) {
+  const [on, setOn] = useState(false);
+  useEffect(() => { api.get<{ google: boolean }>('/auth/providers').then((d) => setOn(!!d.google)).catch(() => {}); }, []);
+  if (!on) return null;
+  return <div className="stack" style={{ gap: 10 }}>
+    <a className="btn" href="/api/v1/auth/google/start" style={{ textDecoration: 'none', gap: 10 }}>
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.9-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+      {label}
+    </a>
+    <p className="small muted" style={{ textAlign: 'center' }}>For business owners. Staff and partners use email and password.</p>
+    <div className="row small muted" style={{ gap: 10 }} aria-hidden="true"><hr style={{ flex: 1, border: 0, borderTop: '1px solid var(--line)' }} />or<hr style={{ flex: 1, border: 0, borderTop: '1px solid var(--line)' }} /></div>
+  </div>;
+}
+
+export function GoogleNotice() {
+  const e = useSearchParams().get('error');
+  return e && GOOGLE_ERR[e] ? <div role="alert" className="alert bad">{GOOGLE_ERR[e]}</div> : null;
+}
+
+type Profile = { required: boolean; name: string; type: string; sector: string | null; region: string | null; district: string | null; size: string | null; contactPhone: string | null; registrationNumber: string | null; consentGiven: boolean };
+export function CompleteProfile() {
+  const [p, setP] = useState<Profile | null>(null); const [err, setErr] = useState<string | null>(null); const [consent, setConsent] = useState(false);
+  useEffect(() => { api.get<Profile>('/auth/profile').then(setP).catch((e: any) => setErr(e.message)); }, []);
+  const f = useForm({ name: '', type: 'SME', sector: '', region: '', district: '', size: '', contactPhone: '', registrationNumber: '' }, async (v) => {
+    const e: Record<string, string> = {};
+    if (v.name.trim().length < 2 || /to confirm\)$/.test(v.name)) e.name = 'Enter your real business name';
+    if (!v.sector.trim()) e.sector = 'Choose or type your sector';
+    if (!v.region) e.region = 'Choose your region';
+    if (!v.district.trim()) e.district = 'Enter your district or town';
+    if (!v.size) e.size = 'Choose the number of people';
+    if ((v.contactPhone.match(/\d/g) ?? []).length < 9) e.contactPhone = 'Enter a phone number we can reach you on';
+    if (!consent && !p?.consentGiven) e.consent = 'Please agree so we can use your business information';
+    if (Object.keys(e).length) throw new ApiFail(422, 'validation', 'Check the highlighted fields', e);
+    return api.put('/auth/profile', { ...v, consent: consent || !!p?.consentGiven });
+  }, { onDone: () => { window.location.href = '/dashboard'; } });
+  useEffect(() => { if (p) f.setValues({ name: p.name.endsWith('to confirm)') ? '' : p.name, type: p.type, sector: p.sector ?? '', region: p.region ?? '', district: p.district ?? '', size: p.size ?? '', contactPhone: p.contactPhone ?? '', registrationNumber: p.registrationNumber ?? '' }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [p]);
+  if (err) return <div className="stack"><h1>Complete your profile</h1><FormError message={err} /><Link href="/login">Sign in</Link></div>;
+  if (!p) return <div className="stack"><h1>Complete your profile</h1><span className="spin" role="status" aria-label="Loading" /></div>;
+  return <form onSubmit={f.onSubmit} className="stack" noValidate>
+    <h1>Tell us about your business</h1>
+    <p className="muted">This takes about two minutes. We use it to ask the right questions and to read your results in context. You need to finish it before you can use the platform.</p>
+    <FormError message={f.formError} />
+    <Field label="Business name" name="name" error={f.errors.name} required>{(q) => <input {...q} {...f.input('name')} />}</Field>
+    <Field label="Type of business" name="type">{(q) => <select {...q} {...f.input('type')}><option value="SME">SME</option><option value="AGRIFOOD">Agribusiness or food</option><option value="ESO">Support organisation</option></select>}</Field>
+    <Field label="Sector" name="sector" error={f.errors.sector} required>{(q) => <><input {...q} list="sectors" {...f.input('sector')} /><datalist id="sectors">{SECTORS.map((x) => <option key={x} value={x} />)}</datalist></>}</Field>
+    <Field label="Region" name="region" error={f.errors.region} required>{(q) => <select {...q} {...f.input('region')}><option value="">Choose a region</option>{REGIONS.map((x) => <option key={x}>{x}</option>)}</select>}</Field>
+    <Field label="District or town" name="district" error={f.errors.district} required>{(q) => <input {...q} {...f.input('district')} />}</Field>
+    <Field label="Number of people working in the business" name="size" error={f.errors.size} required>{(q) => <select {...q} {...f.input('size')}><option value="">Choose</option>{SIZES.map((x) => <option key={x}>{x}</option>)}</select>}</Field>
+    <Field label="Phone number" name="contactPhone" error={f.errors.contactPhone} hint="A number we can call or message on WhatsApp." required>{(q) => <input {...q} type="tel" autoComplete="tel" {...f.input('contactPhone')} />}</Field>
+    <Field label="Business registration number" name="registrationNumber" hint="Optional. Adding it helps us verify your business sooner.">{(q) => <input {...q} {...f.input('registrationNumber')} />}</Field>
+    {!p.consentGiven && <Field label="" name="consent" error={f.errors.consent}>{(q) => <label className="row" style={{ gap: 8 }}><input {...q} type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /><span className="small">I agree that Samakose may use my business information to run my health check, as set out in the <a href="/privacy" target="_blank">privacy notice</a>.</span></label>}</Field>}
+    <Button variant="primary" loading={f.busy} type="submit">Save and continue</Button>
+    <button type="button" className="btn ghost" onClick={async () => { await api.post('/auth/logout').catch(() => {}); window.location.href = '/login'; }}>Sign out</button>
+  </form>;
 }

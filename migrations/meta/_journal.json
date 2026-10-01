@@ -50,6 +50,13 @@
       "when": 1790879138480,
       "tag": "0006_self_registration",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790882020739,
+      "tag": "0007_google_signin_profile",
+      "breakpoints": true
     }
   ]
 }
