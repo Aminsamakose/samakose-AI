@@ -71,6 +71,13 @@
       "when": 1790885274548,
       "tag": "0009_media_library",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790886881934,
+      "tag": "0010_email_templates",
+      "breakpoints": true
     }
   ]
 }

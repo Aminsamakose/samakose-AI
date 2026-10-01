@@ -1,4 +1,5 @@
 /** Background work. Each handler is idempotent enough to be retried. */
+import { getReportText } from '@/services/switches';
 import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import { db, tx, schema } from '@/db/client';
 import { registerJob } from './jobs';
@@ -143,7 +144,11 @@ registerJob('ai_report', async ({ caseId }, job) => {
   const backed = Math.round(((score.evidenceShare['Verified'] ?? 0) + (score.evidenceShare['Document-supported'] ?? 0)) * 100);
   return tx(async (t) => {
     const ctx = systemCtx(t, 'job');
-    const [r] = await t.insert(schema.reports).values({ caseId, title: `Progress report for ${org.name}`, content: (out.output as any).sections, basis: { verified: backed, unverified: 100 - backed }, aiRequestId: out.requestId, createdBy: job.requestedBy }).returning();
+    const wording = await getReportText(t);
+    const sections = [...(out.output as any).sections] as { heading: string; body: string }[];
+    if (wording['text.report_closing'].trim()) sections.push({ heading: 'About this report', body: wording['text.report_closing'].trim() });
+    const title = wording['text.report_title'].replace(/\{\{\s*organisation\s*\}\}/g, org.name).trim() || `Progress report for ${org.name}`;
+    const [r] = await t.insert(schema.reports).values({ caseId, title, content: sections, basis: { verified: backed, unverified: 100 - backed }, aiRequestId: out.requestId, createdBy: job.requestedBy }).returning();
     await audit(ctx, 'report.drafted', 'report', r.id, undefined, { ai: out.requestCode, requestedBy: job.requestedBy }, caseId);
     if (job.requestedBy) await notifyUsers(ctx, [job.requestedBy], { kind: 'AiDone', title: 'The report draft is ready', body: 'Edit if needed. A reviewer releases it to the owner.', link: `/cases/${caseId}` });
     return { reportId: r.id, code: r.code };

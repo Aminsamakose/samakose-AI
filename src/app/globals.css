@@ -238,3 +238,10 @@ details[open]>*:not(summary){animation:rise .25s var(--ease) both}
 .hero-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.28;pointer-events:none;animation:floaty 9s ease-in-out infinite}
 .hero-orb.b{animation-duration:12s;animation-delay:-4s}
 .site a:not([class]):hover,.site .prose a:hover{text-decoration-thickness:2px}
+
+/* On/off switch used on the Workflow settings tab */
+.toggle { flex: none; position: relative; width: 48px; height: 28px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2, var(--line)); cursor: pointer; transition: background .2s, border-color .2s; padding: 0; min-height: 28px; }
+.toggle span { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .2s cubic-bezier(.2,.8,.2,1); }
+.toggle.on { background: var(--brand); border-color: var(--brand); }
+.toggle.on span { transform: translateX(20px); }
+.toggle:disabled { opacity: .55; cursor: not-allowed; }

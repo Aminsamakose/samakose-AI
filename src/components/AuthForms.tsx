@@ -96,8 +96,16 @@ export function TokenPasswordForm({ mode }: { mode: 'reset' | 'accept' }) {
 const SELF = [['OWNER', 'Business owner', 'You run a business and want a health check'], ['CONSULTANT', 'Consultant', 'You advise businesses'], ['COACH', 'Coach or mentor', 'You coach business owners'], ['PROGRAMME_MANAGER', 'Programme manager', 'You run a programme or cohort'], ['FUNDER', 'Partner or funder', 'You support or fund enterprises']] as const;
 
 export function RegisterForm() {
+  const [prov, setProv] = useState<{ selfRegistration: boolean; roles: string[] } | null>(null);
+  useEffect(() => { api.get<{ selfRegistration: boolean; roles: string[] }>('/auth/providers').then(setProv).catch(() => setProv({ selfRegistration: true, roles: SELF.map((s) => s[0]) })); }, []);
+  if (!prov) return <div className="stack"><span className="spin" role="status" aria-label="Loading" /></div>;
+  if (!prov.selfRegistration) return <div className="stack"><h1>Registration is closed</h1><p className="muted">New accounts are by invitation at the moment. If you expect to be invited, ask your Samakose contact to send the invitation again.</p><Link href="/login">Back to sign in</Link></div>;
+  return <RegisterFormInner roles={prov.roles} />;
+}
+
+function RegisterFormInner({ roles }: { roles: string[] }) {
   const [done, setDone] = useState(false); const [consent, setConsent] = useState(false);
-  const f = useForm({ name: '', email: '', password: '', role: 'OWNER', orgName: '', orgType: 'SME', note: '' }, async (v) => {
+  const f = useForm({ name: '', email: '', password: '', role: roles[0] ?? 'OWNER', orgName: '', orgType: 'SME', note: '' }, async (v) => {
     const e: Record<string, string> = {};
     if (v.name.trim().length < 2) e.name = 'Enter your name';
     if (!/^\S+@\S+\.\S+$/.test(v.email)) e.email = 'Enter a valid email address';
@@ -116,7 +124,7 @@ export function RegisterForm() {
     <GoogleNotice />
     <GoogleButton label="Sign up with Google" />
     <FormError message={f.formError} />
-    <Field label="I am a" name="role">{(p) => <select {...p} {...f.input('role')}>{SELF.map(([v, l, h]) => <option key={v} value={v}>{l} ({h})</option>)}</select>}</Field>
+    <Field label="I am a" name="role">{(p) => <select {...p} {...f.input('role')}>{SELF.filter(([v]) => roles.includes(v)).map(([v, l, h]) => <option key={v} value={v}>{l} ({h})</option>)}</select>}</Field>
     <Field label="Your name" name="name" error={f.errors.name} required>{(p) => <input {...p} autoComplete="name" {...f.input('name')} />}</Field>
     <Field label="Email" name="email" error={f.errors.email} required>{(p) => <input {...p} type="email" autoComplete="email" {...f.input('email')} />}</Field>
     <Field label="Password" name="password" error={f.errors.password} hint="At least 10 characters." required>{(p) => <input {...p} type="password" autoComplete="new-password" {...f.input('password')} />}</Field>

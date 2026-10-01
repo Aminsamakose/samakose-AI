@@ -1,3 +1,4 @@
+import { switchOn } from './switches';
 import { eq, sql } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
@@ -48,6 +49,7 @@ export async function signInWithGoogle(ctx: Ctx, c: GoogleClaims, userAgent: str
       await audit({ ...ctx, user: { id: u.id, email: u.email } as any }, 'auth.google_linked', 'user', u.id);
     }
   } else {
+    if (!(await switchOn(ctx.db, 'switch.google_signin')) || !(await switchOn(ctx.db, 'switch.self_registration'))) return { error: 'google_not_allowed' as const };
     const name = (c.name ?? email.split('@')[0]).trim().slice(0, 160) || 'New owner';
     const [o] = await ctx.db.insert(schema.organisations).values({ name: `${name} (business name to confirm)`, type: 'SME', contactName: name, contactEmail: email, status: 'Pending verification' }).returning({ id: schema.organisations.id });
     [u] = await ctx.db.insert(schema.users).values({ email, name, role: 'OWNER', orgId: o.id, googleSub: c.sub, emailVerified: true, approvalStatus: 'approved', profileRequired: true, mustChangePassword: false }).returning();

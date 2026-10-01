@@ -246,6 +246,23 @@ describe('the full case lifecycle', () => {
     expect((await api(S().reviewer).post(`/reports/${id}/release`)).status).toBe(422);
   });
 
+  it('the administrator can switch off the unverified-organisation block, with a reason, and it is audited', async () => {
+    expect((await api(S().consultant).post(`/cases/${caseId}/reports/generate`)).status).toBe(202);
+    await drain();
+    const id = (await api(S().consultant).get(`/cases/${caseId}/reports`)).data.find((r: any) => r.status === 'Draft').id;
+    await db().update(schema.organisations).set({ status: 'Pending verification' }).where(eq(schema.organisations.id, S().org.id));
+    expect((await api(S().reviewer).post(`/reports/${id}/release`)).status).toBe(422);
+    const key = 'switch.report_requires_verified_org';
+    expect((await api(S().reviewer).put(`/settings/switches/${key}`, { on: false, reason: 'long enough reason' })).status).toBe(403);
+    expect((await api(S().admin).put(`/settings/switches/${key}`, { on: false })).status).toBe(400);
+    expect((await api(S().admin).put(`/settings/switches/${key}`, { on: false, reason: 'Pilot partner verified offline' })).status).toBe(200);
+    expect((await api(S().reviewer).post(`/reports/${id}/release`)).status).toBe(200);
+    expect((await api(S().admin).put(`/settings/switches/${key}`, { on: true })).status).toBe(200);
+    const log = await db().select().from(schema.auditLog).where(eq(schema.auditLog.action, 'settings.switch_changed'));
+    expect(JSON.stringify(log.map((l) => l.after))).toContain('Pilot partner verified offline');
+    await db().update(schema.organisations).set({ status: 'Active' }).where(eq(schema.organisations.id, S().org.id));
+  });
+
   it('leaves a complete audit trail and activity feed, and secrets never appear in it', async () => {
     const acts = (await api(S().admin).get(`/audit?caseId=${caseId}&pageSize=100`)).data;
     const names = acts.items.map((a: any) => a.action);
@@ -286,7 +303,7 @@ describe('the full case lifecycle', () => {
       const r = await api(s).get('/dashboard'); expect(r.status, kind).toBe(200); expect(r.data.kind).toBe(kind);
     }
     const o = (await api(S().owner).get('/dashboard')).data;
-    expect(o.case.code).toBe(caseCode); expect(o.dimensions).toHaveLength(6); expect(o.history.length).toBeGreaterThan(1); expect(o.reports).toHaveLength(1);
+    expect(o.case.code).toBe(caseCode); expect(o.dimensions).toHaveLength(6); expect(o.history.length).toBeGreaterThan(1); expect(o.reports).toHaveLength(2);
     const m = (await api(S().admin).get('/dashboard')).data;
     expect(m.totals.cases).toBeGreaterThan(0); expect(m.byState.length).toBeGreaterThan(0);
     expect((await api(S().pm).get('/dashboard')).data.finance).toBeNull();

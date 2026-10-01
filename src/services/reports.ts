@@ -8,6 +8,7 @@ import { notifyUsers } from '@/domain/notify';
 import { enqueue } from '@/domain/jobs';
 import { status } from '@/api/framework';
 import { allow, latestScore, need } from './common';
+import { switchOn } from './switches';
 import { caseParties } from '@/domain/events';
 
 const r = schema.reports;
@@ -66,7 +67,7 @@ export async function releaseReport(ctx: Ctx, id: string, decision: 'release' | 
     return { status: 'Draft' };
   }
   const [org] = await ctx.db.select({ status: schema.organisations.status }).from(schema.organisations).where(eq(schema.organisations.id, cs.orgId)).limit(1);
-  if (org?.status === 'Pending verification') throw unprocessable('This organisation has not been verified yet. An administrator must verify it before a report can be released.');
+  if (org?.status === 'Pending verification' && (await switchOn(ctx.db, 'switch.report_requires_verified_org'))) throw unprocessable('This organisation has not been verified yet. An administrator must verify it before a report can be released.');
   await ctx.db.update(r).set({ status: 'Released', releasedBy: u.id, releasedAt: new Date() }).where(eq(r.id, id));
   await ctx.db.insert(schema.approvals).values({ recordType: 'report', recordId: id, caseId: row.caseId, userId: u.id, decision: 'APPROVED', reason: reason ?? null });
   await audit(ctx, 'report.released', 'report', id, { status: 'Draft' }, { status: 'Released' }, row.caseId);

@@ -1,4 +1,4 @@
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { enqueue } from './jobs';
@@ -24,4 +24,14 @@ export async function notifyUsers(ctx: Ctx, userIds: string[], n: Notice) {
 export async function queueEmail(ctx: Ctx, to: string, subject: string, body: string) {
   await ctx.db.insert(schema.outboxEmails).values({ to, subject, body });
   await enqueue(ctx, 'send_emails', {});
+}
+
+/** Queue a system email using the administrator's wording if they have edited it, otherwise the built-in text. */
+export async function queueTemplate(ctx: Ctx, to: string, key: string, vars: Record<string, string>) {
+  const { TEMPLATE_BY_KEY, render } = await import('./email-templates');
+  const t = TEMPLATE_BY_KEY[key];
+  const [o] = await ctx.db.select().from(schema.emailTemplates).where(eq(schema.emailTemplates.key, key)).limit(1);
+  const clean = Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, String(v)]));
+  const subject = render(o?.subject ?? t.subject, clean).replace(/[\r\n]+/g, ' ').trim();
+  await queueEmail(ctx, to, subject, render(o?.body ?? t.body, clean));
 }

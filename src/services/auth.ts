@@ -8,7 +8,8 @@ import { decrypt, encrypt, hashPassword, newTotpSecret, otpauthUrl, passwordProb
 import { clearRateLimit, cookieHeader, createSession, destroySession, destroyUserSessions, markMfaVerified, rateLimit } from '@/lib/session';
 import { env } from '@/lib/env';
 import { PERMISSIONS, ROLE_LABEL } from '@/lib/rbac';
-import { queueEmail } from '@/domain/notify';
+import { queueTemplate } from '@/domain/notify';
+import { switchOn } from './switches';
 import { need } from './common';
 
 const LOCK_AFTER = 5;
@@ -127,7 +128,7 @@ export async function forgotPassword(ctx: Ctx, email: string) {
   if (u) {
     const token = randomToken(32);
     await ctx.db.insert(schema.userTokens).values({ userId: u.id, kind: 'reset', tokenHash: sha256(token), expiresAt: new Date(Date.now() + 3600_000) });
-    await queueEmail(ctx, u.email, 'Reset your Samakose password', `Use this link within one hour to choose a new password:\n${env.appUrl}/reset-password?token=${token}\n\nIf you did not ask for this, ignore this email.`);
+    await queueTemplate(ctx, u.email, 'password_reset', { user_name: u.name, link: `${env.appUrl}/reset-password?token=${token}` });
     await audit(ctx, 'auth.reset_requested', 'user', u.id);
   }
   return { ok: true }; // the same answer whether or not the account exists
@@ -187,10 +188,12 @@ const VERIFY_HOURS = 48;
 async function issueVerification(ctx: Ctx, userId: string, email: string, name: string) {
   const token = randomToken(32);
   await ctx.db.insert(schema.userTokens).values({ userId, kind: 'verify', tokenHash: sha256(token), expiresAt: new Date(Date.now() + VERIFY_HOURS * 3600_000) });
-  await queueEmail(ctx, email, 'Confirm your email for Samakose', `Hello ${name},\n\nConfirm your email within ${VERIFY_HOURS} hours:\n${env.appUrl}/verify-email?token=${token}\n\nIf you did not sign up, ignore this email.`);
+  await queueTemplate(ctx, email, 'verify_email', { user_name: name, hours: String(VERIFY_HOURS), link: `${env.appUrl}/verify-email?token=${token}` });
 }
 
 export async function register(ctx: Ctx, b: { name: string; email: string; password: string; role: (typeof SELF_ROLES)[number]; orgName?: string; orgType?: 'SME' | 'AGRIFOOD' | 'ESO'; note?: string; consent: boolean }) {
+  if (!(await switchOn(ctx.db, 'switch.self_registration'))) throw forbidden('Registration is closed at the moment. Ask the team for an invitation.');
+  if (b.role !== 'OWNER' && !(await switchOn(ctx.db, `switch.role.${b.role}`))) throw fieldError({ role: 'This kind of account is not open for self-registration. Ask the team for an invitation.' });
   const email = b.email.trim().toLowerCase();
   const name = b.name.trim();
   const problems = passwordProblems(b.password, email, name);
@@ -230,7 +233,7 @@ export async function verifyEmail(ctx: Ctx, token: string) {
   if (!u || !u.active) throw new ApiError(400, 'bad_token', 'This link is invalid or has expired.');
   // A business owner gets access to their own organisation once the email is confirmed. Everyone else stays
   // pending until an administrator approves them. Nobody sees other organisations, programmes or reports.
-  const approve = u.role === 'OWNER' && u.approvalStatus === 'pending';
+  const approve = u.role === 'OWNER' && u.approvalStatus === 'pending' && !(await switchOn(ctx.db, 'switch.owner_needs_approval'));
   await ctx.db.update(schema.users).set({ emailVerified: true, ...(approve ? { approvalStatus: 'approved' } : {}), updatedAt: new Date() }).where(eq(schema.users.id, u.id));
   await ctx.db.update(schema.userTokens).set({ usedAt: new Date() }).where(eq(schema.userTokens.id, t.id));
   await audit({ ...ctx, user: { id: u.id, email: u.email } as any }, 'auth.email_verified', 'user', u.id, undefined, { autoApproved: approve });

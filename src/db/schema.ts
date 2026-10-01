@@ -603,3 +603,12 @@ export const mediaAssets = pgTable('media_assets', {
   createdAt: created(),
   updatedAt: updated()
 }, (t) => [index('media_assets_cat_idx').on(t.category, t.createdAt)]);
+
+/** Administrator-edited wording for the system emails. A row overrides the built-in text for that key. */
+export const emailTemplates = pgTable('email_templates', {
+  key: text('key').primaryKey(),
+  subject: text('subject').notNull(),
+  body: text('body').notNull(),
+  updatedBy: uuid('updated_by'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});

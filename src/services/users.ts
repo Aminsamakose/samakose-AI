@@ -6,7 +6,7 @@ import { ApiError, conflict, fieldError, notFound, unprocessable } from '@/lib/e
 import { randomToken, sha256 } from '@/lib/crypto';
 import { destroyUserSessions } from '@/lib/session';
 import { env } from '@/lib/env';
-import { queueEmail } from '@/domain/notify';
+import { queueTemplate } from '@/domain/notify';
 import { ROLE_LABEL, STAFF_ROLES } from '@/lib/rbac';
 import { ROLES, type Role } from '@/db/schema';
 import { orderBy, search, type ListQuery, countOf } from '@/api/list';
@@ -46,7 +46,7 @@ export async function getUser(ctx: Ctx, id: string) {
 async function issueInvite(ctx: Ctx, userId: string, email: string, name: string) {
   const token = randomToken(32);
   await ctx.db.insert(schema.userTokens).values({ userId, kind: 'invite', tokenHash: sha256(token), expiresAt: new Date(Date.now() + 7 * 86400_000) });
-  await queueEmail(ctx, email, 'You have been invited to Samakose', `Hello ${name},\n\nYou have been invited to Samakose AI. Set your password within 7 days:\n${env.appUrl}/accept-invite?token=${token}\n`);
+  await queueTemplate(ctx, email, 'invite', { user_name: name, link: `${env.appUrl}/accept-invite?token=${token}` });
 }
 
 export async function inviteUser(ctx: Ctx, b: { email: string; name: string; role: Role; orgId?: string | null; programmeIds?: string[] }) {
@@ -164,7 +164,7 @@ export async function approveRegistration(ctx: Ctx, id: string, b: { role?: Role
   await ctx.db.update(u).set({ approvalStatus: 'approved', role, orgId, updatedAt: new Date() }).where(eq(u.id, id));
   if (role === 'OWNER' && orgId) await ctx.db.update(schema.organisations).set({ status: 'Active', updatedAt: new Date() }).where(and(eq(schema.organisations.id, orgId), eq(schema.organisations.status, 'Pending verification')));
   await audit(ctx, 'user.registration_approved', 'user', id, { role: row.role }, { role, orgId });
-  await queueEmail(ctx, row.email, 'Your Samakose registration is approved', `Hello ${row.name},\n\nYour registration is approved. Sign in here:\n${env.appUrl}/login\n`);
+  await queueTemplate(ctx, row.email, 'registration_approved', { user_name: row.name, link: `${env.appUrl}/login` });
   return { ok: true };
 }
 export async function rejectRegistration(ctx: Ctx, id: string, reason?: string) {
