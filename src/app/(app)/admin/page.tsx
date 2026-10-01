@@ -6,7 +6,7 @@ import { useDocTitle, useMe } from '@/components/admin/common';
 import { CommandCentre } from '@/components/admin/CommandCentre';
 
 // Administrators land on the Command Centre. Other roles that reach /admin are sent to the first area they may use.
-const TARGETS: [string, string, string][] = [['content', 'read', '/admin/website'], ['inquiries', 'read', '/admin/inquiries'], ['audit', 'read', '/admin/audit'], ['settings', 'read', '/admin/settings'], ['integrations', 'read', '/admin/system']];
+const TARGETS: [string, string, string][] = [['content', 'read', '/admin/website'], ['inquiries', 'read', '/admin/website?tab=enquiries'], ['audit', 'read', '/admin/audit'], ['settings', 'read', '/admin/settings'], ['integrations', 'read', '/admin/system']];
 
 export default function AdminIndex() {
   const me = useMe(); const router = useRouter();

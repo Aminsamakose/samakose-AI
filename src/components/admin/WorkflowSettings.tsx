@@ -17,7 +17,7 @@ function SwitchRow({ s, canEdit, reload }: { s: Sw; canEdit: boolean; reload: ()
   const flip = () => { if (s.on && s.protected) setAsking(true); else set(!s.on); };
   return <div className="stack" style={{ gap: 8, paddingBlock: 12, borderBottom: '1px solid var(--line)' }}>
     <div className="row" style={{ justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
-      <div className="stack" style={{ gap: 4, minWidth: 0 }}>
+      <div className="stack" style={{ gap: 4, minWidth: 0, flex: 1 }}>
         <span style={{ fontWeight: 600 }}>{s.label} {s.protected && <Badge tone="warn">Safety rule</Badge>}</span>
         <span className="small muted">{s.help}</span>
         <span className="small muted">Default {s.default ? 'on' : 'off'}{s.changed && s.updatedAt ? ` · changed ${dateTime(s.updatedAt)}` : ''}</span>

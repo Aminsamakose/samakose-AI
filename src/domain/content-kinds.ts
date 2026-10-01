@@ -117,6 +117,15 @@ export const KINDS: Kind[] = [
     defaults: { description: 'Diagnose the health of your business, get a prescription, and track the change. Business health assessment and coaching for SMEs, agribusinesses and support organisations in Africa.', indexing: true, shareImage: '' }
   },
   {
+    id: 'analytics', label: 'Visitor analytics', plural: 'Visitor analytics', group: 'site_settings', singleton: true,
+    blurb: 'Connect Google Analytics or Plausible to see website traffic. Loaded on public pages only, never inside the platform, and skipped for visitors who send Do Not Track.',
+    fields: [
+      { key: 'ga4Id', label: 'Google Analytics 4 measurement ID', type: 'text', max: 20, hint: 'Looks like G-ABC123XYZ4. Leave blank to switch it off.' },
+      { key: 'plausibleDomain', label: 'Plausible domain', type: 'text', max: 100, hint: 'The site name registered in Plausible, such as samakose.com. Leave blank to switch it off.' }
+    ],
+    defaults: { ga4Id: '', plausibleDomain: '' }
+  },
+  {
     id: 'home', label: 'Home page', plural: 'Home page', group: 'site_settings', singleton: true,
     blurb: 'The opening headline and call to action. Section order and visibility are set below.',
     fields: [
@@ -225,6 +234,11 @@ export function validateData(kind: Kind, input: unknown, opts: { forPublish?: bo
     out.sections = secs;
   }
   if (kind.id === 'navigation' && out.menu) { const m = parseMenu(String(out.menu)); if (m.error) errs.menu = m.error; }
+  if (kind.id === 'analytics') {
+    if (out.ga4Id && !/^G-[A-Z0-9]{6,14}$/.test(String(out.ga4Id).toUpperCase())) errs.ga4Id = 'Use the form G-ABC123XYZ4';
+    else if (out.ga4Id) out.ga4Id = String(out.ga4Id).toUpperCase();
+    if (out.plausibleDomain && !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(String(out.plausibleDomain))) errs.plausibleDomain = 'Enter a domain such as samakose.com, without https://';
+  }
   if (kind.id === 'announcement' && out.enabled === true && opts.forPublish && !out.text) errs.text = 'Write the message before showing the bar';
   if (kind.id === 'announcement' && out.linkHref && !out.linkLabel) errs.linkLabel = 'Add a label for the link';
   if (opts.forPublish) for (const g of kind.gates ?? []) if (out[g.key] !== true) errs[g.key] = g.message;

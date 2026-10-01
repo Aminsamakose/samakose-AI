@@ -1,5 +1,5 @@
 import QRCode from 'qrcode';
-import { and, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -49,6 +49,11 @@ export async function login(ctx: Ctx, email: string, password: string, userAgent
     throw unauthorized(GENERIC);
   }
   if (!u.emailVerified) throw new ApiError(403, 'email_not_verified', 'Confirm your email first. Use the link we sent, or ask for a new one on the sign-up page.');
+  if (u.role !== 'ADMIN') {
+    const rows = await db().select().from(schema.rules).where(inArray(schema.rules.key, ['switch.maintenance', 'switch.maintenance_block_signin']));
+    const m = new Map(rows.map((r) => [r.key, r.value]));
+    if (m.get('switch.maintenance') === '1' && m.get('switch.maintenance_block_signin') === '1') throw new ApiError(503, 'maintenance', 'The platform is being updated and sign-in is paused for a short while. Please try again later.');
+  }
   await db().update(schema.users).set({ failedLogins: 0, lockedUntil: null, lastLoginAt: new Date() }).where(eq(schema.users.id, u.id));
   await clearRateLimit(key);
   const token = await createSession(u.id, ctx.ip, userAgent, !u.mfaEnabled);

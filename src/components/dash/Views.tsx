@@ -215,7 +215,7 @@ export function Website({ d }: { d: any }) {
       <LinkTile label="Drafts" value={num(c.drafts)} hint="Items not yet published" href="/admin/website" />
       <LinkTile label="Scheduled" value={num(c.scheduled)} hint="Set to go live later" href="/admin/website" />
       <LinkTile label="Published" value={num(c.published)} hint="Items visitors can see" href="/admin/website" />
-      {d.new_enquiries !== undefined && <LinkTile label="New enquiries" value={num(d.new_enquiries)} hint="Website messages not yet handled" href="/admin/inquiries" />}
+      {d.new_enquiries !== undefined && <LinkTile label="New enquiries" value={num(d.new_enquiries)} hint="Website messages not yet handled" href="/admin/website?tab=enquiries" />}
     </div>
     <Card title="Recently changed" actions={<LinkButton href="/admin/website" variant="primary" size="sm">Open website and content</LinkButton>}>
       <MiniTable caption="Recently changed website content" rows={d.recent ?? []} empty="Nothing has been edited yet" cols={[

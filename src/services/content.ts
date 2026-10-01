@@ -14,7 +14,7 @@ type Row = typeof t.$inferSelect;
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
 /** Visitors see changes straight away: drop the cached copy the public pages read. Safe to fail outside a web request. */
-function bust() { try { revalidateTag('site-content', { expire: 0 }); } catch { /* not in a request */ } }
+export function bust() { try { revalidateTag('site-content', { expire: 0 }); } catch { /* not in a request */ } }
 
 function kindOf(id: string): Kind {
   const k = KIND_BY_ID[id];

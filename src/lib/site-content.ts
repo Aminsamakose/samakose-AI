@@ -11,14 +11,14 @@ export type Partner = { name: string; website: string; note: string };
 export type Stat = { value: string; label: string; source: string };
 export type PublicArticle = { slug: string; title: string; summary: string; date: string; author: string; body: string };
 export type SiteContent = {
-  brand: Rec; navigation: Rec; nav: { label: string; href: string }[]; contact: Rec; social: Rec; announcement: Rec; seo: Rec; home: Rec & { sections: HomeSection[] };
+  analytics: Rec; maintenance: { on: boolean; message: string }; brand: Rec; navigation: Rec; nav: { label: string; href: string }[]; contact: Rec; social: Rec; announcement: Rec; seo: Rec; home: Rec & { sections: HomeSection[] };
   faqs: Faq[]; testimonials: Testimonial[]; partners: Partner[]; stats: Stat[]; articles: PublicArticle[];
 };
 
 const D = (id: string): Rec => ({ ...KIND_BY_ID[id].defaults });
 
 export function defaultSite(): SiteContent {
-  return { brand: D('brand'), navigation: D('navigation'), nav: parseMenu(DEFAULT_MENU).items, contact: D('contact'), social: D('social'), announcement: D('announcement'), seo: D('seo'), home: D('home') as any, faqs: [], testimonials: [], partners: [], stats: [], articles: [] };
+  return { analytics: D('analytics'), maintenance: { on: false, message: '' }, brand: D('brand'), navigation: D('navigation'), nav: parseMenu(DEFAULT_MENU).items, contact: D('contact'), social: D('social'), announcement: D('announcement'), seo: D('seo'), home: D('home') as any, faqs: [], testimonials: [], partners: [], stats: [], articles: [] };
 }
 
 /** What a visitor sees: published copies, plus anything whose scheduled time has passed. Gated items (consent, verification) are checked again here. */
@@ -26,6 +26,9 @@ async function load(): Promise<SiteContent> {
   const rows = await db().select().from(schema.contentDocs).where(inArray(schema.contentDocs.status, ['Published', 'Scheduled']));
   const now = Date.now();
   const site = defaultSite();
+  const mrows = await db().select().from(schema.rules).where(inArray(schema.rules.key, ['switch.maintenance', 'text.maintenance_message']));
+  const mv = new Map(mrows.map((r) => [r.key, r.value]));
+  site.maintenance = { on: mv.get('switch.maintenance') === '1', message: mv.get('text.maintenance_message') ?? '' };
   const items: { kind: string; data: Rec; order: number; at: number }[] = [];
   for (const r of rows) {
     const k = KIND_BY_ID[r.kind]; if (!k) continue;

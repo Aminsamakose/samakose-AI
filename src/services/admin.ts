@@ -234,7 +234,7 @@ export async function commandCentre(ctx: Ctx) {
   if (c.failed_jobs > 0) alerts.push({ tone: 'bad', text: `${c.failed_jobs} background job${c.failed_jobs === 1 ? '' : 's'} failed`, href: '/admin/system' });
   if (c.failed_emails > 0) alerts.push({ tone: 'bad', text: `${c.failed_emails} email${c.failed_emails === 1 ? '' : 's'} could not be sent`, href: '/admin/system' });
   if (c.content_in_review > 0) alerts.push({ tone: 'info', text: `${c.content_in_review} website item${c.content_in_review === 1 ? '' : 's'} waiting for review`, href: '/admin/website' });
-  if (c.new_enquiries > 0) alerts.push({ tone: 'info', text: `${c.new_enquiries} new website enquir${c.new_enquiries === 1 ? 'y' : 'ies'}`, href: '/admin/inquiries' });
+  if (c.new_enquiries > 0) alerts.push({ tone: 'info', text: `${c.new_enquiries} new website enquir${c.new_enquiries === 1 ? 'y' : 'ies'}`, href: '/admin/website?tab=enquiries' });
   const mailMode = mailConfigured() ? 'smtp' : 'log-only';
   const store = await fileStorage().health();
   return { counts: c, alerts, recent, health: { database: latency, email: mailMode, storage: store, https: env.appUrl.startsWith('https://') } };

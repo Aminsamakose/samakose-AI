@@ -47,6 +47,29 @@ function HealthCheck() {
   </div>;
 }
 
+function TestButtons() {
+  const [res, setRes] = useState<{ ok: boolean; text: string } | null>(null); const [busy, setBusy] = useState<string | null>(null);
+  const run = async (what: string) => { setBusy(what); try { const r = await api.post<{ ok: boolean; message: string }>(`/admin/system/test/${what}`, {}); setRes({ ok: r.ok, text: r.message }); } catch (e) { setRes({ ok: false, text: errText(e) }); } finally { setBusy(null); } };
+  return <div className="stack" style={{ gap: 8 }}>
+    <div className="row" style={{ flexWrap: 'wrap' }}>{[['email', 'Send a test email to me'], ['storage', 'Test file storage'], ['database', 'Test database']].map(([k, l]) => <Button key={k} loading={busy === k} onClick={() => run(k)}>{l}</Button>)}</div>
+    <div aria-live="polite">{res && <div className={`alert ${res.ok ? 'ok' : 'bad'}`}>{res.text}</div>}</div>
+  </div>;
+}
+
+type Mail = { configured: boolean; items: { id: string; to: string; subject: string; status: string; attempts: number; lastError: string | null; sentAt: string | null; createdAt: string }[] };
+function EmailLog({ canEdit }: { canEdit: boolean }) {
+  const [status, setStatus] = useState(''); const st = useApi<Mail>(`/admin/system/emails${status ? `?status=${status}` : ''}`); const toast = useToast();
+  return <Card title="Email log">
+    <div className="row" style={{ marginBottom: 12, flexWrap: 'wrap' }}>{['', 'Pending', 'Sent', 'Failed'].map((s) => <Button key={s} size="sm" variant={status === s ? 'primary' : undefined} onClick={() => setStatus(s)}>{s || 'All'}</Button>)}<Button size="sm" onClick={st.reload}>Refresh</Button></div>
+    <Async state={st} empty={(d) => d.items.length === 0}>{(d) => <>
+      {!d.configured && <div className="alert warn" style={{ marginBottom: 12 }}>Email is in log-only mode. Messages below are recorded but not delivered.</div>}
+      <div className="table-wrap"><table><thead><tr><th>When</th><th>To</th><th>Subject</th><th>Status</th>{canEdit && <th>Action</th>}</tr></thead>
+        <tbody>{d.items.map((m) => <tr key={m.id}><td className="num">{dateTime(m.createdAt)}</td><td style={{ overflowWrap: 'anywhere' }}>{m.to}</td><td>{m.subject}{m.lastError && <div className="small muted" style={{ overflowWrap: 'anywhere' }}>{m.lastError}</div>}</td><td><Badge tone={m.status === 'Sent' ? 'ok' : m.status === 'Failed' ? 'bad' : 'info'}>{m.status}</Badge></td>
+          {canEdit && <td>{m.status === 'Failed' && <Button size="sm" onClick={async () => { try { await api.post(`/admin/system/emails/${m.id}/retry`, {}); toast('Queued to send again'); st.reload(); } catch (e) { toast(errText(e), 'bad'); } }}>Send again</Button>}</td>}</tr>)}</tbody></table></div>
+    </>}</Async>
+  </Card>;
+}
+
 export default function SystemPage() {
   const st = useApi<Status>('/admin/system'); const toast = useToast(); const [busy, setBusy] = useState<string | null>(null);
   return <Guard resource="integrations" action="read" title="System">{(me) => <>
@@ -80,8 +103,10 @@ export default function SystemPage() {
         <div className="stack">
           <KoboCard s={s.kobo} />
           <Card title="Health check"><HealthCheck /></Card>
+          {me.can('integrations', 'edit') && <Card title="Connection tests"><TestButtons /></Card>}
         </div>
       </div>
+      <EmailLog canEdit={me.can('integrations', 'edit')} />
       <Card title="Job queue">
         <div className="row" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>{['queued', 'running', 'done', 'failed'].map((k) => <Badge key={k} tone={k === 'failed' && (s.jobs[k] ?? 0) > 0 ? 'bad' : ''}>{k}: {s.jobs[k] ?? 0}</Badge>)}</div>
         {s.failedJobs.length === 0 ? <Empty title="No failed jobs" hint="Background work is running cleanly." /> : <>
