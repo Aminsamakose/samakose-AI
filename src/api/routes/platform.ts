@@ -8,6 +8,7 @@ import * as dash from '@/services/dashboards';
 import * as adm from '@/services/admin';
 import * as sw from '@/services/switches';
 import * as sys from '@/services/system';
+import * as bill from '@/services/billing';
 import * as inq from '@/services/inquiries';
 import { getJob } from '@/domain/jobs';
 import { need } from '@/services/common';
@@ -72,6 +73,11 @@ defineRoute({ method: 'GET', path: '/admin/system', tag: AD, summary: 'System an
 defineRoute({ method: 'POST', path: '/admin/system/test/:what', tag: AD, summary: 'Test email, storage or database', permission: ['integrations', 'edit'], body: z.object({}).optional(), handler: ({ ctx, params }) => sys.testIntegration(ctx, params.what) });
 defineRoute({ method: 'GET', path: '/admin/system/emails', tag: AD, summary: 'Recent outgoing email and its delivery status', permission: ['integrations', 'read'], query: z.object({ status: z.string().optional() }), handler: ({ ctx, query }) => sys.emailLog(ctx, query.status) });
 defineRoute({ method: 'POST', path: '/admin/system/emails/:id/retry', tag: AD, summary: 'Send a failed email again', permission: ['integrations', 'edit'], body: z.object({}).optional(), handler: ({ ctx, params }) => sys.retryEmail(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/settings/billing', tag: AD, summary: 'Billing configuration (currency, tax, invoice terms). Separate from public pricing', permission: ['settings', 'read'], handler: ({ ctx }) => bill.readBilling(ctx) });
+defineRoute({ method: 'PUT', path: '/settings/billing', tag: AD, summary: 'Change billing configuration. Tax cannot be switched on without a rate, a registration number and a Finance confirmation reference', permission: ['settings', 'edit'],
+  body: z.object({ currency: z.enum(['GHS', 'USD']), usdReferenceEnabled: z.boolean(), taxEnabled: z.boolean(), taxLabel: z.string().max(40), taxRatePercent: z.number(), taxInclusive: z.boolean(), taxRegistrationNumber: z.string().max(60), taxConfirmationRef: z.string().max(160), invoicePrefix: z.string().max(10), paymentTermsDays: z.number(), paymentInstructions: z.string().max(1200), invoiceFooter: z.string().max(600) }).partial(),
+  handler: ({ ctx, body }) => bill.saveBilling(ctx, body as any) });
+defineRoute({ method: 'GET', path: '/admin/system/payments', tag: AD, summary: 'Is Paystack ready for real money', permission: ['integrations', 'read'], handler: ({ ctx }) => bill.readPaymentReadiness(ctx) });
 defineRoute({ method: 'GET', path: '/settings/security', tag: AD, summary: 'Security overview', permission: ['settings', 'read'], handler: ({ ctx }) => sys.securityOverview(ctx) });
 defineRoute({ method: 'GET', path: '/settings/maintenance', tag: AD, summary: 'Maintenance mode', permission: ['settings', 'read'], handler: ({ ctx }) => sys.readMaintenance(ctx) });
 defineRoute({ method: 'PUT', path: '/settings/maintenance', tag: AD, summary: 'Turn maintenance mode on or off', permission: ['settings', 'edit'], body: z.object({ on: z.boolean(), blockSignin: z.boolean(), message: z.string().max(600) }), handler: ({ ctx, body }) => sys.setMaintenance(ctx, body) });

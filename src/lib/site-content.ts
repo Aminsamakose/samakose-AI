@@ -10,15 +10,32 @@ export type Testimonial = { quote: string; name: string; role: string; organisat
 export type Partner = { name: string; website: string; note: string };
 export type Stat = { value: string; label: string; source: string };
 export type PublicArticle = { slug: string; title: string; summary: string; date: string; author: string; body: string };
+export type PricingCard = { name: string; audience: string; features: string[]; price: string | null; reference: string | null; period: string; ctaLabel: string; ctaHref: string; highlighted: boolean };
+export type PricingView = { confirmed: boolean; banner: string; currency: 'GHS' | 'USD'; enquiryLabel: string; enquiryHref: string; plans: PricingCard[] };
 export type SiteContent = {
+  pricing: PricingView; pricing_settings: Rec;
   analytics: Rec; maintenance: { on: boolean; message: string }; brand: Rec; navigation: Rec; nav: { label: string; href: string }[]; contact: Rec; social: Rec; announcement: Rec; seo: Rec; home: Rec & { sections: HomeSection[] };
   faqs: Faq[]; testimonials: Testimonial[]; partners: Partner[]; stats: Stat[]; articles: PublicArticle[];
 };
 
 const D = (id: string): Rec => ({ ...KIND_BY_ID[id].defaults });
 
+const money = (v: unknown, cur: string) => { const n = Number(String(v ?? '')); return Number.isFinite(n) && String(v ?? '').trim() !== '' ? `${cur === 'USD' ? 'US$' : 'GH₵'}${n.toLocaleString('en-GB', { maximumFractionDigits: 2 })}` : null; };
+/** Prices reach a visitor only when an administrator has approved them AND at least one card actually carries a price. Otherwise the enquiry banner stays. */
+export function buildPricing(s: Rec, cards: Rec[]): PricingView {
+  const cur = s.currency === 'USD' ? 'USD' : 'GHS';
+  const priced = cards.some((c) => String(c.priceGhs ?? '').trim() || String(c.priceUsd ?? '').trim());
+  const confirmed = s.pricesConfirmed === true && String(s.approvalRef ?? '').trim().length >= 5 && priced;
+  const plans: PricingCard[] = cards.map((c) => {
+    const main = cur === 'USD' ? 'priceUsd' : 'priceGhs'; const other = cur === 'USD' ? 'priceGhs' : 'priceUsd';
+    return { name: String(c.name), audience: String(c.audience), features: String(c.features ?? '').split('\n').map((l) => l.trim()).filter(Boolean), price: confirmed ? money(c[main], cur) : null,
+      reference: confirmed && s.showUsdReference === true ? money(c[other], cur === 'USD' ? 'GHS' : 'USD') : null, period: String(c.period ?? ''), ctaLabel: String(c.ctaLabel ?? ''), ctaHref: String(c.ctaHref ?? ''), highlighted: c.highlighted === true };
+  });
+  return { confirmed, banner: String(s.bannerText ?? ''), currency: cur, enquiryLabel: String(s.enquiryLabel ?? 'Send an enquiry'), enquiryHref: String(s.enquiryHref || '/contact'), plans };
+}
+
 export function defaultSite(): SiteContent {
-  return { analytics: D('analytics'), maintenance: { on: false, message: '' }, brand: D('brand'), navigation: D('navigation'), nav: parseMenu(DEFAULT_MENU).items, contact: D('contact'), social: D('social'), announcement: D('announcement'), seo: D('seo'), home: D('home') as any, faqs: [], testimonials: [], partners: [], stats: [], articles: [] };
+  return { pricing: buildPricing(D('pricing_settings'), []), pricing_settings: D('pricing_settings'), analytics: D('analytics'), maintenance: { on: false, message: '' }, brand: D('brand'), navigation: D('navigation'), nav: parseMenu(DEFAULT_MENU).items, contact: D('contact'), social: D('social'), announcement: D('announcement'), seo: D('seo'), home: D('home') as any, faqs: [], testimonials: [], partners: [], stats: [], articles: [] };
 }
 
 /** What a visitor sees: published copies, plus anything whose scheduled time has passed. Gated items (consent, verification) are checked again here. */
@@ -46,6 +63,7 @@ async function load(): Promise<SiteContent> {
   site.testimonials = of('testimonial') as Testimonial[];
   site.partners = of('partner') as Partner[];
   site.stats = of('stat') as Stat[];
+  site.pricing = buildPricing(site.pricing_settings, of('pricing_plan'));
   site.articles = (of('article') as PublicArticle[]).sort((a, b) => b.date.localeCompare(a.date));
   const menu = parseMenu(String(site.navigation.menu ?? ''));
   site.nav = menu.error || !menu.items.length ? parseMenu(DEFAULT_MENU).items : menu.items;

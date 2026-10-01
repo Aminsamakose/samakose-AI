@@ -77,3 +77,56 @@ export function TransferPanel({ canExport }: { canExport: boolean }) {
       <p className="small muted" style={{ marginTop: 12 }}>Bulk import of users or organisations is not offered here on purpose: creating many accounts at once without invitations would bypass the approval steps.</p></Card>}
   </div>;
 }
+
+type Bl = { currency: 'GHS' | 'USD'; usdReferenceEnabled: boolean; taxEnabled: boolean; taxLabel: string; taxRatePercent: number; taxInclusive: boolean; taxRegistrationNumber: string; taxConfirmationRef: string; invoicePrefix: string; paymentTermsDays: number; paymentInstructions: string; invoiceFooter: string; updatedAt: string | null };
+export function BillingEditor({ canEdit }: { canEdit: boolean }) {
+  const st = useApi<Bl>('/settings/billing'); const toast = useToast();
+  const [v, setV] = useState<Bl | null>(null); const [fe, setFe] = useState<Record<string, string>>({}); const [err, setErr] = useState<string | null>(null); const [busy, setBusy] = useState(false);
+  useEffect(() => { if (st.data) setV(st.data); }, [st.data]);
+  const set = <K extends keyof Bl>(k: K, x: Bl[K]) => setV((o) => (o ? { ...o, [k]: x } : o));
+  const save = async () => {
+    if (!v) return; setBusy(true); setErr(null); setFe({});
+    const { updatedAt, ...body } = v; void updatedAt;
+    try { await api.put('/settings/billing', body); toast('Billing settings saved'); st.reload(); }
+    catch (e) { if (e instanceof ApiFail && e.fields) setFe(e.fields); setErr(errText(e)); } finally { setBusy(false); }
+  };
+  if (!v) return <Async state={st}>{() => null}</Async>;
+  const n = (k: keyof Bl, label: string, hint?: string, type: 'text' | 'number' = 'text') => <Field label={label} name={String(k)} error={fe[k as string]} hint={hint}>{(p) => <input {...p} type={type} inputMode={type === 'number' ? 'decimal' : undefined} disabled={!canEdit} value={String(v[k] ?? '')} onChange={(e) => set(k, (type === 'number' ? Number(e.target.value) : e.target.value) as never)} />}</Field>;
+  return <div className="stack">
+    <div className="alert info">These settings are for Finance and billing only. They are separate from the public pricing cards: changing a pricing card never changes invoices, contracts or plans, and nothing here changes what visitors see.</div>
+    <FormError message={err} />
+    <Card title="Currency">
+      <div className="form-grid">
+        <Field label="Default currency" name="currency" error={fe.currency}>{(p) => <select {...p} disabled={!canEdit} value={v.currency} onChange={(e) => set('currency', e.target.value as 'GHS' | 'USD')}><option value="GHS">Ghana cedi (GHS)</option><option value="USD">US dollar (USD)</option></select>}</Field>
+        <label className="row" style={{ gap: 10, paddingTop: 28 }}><input type="checkbox" disabled={!canEdit} checked={v.usdReferenceEnabled} onChange={(e) => set('usdReferenceEnabled', e.target.checked)} /> Keep USD reference amounts available for future use</label>
+      </div>
+    </Card>
+    <Card title="Tax (off until Finance confirms)">
+      <p className="small muted" style={{ marginBottom: 12 }}>Switch tax on only after Finance has confirmed whether Samakose is registered and how it is treated. It cannot be turned on without a rate, a registration number and a confirmation reference.</p>
+      <div className="stack">
+        <label className="row" style={{ gap: 10 }}><input type="checkbox" disabled={!canEdit} checked={v.taxEnabled} onChange={(e) => set('taxEnabled', e.target.checked)} /> Tax is applied</label>
+        <div className="form-grid">{n('taxLabel', 'Tax label')}{n('taxRatePercent', 'Rate (percent)', undefined, 'number')}{n('taxRegistrationNumber', 'Tax registration number')}{n('taxConfirmationRef', 'Finance confirmation reference', 'Who confirmed this and when.')}</div>
+        <label className="row" style={{ gap: 10 }}><input type="checkbox" disabled={!canEdit} checked={v.taxInclusive} onChange={(e) => set('taxInclusive', e.target.checked)} /> Prices already include tax</label>
+      </div>
+    </Card>
+    <Card title="Invoices">
+      <div className="form-grid">{n('invoicePrefix', 'Invoice number prefix', '2 to 6 capital letters.')}{n('paymentTermsDays', 'Payment terms (days)', undefined, 'number')}</div>
+      <div className="stack" style={{ marginTop: 12 }}>
+        <Field label="Payment instructions" name="paymentInstructions" error={fe.paymentInstructions} hint="Bank or mobile money details shown to clients.">{(p) => <textarea {...p} rows={3} disabled={!canEdit} value={v.paymentInstructions} onChange={(e) => set('paymentInstructions', e.target.value)} />}</Field>
+        <Field label="Invoice footer" name="invoiceFooter" error={fe.invoiceFooter}>{(p) => <textarea {...p} rows={2} disabled={!canEdit} value={v.invoiceFooter} onChange={(e) => set('invoiceFooter', e.target.value)} />}</Field>
+      </div>
+    </Card>
+    {canEdit && <div className="form-actions"><Button variant="primary" loading={busy} onClick={save}>Save billing settings</Button></div>}
+  </div>;
+}
+
+type Pay = { mode: string; ready: boolean; checks: { label: string; ok: boolean; fix: string }[]; webhookUrl: string; callbackUrl: string; note: string };
+export function PaymentReadiness() {
+  const st = useApi<Pay>('/admin/system/payments');
+  return <Async state={st}>{(d) => <Card title="Online payment readiness">
+    <div className={`alert ${d.ready ? 'ok' : 'warn'}`} style={{ marginBottom: 12 }}>{d.ready ? 'Ready for real payments.' : `Not ready for real money. Current mode: ${d.mode}.`}</div>
+    <ul className="stack" style={{ listStyle: 'none', padding: 0, gap: 8 }}>{d.checks.map((c) => <li key={c.label} className="row" style={{ gap: 10, alignItems: 'flex-start' }}><Badge tone={c.ok ? 'ok' : 'warn'}>{c.ok ? 'OK' : 'To do'}</Badge><span>{c.label}{!c.ok && <span className="small muted"><br />{c.fix}</span>}</span></li>)}</ul>
+    <KV items={[['Webhook address', <span key="w" className="mono" style={{ overflowWrap: 'anywhere' }}>{d.webhookUrl}</span>], ['Return address', <span key="c" className="mono" style={{ overflowWrap: 'anywhere' }}>{d.callbackUrl}</span>]]} />
+    <p className="small muted" style={{ marginTop: 12 }}>{d.note}</p>
+  </Card>}</Async>;
+}

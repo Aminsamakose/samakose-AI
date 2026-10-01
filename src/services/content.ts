@@ -14,6 +14,19 @@ type Row = typeof t.$inferSelect;
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
 /** Visitors see changes straight away: drop the cached copy the public pages read. Safe to fail outside a web request. */
+type Act = 'read' | 'create' | 'edit' | 'approve' | 'delete';
+/** The usual permission for the content group, plus administrator-only for settings that carry money or approval. */
+function guard(ctx: Ctx, k: Kind, action: Act) {
+  allow(ctx, k.group, action);
+  if (k.adminOnly && action !== 'read') allow(ctx, 'settings', 'edit');
+}
+const priceTouched = (k: Kind, a: Record<string, unknown> | null | undefined, b: Record<string, unknown> | null | undefined) =>
+  (k.adminFields ?? []).some((f) => String((a ?? {})[f] ?? '') !== String((b ?? {})[f] ?? ''));
+/** Prices are an administrator's call, even when an editor or site manager owns the rest of the card. */
+function priceGuard(ctx: Ctx, k: Kind, a: Record<string, unknown> | null | undefined, b: Record<string, unknown> | null | undefined) {
+  if (priceTouched(k, a, b) && !allowed(need(ctx).user.role, 'settings', 'edit')) throw new ApiError(403, 'forbidden', 'Only an administrator can enter, change or publish prices.');
+}
+
 export function bust() { try { revalidateTag('site-content', { expire: 0 }); } catch { /* not in a request */ } }
 
 function kindOf(id: string): Kind {
@@ -50,7 +63,7 @@ export async function overview(ctx: Ctx) {
 }
 export async function listDocs(ctx: Ctx, kindId: string) {
   const k = kindOf(kindId);
-  allow(ctx, k.group, 'read');
+  guard(ctx, k, 'read');
   if (k.singleton) {
     let [r] = await ctx.db.select().from(t).where(and(eq(t.kind, k.id), eq(t.key, k.id))).limit(1);
     if (!r) r = await createSingleton(ctx, k);
@@ -70,7 +83,7 @@ async function createSingleton(ctx: Ctx, k: Kind) {
 
 export async function getDoc(ctx: Ctx, id: string) {
   const { r, k } = await load(ctx, id);
-  allow(ctx, k.group, 'read');
+  guard(ctx, k, 'read');
   return { kind: k, item: shape(r, k) };
 }
 
@@ -82,9 +95,10 @@ async function slugTaken(ctx: Ctx, slug: string, exceptId?: string) {
 export async function createDoc(ctx: Ctx, kindId: string, body: { data: unknown; sortOrder?: number }) {
   const k = kindOf(kindId);
   if (k.singleton) throw unprocessable('This setting already exists. Edit it instead.');
-  allow(ctx, k.group, 'create');
+  guard(ctx, k, 'create');
   const v = validateData(k, body.data);
   if (!v.ok) throw fieldError(v.fields);
+  priceGuard(ctx, k, null, v.data);
   if (k.id === 'article') {
     if (!v.data.slug && v.data.title) v.data.slug = slugify(String(v.data.title));
     if (v.data.slug && (await slugTaken(ctx, String(v.data.slug)))) throw fieldError({ slug: 'Another article already uses this address' });
@@ -96,10 +110,11 @@ export async function createDoc(ctx: Ctx, kindId: string, body: { data: unknown;
 
 export async function saveDraft(ctx: Ctx, id: string, body: { data: unknown; sortOrder?: number }) {
   const { r, k } = await load(ctx, id);
-  allow(ctx, k.group, 'edit');
+  guard(ctx, k, 'edit');
   if (r.status === 'Archived') throw unprocessable('Restore this item from the archive before editing it.');
   const v = validateData(k, body.data);
   if (!v.ok) throw fieldError(v.fields);
+  priceGuard(ctx, k, r.draft as any, v.data);
   if (k.id === 'article' && v.data.slug && (await slugTaken(ctx, String(v.data.slug), r.id))) throw fieldError({ slug: 'Another article already uses this address' });
   // Editing something that is in review sends it back to draft so the reviewer sees the latest text.
   const status = r.status === 'In review' ? 'Draft' : r.status === 'Scheduled' ? 'Scheduled' : r.status;
@@ -110,7 +125,7 @@ export async function saveDraft(ctx: Ctx, id: string, body: { data: unknown; sor
 
 export async function submitForReview(ctx: Ctx, id: string) {
   const { r, k } = await load(ctx, id);
-  allow(ctx, k.group, 'edit');
+  guard(ctx, k, 'edit');
   if (r.status !== 'Draft') throw unprocessable('Only drafts can be sent for review.');
   const v = validateData(k, r.draft, { forPublish: true });
   if (!v.ok) throw fieldError(v.fields);
@@ -130,8 +145,9 @@ async function nextVersion(ctx: Ctx, r: Row, k: Kind, note: string | null, actor
 
 export async function publish(ctx: Ctx, id: string, body: { note?: string | null }) {
   const { r, k } = await load(ctx, id);
-  allow(ctx, k.group, 'approve');
+  guard(ctx, k, 'approve');
   if (r.status === 'Archived') throw unprocessable('Restore this item from the archive first.');
+  priceGuard(ctx, k, r.live as any, r.draft as any);
   const { version, data } = await nextVersion(ctx, r, k, body.note ?? null, need(ctx).user.id);
   const [u] = await ctx.db.update(t).set({ live: data, draft: data, title: titleOf(k, data), version, status: 'Published', publishAt: null, publishedAt: new Date(), publishedBy: need(ctx).user.id, updatedAt: new Date() }).where(eq(t.id, id)).returning();
   await audit(ctx, 'content.publish', `content:${k.id}`, id, r.live, data);
@@ -141,10 +157,11 @@ export async function publish(ctx: Ctx, id: string, body: { note?: string | null
 
 export async function schedule(ctx: Ctx, id: string, body: { at: string }) {
   const { r, k } = await load(ctx, id);
-  allow(ctx, k.group, 'approve');
+  guard(ctx, k, 'approve');
   const at = new Date(body.at);
   if (Number.isNaN(at.getTime()) || at.getTime() < Date.now() + 60_000) throw fieldError({ at: 'Choose a time in the future' });
   if (r.status === 'Archived') throw unprocessable('Restore this item from the archive first.');
+  priceGuard(ctx, k, r.live as any, r.draft as any);
   const v = validateData(k, r.draft, { forPublish: true });
   if (!v.ok) throw fieldError(v.fields);
   const [u] = await ctx.db.update(t).set({ status: 'Scheduled', publishAt: at, updatedAt: new Date() }).where(eq(t.id, id)).returning();
@@ -155,7 +172,7 @@ export async function schedule(ctx: Ctx, id: string, body: { at: string }) {
 
 export async function unschedule(ctx: Ctx, id: string) {
   const { r, k } = await load(ctx, id);
-  allow(ctx, k.group, 'approve');
+  guard(ctx, k, 'approve');
   if (r.status !== 'Scheduled') throw unprocessable('This item is not scheduled.');
   const [u] = await ctx.db.update(t).set({ status: r.live ? 'Published' : 'Draft', publishAt: null, updatedAt: new Date() }).where(eq(t.id, id)).returning();
   await audit(ctx, 'content.unschedule', `content:${k.id}`, id, { status: 'Scheduled' }, { status: u.status });
@@ -167,7 +184,7 @@ export async function unschedule(ctx: Ctx, id: string) {
 export async function archive(ctx: Ctx, id: string) {
   const { r, k } = await load(ctx, id);
   if (k.singleton) throw unprocessable('Settings cannot be archived. Switch them off or restore an earlier version.');
-  allow(ctx, k.group, 'approve');
+  guard(ctx, k, 'approve');
   const [u] = await ctx.db.update(t).set({ status: 'Archived', publishAt: null, updatedAt: new Date() }).where(eq(t.id, id)).returning();
   await audit(ctx, 'content.archive', `content:${k.id}`, id, { status: r.status }, { status: 'Archived' });
   bust();
@@ -176,7 +193,7 @@ export async function archive(ctx: Ctx, id: string) {
 
 export async function unarchive(ctx: Ctx, id: string) {
   const { r, k } = await load(ctx, id);
-  allow(ctx, k.group, 'approve');
+  guard(ctx, k, 'approve');
   if (r.status !== 'Archived') throw unprocessable('This item is not archived.');
   const [u] = await ctx.db.update(t).set({ status: 'Draft', updatedAt: new Date() }).where(eq(t.id, id)).returning();
   await audit(ctx, 'content.unarchive', `content:${k.id}`, id, { status: 'Archived' }, { status: 'Draft' });
@@ -187,7 +204,7 @@ export async function unarchive(ctx: Ctx, id: string) {
 /** Permanent removal is limited to archived items, so nothing live disappears by accident. */
 export async function remove(ctx: Ctx, id: string) {
   const { r, k } = await load(ctx, id);
-  allow(ctx, k.group, 'delete');
+  guard(ctx, k, 'delete');
   if (r.status !== 'Archived') throw unprocessable('Archive an item before deleting it.');
   await ctx.db.delete(t).where(eq(t.id, id));
   await audit(ctx, 'content.delete', `content:${k.id}`, id, { title: r.title, draft: r.draft }, undefined);
@@ -197,7 +214,7 @@ export async function remove(ctx: Ctx, id: string) {
 
 export async function versions(ctx: Ctx, id: string) {
   const { k } = await load(ctx, id);
-  allow(ctx, k.group, 'read');
+  guard(ctx, k, 'read');
   const rows = await ctx.db.select({ id: schema.contentVersions.id, version: schema.contentVersions.version, data: schema.contentVersions.data, note: schema.contentVersions.note, createdAt: schema.contentVersions.createdAt, author: schema.users.name })
     .from(schema.contentVersions).leftJoin(schema.users, eq(schema.users.id, schema.contentVersions.authorId)).where(eq(schema.contentVersions.docId, id)).orderBy(desc(schema.contentVersions.version));
   return rows;
@@ -206,12 +223,13 @@ export async function versions(ctx: Ctx, id: string) {
 /** Put an earlier published version back into the working copy. It does not go live until it is published again. */
 export async function restore(ctx: Ctx, id: string, body: { version: number }) {
   const { r, k } = await load(ctx, id);
-  allow(ctx, k.group, 'edit');
+  guard(ctx, k, 'edit');
   if (r.status === 'Archived') throw unprocessable('Restore this item from the archive first.');
   const [vr] = await ctx.db.select().from(schema.contentVersions).where(and(eq(schema.contentVersions.docId, id), eq(schema.contentVersions.version, body.version))).limit(1);
   if (!vr) throw notFound('Version not found');
   const v = validateData(k, vr.data);
   if (!v.ok) throw conflict('That version no longer fits the current fields.');
+  priceGuard(ctx, k, r.draft as any, v.data);
   const [u] = await ctx.db.update(t).set({ draft: v.data, title: titleOf(k, v.data), status: r.live ? 'Published' : 'Draft', updatedBy: need(ctx).user.id, updatedAt: new Date() }).where(eq(t.id, id)).returning();
   await audit(ctx, 'content.restore', `content:${k.id}`, id, r.draft, v.data);
   return shape(u, k);

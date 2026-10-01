@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { api, dateTime, errText } from '@/lib/client/api';
 import { Async, Badge, Button, Card, Empty, KV, PageHead, Tile, useApi, useToast } from '@/components/ui';
 import { Guard } from '@/components/admin/common';
+import { PaymentReadiness } from '@/components/admin/SystemSettings';
 
 type Status = {
   database: { ok: boolean; latencyMs: number }; jobs: Record<string, number>;
@@ -106,6 +107,7 @@ export default function SystemPage() {
           {me.can('integrations', 'edit') && <Card title="Connection tests"><TestButtons /></Card>}
         </div>
       </div>
+      <PaymentReadiness />
       <EmailLog canEdit={me.can('integrations', 'edit')} />
       <Card title="Job queue">
         <div className="row" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>{['queued', 'running', 'done', 'failed'].map((k) => <Badge key={k} tone={k === 'failed' && (s.jobs[k] ?? 0) > 0 ? 'bad' : ''}>{k}: {s.jobs[k] ?? 0}</Badge>)}</div>
