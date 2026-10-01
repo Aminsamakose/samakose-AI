@@ -190,7 +190,12 @@ const psFetch: PsFetch = async (path, init) => {
   if (psOverride) return psOverride(path, init);
   const res = await fetch('https://api.paystack.co' + path, { method: init?.method ?? 'GET', headers: { authorization: `Bearer ${env.paystackSecret}`, 'content-type': 'application/json' }, body: init?.body ? JSON.stringify(init.body) : undefined, signal: AbortSignal.timeout(20_000) });
   const j = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(502, 'provider_error', 'The payment provider could not be reached. Try again.');
+  if (!res.ok) {
+    // Log what Paystack said (status and message only, never the key) so a bad key or unsupported currency is diagnosable.
+    console.error('[paystack] request failed', { path, status: res.status, message: (j as any)?.message ?? null, code: (j as any)?.code ?? null });
+    const hint = res.status === 401 ? 'The payment provider rejected the API key. Check PAYSTACK_SECRET_KEY.' : res.status === 400 ? 'The payment provider rejected the request. Check that GHS is enabled on the Paystack account.' : 'The payment provider could not be reached. Try again.';
+    throw new ApiError(502, 'provider_error', hint);
+  }
   return j;
 };
 
