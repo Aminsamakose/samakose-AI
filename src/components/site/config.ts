@@ -17,10 +17,11 @@ export const PORTAL_HREF = '/dashboard';
 export type NavItem = { label: string; href: string };
 /** Only live destinations appear here. Pages are added as each stage ships. */
 export const NAV: NavItem[] = [
-  { label: 'Platform', href: '/#platform' },
+  { label: 'Platform', href: '/platform' },
+  { label: 'Solutions', href: '/solutions' },
   { label: 'How it works', href: '/#how-it-works' },
-  { label: 'Solutions', href: '/#solutions' },
   { label: 'Impact', href: '/#impact' },
-  { label: 'Resources', href: '/#resources' },
-  { label: 'Contact', href: '/#contact' }
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' }
 ];

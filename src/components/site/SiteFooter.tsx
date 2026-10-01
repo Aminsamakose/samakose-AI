@@ -16,6 +16,7 @@ export function SiteFooter() {
           <nav aria-label="Explore" className="flex flex-col gap-2 text-sm">
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-lime">Explore</p>
             {NAV.map((n) => <Link key={n.href} href={n.href} className={a}>{n.label}</Link>)}
+            <Link href="/#resources" className={a}>Resources</Link>
           </nav>
           <nav aria-label="Account" className="flex flex-col gap-2 text-sm">
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-lime">Account</p>

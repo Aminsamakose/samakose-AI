@@ -524,3 +524,25 @@ export const rateLimits = pgTable('rate_limits', {
   windowStart: timestamp('window_start', { withTimezone: true }).notNull().defaultNow()
 });
 
+
+/** Public website enquiries (contact, demo, newsletter). Created by anonymous visitors through one rate-limited endpoint. */
+export const INQUIRY_KINDS = ['contact', 'demo', 'newsletter'] as const;
+export type InquiryKind = (typeof INQUIRY_KINDS)[number];
+export const INQUIRY_STATUSES = ['New', 'Handled', 'Spam'] as const;
+export const inquiries = pgTable('inquiries', {
+  id: id(),
+  kind: text('kind').notNull(),
+  name: text('name'),
+  email: text('email').notNull(),
+  organisation: text('organisation'),
+  phone: text('phone'),
+  interest: text('interest'),
+  message: text('message'),
+  consent: boolean('consent').notNull().default(false),
+  source: text('source'),
+  status: text('status').notNull().default('New'),
+  ipHash: text('ip_hash'),
+  handledBy: uuid('handled_by'),
+  handledAt: timestamp('handled_at', { withTimezone: true }),
+  createdAt: created()
+}, (t) => [index('inquiries_status_idx').on(t.status, t.createdAt)]);

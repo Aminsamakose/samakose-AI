@@ -9,7 +9,7 @@ export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
   'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments',
-  'audit', 'settings', 'dashboard', 'integrations'
+  'audit', 'settings', 'dashboard', 'integrations', 'inquiries'
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -21,7 +21,7 @@ const ADMIN: Grants = {
   cases: [R, C, E, X], diagnostics: [R, C], evidence: [R, C, E], documents: [R, C], scores: [R], diagnoses: [R, C],
   prescriptions: [R, C], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E], reports: [R, C, X],
   plans: [R, C, E, D], contracts: [R, C, E, X], invoices: [R, C, E, D, X], payments: [R, C, X],
-  audit: [R, X], settings: [R, C, E, D], dashboard: [R, X], integrations: [R, C, E]
+  audit: [R, X], settings: [R, C, E, D], dashboard: [R, X], integrations: [R, C, E], inquiries: [R, E, X]
 };
 export const PERMISSIONS: Record<Role, Grants> = {
   ADMIN,

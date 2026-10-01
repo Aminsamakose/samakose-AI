@@ -147,6 +147,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-3">
                 <ButtonLink href={REGISTER_HREF} variant="lime">Start your health check</ButtonLink>
                 <ButtonLink href={LOGIN_HREF} variant="ghost-dark">Sign in</ButtonLink>
+                <ButtonLink href="/contact" variant="ghost-dark">Send us a message</ButtonLink>
               </div>
             </div>
           </Reveal>

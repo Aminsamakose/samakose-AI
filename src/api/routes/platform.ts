@@ -6,6 +6,7 @@ import * as fin from '@/services/finance';
 import * as kobo from '@/services/kobo';
 import * as dash from '@/services/dashboards';
 import * as adm from '@/services/admin';
+import * as inq from '@/services/inquiries';
 import { getJob } from '@/domain/jobs';
 import { need } from '@/services/common';
 import { forbidden, notFound } from '@/lib/errors';
@@ -63,3 +64,20 @@ defineRoute({ method: 'POST', path: '/admin/jobs/:id/retry', tag: AD, summary: '
 defineRoute({ method: 'GET', path: '/health', tag: 'Platform', summary: 'Liveness and database check', auth: 'public', transactional: false, handler: () => adm.health() });
 defineRoute({ method: 'GET', path: '/openapi.json', tag: 'Platform', summary: 'This API described in OpenAPI 3.1', auth: 'public', transactional: false, handler: async () => (await import('../openapi')).buildOpenApi(routes) });
 export { email, forbidden };
+
+/* ------------------------- public website enquiries ------------------------- */
+const W = 'Website';
+defineRoute({ method: 'POST', path: '/public/inquiries', tag: W, summary: 'Send a contact, demo or newsletter enquiry from the public site', auth: 'public',
+  rateLimit: { key: 'inquiry:ip:{ip}', limit: 6, windowSec: 900 },
+  body: z.object({
+    kind: z.enum(['contact', 'demo', 'newsletter']), name: optText(160), email, organisation: optText(160), phone: optText(40), interest: optText(80),
+    message: optText(3000), consent: z.literal(true, { error: 'Please confirm you agree to be contacted' }), source: optText(80), website: optText(200)
+  }).superRefine((v, c) => {
+    if (v.kind !== 'newsletter' && !v.website) {
+      if (!v.name || v.name.length < 2) c.addIssue({ code: 'custom', path: ['name'], message: 'Enter your name' });
+      if ((v.kind === 'contact' || v.kind === 'demo') && (!v.message || v.message.length < 10)) c.addIssue({ code: 'custom', path: ['message'], message: 'Tell us a little more (at least 10 characters)' });
+    }
+  }),
+  handler: ({ ctx, body }) => inq.submitInquiry(ctx, body as any) });
+defineRoute({ method: 'GET', path: '/inquiries', tag: AD, summary: 'Website enquiries', permission: ['inquiries', 'read'], query: listQuery.extend({ status: z.string().optional(), kind: z.string().optional() }), handler: ({ ctx, query }) => inq.listInquiries(ctx, query) });
+defineRoute({ method: 'PATCH', path: '/inquiries/:id', tag: AD, summary: 'Mark an enquiry handled, spam or new', permission: ['inquiries', 'edit'], body: z.object({ status: z.enum(['New', 'Handled', 'Spam']) }), handler: ({ ctx, params, body }) => inq.setInquiryStatus(ctx, params.id, (body as any).status) });

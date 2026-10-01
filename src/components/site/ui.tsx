@@ -27,7 +27,7 @@ const VARIANTS: Record<Variant, string> = {
 };
 export function ButtonLink({ href, variant = 'primary', children, className }: { href: string; variant?: Variant; children: ReactNode; className?: string }) {
   return (
-    <Link href={href} className={clsx('inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 text-[0.95rem] font-semibold no-underline transition duration-200 active:scale-[0.97] focus-visible:outline-2', VARIANTS[variant], className)}>
+    <Link href={href} className={clsx('inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 text-[0.95rem] font-semibold no-underline transition duration-200 active:scale-[0.97] focus-visible:outline-2', VARIANTS[variant], className)}>
       {children}
     </Link>
   );
@@ -45,5 +45,20 @@ export function Placeholder({ label, children }: { label: string; children?: Rea
       <p className="mt-1 font-semibold">{label}</p>
       {children}
     </div>
+  );
+}
+
+/** Page header for inner public pages. */
+export function PageHero({ eyebrow, title, intro, children }: { eyebrow: string; title: string; intro?: string; children?: ReactNode }) {
+  return (
+    <section className="relative overflow-hidden bg-forest text-white">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-40" style={{ backgroundImage: 'repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 1px,transparent 1px 22px),repeating-linear-gradient(-45deg,rgba(255,255,255,.05) 0 1px,transparent 1px 22px)' }} />
+      <Container className="relative py-14 sm:py-20">
+        <Eyebrow dark>{eyebrow}</Eyebrow>
+        <h1 className="mt-3 max-w-3xl font-display text-4xl font-bold leading-[1.06] tracking-tight text-balance sm:text-5xl">{title}</h1>
+        {intro && <p className="mt-5 max-w-2xl text-lg text-white/80">{intro}</p>}
+        {children && <div className="mt-8 flex flex-wrap gap-3">{children}</div>}
+      </Container>
+    </section>
   );
 }

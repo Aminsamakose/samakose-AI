@@ -36,6 +36,13 @@
       "when": 1790704342500,
       "tag": "0004_lock_data_api",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790877738462,
+      "tag": "0005_public_inquiries",
+      "breakpoints": true
     }
   ]
 }

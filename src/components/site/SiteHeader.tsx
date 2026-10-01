@@ -34,25 +34,25 @@ export function SiteHeader() {
     return () => { document.removeEventListener('keydown', esc); document.body.style.overflow = ''; };
   }, [open]);
 
-  const link = 'rounded-full px-3 py-2 text-sm font-semibold text-fg no-underline transition-colors duration-200 hover:bg-surface-2';
+  const link = 'whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold text-fg no-underline transition-colors duration-200 hover:bg-surface-2';
   return (
     <header className={clsx('sticky top-0 z-40 border-b transition-all duration-300', scrolled ? 'border-line bg-bg/90 backdrop-blur' : 'border-transparent bg-bg')}>
-      <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-[72px] w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Logo />
-        <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
+        <nav aria-label="Primary" className="hidden items-center gap-1 xl:flex">
           {NAV.map((n) => <Link key={n.href} href={n.href} className={link}>{n.label}</Link>)}
         </nav>
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 xl:flex">
           {signedIn ? <ButtonLink href={PORTAL_HREF}>Open portal</ButtonLink> : (<>
             <ButtonLink href={LOGIN_HREF} variant="ghost">Sign in</ButtonLink>
             <ButtonLink href={REGISTER_HREF}>Start your health check</ButtonLink>
           </>)}
         </div>
-        <button type="button" className="inline-flex size-11 items-center justify-center rounded-full border border-line bg-surface text-fg lg:hidden" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((v) => !v)}>
+        <button type="button" className="inline-flex size-11 items-center justify-center rounded-full border border-line bg-surface text-fg xl:hidden" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((v) => !v)}>
           {open ? <X className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
         </button>
       </div>
-      <div id="mobile-menu" hidden={!open} className="border-t border-line bg-bg lg:hidden">
+      <div id="mobile-menu" hidden={!open} className="border-t border-line bg-bg xl:hidden">
         <nav aria-label="Mobile" className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4 sm:px-6">
           {NAV.map((n) => <Link key={n.href} href={n.href} className="rounded-xl px-3 py-3 text-base font-semibold text-fg no-underline hover:bg-surface-2" onClick={() => setOpen(false)}>{n.label}</Link>)}
           <div className="mt-3 flex flex-col gap-2">

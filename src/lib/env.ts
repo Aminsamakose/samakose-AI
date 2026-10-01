@@ -25,6 +25,7 @@ export const env = {
   get smtpPort() { return Number(str('SMTP_PORT', '587')); },
   get smtpUser() { return str('SMTP_USER'); },
   get smtpPass() { return str('SMTP_PASS'); },
+  get inquiryTo() { return str('INQUIRY_TO', 'info@samakose.com'); },
   get mailFrom() { return str('MAIL_FROM', 'Samakose <no-reply@samakose.com>'); },
   get storageDir() { return str('STORAGE_DIR', './storage'); },
   get storageDriver() { return str('STORAGE_DRIVER', process.env.BLOB_READ_WRITE_TOKEN ? 'blob' : 'disk'); },
