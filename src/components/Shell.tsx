@@ -32,6 +32,7 @@ const GROUPS: Group[] = [
   ] },
   { title: 'Administration', items: [
     { icon: 'users', href: '/admin/users', label: 'Users', need: ['users', 'create'] },
+    { icon: 'users', href: '/admin/registrations', label: 'Pending approvals', need: ['users', 'edit'] },
     { icon: 'inbox', href: '/admin/inquiries', label: 'Website enquiries', need: ['inquiries', 'read'] },
     { icon: 'audit', href: '/admin/audit', label: 'Audit trail', need: ['audit', 'read'] },
     { icon: 'settings', href: '/admin/settings', label: 'Settings', need: ['settings', 'read'] },

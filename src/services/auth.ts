@@ -15,16 +15,17 @@ const LOCK_AFTER = 5;
 const LOCK_MINUTES = 15;
 const GENERIC = 'Email or password is incorrect';
 
-export type NextStep = 'ok' | 'mfa' | 'mfa_setup' | 'change_password';
-export function nextStep(u: { mfaEnabled: boolean; mfaVerified: boolean; mustChangePassword: boolean; role: string }): NextStep {
+export type NextStep = 'ok' | 'mfa' | 'mfa_setup' | 'change_password' | 'pending';
+export function nextStep(u: { mfaEnabled: boolean; mfaVerified: boolean; mustChangePassword: boolean; role: string; approvalStatus?: string }): NextStep {
+  if (u.approvalStatus && u.approvalStatus !== 'approved') return 'pending';
   if (u.mfaEnabled && !u.mfaVerified) return 'mfa';
   if (u.mustChangePassword) return 'change_password';
   if (env.mfaRequiredRoles.includes(u.role) && !u.mfaEnabled) return 'mfa_setup';
   return 'ok';
 }
 
-export const publicUser = (u: { id: string; code?: string; email: string; name: string; role: string; orgId: string | null; mfaEnabled: boolean }) =>
-  ({ id: u.id, code: u.code, email: u.email, name: u.name, role: u.role, roleLabel: ROLE_LABEL[u.role as keyof typeof ROLE_LABEL], orgId: u.orgId, mfaEnabled: u.mfaEnabled });
+export const publicUser = (u: { id: string; code?: string; email: string; name: string; role: string; orgId: string | null; mfaEnabled: boolean; approvalStatus?: string }) =>
+  ({ approvalStatus: u.approvalStatus ?? 'approved', id: u.id, code: u.code, email: u.email, name: u.name, role: u.role, roleLabel: ROLE_LABEL[u.role as keyof typeof ROLE_LABEL], orgId: u.orgId, mfaEnabled: u.mfaEnabled });
 
 const json = (data: unknown, cookie?: string) =>
   new Response(JSON.stringify({ data }), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...(cookie ? { 'set-cookie': cookie } : {}) } });
@@ -45,11 +46,12 @@ export async function login(ctx: Ctx, email: string, password: string, userAgent
     }
     throw unauthorized(GENERIC);
   }
+  if (!u.emailVerified) throw new ApiError(403, 'email_not_verified', 'Confirm your email first. Use the link we sent, or ask for a new one on the sign-up page.');
   await db().update(schema.users).set({ failedLogins: 0, lockedUntil: null, lastLoginAt: new Date() }).where(eq(schema.users.id, u.id));
   await clearRateLimit(key);
   const token = await createSession(u.id, ctx.ip, userAgent, !u.mfaEnabled);
   await audit({ ...ctx, user: { id: u.id, email: u.email } as any, db: db() }, 'auth.login', 'user', u.id);
-  const step = nextStep({ mfaEnabled: u.mfaEnabled, mfaVerified: !u.mfaEnabled, mustChangePassword: u.mustChangePassword, role: u.role });
+  const step = nextStep({ mfaEnabled: u.mfaEnabled, mfaVerified: !u.mfaEnabled, mustChangePassword: u.mustChangePassword, role: u.role, approvalStatus: u.approvalStatus });
   return json({ user: publicUser(u), next: step }, cookieHeader(token));
 }
 
@@ -162,7 +164,7 @@ export async function me(ctx: Ctx) {
   const c = need(ctx);
   const [u] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, c.user.id)).limit(1);
   const unread = Number(((await ctx.db.execute(sql`select count(*)::int n from notifications where user_id=${c.user.id} and read_at is null`)).rows[0] as { n: number }).n);
-  return { user: publicUser(u), permissions: PERMISSIONS[u.role], programmeIds: c.user.programmeIds, unreadNotifications: unread, next: nextStep(c.user) };
+  return { user: publicUser(u), permissions: PERMISSIONS[u.role], programmeIds: c.user.programmeIds, unreadNotifications: unread, next: nextStep(c.user), approvalStatus: u.approvalStatus };
 }
 export async function updateMe(ctx: Ctx, name: string) {
   const c = need(ctx);
@@ -175,4 +177,61 @@ export async function logoutOthers(ctx: Ctx) {
   await destroyUserSessions(c.user.id, c.user.sessionId);
   await audit(ctx, 'auth.logout_others', 'user', c.user.id);
   return { ok: true };
+}
+
+/* ------------------------- self-registration ------------------------- */
+export const SELF_ROLES = ['OWNER', 'CONSULTANT', 'COACH', 'PROGRAMME_MANAGER', 'FUNDER'] as const;
+const VERIFY_HOURS = 48;
+
+async function issueVerification(ctx: Ctx, userId: string, email: string, name: string) {
+  const token = randomToken(32);
+  await ctx.db.insert(schema.userTokens).values({ userId, kind: 'verify', tokenHash: sha256(token), expiresAt: new Date(Date.now() + VERIFY_HOURS * 3600_000) });
+  await queueEmail(ctx, email, 'Confirm your email for Samakose', `Hello ${name},\n\nConfirm your email within ${VERIFY_HOURS} hours:\n${env.appUrl}/verify-email?token=${token}\n\nIf you did not sign up, ignore this email.`);
+}
+
+export async function register(ctx: Ctx, b: { name: string; email: string; password: string; role: (typeof SELF_ROLES)[number]; orgName?: string; orgType?: 'SME' | 'AGRIFOOD' | 'ESO'; note?: string; consent: boolean }) {
+  const email = b.email.trim().toLowerCase();
+  const name = b.name.trim();
+  const problems = passwordProblems(b.password, email, name);
+  if (problems.length) throw fieldError({ password: problems.join('. ') });
+  if (!b.consent) throw fieldError({ consent: 'Please accept the terms and privacy notice' });
+  const orgName = b.orgName?.trim();
+  if (!orgName || orgName.length < 2) throw fieldError({ orgName: b.role === 'OWNER' ? 'Enter your business name' : 'Enter your organisation or employer' });
+  const [dupe] = await ctx.db.select({ id: schema.users.id }).from(schema.users).where(sql`lower(${schema.users.email}) = ${email}`).limit(1);
+  // Same answer whether or not the address is already registered, so the form cannot be used to find who has an account.
+  if (dupe) return { ok: true };
+  let orgId: string | null = null;
+  if (b.role === 'OWNER') {
+    const [o] = await ctx.db.insert(schema.organisations).values({ name: orgName, type: b.orgType ?? 'SME', contactName: name, contactEmail: email, consentAt: new Date(), consentBy: email, status: 'Pending verification' }).returning({ id: schema.organisations.id });
+    orgId = o.id;
+  }
+  const [row] = await ctx.db.insert(schema.users).values({
+    email, name, role: b.role, orgId, passwordHash: await hashPassword(b.password), mustChangePassword: false,
+    emailVerified: false, approvalStatus: 'pending', signupOrgName: orgName, signupNote: b.note?.trim().slice(0, 1000) || null
+  }).returning({ id: schema.users.id });
+  await issueVerification(ctx, row.id, email, name);
+  await audit({ ...ctx, user: { id: row.id, email } as any }, 'auth.registered', 'user', row.id, undefined, { role: b.role, orgId });
+  return { ok: true };
+}
+
+export async function resendVerification(ctx: Ctx, email: string) {
+  if ((await rateLimit('verify:' + sha256(email.toLowerCase()), 3600)) > 3) return { ok: true };
+  const [u] = await ctx.db.select().from(schema.users).where(and(sql`lower(${schema.users.email}) = ${email.toLowerCase()}`, eq(schema.users.emailVerified, false), eq(schema.users.active, true))).limit(1);
+  if (u) await issueVerification(ctx, u.id, u.email, u.name);
+  return { ok: true };
+}
+
+export async function verifyEmail(ctx: Ctx, token: string) {
+  const [t] = await ctx.db.select().from(schema.userTokens)
+    .where(and(eq(schema.userTokens.tokenHash, sha256(token)), eq(schema.userTokens.kind, 'verify'), isNull(schema.userTokens.usedAt), gt(schema.userTokens.expiresAt, new Date()))).for('update').limit(1);
+  if (!t) throw new ApiError(400, 'bad_token', 'This link is invalid or has expired. Ask for a new one on the sign-up page.');
+  const [u] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, t.userId)).limit(1);
+  if (!u || !u.active) throw new ApiError(400, 'bad_token', 'This link is invalid or has expired.');
+  // A business owner gets access to their own organisation once the email is confirmed. Everyone else stays
+  // pending until an administrator approves them. Nobody sees other organisations, programmes or reports.
+  const approve = u.role === 'OWNER' && u.approvalStatus === 'pending';
+  await ctx.db.update(schema.users).set({ emailVerified: true, ...(approve ? { approvalStatus: 'approved' } : {}), updatedAt: new Date() }).where(eq(schema.users.id, u.id));
+  await ctx.db.update(schema.userTokens).set({ usedAt: new Date() }).where(eq(schema.userTokens.id, t.id));
+  await audit({ ...ctx, user: { id: u.id, email: u.email } as any }, 'auth.email_verified', 'user', u.id, undefined, { autoApproved: approve });
+  return { ok: true, next: approve ? 'ok' : 'pending' };
 }

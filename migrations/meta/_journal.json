@@ -43,6 +43,13 @@
       "when": 1790877738462,
       "tag": "0005_public_inquiries",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790879138480,
+      "tag": "0006_self_registration",
+      "breakpoints": true
     }
   ]
 }

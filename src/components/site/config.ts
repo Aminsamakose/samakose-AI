@@ -10,7 +10,7 @@ export const SITE = {
 };
 
 /** Flip to '/register' when self-registration ships (Stage 5). */
-export const REGISTER_HREF = '/login';
+export const REGISTER_HREF = '/register';
 export const LOGIN_HREF = '/login';
 export const PORTAL_HREF = '/dashboard';
 

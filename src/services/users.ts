@@ -13,14 +13,15 @@ import { orderBy, search, type ListQuery, countOf } from '@/api/list';
 import { allow, need, respondList } from './common';
 
 const u = schema.users;
-const safe = { id: u.id, code: u.code, email: u.email, name: u.name, role: u.role, orgId: u.orgId, active: u.active, mfaEnabled: u.mfaEnabled, lockedUntil: u.lockedUntil, lastLoginAt: u.lastLoginAt, createdAt: u.createdAt, invited: sql<boolean>`${u.passwordHash} is null` };
+const safe = { id: u.id, code: u.code, email: u.email, name: u.name, role: u.role, orgId: u.orgId, active: u.active, mfaEnabled: u.mfaEnabled, lockedUntil: u.lockedUntil, lastLoginAt: u.lastLoginAt, createdAt: u.createdAt, approvalStatus: u.approvalStatus, emailVerified: u.emailVerified, signupOrgName: u.signupOrgName, signupNote: u.signupNote, invited: sql<boolean>`${u.passwordHash} is null` };
 
-export async function listUsers(ctx: Ctx, q: ListQuery & { role?: string; active?: string }) {
+export async function listUsers(ctx: Ctx, q: ListQuery & { role?: string; active?: string; approval?: string }) {
   allow(ctx, 'users', 'read');
   const c = need(ctx);
   const where = and(
     search(q.q, [u.name, u.email, u.code]),
     q.role && (ROLES as readonly string[]).includes(q.role) ? eq(u.role, q.role as Role) : undefined,
+    q.approval === 'pending' ? and(eq(u.approvalStatus, 'pending'), eq(u.emailVerified, true)) : undefined,
     q.active === 'true' ? eq(u.active, true) : q.active === 'false' ? eq(u.active, false) : undefined,
     // Only administrators see clients and funders. Other staff see staff (to assign work).
     c.user.role === 'ADMIN' ? undefined : inArray(u.role, STAFF_ROLES)
@@ -143,3 +144,35 @@ export async function assignable(ctx: Ctx) {
   return ctx.db.select({ id: u.id, name: u.name, role: u.role }).from(u).where(and(eq(u.active, true), inArray(u.role, ['CONSULTANT', 'COACH', 'REVIEWER']))).orderBy(u.name);
 }
 export { ApiError };
+
+/* ---------------- approvals of self-registered users ---------------- */
+async function pendingUser(ctx: Ctx, id: string) {
+  const [row] = await ctx.db.select().from(u).where(eq(u.id, id)).limit(1);
+  if (!row) throw notFound('User not found');
+  if (row.approvalStatus !== 'pending') throw unprocessable('This registration has already been decided');
+  if (!row.emailVerified) throw unprocessable('This person has not confirmed their email yet');
+  return row;
+}
+export async function approveRegistration(ctx: Ctx, id: string, b: { role?: Role; orgId?: string | null }) {
+  allow(ctx, 'users', 'edit');
+  if (need(ctx).user.role !== 'ADMIN') throw new ApiError(403, 'forbidden', 'Only administrators approve registrations');
+  const row = await pendingUser(ctx, id);
+  const role = b.role ?? row.role;
+  if (role === 'ADMIN' || role === 'EXECUTIVE') throw fieldError({ role: 'Administrator and executive accounts are invite-only' });
+  const orgId = role === 'OWNER' ? (row.orgId ?? b.orgId ?? null) : null;
+  if (role === 'OWNER' && !orgId) throw fieldError({ orgId: 'Link a business owner to an organisation first' });
+  await ctx.db.update(u).set({ approvalStatus: 'approved', role, orgId, updatedAt: new Date() }).where(eq(u.id, id));
+  if (role === 'OWNER' && orgId) await ctx.db.update(schema.organisations).set({ status: 'Active', updatedAt: new Date() }).where(and(eq(schema.organisations.id, orgId), eq(schema.organisations.status, 'Pending verification')));
+  await audit(ctx, 'user.registration_approved', 'user', id, { role: row.role }, { role, orgId });
+  await queueEmail(ctx, row.email, 'Your Samakose registration is approved', `Hello ${row.name},\n\nYour registration is approved. Sign in here:\n${env.appUrl}/login\n`);
+  return { ok: true };
+}
+export async function rejectRegistration(ctx: Ctx, id: string, reason?: string) {
+  allow(ctx, 'users', 'edit');
+  if (need(ctx).user.role !== 'ADMIN') throw new ApiError(403, 'forbidden', 'Only administrators decide registrations');
+  const row = await pendingUser(ctx, id);
+  await ctx.db.update(u).set({ approvalStatus: 'rejected', active: false, updatedAt: new Date() }).where(eq(u.id, id));
+  await destroyUserSessions(id);
+  await audit(ctx, 'user.registration_rejected', 'user', id, undefined, { reason: reason?.slice(0, 300) ?? null });
+  return { ok: true };
+}

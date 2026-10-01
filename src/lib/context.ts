@@ -3,7 +3,7 @@ import type { Role } from '@/db/schema';
 
 export type AuthUser = {
   id: string; email: string; name: string; role: Role; orgId: string | null;
-  programmeIds: string[]; mfaEnabled: boolean; mfaVerified: boolean; sessionId: string; mustChangePassword: boolean;
+  programmeIds: string[]; mfaEnabled: boolean; mfaVerified: boolean; sessionId: string; mustChangePassword: boolean; approvalStatus: string;
 };
 export type Ctx = {
   user: AuthUser | null;

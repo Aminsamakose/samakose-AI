@@ -2,10 +2,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { api } from '@/lib/client/api';
+import { api, ApiFail } from '@/lib/client/api';
 import { Button, Field, FormError, useForm } from './ui';
 
-const dest = (next: string, fallback: string) => ({ ok: fallback, mfa: '/mfa', mfa_setup: '/mfa-setup', change_password: '/change-password' } as Record<string, string>)[next] ?? fallback;
+const dest = (next: string, fallback: string) => ({ ok: fallback, mfa: '/mfa', mfa_setup: '/mfa-setup', change_password: '/change-password', pending: '/pending' } as Record<string, string>)[next] ?? fallback;
 const safeNext = (n: string | null) => (n && n.startsWith('/') && !n.startsWith('//') ? n : '/dashboard');
 
 export function LoginForm() {
@@ -18,6 +18,7 @@ export function LoginForm() {
     <Field label="Password" name="password" error={f.errors.password} required>{(p) => <input {...p} type="password" autoComplete="current-password" {...f.input('password')} />}</Field>
     <Button variant="primary" loading={f.busy} type="submit">Sign in</Button>
     <Link href="/forgot-password" className="small">Forgot your password?</Link>
+    <span className="small muted">New here? <Link href="/register">Create an account</Link></span>
   </form>;
 }
 
@@ -87,4 +88,63 @@ export function TokenPasswordForm({ mode }: { mode: 'reset' | 'accept' }) {
     <Field label="Confirm password" name="confirm" error={f.values.confirm && f.values.confirm !== f.values.password ? 'Passwords do not match' : undefined} required>{(p) => <input {...p} type="password" autoComplete="new-password" {...f.input('confirm')} />}</Field>
     <Button variant="primary" loading={f.busy} type="submit" disabled={f.values.password !== f.values.confirm || !f.values.confirm}>Save and continue</Button>
   </form>;
+}
+
+const SELF = [['OWNER', 'Business owner', 'You run a business and want a health check'], ['CONSULTANT', 'Consultant', 'You advise businesses'], ['COACH', 'Coach or mentor', 'You coach business owners'], ['PROGRAMME_MANAGER', 'Programme manager', 'You run a programme or cohort'], ['FUNDER', 'Partner or funder', 'You support or fund enterprises']] as const;
+
+export function RegisterForm() {
+  const [done, setDone] = useState(false); const [consent, setConsent] = useState(false);
+  const f = useForm({ name: '', email: '', password: '', role: 'OWNER', orgName: '', orgType: 'SME', note: '' }, async (v) => {
+    const e: Record<string, string> = {};
+    if (v.name.trim().length < 2) e.name = 'Enter your name';
+    if (!/^\S+@\S+\.\S+$/.test(v.email)) e.email = 'Enter a valid email address';
+    if (v.password.length < 10) e.password = 'Use at least 10 characters';
+    if (v.orgName.trim().length < 2) e.orgName = v.role === 'OWNER' ? 'Enter your business name' : 'Enter your organisation';
+    if (!consent) e.consent = 'Please accept the terms and privacy notice';
+    if (Object.keys(e).length) throw new ApiFail(422, 'validation', 'Check the highlighted fields', e);
+    return api.post('/auth/register', { ...v, consent, orgType: v.role === 'OWNER' ? v.orgType : undefined });
+  }, { onDone: () => setDone(true) });
+  if (done) return <div className="stack"><h1>Check your email</h1><p className="muted">We sent a link to <b>{f.values.email}</b>. Open it to confirm your address.</p>
+    <p className="small muted">{f.values.role === 'OWNER' ? 'After you confirm, you can sign in and start your health check. Our team checks business details before any report leaves your organisation.' : 'After you confirm, an administrator reviews your request. You will not see any organisation or programme data until you are approved and linked to your work.'}</p>
+    <Link href="/login">Back to sign in</Link></div>;
+  const owner = f.values.role === 'OWNER';
+  return <form onSubmit={f.onSubmit} className="stack" noValidate>
+    <h1>Create your account</h1>
+    <FormError message={f.formError} />
+    <Field label="I am a" name="role">{(p) => <select {...p} {...f.input('role')}>{SELF.map(([v, l, h]) => <option key={v} value={v}>{l} ({h})</option>)}</select>}</Field>
+    <Field label="Your name" name="name" error={f.errors.name} required>{(p) => <input {...p} autoComplete="name" {...f.input('name')} />}</Field>
+    <Field label="Email" name="email" error={f.errors.email} required>{(p) => <input {...p} type="email" autoComplete="email" {...f.input('email')} />}</Field>
+    <Field label="Password" name="password" error={f.errors.password} hint="At least 10 characters." required>{(p) => <input {...p} type="password" autoComplete="new-password" {...f.input('password')} />}</Field>
+    <Field label={owner ? 'Business name' : 'Organisation or employer'} name="orgName" error={f.errors.orgName} required>{(p) => <input {...p} {...f.input('orgName')} />}</Field>
+    {owner && <Field label="Type of business" name="orgType">{(p) => <select {...p} {...f.input('orgType')}><option value="SME">SME</option><option value="AGRIFOOD">Agribusiness or food</option><option value="ESO">Support organisation</option></select>}</Field>}
+    {!owner && <Field label="What do you want to do on the platform?" name="note" hint="Optional. This helps the administrator review your request.">{(p) => <textarea {...p} rows={3} {...f.input('note')} />}</Field>}
+    <Field label="" name="consent" error={f.errors.consent}>{(p) => <label className="row" style={{ gap: 8 }}><input {...p} type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /><span className="small">I accept the <a href="/terms" target="_blank">terms</a> and the <a href="/privacy" target="_blank">privacy notice</a>.</span></label>}</Field>
+    <Button variant="primary" loading={f.busy} type="submit">Create account</Button>
+    <span className="small muted">Already registered? <Link href="/login">Sign in</Link></span>
+  </form>;
+}
+
+export function VerifyEmail() {
+  const token = useSearchParams().get('token') ?? '';
+  const [state, setState] = useState<'idle' | 'ok' | 'pending' | 'err'>('idle'); const [msg, setMsg] = useState('');
+  const go = async () => { try { const d = await api.post('/auth/verify-email', { token }); setState(d.next === 'ok' ? 'ok' : 'pending'); } catch (e: any) { setMsg(e.message); setState('err'); } };
+  return <div className="stack"><h1>Confirm your email</h1>
+    {state === 'idle' && <><p className="muted">Press the button to confirm your address.</p><Button variant="primary" onClick={go} disabled={!token}>Confirm email</Button></>}
+    {state === 'ok' && <><p>Your email is confirmed.</p><Link className="btn primary" href="/login">Sign in</Link></>}
+    {state === 'pending' && <><p>Your email is confirmed. An administrator will review your request. You can sign in to check its status.</p><Link className="btn primary" href="/login">Sign in</Link></>}
+    {state === 'err' && <><FormError message={msg} /><ResendVerification /></>}
+  </div>;
+}
+
+function ResendVerification() {
+  const [sent, setSent] = useState(false);
+  const f = useForm({ email: '' }, (v) => api.post('/auth/resend-verification', v), { onDone: () => setSent(true) });
+  if (sent) return <p className="muted">If that address is waiting for confirmation, we sent a new link.</p>;
+  return <form onSubmit={f.onSubmit} className="stack" noValidate><Field label="Email" name="email" error={f.errors.email}>{(p) => <input {...p} type="email" {...f.input('email')} />}</Field><Button loading={f.busy} type="submit">Send a new link</Button></form>;
+}
+
+export function PendingNotice() {
+  return <div className="stack"><h1>Waiting for approval</h1>
+    <p className="muted">Your registration is with the Samakose team. You will get an email when it is approved. Until then you cannot see any organisation, programme or report data.</p>
+    <button type="button" className="btn ghost" onClick={async () => { await api.post('/auth/logout').catch(() => {}); window.location.href = '/login'; }}>Sign out</button></div>;
 }

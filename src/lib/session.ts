@@ -32,7 +32,7 @@ export async function loadSession(token: string | undefined | null): Promise<Aut
   return {
     id: row.u.id, email: row.u.email, name: row.u.name, role: row.u.role, orgId: row.u.orgId,
     programmeIds: progs.map((p) => p.p), mfaEnabled: row.u.mfaEnabled, mfaVerified: row.s.mfaVerified,
-    sessionId: id, mustChangePassword: row.u.mustChangePassword
+    sessionId: id, mustChangePassword: row.u.mustChangePassword, approvalStatus: row.u.approvalStatus
   };
 }
 

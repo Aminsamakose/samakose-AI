@@ -79,6 +79,11 @@ export const users = pgTable('users', {
   lockedUntil: timestamp('locked_until', { withTimezone: true }),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   mustChangePassword: boolean('must_change_password').notNull().default(false),
+  // Self-registration: existing and invited users are 'approved' and verified. Self-registered users start pending.
+  approvalStatus: text('approval_status').notNull().default('approved'), // approved | pending | rejected
+  emailVerified: boolean('email_verified').notNull().default(true),
+  signupOrgName: text('signup_org_name'),
+  signupNote: text('signup_note'),
   createdAt: created(), updatedAt: updated()
 }, (t) => [uniqueIndex('users_email_uq').on(sql`lower(${t.email})`), index('users_role_idx').on(t.role), index('users_org_idx').on(t.orgId)]);
 
