@@ -33,7 +33,7 @@ export function HowItWorks() {
       <div id="hiw-panel" role="tabpanel" aria-labelledby={`hiw-tab-${i}`} className="min-h-[200px] rounded-card border border-line bg-surface p-7">
         <AnimatePresence mode="wait">
           <motion.div key={i} initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, y: -6 }} transition={{ duration: 0.2 }}>
-            <p className="font-mono text-xs uppercase tracking-[0.14em] text-leaf">Step {i + 1} of {STEPS.length}</p>
+            <p className="font-mono text-xs uppercase tracking-[0.14em] text-leaf-ink">Step {i + 1} of {STEPS.length}</p>
             <h3 className="mt-2 font-display text-2xl font-semibold">{s.t}</h3>
             <p className="mt-3 max-w-xl text-muted">{s.d}</p>
           </motion.div>

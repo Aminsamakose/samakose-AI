@@ -19,7 +19,7 @@ export default function ImpactPage() {
       <Section>
         <Reveal><Eyebrow>How we measure</Eyebrow><h2 className="mt-3 max-w-2xl font-display text-3xl font-bold tracking-tight text-balance">Change is measured against a baseline, with evidence.</h2></Reveal>
         <Stagger className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {METHOD.map((m, i) => <Item key={m.t}><Card className="h-full"><p className="font-mono text-xs text-leaf">0{i + 1}</p><h3 className="mt-2 font-display text-xl font-semibold">{m.t}</h3><p className="mt-2 text-sm text-muted">{m.d}</p></Card></Item>)}
+          {METHOD.map((m, i) => <Item key={m.t}><Card className="h-full"><p className="font-mono text-xs text-leaf-ink">0{i + 1}</p><h3 className="mt-2 font-display text-xl font-semibold">{m.t}</h3><p className="mt-2 text-sm text-muted">{m.d}</p></Card></Item>)}
         </Stagger>
       </Section>
       <Section tone="soft">

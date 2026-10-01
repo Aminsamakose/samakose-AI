@@ -18,9 +18,9 @@ export default function ContactPage() {
             <div className="flex flex-col gap-6">
               <h2 className="font-display text-2xl font-bold">Reach us directly</h2>
               <ul className="flex flex-col gap-4 text-sm">
-                <li className="flex items-start gap-3"><Mail className="mt-0.5 size-5 flex-none text-leaf" aria-hidden="true" /><span><span className="block font-semibold">Email</span><a href={`mailto:${SITE.email}`}>{SITE.email}</a></span></li>
-                <li className="flex items-start gap-3"><Phone className="mt-0.5 size-5 flex-none text-leaf" aria-hidden="true" /><span><span className="block font-semibold">Phone</span><a href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a></span></li>
-                <li className="flex items-start gap-3"><MapPin className="mt-0.5 size-5 flex-none text-leaf" aria-hidden="true" /><span><span className="block font-semibold">Office</span>{SITE.address.map((l) => <span key={l} className="block">{l}</span>)}</span></li>
+                <li className="flex items-start gap-3"><Mail className="mt-0.5 size-5 flex-none text-leaf-ink" aria-hidden="true" /><span><span className="block font-semibold">Email</span><a href={`mailto:${SITE.email}`}>{SITE.email}</a></span></li>
+                <li className="flex items-start gap-3"><Phone className="mt-0.5 size-5 flex-none text-leaf-ink" aria-hidden="true" /><span><span className="block font-semibold">Phone</span><a href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a></span></li>
+                <li className="flex items-start gap-3"><MapPin className="mt-0.5 size-5 flex-none text-leaf-ink" aria-hidden="true" /><span><span className="block font-semibold">Office</span>{SITE.address.map((l) => <span key={l} className="block">{l}</span>)}</span></li>
               </ul>
               <p className="rounded-card bg-surface-2 p-4 text-sm text-muted">We use the details you send only to respond to you. You can ask us to delete them at any time.</p>
             </div>

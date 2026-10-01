@@ -15,7 +15,7 @@ export function Lifecycle({ status }: { status: string }) {
       {STATES.map((s, i) => {
         const state = idx === -1 ? 'later' : i < idx ? 'done' : i === idx ? 'current' : 'later';
         return <li key={s} aria-current={state === 'current' ? 'step' : undefined}
-          style={{ padding: '4px 10px', borderRadius: 99, border: `1px solid ${state === 'later' ? 'var(--line)' : 'var(--brand)'}`, background: state === 'current' ? 'var(--brand)' : 'transparent', color: state === 'current' ? '#fff' : state === 'done' ? 'var(--brand)' : 'var(--muted)', fontWeight: state === 'current' ? 700 : 500, fontSize: '.85rem' }}>
+          style={{ padding: '4px 10px', borderRadius: 99, border: `1px solid ${state === 'later' ? 'var(--line)' : 'var(--brand)'}`, background: state === 'current' ? 'var(--brand)' : 'transparent', color: state === 'current' ? 'var(--brand-fg)' : state === 'done' ? 'var(--brand)' : 'var(--muted)', fontWeight: state === 'current' ? 700 : 500, fontSize: '.85rem' }}>
           {state === 'done' ? 'Done: ' : state === 'current' ? 'Now: ' : ''}{label(s)}
         </li>;
       })}

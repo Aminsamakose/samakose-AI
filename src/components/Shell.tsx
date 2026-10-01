@@ -1,4 +1,5 @@
 'use client';
+import { ThemeToggle } from './ThemeToggle';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -45,10 +46,7 @@ export function Shell({ user, children }: { user: { name: string; role: Role; em
   const notes = useApi<{ unread: number }>('/notifications?pageSize=1');
   const groups = GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => (i.roles ? i.roles.includes(user.role) : i.need ? can(user.role, i.need[0], i.need[1]) : true)) })).filter((g) => g.items.length);
   const searchRef = useRef<HTMLInputElement>(null);
-  const [theme, setTheme] = useState<'system' | 'light' | 'dark'>('system');
-  useEffect(() => { try { const t = localStorage.getItem('sk-theme'); if (t === 'light' || t === 'dark') setTheme(t); } catch {} }, []);
   useEffect(() => { const h = (e: KeyboardEvent) => { const t = e.target as HTMLElement; if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(t.tagName) && !t.isContentEditable) { e.preventDefault(); searchRef.current?.focus(); } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
-  const cycle = () => { const n = theme === 'system' ? 'light' : theme === 'light' ? 'dark' : 'system'; setTheme(n); try { if (n === 'system') { localStorage.removeItem('sk-theme'); document.documentElement.removeAttribute('data-theme'); } else { localStorage.setItem('sk-theme', n); document.documentElement.setAttribute('data-theme', n); } } catch {} };
   const primary = groups.flatMap((g) => g.items).slice(0, 4);
   const current = (h: string) => path === h || path.startsWith(h + '/');
   return <ToastProvider>
@@ -58,6 +56,7 @@ export function Shell({ user, children }: { user: { name: string; role: Role; em
       <nav className={`nav ${open ? 'open' : ''}`} aria-label="Main">
         <div className="brand"><b>Samakose</b><span>The Business Doctor</span></div>
         {groups.map((g) => <div key={g.title}><h4>{g.title}</h4>{g.items.map((i) => <Link key={i.href} className="item" href={i.href} aria-current={current(i.href) ? 'page' : undefined} onClick={() => setOpen(false)}><Icon name={i.icon} />{i.label}</Link>)}</div>)}
+        <Link className="site-link" href="/">Back to the public website</Link>
       </nav>
       <div className="main">
         <header className="topbar">
@@ -68,7 +67,7 @@ export function Shell({ user, children }: { user: { name: string; role: Role; em
           </form>
           <Link className="btn" href="/notifications" aria-label={`Notifications${notes.data?.unread ? `, ${notes.data.unread} unread` : ''}`}><Icon name="bell" />Alerts{notes.data?.unread ? <span className="badge-n">{notes.data.unread}</span> : null}</Link>
           <Link className="btn ghost" href="/profile" title={user.email}>{user.name}<span className="muted small hide-sm"> · {ROLE_LABEL[user.role]}</span></Link>
-          <button className="btn icon" onClick={cycle} aria-label={`Theme: ${theme}. Switch theme`} title={`Theme: ${theme}`}><Icon name={theme === 'light' ? 'sun' : theme === 'dark' ? 'moon' : 'system_theme'} /></button>
+          <ThemeToggle className="btn icon" />
           <button className="btn" aria-label="Sign out" onClick={async () => { await api.post('/auth/logout').catch(() => {}); window.location.href = '/login'; }}><Icon name="logout" /><span className="hide-sm">Sign out</span></button>
         </header>
         <main id="main" className="content" tabIndex={-1}>{children}</main>

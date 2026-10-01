@@ -21,8 +21,8 @@ export default async function ArticlePage({ params }: Props) {
   return (
     <article className="bg-bg py-12 sm:py-16">
       <Container><div className="mx-auto max-w-3xl">
-        <Link href="/resources" className="inline-flex items-center gap-1 text-sm font-semibold text-leaf no-underline"><ArrowLeft className="size-4" aria-hidden="true" />All resources</Link>
-        <p className="mt-6 font-mono text-xs uppercase tracking-[0.12em] text-leaf">{a.date} · {a.author}</p>
+        <Link href="/resources" className="inline-flex items-center gap-1 text-sm font-semibold text-leaf-ink no-underline"><ArrowLeft className="size-4" aria-hidden="true" />All resources</Link>
+        <p className="mt-6 font-mono text-xs uppercase tracking-[0.12em] text-leaf-ink">{a.date} · {a.author}</p>
         <h1 className="mt-3 font-display text-4xl font-bold leading-tight tracking-tight text-balance sm:text-5xl">{a.title}</h1>
         <p className="mt-4 text-lg text-muted">{a.summary}</p>
         <Prose>{a.body}</Prose>

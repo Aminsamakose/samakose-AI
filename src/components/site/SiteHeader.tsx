@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import clsx from 'clsx';
 import { Logo } from './Logo';
+import { ThemeToggle } from '../ThemeToggle';
 import { ButtonLink } from './ui';
 import { NAV, LOGIN_HREF, PORTAL_HREF, REGISTER_HREF } from './config';
 
@@ -43,14 +44,16 @@ export function SiteHeader() {
           {NAV.map((n) => <Link key={n.href} href={n.href} className={link}>{n.label}</Link>)}
         </nav>
         <div className="hidden items-center gap-2 xl:flex">
+          <ThemeToggle />
           {signedIn ? <ButtonLink href={PORTAL_HREF}>Open portal</ButtonLink> : (<>
             <ButtonLink href={LOGIN_HREF} variant="ghost">Sign in</ButtonLink>
             <ButtonLink href={REGISTER_HREF}>Start your health check</ButtonLink>
           </>)}
         </div>
-        <button type="button" className="inline-flex size-11 items-center justify-center rounded-full border border-line bg-surface text-fg xl:hidden" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((v) => !v)}>
+        <div className="flex items-center gap-2 xl:hidden"><ThemeToggle />
+        <button type="button" className="inline-flex size-11 items-center justify-center rounded-full border border-line bg-surface text-fg" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((v) => !v)}>
           {open ? <X className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
-        </button>
+        </button></div>
       </div>
       <div id="mobile-menu" hidden={!open} className="border-t border-line bg-bg xl:hidden">
         <nav aria-label="Mobile" className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4 sm:px-6">

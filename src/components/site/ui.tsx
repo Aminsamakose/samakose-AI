@@ -15,7 +15,7 @@ export function Section({ id, tone = 'light', children, className }: { id?: stri
 }
 
 export function Eyebrow({ children, dark }: { children: ReactNode; dark?: boolean }) {
-  return <p className={clsx('font-mono text-xs font-medium uppercase tracking-[0.14em]', dark ? 'text-lime' : 'text-leaf')}>{children}</p>;
+  return <p className={clsx('font-mono text-xs font-medium uppercase tracking-[0.14em]', dark ? 'text-lime' : 'text-leaf-ink')}>{children}</p>;
 }
 
 type Variant = 'primary' | 'lime' | 'ghost' | 'ghost-dark';

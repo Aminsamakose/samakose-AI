@@ -11,7 +11,7 @@ export function Prose({ children }: { children: string }) {
         ul: (p) => <ul className="mt-4 flex list-disc flex-col gap-2 pl-6" {...p} />,
         ol: (p) => <ol className="mt-4 flex list-decimal flex-col gap-2 pl-6" {...p} />,
         strong: (p) => <strong className="font-semibold text-fg" {...p} />,
-        a: (p) => <a className="font-semibold text-leaf underline underline-offset-2" {...p} />
+        a: (p) => <a className="font-semibold text-leaf-ink underline underline-offset-2" {...p} />
       }}>{children}</ReactMarkdown>
     </div>
   );

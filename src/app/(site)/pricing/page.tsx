@@ -30,7 +30,7 @@ export default function PricingPage() {
             <Item key={t.name}>
               <Card className={`flex h-full flex-col gap-3 ${t.featured ? '!border-2 !border-forest' : ''}`}>
                 <h2 className="font-display text-2xl font-bold">{t.name}</h2>
-                <p className="font-display text-lg font-semibold text-leaf">To be confirmed</p>
+                <p className="font-display text-lg font-semibold text-leaf-ink">To be confirmed</p>
                 <p className="text-sm text-muted">{t.who}</p>
                 <ul className="mt-1 flex flex-1 flex-col gap-2 text-sm">{t.pts.map((p) => <li key={p} className="flex gap-2"><span className="mt-1.5 size-1.5 flex-none rounded-full bg-leaf" aria-hidden="true" />{p}</li>)}</ul>
               </Card>
@@ -45,7 +45,7 @@ export default function PricingPage() {
               <Item key={h.days}>
                 <Card className={`flex h-full flex-col gap-3 ${h.featured ? '!border-2 !border-forest' : ''}`}>
                   <h3 className="font-display text-2xl font-bold">{h.label}</h3>
-                  <p className="font-display text-lg font-semibold text-leaf">To be confirmed</p>
+                  <p className="font-display text-lg font-semibold text-leaf-ink">To be confirmed</p>
                   <p className="text-sm text-muted">{h.who}</p>
                   <ul className="mt-1 flex flex-col gap-2 text-sm">{h.pts.map((p) => <li key={p} className="flex gap-2"><span className="mt-1.5 size-1.5 flex-none rounded-full bg-leaf" aria-hidden="true" />{p}</li>)}</ul>
                 </Card>

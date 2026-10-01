@@ -134,9 +134,9 @@ export default function Home() {
             <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-balance sm:text-4xl">Talk to the team.</h2>
             <p className="mt-4 max-w-md text-muted">Whether you run a business, a cooperative or a support programme, we can show you what a health check would look like.</p>
             <ul className="mt-6 flex flex-col gap-3 text-sm">
-              <li className="flex items-start gap-3"><Mail className="mt-0.5 size-5 flex-none text-leaf" aria-hidden="true" /><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
-              <li className="flex items-start gap-3"><Phone className="mt-0.5 size-5 flex-none text-leaf" aria-hidden="true" /><a href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a></li>
-              <li className="flex items-start gap-3"><MapPin className="mt-0.5 size-5 flex-none text-leaf" aria-hidden="true" /><span>{SITE.address.join(', ')}</span></li>
+              <li className="flex items-start gap-3"><Mail className="mt-0.5 size-5 flex-none text-leaf-ink" aria-hidden="true" /><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
+              <li className="flex items-start gap-3"><Phone className="mt-0.5 size-5 flex-none text-leaf-ink" aria-hidden="true" /><a href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a></li>
+              <li className="flex items-start gap-3"><MapPin className="mt-0.5 size-5 flex-none text-leaf-ink" aria-hidden="true" /><span>{SITE.address.join(', ')}</span></li>
             </ul>
           </Reveal>
           <Reveal delay={0.1}>

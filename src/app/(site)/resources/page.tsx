@@ -18,10 +18,10 @@ export default function ResourcesPage() {
             {items.map((a) => (
               <Item key={a.slug}>
                 <Card className="flex h-full flex-col">
-                  <p className="font-mono text-xs uppercase tracking-[0.12em] text-leaf">{a.date}</p>
-                  <h2 className="mt-2 font-display text-xl font-semibold"><Link href={`/resources/${a.slug}`} className="text-fg no-underline hover:text-leaf">{a.title}</Link></h2>
+                  <p className="font-mono text-xs uppercase tracking-[0.12em] text-leaf-ink">{a.date}</p>
+                  <h2 className="mt-2 font-display text-xl font-semibold"><Link href={`/resources/${a.slug}`} className="text-fg no-underline hover:text-leaf-ink">{a.title}</Link></h2>
                   <p className="mt-2 flex-1 text-sm text-muted">{a.summary}</p>
-                  <Link href={`/resources/${a.slug}`} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-leaf no-underline">Read <ArrowRight className="size-4" aria-hidden="true" /></Link>
+                  <Link href={`/resources/${a.slug}`} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-leaf-ink no-underline">Read <ArrowRight className="size-4" aria-hidden="true" /></Link>
                 </Card>
               </Item>
             ))}
