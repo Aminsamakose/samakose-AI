@@ -65,6 +65,8 @@ export async function releaseReport(ctx: Ctx, id: string, decision: 'release' | 
     await notifyUsers(ctx, [cs.consultantId].filter(Boolean) as string[], { kind: 'ReportReturned', title: 'Report returned by the reviewer', body: reason, link: `/cases/${row.caseId}` });
     return { status: 'Draft' };
   }
+  const [org] = await ctx.db.select({ status: schema.organisations.status }).from(schema.organisations).where(eq(schema.organisations.id, cs.orgId)).limit(1);
+  if (org?.status === 'Pending verification') throw unprocessable('This organisation has not been verified yet. An administrator must verify it before a report can be released.');
   await ctx.db.update(r).set({ status: 'Released', releasedBy: u.id, releasedAt: new Date() }).where(eq(r.id, id));
   await ctx.db.insert(schema.approvals).values({ recordType: 'report', recordId: id, caseId: row.caseId, userId: u.id, decision: 'APPROVED', reason: reason ?? null });
   await audit(ctx, 'report.released', 'report', id, { status: 'Draft' }, { status: 'Released' }, row.caseId);

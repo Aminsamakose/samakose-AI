@@ -237,6 +237,9 @@ describe('the full case lifecycle', () => {
     expect(full.content.length).toBeGreaterThan(3); expect(full.basis.verified + full.basis.unverified).toBe(100);
     expect((await api(S().consultant).post(`/reports/${id}/release`)).status).toBe(403);
     expect((await api(S().reviewer).post(`/reports/${id}/return`, { reason: 'ok' })).status).toBe(400);
+    await db().update(schema.organisations).set({ status: 'Pending verification' }).where(eq(schema.organisations.id, S().org.id));
+    expect((await api(S().reviewer).post(`/reports/${id}/release`)).status).toBe(422);
+    await db().update(schema.organisations).set({ status: 'Active' }).where(eq(schema.organisations.id, S().org.id));
     expect((await api(S().reviewer).post(`/reports/${id}/release`)).status).toBe(200);
     expect((await api(S().owner).get(`/reports/${id}`)).status).toBe(200);
     expect((await api(S().consultant).patch(`/reports/${id}`, { title: 'Changed after release' })).status).toBe(422);
