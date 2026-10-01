@@ -14,3 +14,14 @@ export function listArticles(): Article[] {
   }).filter((a) => a.status === 'published').map(({ status: _s, ...a }) => a).sort((a, b) => b.date.localeCompare(a.date));
 }
 export const getArticle = (slug: string) => listArticles().find((a) => a.slug === slug) ?? null;
+
+/** Repository Markdown articles plus the ones published from the admin screens. An article from the admin wins if both share an address. */
+export async function listAllArticles(): Promise<Article[]> {
+  const { getSite } = await import('./site-content');
+  const site = await getSite();
+  const bySlug = new Map<string, Article>();
+  for (const a of listArticles()) bySlug.set(a.slug, a);
+  for (const a of site.articles) bySlug.set(a.slug, { slug: a.slug, title: a.title, summary: a.summary, date: a.date, author: a.author, body: a.body });
+  return [...bySlug.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+export async function findArticle(slug: string) { return (await listAllArticles()).find((a) => a.slug === slug) ?? null; }

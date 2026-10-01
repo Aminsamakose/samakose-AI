@@ -9,7 +9,7 @@ export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
   'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments',
-  'audit', 'settings', 'dashboard', 'integrations', 'inquiries'
+  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media'
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -21,7 +21,8 @@ const ADMIN: Grants = {
   cases: [R, C, E, X], diagnostics: [R, C], evidence: [R, C, E], documents: [R, C], scores: [R], diagnoses: [R, C],
   prescriptions: [R, C], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E], reports: [R, C, X],
   plans: [R, C, E, D], contracts: [R, C, E, X], invoices: [R, C, E, D, X], payments: [R, C, X],
-  audit: [R, X], settings: [R, C, E, D], dashboard: [R, X], integrations: [R, C, E], inquiries: [R, E, X]
+  audit: [R, X], settings: [R, C, E, D], dashboard: [R, X], integrations: [R, C, E], inquiries: [R, E, X],
+  content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D]
 };
 export const PERMISSIONS: Record<Role, Grants> = {
   ADMIN,
@@ -53,7 +54,10 @@ export const PERMISSIONS: Record<Role, Grants> = {
     organisations: [R, E], cases: [R], diagnostics: [R, C], evidence: [R, C], documents: [R, C], scores: [R], prescriptions: [R],
     actions: [R, E], kpis: [R, C], sessions: [R], reports: [R], invoices: [R], payments: [C], dashboard: [R]
   },
-  FUNDER: { programmes: [R], cohorts: [R], reports: [R], dashboard: [R, X] }
+  FUNDER: { programmes: [R], cohorts: [R], reports: [R], dashboard: [R, X] },
+  // Website roles never reach client, case or finance data. The editor drafts; only the site manager and administrator publish.
+  CONTENT_EDITOR: { content: [R, C, E], site_settings: [R], media: [R, C], dashboard: [R] },
+  SITE_MANAGER: { content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D], inquiries: [R, E], dashboard: [R] }
 };
 
 export function can(role: Role, resource: Resource, action: Action): boolean {
@@ -61,9 +65,10 @@ export function can(role: Role, resource: Resource, action: Action): boolean {
 }
 
 /** Roles that work inside the organisation, as opposed to clients and funders. */
-export const STAFF_ROLES: Role[] = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'CONSULTANT', 'REVIEWER', 'COACH', 'FINANCE'];
+export const STAFF_ROLES: Role[] = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'CONSULTANT', 'REVIEWER', 'COACH', 'FINANCE', 'CONTENT_EDITOR', 'SITE_MANAGER'];
 export const isStaff = (r: Role) => STAFF_ROLES.includes(r);
 export const ROLE_LABEL: Record<Role, string> = {
   ADMIN: 'Administrator', EXECUTIVE: 'Executive', PROGRAMME_MANAGER: 'Programme manager', CONSULTANT: 'Consultant',
-  REVIEWER: 'Reviewer', COACH: 'Coach', FINANCE: 'Finance', OWNER: 'Business owner', FUNDER: 'Funder'
+  REVIEWER: 'Reviewer', COACH: 'Coach', FINANCE: 'Finance', OWNER: 'Business owner', FUNDER: 'Funder',
+  CONTENT_EDITOR: 'Content editor', SITE_MANAGER: 'Site manager'
 };

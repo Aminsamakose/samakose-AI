@@ -205,3 +205,22 @@ export function Funder({ d, me }: { d: any; me: Me | null }) {
   </div>;
 }
 export { PageHead };
+
+/* ------------------------------- website roles ------------------------------- */
+export function Website({ d }: { d: any }) {
+  const c = d.content ?? {};
+  return <div className="stack">
+    <div className="grid">
+      <LinkTile label="Waiting for review" value={num(c.in_review)} hint="Drafts sent for a decision" href="/admin/website" tone={Number(c.in_review) > 0 ? 'warn' : undefined} />
+      <LinkTile label="Drafts" value={num(c.drafts)} hint="Items not yet published" href="/admin/website" />
+      <LinkTile label="Scheduled" value={num(c.scheduled)} hint="Set to go live later" href="/admin/website" />
+      <LinkTile label="Published" value={num(c.published)} hint="Items visitors can see" href="/admin/website" />
+      {d.new_enquiries !== undefined && <LinkTile label="New enquiries" value={num(d.new_enquiries)} hint="Website messages not yet handled" href="/admin/inquiries" />}
+    </div>
+    <Card title="Recently changed" actions={<LinkButton href="/admin/website" variant="primary" size="sm">Open website and content</LinkButton>}>
+      <MiniTable caption="Recently changed website content" rows={d.recent ?? []} empty="Nothing has been edited yet" cols={[
+        { label: 'Item', render: (r: any) => <Link href={`/admin/website/${r.kind}`}>{r.title || titleCase(r.kind)}</Link> },
+        { label: 'Type', render: (r: any) => titleCase(r.kind) }, { label: 'Status', render: (r: any) => <Badge>{r.status}</Badge> }, { label: 'Updated', render: (r: any) => dateTime(r.updated_at) }]} />
+    </Card>
+  </div>;
+}

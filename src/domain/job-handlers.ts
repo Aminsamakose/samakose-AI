@@ -204,3 +204,9 @@ registerJob('expire_sessions', async () => {
 });
 
 registerJob('kobo_pull', async () => koboPull());
+
+/** Website items whose scheduled time has passed go live, and the public pages refresh. */
+registerJob('content_scan', async () => {
+  const { promoteDue } = await import('@/services/content');
+  return { promoted: await tx((t) => promoteDue(systemCtx(t as any))) };
+});

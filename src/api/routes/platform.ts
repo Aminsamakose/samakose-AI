@@ -81,3 +81,22 @@ defineRoute({ method: 'POST', path: '/public/inquiries', tag: W, summary: 'Send 
   handler: ({ ctx, body }) => inq.submitInquiry(ctx, body as any) });
 defineRoute({ method: 'GET', path: '/inquiries', tag: AD, summary: 'Website enquiries', permission: ['inquiries', 'read'], query: listQuery.extend({ status: z.string().optional(), kind: z.string().optional() }), handler: ({ ctx, query }) => inq.listInquiries(ctx, query) });
 defineRoute({ method: 'PATCH', path: '/inquiries/:id', tag: AD, summary: 'Mark an enquiry handled, spam or new', permission: ['inquiries', 'edit'], body: z.object({ status: z.enum(['New', 'Handled', 'Spam']) }), handler: ({ ctx, params, body }) => inq.setInquiryStatus(ctx, params.id, (body as any).status) });
+
+/* ------------------------- website content (configuration centre) ------------------------- */
+import * as cms from '@/services/content';
+const CM = 'Website content';
+const contentBody = z.object({ data: z.record(z.string(), z.unknown()), sortOrder: z.number().int().min(0).max(10000).optional() });
+defineRoute({ method: 'GET', path: '/admin/content', tag: CM, summary: 'Everything that can be edited on the website, with counts', permission: ['content', 'read'], handler: ({ ctx }) => cms.overview(ctx) });
+defineRoute({ method: 'GET', path: '/admin/content/kind/:kind', tag: CM, summary: 'Items of one content type', permission: ['content', 'read'], handler: ({ ctx, params }) => cms.listDocs(ctx, params.kind) });
+defineRoute({ method: 'POST', path: '/admin/content/kind/:kind', tag: CM, summary: 'Create a draft item', permission: ['content', 'create'], body: contentBody, handler: async ({ ctx, params, body }) => status(201, await cms.createDoc(ctx, params.kind, body)) });
+defineRoute({ method: 'GET', path: '/admin/content/:id', tag: CM, summary: 'One item', permission: ['content', 'read'], handler: ({ ctx, params }) => cms.getDoc(ctx, params.id) });
+defineRoute({ method: 'PUT', path: '/admin/content/:id', tag: CM, summary: 'Save the working copy', permission: ['content', 'edit'], body: contentBody, handler: ({ ctx, params, body }) => cms.saveDraft(ctx, params.id, body) });
+defineRoute({ method: 'POST', path: '/admin/content/:id/submit', tag: CM, summary: 'Send a draft for review', permission: ['content', 'edit'], body: empty, handler: ({ ctx, params }) => cms.submitForReview(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/admin/content/:id/publish', tag: CM, summary: 'Publish the working copy', permission: ['content', 'approve'], body: z.object({ note: optText(200) }), handler: ({ ctx, params, body }) => cms.publish(ctx, params.id, body as any) });
+defineRoute({ method: 'POST', path: '/admin/content/:id/schedule', tag: CM, summary: 'Publish at a set time', permission: ['content', 'approve'], body: z.object({ at: z.string().min(10).max(40) }), handler: ({ ctx, params, body }) => cms.schedule(ctx, params.id, body) });
+defineRoute({ method: 'POST', path: '/admin/content/:id/unschedule', tag: CM, summary: 'Cancel a scheduled publication', permission: ['content', 'approve'], body: empty, handler: ({ ctx, params }) => cms.unschedule(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/admin/content/:id/archive', tag: CM, summary: 'Take an item off the website', permission: ['content', 'approve'], body: empty, handler: ({ ctx, params }) => cms.archive(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/admin/content/:id/unarchive', tag: CM, summary: 'Bring an archived item back as a draft', permission: ['content', 'approve'], body: empty, handler: ({ ctx, params }) => cms.unarchive(ctx, params.id) });
+defineRoute({ method: 'DELETE', path: '/admin/content/:id', tag: CM, summary: 'Delete an archived item', permission: ['content', 'delete'], handler: ({ ctx, params }) => cms.remove(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/admin/content/:id/versions', tag: CM, summary: 'Published versions of an item', permission: ['content', 'read'], handler: ({ ctx, params }) => cms.versions(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/admin/content/:id/restore', tag: CM, summary: 'Put an earlier version back in the working copy', permission: ['content', 'edit'], body: z.object({ version: z.number().int().min(1) }), handler: ({ ctx, params, body }) => cms.restore(ctx, params.id, body) });

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/site/LegalPage';
-import { SITE } from '@/components/site/config';
+import { getSite, contactOf } from '@/lib/site-content';
 
 export const metadata: Metadata = { title: 'Terms of use', description: 'The terms that apply to using the Samakose website and platform.' };
 
-const BODY = `
+const body = (SITE: { email: string; phone: string; address: string[] }) => `
 ## About these terms
 These terms apply to your use of the Samakose website and platform. By using them you agree to these terms. If you use the platform through a programme or an organisation, the agreement you have with that programme or organisation also applies.
 
@@ -30,4 +30,4 @@ We aim to keep the platform available but cannot promise it will always be unint
 We may update these terms and will show the date at the top of the page. Questions can be sent to ${SITE.email}.
 `;
 
-export default function Page() { return <LegalPage title="Terms of use" updated="1 October 2026" body={BODY} />; }
+export default async function Page() { return <LegalPage title="Terms of use" updated="1 October 2026" body={body(contactOf(await getSite()))} />; }

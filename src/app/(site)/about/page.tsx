@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { PageHero, Section, Eyebrow, Placeholder, ButtonLink } from '@/components/site/ui';
 import { Reveal } from '@/components/site/motion';
-import { SITE } from '@/components/site/config';
+import { getSite, contactOf } from '@/lib/site-content';
 
 export const metadata: Metadata = { title: 'About', description: 'Samakose is an enterprise development and business transformation organisation based in Tamale, Northern Ghana.' };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const SITE = contactOf(await getSite());
   return (
     <>
       <PageHero eyebrow="About Samakose" title="Helping enterprises become sustainable and investment-ready." intro="Samakose is an enterprise development and business transformation organisation based in Tamale, Northern Ghana. The Business Doctor is how we diagnose, treat and track the health of the enterprises we serve." />

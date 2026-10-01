@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 import { db, closeDb } from './db/client';
 import { drainJobs } from './domain/jobs';
 
-const RECURRING: [string, number][] = [['send_emails', 60], ['overdue_scan', 3600], ['invoice_scan', 3600], ['expire_sessions', 6 * 3600], ['kobo_pull', 900]];
+const RECURRING: [string, number][] = [['send_emails', 60], ['overdue_scan', 3600], ['invoice_scan', 3600], ['expire_sessions', 6 * 3600], ['content_scan', 900], ['kobo_pull', 900]];
 const last = new Map<string, number>();
 let stopping = false;
 

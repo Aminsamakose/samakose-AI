@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/site/LegalPage';
-import { SITE } from '@/components/site/config';
+import { getSite, contactOf } from '@/lib/site-content';
 
 export const metadata: Metadata = { title: 'Privacy notice', description: 'How Samakose handles personal information collected through this website and platform.' };
 
-const BODY = `
+const body = (SITE: { email: string; phone: string; address: string[] }) => `
 ## Who we are
 Samakose is based at ${SITE.address.join(', ')}. You can reach us at ${SITE.email} or ${SITE.phone}. We are responsible for the personal information described in this notice.
 
@@ -32,4 +32,4 @@ Under Ghana's Data Protection Act, 2012 (Act 843), you can ask to see the person
 We will update this notice when our practices change and show the date at the top of the page.
 `;
 
-export default function Page() { return <LegalPage title="Privacy notice" updated="1 October 2026" body={BODY} />; }
+export default async function Page() { return <LegalPage title="Privacy notice" updated="1 October 2026" body={body(contactOf(await getSite()))} />; }

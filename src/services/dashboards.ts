@@ -38,7 +38,21 @@ export async function dashboard(ctx: Ctx) {
     case 'FINANCE': return { ...base, kind: 'finance', ...(await finance(ctx)) };
     case 'OWNER': return { ...base, kind: 'owner', ...(await owner(ctx)) };
     case 'FUNDER': return { ...base, kind: 'funder', ...(await funder(ctx)) };
+    case 'CONTENT_EDITOR': case 'SITE_MANAGER': return { ...base, kind: 'website', ...(await website(ctx)) };
   }
+}
+
+/** Website roles see only the state of the website content. No client, case or finance figures. */
+async function website(ctx: Ctx) {
+  const u = need(ctx).user;
+  const c = await one(ctx, sql`select
+    (select count(*)::int from content_docs where status='In review') in_review,
+    (select count(*)::int from content_docs where status='Draft' and kind not in ('brand','contact','social','announcement','seo','home')) drafts,
+    (select count(*)::int from content_docs where status='Scheduled') scheduled,
+    (select count(*)::int from content_docs where status='Published') published`);
+  const enquiries = u.role === 'SITE_MANAGER' ? await one(ctx, sql`select count(*)::int new_enquiries from inquiries where status='New'`) : {};
+  const recent = await rows(ctx, sql`select id, kind, title, status, updated_at from content_docs order by updated_at desc limit 8`);
+  return { content: c, ...enquiries, recent };
 }
 
 async function management(ctx: Ctx) {

@@ -4,19 +4,20 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Container, ButtonLink } from '@/components/site/ui';
 import { Prose } from '@/components/site/Prose';
-import { getArticle, listArticles } from '@/lib/content';
+import { findArticle, listArticles } from '@/lib/content';
 import { REGISTER_HREF } from '@/components/site/config';
 
 type Props = { params: Promise<{ slug: string }> };
-export const dynamicParams = false;
+export const dynamicParams = true;
+export const revalidate = 120;
 export const generateStaticParams = () => listArticles().map((a) => ({ slug: a.slug }));
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const a = getArticle((await params).slug);
+  const a = await findArticle((await params).slug);
   return a ? { title: a.title, description: a.summary } : {};
 }
 
 export default async function ArticlePage({ params }: Props) {
-  const a = getArticle((await params).slug);
+  const a = await findArticle((await params).slug);
   if (!a) notFound();
   return (
     <article className="bg-bg py-12 sm:py-16">

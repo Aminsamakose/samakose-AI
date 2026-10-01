@@ -62,9 +62,9 @@ export const LinkButton = ({ href, children, variant, size }: { href: string; ch
 
 const TONES: Record<string, string> = {
   // good
-  Validated: 'ok', Done: 'ok', Paid: 'ok', Succeeded: 'ok', Active: 'ok', APPROVED: 'ok', Reviewed: 'ok', Released: 'ok', Held: 'ok', Verified: 'ok', GRADUATED: 'ok', Green: 'ok', Low: 'ok', High: 'ok', Completed: 'ok', Open: 'info',
+  Validated: 'ok', Done: 'ok', Paid: 'ok', Succeeded: 'ok', Active: 'ok', APPROVED: 'ok', Reviewed: 'ok', Released: 'ok', Held: 'ok', Verified: 'ok', Published: 'ok', GRADUATED: 'ok', Green: 'ok', Low: 'ok', High: 'ok', Completed: 'ok', Open: 'info',
   // in progress
-  'IN REVIEW': 'info', 'In progress': 'info', Sent: 'info', Pending: 'info', Scheduled: 'info', Draft: '', Generating: 'info', MONITORING: 'brand', COACHING: 'brand', PRESCRIBED: 'brand', DIAGNOSED: 'brand', SCORED: 'brand', 'FOLLOW-UP': 'brand',
+  'IN REVIEW': 'info', 'In progress': 'info', Sent: 'info', Pending: 'info', 'In review': 'info', Scheduled: 'info', Draft: '', Generating: 'info', MONITORING: 'brand', COACHING: 'brand', PRESCRIBED: 'brand', DIAGNOSED: 'brand', SCORED: 'brand', 'FOLLOW-UP': 'brand',
   // attention
   RETURNED: 'warn', Returned: 'warn', Overdue: 'warn', Amber: 'warn', Medium: 'warn', Blocked: 'warn', Unverified: 'warn', Expiring: 'warn', Rejected: 'bad',
   // bad
@@ -130,7 +130,7 @@ export function useForm<T extends Record<string, any>>(initial: T, submit: (v: T
     } finally { setBusy(false); }
   };
   const input = (k: keyof T) => ({ value: values[k] ?? '', onChange: (e: React.ChangeEvent<any>) => set(k, e.target.value) });
-  return { values, set, setValues, errors, formError, busy, onSubmit, input };
+  return { values, set, setValues, errors, setErrors, formError, busy, onSubmit, input };
 }
 export const FormError = ({ message }: { message: string | null }) => message ? <div className="alert bad" role="alert">{message}</div> : null;
 

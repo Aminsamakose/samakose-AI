@@ -48,7 +48,7 @@ const created = () => timestamp('created_at', { withTimezone: true }).notNull().
 const updated = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow();
 
 /* ------------------------------ enums ------------------------------ */
-export const ROLES = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'CONSULTANT', 'REVIEWER', 'COACH', 'FINANCE', 'OWNER', 'FUNDER'] as const;
+export const ROLES = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'CONSULTANT', 'REVIEWER', 'COACH', 'FINANCE', 'OWNER', 'FUNDER', 'CONTENT_EDITOR', 'SITE_MANAGER'] as const;
 export type Role = (typeof ROLES)[number];
 export const roleEnum = pgEnum('role', ROLES);
 
@@ -554,3 +554,36 @@ export const inquiries = pgTable('inquiries', {
   handledAt: timestamp('handled_at', { withTimezone: true }),
   createdAt: created()
 }, (t) => [index('inquiries_status_idx').on(t.status, t.createdAt)]);
+
+/* ---------------- website content (Phase 1 of the configuration centre) ---------------- */
+export const CONTENT_STATUS = ['Draft', 'In review', 'Published', 'Scheduled', 'Archived'] as const;
+/** One document per piece of public content: a setting, an FAQ, a testimonial, an article. `live` is what visitors see; `draft` is the working copy. */
+export const contentDocs = pgTable('content_docs', {
+  id: id(),
+  kind: text('kind').notNull(),
+  key: text('key').notNull(),
+  title: text('title').notNull().default(''),
+  status: text('status').notNull().default('Draft'),
+  live: jsonb('live'),
+  draft: jsonb('draft').notNull(),
+  version: integer('version').notNull().default(0),
+  sortOrder: integer('sort_order').notNull().default(0),
+  publishAt: timestamp('publish_at', { withTimezone: true }),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  publishedBy: uuid('published_by'),
+  updatedBy: uuid('updated_by'),
+  createdBy: uuid('created_by'),
+  createdAt: created(),
+  updatedAt: updated()
+}, (t) => [uniqueIndex('content_docs_kind_key_uq').on(t.kind, t.key), index('content_docs_kind_idx').on(t.kind, t.status)]);
+
+/** A frozen copy of each published version, so any change can be compared and restored. */
+export const contentVersions = pgTable('content_versions', {
+  id: id(),
+  docId: uuid('doc_id').notNull().references(() => contentDocs.id, { onDelete: 'cascade' }),
+  version: integer('version').notNull(),
+  data: jsonb('data').notNull(),
+  note: text('note'),
+  authorId: uuid('author_id'),
+  createdAt: created()
+}, (t) => [uniqueIndex('content_versions_doc_ver_uq').on(t.docId, t.version)]);

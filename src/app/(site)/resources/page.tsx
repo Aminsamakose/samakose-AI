@@ -3,12 +3,12 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { PageHero, Section, Card, Placeholder } from '@/components/site/ui';
 import { Stagger, Item } from '@/components/site/motion';
-import { listArticles } from '@/lib/content';
+import { listAllArticles } from '@/lib/content';
 
 export const metadata: Metadata = { title: 'Resources', description: 'Plain-language guides on business health, evidence and action planning from Samakose.' };
 
-export default function ResourcesPage() {
-  const items = listArticles();
+export default async function ResourcesPage() {
+  const items = await listAllArticles();
   return (
     <>
       <PageHero eyebrow="Resources and insights" title="Practical guidance for enterprise growth." intro="Short guides on how business health is measured and what to do with the results." />
