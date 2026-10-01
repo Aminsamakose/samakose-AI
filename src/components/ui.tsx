@@ -1,4 +1,5 @@
 'use client';
+import { CountUp } from './site/motion';
 import { Icon } from './Icon';
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
@@ -78,8 +79,14 @@ export const Badge = ({ children, tone }: { children: ReactNode; tone?: string }
 export const Card = ({ title, actions, children, className }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) => (
   <section className={`card ${className ?? ''}`}>{(title || actions) && <div className="card-head">{title && <h2>{title}</h2>}{actions && <div className="row">{actions}</div>}</div>}{children}</section>
 );
+/** Whole numbers count up once; anything else (money, scores with decimals, text) is shown as it is. */
+export function AnimatedValue({ value }: { value: ReactNode }) {
+  const raw = typeof value === 'number' ? String(value) : typeof value === 'string' ? value : '';
+  if (/^\d{1,3}(,\d{3})*$|^\d+$/.test(raw) && Number(raw.replace(/,/g, '')) < 1e9) return <CountUp to={Number(raw.replace(/,/g, ''))} />;
+  return <>{value}</>;
+}
 export const Tile = ({ label, value, hint, tone }: { label: string; value: ReactNode; hint?: string; tone?: string }) => (
-  <div className="tile"><span className="l">{label}</span><span className="v" style={tone ? { color: `var(--${tone})` } : undefined}>{value}</span>{hint && <span className="small muted">{hint}</span>}</div>
+  <div className="tile"><span className="l">{label}</span><span className="v" style={tone ? { color: `var(--${tone})` } : undefined}><AnimatedValue value={value} /></span>{hint && <span className="small muted">{hint}</span>}</div>
 );
 export const PageHead = ({ title, sub, crumbs, actions }: { title: ReactNode; sub?: ReactNode; crumbs?: ReactNode; actions?: ReactNode }) => (
   <div className="page-head"><div>{crumbs && <div className="crumbs">{crumbs}</div>}<h1>{title}</h1>{sub && <p className="muted" style={{ marginTop: 4 }}>{sub}</p>}</div>{actions && <div className="actions">{actions}</div>}</div>
@@ -191,7 +198,7 @@ export function LineChart({ points, label, min = 0, max = 100 }: { points: { x: 
   const line = points.map((p, i) => `${i ? 'L' : 'M'}${xs(i).toFixed(1)},${ys(p.y).toFixed(1)}`).join(' ');
   return <div><svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${label}: ${points.map((p) => `${p.x} ${p.y}`).join(', ')}`} style={{ width: '100%', height: 'auto' }}>
     {[min, (min + max) / 2, max].map((t) => <g key={t}><line x1={P} x2={W - P} y1={ys(t)} y2={ys(t)} stroke="var(--line)" /><text x={P - 6} y={ys(t) + 4} textAnchor="end">{Math.round(t)}</text></g>)}
-    <path d={line} fill="none" stroke="var(--brand)" strokeWidth="2.5" />
+    <path className="draw" pathLength={1} d={line} fill="none" stroke="var(--brand)" strokeWidth="2.5" />
     {points.map((p, i) => <g key={i}><circle cx={xs(i)} cy={ys(p.y)} r="4" fill="var(--brand)" />{(points.length <= 8 || i % Math.ceil(points.length / 8) === 0) && <text x={xs(i)} y={H - 10} textAnchor="middle">{p.x}</text>}</g>)}
   </svg>
   <details className="small muted"><summary>View as table</summary><table><thead><tr><th>Period</th><th className="r">Value</th></tr></thead><tbody>{points.map((p) => <tr key={p.x}><td>{p.x}</td><td className="r num">{p.y}</td></tr>)}</tbody></table></details></div>;

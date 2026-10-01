@@ -43,5 +43,5 @@ export function CountUp({ to, duration = 1.1, className }: { to: number; duratio
     const c = animate(0, to, { duration, ease: [0.2, 0.7, 0.3, 1], onUpdate: (x) => setV(Math.round(x)) });
     return () => c.stop();
   }, [inView, to, duration, reduce]);
-  return <span ref={ref} className={className} style={{ fontVariantNumeric: 'tabular-nums' }}>{v}</span>;
+  return <span ref={ref} className={className} style={{ fontVariantNumeric: 'tabular-nums' }}>{v.toLocaleString('en-GB')}</span>;
 }

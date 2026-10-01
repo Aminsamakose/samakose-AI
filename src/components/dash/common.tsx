@@ -2,7 +2,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { api, dateFmt, errText, titleCase } from '@/lib/client/api';
-import { Badge, BarList, Button, Empty, Field, FormError, Modal, useApi, useForm, useToast } from '@/components/ui';
+import { AnimatedValue, Badge, BarList, Button, Empty, Field, FormError, Modal, useApi, useForm, useToast } from '@/components/ui';
 
 export type Me = { user: { id: string; name: string; email: string; role: string; roleLabel: string; orgId: string | null; mfaEnabled: boolean }; permissions: Record<string, string[]> };
 
@@ -12,7 +12,7 @@ export const canDo = (me: Me | null, resource: string, action: string) => !!me?.
 
 /** A metric that is a link, with a plain sentence saying what it counts. */
 export function LinkTile({ label, value, hint, href, tone }: { label: string; value: ReactNode; hint: string; href?: string; tone?: string }) {
-  const inner = <><span className="l">{label}</span><span className="v" style={tone ? { color: `var(--${tone})` } : undefined}>{value}</span><span className="small muted">{hint}</span></>;
+  const inner = <><span className="l">{label}</span><span className="v" style={tone ? { color: `var(--${tone})` } : undefined}><AnimatedValue value={value} /></span><span className="small muted">{hint}</span></>;
   return href
     ? <Link href={href} className="tile" style={{ textDecoration: 'none', color: 'inherit' }} aria-label={`${label}: ${typeof value === 'string' || typeof value === 'number' ? value : ''}. ${hint}. Open details`}>{inner}</Link>
     : <div className="tile">{inner}</div>;

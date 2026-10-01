@@ -187,6 +187,8 @@ export default async function Home() {
     <>
       <section className="relative overflow-hidden bg-forest text-white">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-40" style={{ backgroundImage: 'repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 1px,transparent 1px 22px),repeating-linear-gradient(-45deg,rgba(255,255,255,.05) 0 1px,transparent 1px 22px)' }} />
+        <span aria-hidden="true" className="hero-orb" style={{ width: 380, height: 380, background: '#c6f26b', top: -120, right: '8%' }} />
+        <span aria-hidden="true" className="hero-orb b" style={{ width: 300, height: 300, background: '#e2a93b', bottom: -140, left: '4%' }} />
         <Container className="relative grid items-center gap-12 py-16 sm:py-24 lg:grid-cols-2">
           <div className="flex flex-col gap-6">
             <Reveal><p className="inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 font-mono text-xs uppercase tracking-[0.14em] text-lime"><span className="size-2 rounded-full bg-lime" aria-hidden="true" />The Business Doctor, as software</p></Reveal>
