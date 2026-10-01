@@ -13,6 +13,12 @@ const TIERS = [
   { name: 'Programme', who: 'Programmes, partners and institutions supporting many organisations.', pts: ['Cohorts and many users', 'Coach management', 'Portfolio intelligence and reporting', 'Priced per participant by agreement'] }
 ];
 
+const HORIZONS = [
+  { days: '30', label: '30 day plan', who: 'A fast start: fix the one or two things holding the business back.', pts: ['Quick wins on the weakest dimension', 'Weekly check-ins', 'Progress check at day 30'] },
+  { days: '180', label: '180 day plan', who: 'Six months to build the systems behind the quick wins.', pts: ['Priorities across several dimensions', 'Monthly reviews and KPI tracking', 'Re-assessment to show the change in score'], featured: true },
+  { days: '360', label: '360 day plan', who: 'A full year of structured support toward investment readiness.', pts: ['Full action plan with long horizon items', 'Quarterly reviews and re-assessment', 'Planned: investment readiness pack'] }
+];
+
 export default function PricingPage() {
   return (
     <>
@@ -31,6 +37,22 @@ export default function PricingPage() {
             </Item>
           ))}
         </Stagger>
+        <div className="mt-14">
+          <h2 className="font-display text-3xl font-bold">Choose the length of your plan</h2>
+          <p className="mt-2 max-w-2xl text-muted">Actions in your platform plan are grouped by horizon, so you can see what to do in 30, 90, 180 and 360 days. The options below set how long Samakose supports you. Prices to be confirmed.</p>
+          <Stagger className="mt-6 grid gap-5 md:grid-cols-3">
+            {HORIZONS.map((h) => (
+              <Item key={h.days}>
+                <Card className={`flex h-full flex-col gap-3 ${h.featured ? '!border-2 !border-forest' : ''}`}>
+                  <h3 className="font-display text-2xl font-bold">{h.label}</h3>
+                  <p className="font-display text-lg font-semibold text-leaf">To be confirmed</p>
+                  <p className="text-sm text-muted">{h.who}</p>
+                  <ul className="mt-1 flex flex-col gap-2 text-sm">{h.pts.map((p) => <li key={p} className="flex gap-2"><span className="mt-1.5 size-1.5 flex-none rounded-full bg-leaf" aria-hidden="true" />{p}</li>)}</ul>
+                </Card>
+              </Item>
+            ))}
+          </Stagger>
+        </div>
         <div className="mt-10 flex flex-wrap gap-3">
           <ButtonLink href={REGISTER_HREF}>Start your health check</ButtonLink>
           <ButtonLink href="/contact" variant="ghost">Ask about programme pricing</ButtonLink>

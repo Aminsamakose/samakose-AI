@@ -70,10 +70,11 @@ describe('AI output rules', () => {
     expect(validateDiagnosis({ ...good, model_confidence: 2 }, ['EVD-1']).length).toBeGreaterThan(0);
   });
   const rx = { items: [{ library_id: 'IVL-001', actions: [{ text: 't', owner_role: 'OWNER', deadline_days: 30 }] }] };
+  it('accepts 180 and 360 day actions', () => expect(validatePrescription({ items: [{ library_id: 'IVL-001', actions: [{ text: 't', owner_role: 'OWNER', deadline_days: 360 }] }] }, ['IVL-001'], DEFAULT_RULES)).toEqual([]));
   it('accepts a valid prescription', () => expect(validatePrescription(rx, ['IVL-001'], DEFAULT_RULES)).toEqual([]));
   it('rejects unknown library ids and out of range deadlines', () => {
     expect(validatePrescription(rx, ['IVL-002'], DEFAULT_RULES).length).toBe(1);
-    expect(validatePrescription({ items: [{ library_id: 'IVL-001', actions: [{ text: 't', owner_role: 'OWNER', deadline_days: 500 }] }] }, ['IVL-001'], DEFAULT_RULES).length).toBe(1);
+    expect(validatePrescription({ items: [{ library_id: 'IVL-001', actions: [{ text: 't', owner_role: 'OWNER', deadline_days: 800 }] }] }, ['IVL-001'], DEFAULT_RULES).length).toBe(1);
     expect(validatePrescription({ items: [{ library_id: 'IVL-001', actions: [{ text: 't', owner_role: 'ADMIN', deadline_days: 30 }] }] }, ['IVL-001'], DEFAULT_RULES).length).toBe(1);
   });
   it('extracts JSON from fenced or chatty replies', () => {

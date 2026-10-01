@@ -20,7 +20,7 @@ export const DEFAULT_RULES: Rules = {
   'confidence.high_share': 0.6,
   'confidence.medium_share': 0.35,
   'prescription.min_days': 5,
-  'prescription.max_days': 120,
+  'prescription.max_days': 400,
   'session.min_for_monitoring': 3,
   'privacy.min_cell_size': 5
 };
@@ -239,5 +239,12 @@ export const SEED_LIBRARY: [string, string, string, string, number, string][] = 
   ['IVL-007', 'Roles and monthly review', 'People and governance', 'Write roles and hold a monthly review.', 45, 'Reviews held'],
   ['IVL-008', 'Simple ledger and records', 'Records and systems', 'Set up a ledger for sales and purchases.', 30, 'Months with complete records'],
   ['IVL-009', 'Registration and compliance', 'Compliance and finance access', 'Complete registration and tax filings.', 90, 'Compliance items complete'],
-  ['IVL-010', 'Investment readiness pack', 'Compliance and finance access', 'Prepare records and a summary for lenders.', 90, 'Pack complete']
+  ['IVL-010', 'Investment readiness pack', 'Compliance and finance access', 'Prepare records and a summary for lenders.', 90, 'Pack complete'],
+  // Longer horizons: 180 and 360 day interventions.
+  ['IVL-011', 'Working capital facility preparation', 'Finance', 'Prepare a financing request, secure a facility and agree a repayment plan.', 180, 'Facility secured in GHS'],
+  ['IVL-012', 'Second market development', 'Market and sales', 'Open and serve a second market zone or buyer group.', 180, 'Share of sales from new buyers'],
+  ['IVL-013', 'Storage and handling upgrade', 'Operations', 'Improve storage or handling to cut losses and hold stock for better prices.', 180, 'Loss percent'],
+  ['IVL-014', 'Annual plan and budget cycle', 'People and governance', 'Set a yearly plan and budget with a quarterly review calendar.', 360, 'Quarterly reviews held'],
+  ['IVL-015', 'Governance and accountability structure', 'People and governance', 'Set up an advisory group and written policies for the business.', 360, 'Policies in force'],
+  ['IVL-016', 'Reviewed annual accounts', 'Compliance and finance access', 'Produce a full year of management accounts and prepare for external review.', 360, 'Months of reviewed accounts']
 ];

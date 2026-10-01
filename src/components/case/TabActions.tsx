@@ -5,7 +5,7 @@ import { Badge, Button, Card, DataTable, Field, FormError, Modal, useForm, type 
 import type { TabProps } from './types';
 import { today, useMe } from './clinical/common';
 
-type Row = { id: string; code: string; text: string; ownerRole: string; assignee: string | null; dueDate: string; status: string; evidenceNote: string | null; overdue: boolean };
+type Row = { id: string; code: string; text: string; ownerRole: string; assignee: string | null; dueDate: string; status: string; evidenceNote: string | null; overdue: boolean; horizon?: number };
 const OWNER: Record<string, string> = { OWNER: 'Business owner', COACH: 'Coach', CONSULTANT: 'Consultant' };
 const NEXT: Record<string, string[]> = { Open: ['Open', 'In progress', 'Done'], 'In progress': ['In progress', 'Open', 'Done'], Done: ['Done'] };
 
@@ -14,6 +14,7 @@ export default function TabActions({ caseId, role, reload }: TabProps) {
   const [edit, setEdit] = useState<Row | null>(null);
   const [adding, setAdding] = useState(false);
   const [key, setKey] = useState(0);
+  const [horizon, setHorizon] = useState('');
   const done = () => { setEdit(null); setAdding(false); setKey((k) => k + 1); reload(); };
   const mayEdit = (r: Row) => can('actions', 'edit') && r.status !== 'Done' && !(role === 'OWNER' && r.ownerRole !== 'OWNER');
   const cols: Col<Row>[] = [
@@ -21,12 +22,19 @@ export default function TabActions({ caseId, role, reload }: TabProps) {
     { key: 'text', label: 'Action', render: (r) => <div>{r.text}{r.evidenceNote && <div className="small muted">Done: {r.evidenceNote}</div>}</div> },
     { key: 'ownerRole', label: 'Owner role', render: (r) => <div>{OWNER[r.ownerRole] ?? r.ownerRole}{r.assignee && <div className="small muted">{r.assignee}</div>}</div> },
     { key: 'due', label: 'Due', sort: 'due', render: (r) => <span className="num" style={r.overdue ? { color: 'var(--bad)', fontWeight: 700 } : undefined}>{dateFmt(r.dueDate)}</span> },
+    { key: 'horizon', label: 'Plan', render: (r) => <Badge>{r.horizon ? `${r.horizon} day` : '-'}</Badge> },
     { key: 'status', label: 'Status', sort: 'status', render: (r) => <span className="row" style={{ gap: 6 }}><Badge>{r.status}</Badge>{r.overdue && <Badge tone="bad">Overdue</Badge>}</span> },
     { key: 'edit', label: 'Update', render: (r) => mayEdit(r) ? <Button size="sm" onClick={() => setEdit(r)} aria-label={`Update ${r.code}`}>Update</Button> : <span className="muted small">-</span> }
   ];
   return <Card title="Actions" actions={can('actions', 'create') && <Button variant="primary" size="sm" onClick={() => setAdding(true)}>Add action</Button>}>
     <p className="muted small" style={{ marginBottom: 10 }}>Overdue actions show a red date and an Overdue label. Marking an action done needs a note saying what was done.</p>
-    <DataTable<Row> endpoint="/actions" params={{ caseId }} columns={cols} exportable={can('actions', 'export')} placeholder="Search actions" refreshKey={key} defaultSort={{ key: 'due', dir: 'asc' }}
+    <div className="row" style={{ marginBottom: 10, gap: 8 }}>
+      <label className="small muted" htmlFor="horizon">Plan horizon</label>
+      <select id="horizon" value={horizon} onChange={(e) => setHorizon(e.target.value)}>
+        <option value="">All</option><option value="30">30 day plan</option><option value="90">90 day plan</option><option value="180">180 day plan</option><option value="360">360 day plan</option>
+      </select>
+    </div>
+    <DataTable<Row> endpoint="/actions" params={{ caseId, ...(horizon ? { horizon } : {}) }} columns={cols} exportable={can('actions', 'export')} placeholder="Search actions" refreshKey={key} defaultSort={{ key: 'due', dir: 'asc' }}
       empty={{ title: 'No actions yet', hint: 'Actions appear here when a prescription is approved, or you can add one.' }} />
     <Modal open={adding} onClose={() => setAdding(false)} title="Add an action">{adding && <AddForm caseId={caseId} onDone={done} onCancel={() => setAdding(false)} />}</Modal>
     <Modal open={!!edit} onClose={() => setEdit(null)} title={edit ? `Update ${edit.code}` : 'Update action'}>{edit && <EditForm row={edit} role={role} onDone={done} onCancel={() => setEdit(null)} />}</Modal>

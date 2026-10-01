@@ -18,21 +18,24 @@ const a = schema.actions, c = schema.cases, o = schema.organisations;
 const actionCols = {
   id: a.id, code: a.code, caseId: a.caseId, caseCode: c.code, org: o.name, text: a.text, ownerRole: a.ownerRole, assigneeId: a.assigneeId,
   assignee: sql<string | null>`(select name from users where id = ${a.assigneeId})`, dueDate: a.dueDate, status: a.status, evidenceNote: a.evidenceNote,
-  completedAt: a.completedAt, overdue: sql<boolean>`(${a.status} <> 'Done' and ${a.dueDate} < current_date)`
+  completedAt: a.completedAt, overdue: sql<boolean>`(${a.status} <> 'Done' and ${a.dueDate} < current_date)`,
+  horizon: sql<number>`(case when (${a.dueDate} - ${a.createdAt}::date) <= 30 then 30 when (${a.dueDate} - ${a.createdAt}::date) <= 90 then 90 when (${a.dueDate} - ${a.createdAt}::date) <= 180 then 180 else 360 end)`
 };
+/** Plan horizon in days, from when the action was created to its due date: 30, 90, 180 or 360. */
+const horizonWhere = (h?: string) => (h === '30' ? sql`(${a.dueDate} - ${a.createdAt}::date) <= 30` : h === '90' ? sql`(${a.dueDate} - ${a.createdAt}::date) between 31 and 90` : h === '180' ? sql`(${a.dueDate} - ${a.createdAt}::date) between 91 and 180` : h === '360' ? sql`(${a.dueDate} - ${a.createdAt}::date) > 180` : undefined);
 
-export async function listActions(ctx: Ctx, q: ListQuery & { caseId?: string; status?: string; assigneeId?: string; overdue?: string; mine?: string }) {
+export async function listActions(ctx: Ctx, q: ListQuery & { caseId?: string; status?: string; assigneeId?: string; overdue?: string; mine?: string; horizon?: string }) {
   allow(ctx, 'actions', 'read');
   const u = need(ctx).user;
   const where = and(caseScope(u), search(q.q, [a.text, a.code, c.code, o.name]),
     q.caseId ? eq(a.caseId, q.caseId) : undefined, q.status ? eq(a.status, q.status) : undefined,
     q.mine === 'true' ? eq(a.assigneeId, u.id) : q.assigneeId ? eq(a.assigneeId, q.assigneeId) : undefined,
-    q.overdue === 'true' ? sql`${a.status} <> 'Done' and ${a.dueDate} < current_date` : undefined);
+    q.overdue === 'true' ? sql`${a.status} <> 'Done' and ${a.dueDate} < current_date` : undefined, horizonWhere(q.horizon));
   const from = (b: any) => b.from(a).innerJoin(c, eq(c.id, a.caseId)).innerJoin(o, eq(o.id, c.orgId));
   return respondList(ctx, 'actions', q,
     (limit, off) => from(ctx.db.select(actionCols)).where(where).orderBy(orderBy(q, { due: a.dueDate, status: a.status, code: a.code, org: o.name }, a.dueDate)).limit(limit).offset(off),
     async () => Number((await from(ctx.db.select({ n: countOf })).where(where))[0].n),
-    { filename: 'actions.csv', columns: [['code', 'Action'], ['caseCode', 'Case'], ['org', 'Organisation'], ['text', 'Action'], ['ownerRole', 'Owner role'], ['assignee', 'Assignee'], ['dueDate', 'Due'], ['status', 'Status'], ['overdue', 'Overdue'], ['evidenceNote', 'Evidence note']].map(([key, label]) => ({ key, label })) });
+    { filename: 'actions.csv', columns: [['code', 'Action'], ['caseCode', 'Case'], ['org', 'Organisation'], ['text', 'Action'], ['ownerRole', 'Owner role'], ['assignee', 'Assignee'], ['horizon', 'Plan horizon (days)'], ['dueDate', 'Due'], ['status', 'Status'], ['overdue', 'Overdue'], ['evidenceNote', 'Evidence note']].map(([key, label]) => ({ key, label })) });
 }
 
 export async function createAction(ctx: Ctx, caseId: string, b: { text: string; ownerRole: 'OWNER' | 'COACH' | 'CONSULTANT'; dueDate: string; assigneeId?: string | null }) {
