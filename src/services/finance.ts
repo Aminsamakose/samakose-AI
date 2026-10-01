@@ -186,6 +186,8 @@ type PsFetch = (path: string, init?: { method?: string; body?: unknown }) => Pro
 let psOverride: PsFetch | null = null;
 export const setPaystackTransport = (f: PsFetch | null) => { psOverride = f; };
 export const paystackIsMock = () => !psOverride && !env.paystackSecret;
+/** In production the labelled test checkout is refused unless ALLOW_MOCK_PAYMENTS=1, so a missing key can never let invoices be marked paid. */
+const mockForbidden = () => paystackIsMock() && env.isProd && process.env.ALLOW_MOCK_PAYMENTS !== '1';
 const psFetch: PsFetch = async (path, init) => {
   if (psOverride) return psOverride(path, init);
   const res = await fetch('https://api.paystack.co' + path, { method: init?.method ?? 'GET', headers: { authorization: `Bearer ${env.paystackSecret}`, 'content-type': 'application/json' }, body: init?.body ? JSON.stringify(init.body) : undefined, signal: AbortSignal.timeout(20_000) });
@@ -205,6 +207,7 @@ export async function startPayment(ctx: Ctx, invoiceId: string) {
   const [i] = await ctx.db.select().from(inv).where(eq(inv.id, invoiceId)).limit(1);
   if (!i || (u.role === 'OWNER' && i.orgId !== u.orgId)) throw notFound('Invoice not found');
   if (!['Sent', 'Overdue'].includes(i.status)) throw unprocessable(`A ${i.status.toLowerCase()} invoice cannot be paid`);
+  if (mockForbidden()) throw new ApiError(503, 'not_configured', 'Online payments are not configured. Set PAYSTACK_SECRET_KEY or record a manual payment.');
   const reference = `SK-${i.code}-${randomToken(5)}`.replace(/[^\w-]/g, '');
   const amount = Number(i.amountGhs);
   let url: string;
@@ -255,7 +258,7 @@ export async function verifyPayment(ctx: Ctx, reference: string) {
 
 /** Development and demo only: complete a pending payment when no Paystack key is configured. */
 export async function mockComplete(ctx: Ctx, reference: string) {
-  if (!paystackIsMock()) throw forbidden('Mock payments are only available when no payment key is configured');
+  if (!paystackIsMock() || mockForbidden()) throw forbidden('Mock payments are not available here');
   allow(ctx, 'payments', 'create');
   const { p } = await ownPayment(ctx, reference);
   if (p.status !== 'Pending') throw unprocessable(`This payment is already ${p.status.toLowerCase()}`);
