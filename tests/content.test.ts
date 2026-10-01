@@ -177,3 +177,27 @@ describe('built-in text', () => {
     }
   });
 });
+
+describe('menu and brand colour', () => {
+  it('refuses a brand colour that white text cannot be read on, and accepts a dark one', async () => {
+    const doc = (await api(manager).get('/admin/content/kind/brand')).data.items[0];
+    const light = await api(manager).put(`/admin/content/${doc.id}`, { data: { ...doc.data, primaryColour: '#c6f26b' } });
+    expect(light.status).toBe(400); expect(light.error.details.primaryColour).toMatch(/contrast/i);
+    expect((await api(manager).put(`/admin/content/${doc.id}`, { data: { ...doc.data, primaryColour: 'green' } })).status).toBe(400);
+    const dark = await api(manager).put(`/admin/content/${doc.id}`, { data: { ...doc.data, primaryColour: '#0B3D91' } });
+    expect(dark.status).toBe(200); expect(dark.data.data.primaryColour).toBe('#0b3d91');
+    await api(manager).put(`/admin/content/${doc.id}`, { data: { ...doc.data, primaryColour: '' } });
+  });
+  it('validates the menu and publishes it to the public loader', async () => {
+    const doc = (await api(manager).get('/admin/content/kind/navigation')).data.items[0];
+    const bad = (m: string) => api(manager).put(`/admin/content/${doc.id}`, { data: { menu: m } });
+    expect((await bad('Pricing')).status).toBe(400);
+    expect((await bad('Evil | javascript:alert(1)')).status).toBe(400);
+    expect((await bad(Array.from({ length: 11 }, (_, i) => `L${i} | /p${i}`).join('\n'))).status).toBe(400);
+    expect((await bad('Home | /\nPricing | /pricing\nPartners | https://example.org/partners')).status).toBe(200);
+    expect((await api(manager).post(`/admin/content/${doc.id}/publish`, {})).status).toBe(200);
+    const nav = (await loadForTest()).nav;
+    expect(nav.map((n) => n.label)).toEqual(['Home', 'Pricing', 'Partners']);
+    await bad(doc.data.menu); await api(manager).post(`/admin/content/${doc.id}/publish`, {});
+  });
+});

@@ -2,7 +2,7 @@
  * What can be edited on the public website, and the rules each piece must follow.
  * Pure data and checks, so the server (to validate) and the admin screens (to draw forms) share one definition.
  */
-export type FieldType = 'text' | 'textarea' | 'url' | 'email' | 'bool' | 'select' | 'date' | 'markdown';
+export type FieldType = 'text' | 'textarea' | 'url' | 'email' | 'bool' | 'select' | 'date' | 'markdown' | 'colour';
 export type Field = {
   key: string; label: string; type: FieldType; max?: number; required?: boolean; hint?: string;
   options?: { value: string; label: string }[];
@@ -34,6 +34,31 @@ export const DEFAULT_SECTIONS: HomeSection[] = HOME_SECTIONS.map((s) => ({ id: s
 
 const url = (key: string, label: string, hint?: string): Field => ({ key, label, type: 'url', max: 300, hint });
 
+const isUrl = (v: string) => /^https:\/\/[^\s]+\.[^\s]+$/i.test(v) || /^\/[a-z0-9\-/_#?=&.]*$/i.test(v);
+export const DEFAULT_MENU = ['Platform | /platform', 'Solutions | /solutions', 'Impact | /impact', 'Resources | /resources', 'Pricing | /pricing', 'About | /about', 'Contact | /contact'].join('\n');
+
+/** Reads the menu text into links. Returns the links and any problem found, so the editor can say exactly what is wrong. */
+export function parseMenu(text: string): { items: { label: string; href: string }[]; error?: string } {
+  const items: { label: string; href: string }[] = [];
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+  if (lines.length > 10) return { items, error: 'Use at most 10 links' };
+  for (const [i, l] of lines.entries()) {
+    const [label, href, ...rest] = l.split('|').map((x) => x.trim());
+    if (!label || !href || rest.length) return { items, error: `Line ${i + 1}: write it as Label | /page` };
+    if (label.length > 30) return { items, error: `Line ${i + 1}: keep the label under 30 characters` };
+    if (!isUrl(href)) return { items, error: `Line ${i + 1}: the address must be a page such as /pricing or a full https:// address` };
+    items.push({ label, href });
+  }
+  return { items };
+}
+
+/** WCAG contrast ratio between two #rrggbb colours. */
+export function contrastRatio(a: string, b: string): number {
+  const lum = (h: string) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
+  return (x + 0.05) / (y + 0.05);
+}
+
 export const KINDS: Kind[] = [
   {
     id: 'brand', label: 'Brand and identity', plural: 'Brand and identity', group: 'site_settings', singleton: true,
@@ -42,9 +67,16 @@ export const KINDS: Kind[] = [
       { key: 'siteName', label: 'Site name', type: 'text', max: 60, required: true },
       { key: 'tagline', label: 'Tagline', type: 'text', max: 100, hint: 'Shown beside the logo.' },
       { key: 'browserTitle', label: 'Browser title (home page)', type: 'text', max: 70, required: true },
-      { key: 'footerBlurb', label: 'Footer description', type: 'textarea', max: 240 }
+      { key: 'footerBlurb', label: 'Footer description', type: 'textarea', max: 240 },
+      { key: 'primaryColour', label: 'Main brand colour (light theme)', type: 'colour', hint: 'Used for buttons, headers and the footer. White text sits on it, so it must be dark enough to read: contrast of at least 4.5 to 1. Leave empty for the standard green.' }
     ],
-    defaults: { siteName: 'Samakose', tagline: 'The Business Doctor', browserTitle: 'Samakose | The Business Doctor', footerBlurb: 'Diagnose, prescribe and track the health of enterprises across Africa. Built in Tamale, Northern Ghana.' }
+    defaults: { siteName: 'Samakose', tagline: 'The Business Doctor', primaryColour: '', browserTitle: 'Samakose | The Business Doctor', footerBlurb: 'Diagnose, prescribe and track the health of enterprises across Africa. Built in Tamale, Northern Ghana.' }
+  },
+  {
+    id: 'navigation', label: 'Menu', plural: 'Menu and navigation', group: 'site_settings', singleton: true,
+    blurb: 'The links in the website header and footer, in order. The Sign in and Start buttons are always shown.',
+    fields: [{ key: 'menu', label: 'Menu links (one per line)', type: 'textarea', max: 600, required: true, hint: 'Write each as Label | /page, for example Pricing | /pricing. Up to 10 links. Use a full https:// address for another website.' }],
+    defaults: { menu: DEFAULT_MENU }
   },
   {
     id: 'contact', label: 'Contact details', plural: 'Contact details', group: 'site_settings', singleton: true,
@@ -166,7 +198,6 @@ export const KINDS: Kind[] = [
 export const KIND_BY_ID: Record<string, Kind> = Object.fromEntries(KINDS.map((k) => [k.id, k]));
 export const SECTION_IDS = new Set<string>(HOME_SECTIONS.map((s) => s.id));
 
-const isUrl = (v: string) => /^https:\/\/[^\s]+\.[^\s]+$/i.test(v) || /^\/[a-z0-9\-/_#?=&.]*$/i.test(v);
 
 /** Checks and cleans one document's data against its kind. Returns the clean data or per-field messages. */
 export function validateData(kind: Kind, input: unknown, opts: { forPublish?: boolean } = {}): { ok: true; data: Record<string, unknown> } | { ok: false; fields: Record<string, string> } {
@@ -181,6 +212,7 @@ export function validateData(kind: Kind, input: unknown, opts: { forPublish?: bo
     if (!v) { if (f.required && opts.forPublish) errs[f.key] = 'This is required before publishing'; out[f.key] = ''; continue; }
     if (f.type === 'url' && !isUrl(v)) errs[f.key] = 'Enter a full https:// address' + (f.key === 'linkHref' ? ' or a page such as /pricing' : '');
     else if (f.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) errs[f.key] = 'Enter a valid email address';
+    else if (f.type === 'colour') { if (!/^#[0-9a-fA-F]{6}$/.test(v)) errs[f.key] = 'Use a six-digit colour such as #0f4a3f'; else if (contrastRatio(v, '#ffffff') < 4.5) errs[f.key] = `White text would be hard to read on this colour (contrast ${contrastRatio(v, '#ffffff').toFixed(1)} to 1). Choose a darker shade, at least 4.5 to 1.`; else out[f.key] = v.toLowerCase(); continue; }
     else if (f.type === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) errs[f.key] = 'Use the format YYYY-MM-DD';
     else if (f.key === 'slug' && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v)) errs[f.key] = 'Use lower-case words joined by hyphens';
     out[f.key] = v;
@@ -192,6 +224,7 @@ export function validateData(kind: Kind, input: unknown, opts: { forPublish?: bo
     for (const d of DEFAULT_SECTIONS) if (!seen.has(d.id)) secs.push({ ...d });
     out.sections = secs;
   }
+  if (kind.id === 'navigation' && out.menu) { const m = parseMenu(String(out.menu)); if (m.error) errs.menu = m.error; }
   if (kind.id === 'announcement' && out.enabled === true && opts.forPublish && !out.text) errs.text = 'Write the message before showing the bar';
   if (kind.id === 'announcement' && out.linkHref && !out.linkLabel) errs.linkLabel = 'Add a label for the link';
   if (opts.forPublish) for (const g of kind.gates ?? []) if (out[g.key] !== true) errs[g.key] = g.message;

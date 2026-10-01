@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { api, dateTime, errText } from '@/lib/client/api';
 import { Async, Badge, Button, Card, ConfirmButton, Empty, Field, FormError, Modal, useApi, useForm, useToast } from '@/components/ui';
-import { HOME_SECTIONS, type Field as FieldDef, type HomeSection, type Kind } from '@/domain/content-kinds';
+import { HOME_SECTIONS, contrastRatio, type Field as FieldDef, type HomeSection, type Kind } from '@/domain/content-kinds';
 import type { useMe } from '@/components/admin/common';
 type Me = ReturnType<typeof useMe>;
 
@@ -64,6 +64,15 @@ export function KindScreen({ kindId, me }: { kindId: string; me: Me }) {
 /* ------------------------------------------------------------------ form pieces */
 function FieldInput({ f, value, onChange, p, disabled }: { f: FieldDef; value: any; onChange: (v: any) => void; p: any; disabled: boolean }) {
   if (f.type === 'bool') return <label className="row" style={{ gap: 8 }}><input type="checkbox" {...p} checked={value === true} disabled={disabled} onChange={(e) => onChange(e.target.checked)} /><span>{f.label}</span></label>;
+  if (f.type === 'colour') {
+    const ok = /^#[0-9a-fA-F]{6}$/.test(value ?? '');
+    const ratio = ok ? contrastRatio(value, '#ffffff') : 0;
+    return <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
+      <input type="color" aria-label={`${f.label}, colour picker`} value={ok ? value : '#0f4a3f'} disabled={disabled} onChange={(e) => onChange(e.target.value)} style={{ width: 48, height: 40, padding: 2 }} />
+      <input {...p} type="text" value={value ?? ''} placeholder="#0f4a3f" maxLength={7} disabled={disabled} onChange={(e) => onChange(e.target.value)} style={{ maxWidth: 140 }} />
+      {ok && <span className="row" style={{ gap: 8 }}><span style={{ background: value, color: '#fff', padding: '4px 12px', borderRadius: 99, fontWeight: 600 }}>Sample button</span><Badge tone={ratio >= 4.5 ? 'ok' : 'bad'}>{`Contrast ${ratio.toFixed(1)} to 1${ratio >= 4.5 ? ', readable' : ', too light'}`}</Badge></span>}
+    </div>;
+  }
   if (f.type === 'textarea' || f.type === 'markdown') return <textarea {...p} rows={f.type === 'markdown' ? 14 : 4} value={value ?? ''} disabled={disabled} onChange={(e) => onChange(e.target.value)} />;
   return <input {...p} type={f.type === 'email' ? 'email' : f.type === 'date' ? 'date' : 'text'} inputMode={f.type === 'url' ? 'url' : undefined} value={value ?? ''} disabled={disabled} onChange={(e) => onChange(e.target.value)} />;
 }

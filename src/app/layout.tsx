@@ -22,6 +22,14 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1, colo
 
 const NO_FLASH = "try{var t=localStorage.getItem('sk-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en-GH" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: NO_FLASH }} /></head><body>{children}</body></html>;
+/** An administrator's brand colour, applied to the light theme only. The dark theme keeps its own tuned colours. */
+function brandCss(hex: unknown): string {
+  if (typeof hex !== 'string' || !/^#[0-9a-f]{6}$/.test(hex)) return '';
+  const rule = `--brand:${hex};--forest:${hex};--brand-soft:color-mix(in srgb,${hex} 14%,#fff)`;
+  return `@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){${rule}}}:root[data-theme="light"]{${rule}}`;
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const css = brandCss((await getSite()).brand.primaryColour);
+  return <html lang="en-GH" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: NO_FLASH }} />{css && <style dangerouslySetInnerHTML={{ __html: css }} />}</head><body>{children}</body></html>;
 }

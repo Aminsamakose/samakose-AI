@@ -8,7 +8,7 @@ import { ThemeToggle } from '../ThemeToggle';
 import { ButtonLink } from './ui';
 import { NAV, LOGIN_HREF, PORTAL_HREF, REGISTER_HREF } from './config';
 
-export function SiteHeader() {
+export function SiteHeader({ nav = NAV }: { nav?: { label: string; href: string }[] }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [signedIn, setSignedIn] = useState(false);

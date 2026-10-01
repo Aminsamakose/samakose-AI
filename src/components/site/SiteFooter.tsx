@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Logo } from './Logo';
 import { Container } from './ui';
-import { NAV, LOGIN_HREF, REGISTER_HREF } from './config';
+import { LOGIN_HREF, REGISTER_HREF } from './config';
 import { contactOf, socialLinks, type SiteContent } from '@/lib/site-content';
 
 export function SiteFooter({ site }: { site: SiteContent }) {
@@ -19,7 +19,7 @@ export function SiteFooter({ site }: { site: SiteContent }) {
           </div>
           <nav aria-label="Explore" className="flex flex-col gap-2 text-sm">
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-lime">Explore</p>
-            {NAV.map((n) => <Link key={n.href} href={n.href} className={a}>{n.label}</Link>)}
+            {site.nav.map((n) => <Link key={n.href} href={n.href} className={a}>{n.label}</Link>)}
             <Link href="/#how-it-works" className={a}>How it works</Link>
           </nav>
           <nav aria-label="Account" className="flex flex-col gap-2 text-sm">

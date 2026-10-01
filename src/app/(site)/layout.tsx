@@ -11,7 +11,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <a href="#main" className="skip">Skip to content</a>
       <ScrollProgress />
       <AnnouncementBar a={site.announcement} />
-      <SiteHeader />
+      <SiteHeader nav={site.nav} />
       <main id="main" className="flex-1">{children}</main>
       <SiteFooter site={site} />
     </div>

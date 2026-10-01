@@ -1,7 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { inArray } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
-import { KIND_BY_ID, validateData, phoneHref, type HomeSection, DEFAULT_SECTIONS } from '@/domain/content-kinds';
+import { KIND_BY_ID, validateData, phoneHref, parseMenu, DEFAULT_MENU, type HomeSection, DEFAULT_SECTIONS } from '@/domain/content-kinds';
 import { SITE } from '@/components/site/config';
 
 type Rec = Record<string, any>;
@@ -11,14 +11,14 @@ export type Partner = { name: string; website: string; note: string };
 export type Stat = { value: string; label: string; source: string };
 export type PublicArticle = { slug: string; title: string; summary: string; date: string; author: string; body: string };
 export type SiteContent = {
-  brand: Rec; contact: Rec; social: Rec; announcement: Rec; seo: Rec; home: Rec & { sections: HomeSection[] };
+  brand: Rec; navigation: Rec; nav: { label: string; href: string }[]; contact: Rec; social: Rec; announcement: Rec; seo: Rec; home: Rec & { sections: HomeSection[] };
   faqs: Faq[]; testimonials: Testimonial[]; partners: Partner[]; stats: Stat[]; articles: PublicArticle[];
 };
 
 const D = (id: string): Rec => ({ ...KIND_BY_ID[id].defaults });
 
 export function defaultSite(): SiteContent {
-  return { brand: D('brand'), contact: D('contact'), social: D('social'), announcement: D('announcement'), seo: D('seo'), home: D('home') as any, faqs: [], testimonials: [], partners: [], stats: [], articles: [] };
+  return { brand: D('brand'), navigation: D('navigation'), nav: parseMenu(DEFAULT_MENU).items, contact: D('contact'), social: D('social'), announcement: D('announcement'), seo: D('seo'), home: D('home') as any, faqs: [], testimonials: [], partners: [], stats: [], articles: [] };
 }
 
 /** What a visitor sees: published copies, plus anything whose scheduled time has passed. Gated items (consent, verification) are checked again here. */
@@ -44,6 +44,8 @@ async function load(): Promise<SiteContent> {
   site.partners = of('partner') as Partner[];
   site.stats = of('stat') as Stat[];
   site.articles = (of('article') as PublicArticle[]).sort((a, b) => b.date.localeCompare(a.date));
+  const menu = parseMenu(String(site.navigation.menu ?? ''));
+  site.nav = menu.error || !menu.items.length ? parseMenu(DEFAULT_MENU).items : menu.items;
   if (!Array.isArray(site.home.sections) || !site.home.sections.length) site.home.sections = DEFAULT_SECTIONS;
   return site;
 }
