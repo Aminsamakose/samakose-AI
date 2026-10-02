@@ -7,6 +7,8 @@ import * as kobo from '@/services/kobo';
 import * as dash from '@/services/dashboards';
 import * as adm from '@/services/admin';
 import * as fw from '@/services/frameworks';
+import * as ag from '@/services/agents';
+import { AGENT_STATUSES } from '@/domain/agents';
 import * as sw from '@/services/switches';
 import * as sys from '@/services/system';
 import * as bill from '@/services/billing';
@@ -87,6 +89,15 @@ defineRoute({ method: 'POST', path: '/settings/frameworks/:code/versions', tag: 
 defineRoute({ method: 'PATCH', path: '/settings/frameworks/versions/:id', tag: AD, summary: 'Edit a draft version or its evidence trail', permission: ['frameworks', 'edit'], body: fwDraft.partial(), handler: ({ ctx, params, body }) => fw.updateDraft(ctx, params.id, body as never) });
 defineRoute({ method: 'DELETE', path: '/settings/frameworks/versions/:id', tag: AD, summary: 'Discard a draft version', permission: ['frameworks', 'edit'], handler: ({ ctx, params }) => fw.discardDraft(ctx, params.id) });
 defineRoute({ method: 'POST', path: '/settings/frameworks/versions/:id/publish', tag: AD, summary: 'Approve and publish a draft version', permission: ['frameworks', 'approve'], body: z.object({ note: text(5, 600) }), handler: ({ ctx, params, body }) => fw.publishVersion(ctx, params.id, body.note) });
+
+// AI workforce: registry, versions, lifecycle, limits. Administrators only; executives may read.
+const agentLimits = z.object({ requestsPerDay: z.number().int().min(0).optional(), requestsPerMonth: z.number().int().min(0).optional(), tokensPerDay: z.number().int().min(0).optional(), tokensPerMonth: z.number().int().min(0).optional(), alertPct: z.number().int().min(1).max(99).optional(), onLimit: z.enum(['throttle', 'pause']).optional() });
+defineRoute({ method: 'GET', path: '/admin/agents', tag: AD, summary: 'AI agents with status, owner, usage and limits', permission: ['agents', 'read'], handler: ({ ctx }) => ag.listAgents(ctx) });
+defineRoute({ method: 'GET', path: '/admin/agents/:id', tag: AD, summary: 'One agent with versions, recent requests and audit trail', permission: ['agents', 'read'], handler: ({ ctx, params }) => ag.getAgent(ctx, params.id) });
+defineRoute({ method: 'PATCH', path: '/admin/agents/:id', tag: AD, summary: 'Change an agent owner, description or usage limits', permission: ['agents', 'edit'], body: z.object({ ownerId: z.string().uuid().nullable().optional(), name: text(2, 80).optional(), description: text(0, 400).nullable().optional(), purpose: text(0, 400).nullable().optional(), limits: agentLimits.optional() }), handler: ({ ctx, params, body }) => ag.updateAgent(ctx, params.id, body as never) });
+defineRoute({ method: 'POST', path: '/admin/agents/:id/versions', tag: AD, summary: 'Create a new agent version (prompt, model or configuration)', permission: ['agents', 'edit'], body: z.object({ prompt: z.string().max(20000).optional(), model: z.string().max(80).nullable().optional(), config: z.record(z.string(), z.any()).optional(), note: text(5, 400) }), handler: async ({ ctx, params, body }) => status(201, await ag.createVersion(ctx, params.id, body as never)) });
+defineRoute({ method: 'POST', path: '/admin/agents/:id/current-version', tag: AD, summary: 'Make a version the one the agent runs', permission: ['agents', 'edit'], body: z.object({ versionId: z.string().uuid(), reason: text(5, 400) }), handler: ({ ctx, params, body }) => ag.setCurrentVersion(ctx, params.id, body.versionId, body.reason) });
+defineRoute({ method: 'POST', path: '/admin/agents/:id/status', tag: AD, summary: 'Move an agent through its lifecycle, pause, resume or disable it', permission: ['agents', 'edit'], body: z.object({ to: z.enum([...AGENT_STATUSES, 'Resume']), reason: text(5, 400) }), handler: ({ ctx, params, body }) => ag.changeStatus(ctx, params.id, body as never) });
 defineRoute({ method: 'POST', path: '/settings/questions', tag: AD, summary: 'Add a question', permission: ['settings', 'create'], body: z.object({ code: z.string().trim().regex(/^Q\d{2,3}$/, 'Use a code like Q19'), dimension: text(3, 60), text: text(5, 300), weight: z.number().int().min(1).max(5), sort: z.number().int().optional() }), handler: async ({ ctx, body }) => status(201, await adm.createQuestion(ctx, body)) });
 defineRoute({ method: 'PATCH', path: '/settings/questions/:id', tag: AD, summary: 'Edit or retire a question', permission: ['settings', 'edit'], body: z.object({ text: text(5, 300).optional(), weight: z.number().int().min(1).max(5).optional(), sort: z.number().int().optional(), active: z.boolean().optional(), dimension: text(3, 60).optional() }), handler: ({ ctx, params, body }) => adm.updateQuestion(ctx, params.id, body) });
 defineRoute({ method: 'GET', path: '/settings/library', tag: AD, summary: 'Approved intervention library', permission: ['settings', 'read'], handler: ({ ctx }) => adm.listLibrary(ctx) });

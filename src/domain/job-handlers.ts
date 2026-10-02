@@ -7,7 +7,7 @@ import { emitEvent } from './events';
 import { notifyUsers } from './notify';
 import { audit } from '@/lib/audit';
 import { sendMail } from '@/lib/mail';
-import { NonRetryable, runAgent, SYSTEM } from '@/services/ai';
+import { AgentBlocked, NonRetryable, runAgent } from '@/services/ai';
 import { latestDiagnosis, latestScore, loadRules, systemCtx } from '@/services/common';
 import { validateDiagnosis, validatePrescription } from './logic';
 import { mockBrief, mockDiagnosis, mockPrescription, mockReport, type BriefContext, type DiagnosisContext, type PrescriptionContext, type ReportContext } from './mockai';
@@ -18,7 +18,7 @@ async function fail(caseId: string | null, requestedBy: string | null, what: str
   await tx(async (t) => {
     const ctx = systemCtx(t, 'job');
     if (caseId) await emitEvent(ctx, 'SystemError', { caseId, payload: { message: `${what} failed: ${(e as Error).message}` } });
-    if (requestedBy) await notifyUsers(ctx, [requestedBy], { kind: 'AiFailed', title: `${what} could not be prepared`, body: 'Try again, or write it by hand.', link: caseId ? `/cases/${caseId}` : undefined });
+    if (requestedBy) await notifyUsers(ctx, [requestedBy], { kind: 'AiFailed', title: `${what} could not be prepared`, body: e instanceof AgentBlocked ? `${e.message}. Write it by hand, or ask an administrator.` : 'Try again, or write it by hand.', link: caseId ? `/cases/${caseId}` : undefined });
   });
 }
 
@@ -47,7 +47,7 @@ registerJob('ai_diagnosis', async ({ caseId }, job) => {
   const ctxData = await diagnosisContext(caseId);
   let out;
   try {
-    out = await runAgent({ agent: 'diagnosis', caseId, requestedBy: job.requestedBy, system: SYSTEM.diagnosis, context: ctxData, validate: (o) => validateDiagnosis(o, ctxData.allowed_evidence_ids), mock: () => mockDiagnosis(ctxData) });
+    out = await runAgent({ agent: 'diagnosis', caseId, requestedBy: job.requestedBy, context: ctxData, validate: (o) => validateDiagnosis(o, ctxData.allowed_evidence_ids), mock: () => mockDiagnosis(ctxData) });
   } catch (e) { if (e instanceof NonRetryable) await fail(caseId, job.requestedBy, 'The diagnosis', e); throw e; }
   const o: any = out.output;
   return tx(async (t) => {
@@ -59,7 +59,7 @@ registerJob('ai_diagnosis', async ({ caseId }, job) => {
       await t.insert(schema.risks).values(o.risks.map((r: any) => ({ caseId, text: r.text, severity: r.severity })));
       await emitEvent(ctx, 'RiskDetected', { caseId, payload: { count: o.risks.length } });
     }
-    await audit(ctx, 'diagnosis.drafted', 'diagnosis', d.id, undefined, { version: d.version, ai: out.requestCode, requestedBy: job.requestedBy }, caseId);
+    await audit(ctx, 'diagnosis.drafted', 'diagnosis', d.id, undefined, { version: d.version, ai: out.requestCode, requestedBy: job.requestedBy }, caseId, 'HYBRID');
     if (job.requestedBy) await notifyUsers(ctx, [job.requestedBy], { kind: 'AiDone', title: 'The diagnosis draft is ready to review', link: `/cases/${caseId}` });
     return { diagnosisId: d.id, code: d.code };
   });
@@ -81,14 +81,14 @@ registerJob('ai_prescription', async ({ caseId }, job) => {
   };
   let out;
   try {
-    out = await runAgent({ agent: 'prescription', caseId, requestedBy: job.requestedBy, system: SYSTEM.prescription, context, validate: (o) => validatePrescription(o, lib.map((l) => l.code), rules), mock: () => mockPrescription(context) });
+    out = await runAgent({ agent: 'prescription', caseId, requestedBy: job.requestedBy, context, validate: (o) => validatePrescription(o, lib.map((l) => l.code), rules), mock: () => mockPrescription(context) });
   } catch (e) { if (e instanceof NonRetryable) await fail(caseId, job.requestedBy, 'The prescription', e); throw e; }
   return tx(async (t) => {
     const ctx = systemCtx(t, 'job');
     const [prev] = await t.select().from(schema.prescriptions).where(eq(schema.prescriptions.caseId, caseId)).orderBy(desc(schema.prescriptions.version)).limit(1);
     if (prev && ['DRAFT', 'IN REVIEW', 'RETURNED'].includes(prev.status)) throw new NonRetryable('An open prescription already exists for this case');
     const [p] = await t.insert(schema.prescriptions).values({ caseId, diagnosisId: dgn.id, status: 'DRAFT', items: (out.output as any).items, aiRequestId: out.requestId, version: (prev?.version ?? 0) + 1, supersedesId: prev?.id ?? null, createdBy: job.requestedBy }).returning();
-    await audit(ctx, 'prescription.drafted', 'prescription', p.id, undefined, { version: p.version, ai: out.requestCode, requestedBy: job.requestedBy }, caseId);
+    await audit(ctx, 'prescription.drafted', 'prescription', p.id, undefined, { version: p.version, ai: out.requestCode, requestedBy: job.requestedBy }, caseId, 'HYBRID');
     if (job.requestedBy) await notifyUsers(ctx, [job.requestedBy], { kind: 'AiDone', title: 'The prescription draft is ready to check', body: 'Edit if needed, then submit it for review.', link: `/cases/${caseId}` });
     return { prescriptionId: p.id, code: p.code };
   });
@@ -112,7 +112,7 @@ registerJob('ai_brief', async ({ sessionId, caseId }, job) => {
   };
   let out;
   try {
-    out = await runAgent({ agent: 'brief', caseId, requestedBy: job.requestedBy, system: SYSTEM.brief, context: { ...context, org: 'the business' }, validate: (o) => (typeof o?.brief === 'string' && o.brief.length > 20 ? [] : ['brief missing']), mock: () => mockBrief(context) });
+    out = await runAgent({ agent: 'brief', caseId, requestedBy: job.requestedBy, context: { ...context, org: 'the business' }, validate: (o) => (typeof o?.brief === 'string' && o.brief.length > 20 ? [] : ['brief missing']), mock: () => mockBrief(context) });
   } catch (e) { if (e instanceof NonRetryable) await fail(caseId, job.requestedBy, 'The coaching brief', e); throw e; }
   await db().update(schema.coachingSessions).set({ brief: (out.output as any).brief, updatedAt: new Date() }).where(eq(schema.coachingSessions.id, sessionId));
   return { sessionId };
@@ -140,7 +140,7 @@ registerJob('ai_report', async ({ caseId }, job) => {
   };
   let out;
   try {
-    out = await runAgent({ agent: 'report', caseId, requestedBy: job.requestedBy, system: SYSTEM.report, context: { ...context, org: 'the business' }, mock: () => mockReport(context),
+    out = await runAgent({ agent: 'report', caseId, requestedBy: job.requestedBy, context: { ...context, org: 'the business' }, mock: () => mockReport(context),
       validate: (o) => (Array.isArray(o?.sections) && o.sections.length && o.sections.every((s: any) => s?.heading && s?.body) ? [] : ['sections must be a list of heading and body']) });
   } catch (e) { if (e instanceof NonRetryable) await fail(caseId, job.requestedBy, 'The report', e); throw e; }
   const backed = Math.round(((score.evidenceShare['Verified'] ?? 0) + (score.evidenceShare['Document-supported'] ?? 0)) * 100);
@@ -151,7 +151,7 @@ registerJob('ai_report', async ({ caseId }, job) => {
     if (wording['text.report_closing'].trim()) sections.push({ heading: 'About this report', body: wording['text.report_closing'].trim() });
     const title = wording['text.report_title'].replace(/\{\{\s*organisation\s*\}\}/g, org.name).trim() || `Progress report for ${org.name}`;
     const [r] = await t.insert(schema.reports).values({ caseId, title, content: sections, basis: { verified: backed, unverified: 100 - backed }, aiRequestId: out.requestId, createdBy: job.requestedBy }).returning();
-    await audit(ctx, 'report.drafted', 'report', r.id, undefined, { ai: out.requestCode, requestedBy: job.requestedBy }, caseId);
+    await audit(ctx, 'report.drafted', 'report', r.id, undefined, { ai: out.requestCode, requestedBy: job.requestedBy }, caseId, 'HYBRID');
     if (job.requestedBy) await notifyUsers(ctx, [job.requestedBy], { kind: 'AiDone', title: 'The report draft is ready', body: 'Edit if needed. A reviewer releases it to the owner.', link: `/cases/${caseId}` });
     return { reportId: r.id, code: r.code };
   });

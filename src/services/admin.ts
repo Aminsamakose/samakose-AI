@@ -1,3 +1,4 @@
+import { agentsSummary } from './agents';
 import { and, asc, desc, eq, gte, lte, sql } from 'drizzle-orm';
 import { storage as fileStorage } from '@/lib/storage';
 import { db, schema } from '@/db/client';
@@ -235,7 +236,11 @@ export async function commandCentre(ctx: Ctx) {
   if (c.failed_emails > 0) alerts.push({ tone: 'bad', text: `${c.failed_emails} email${c.failed_emails === 1 ? '' : 's'} could not be sent`, href: '/admin/system' });
   if (c.content_in_review > 0) alerts.push({ tone: 'info', text: `${c.content_in_review} website item${c.content_in_review === 1 ? '' : 's'} waiting for review`, href: '/admin/website' });
   if (c.new_enquiries > 0) alerts.push({ tone: 'info', text: `${c.new_enquiries} new website enquir${c.new_enquiries === 1 ? 'y' : 'ies'}`, href: '/admin/website?tab=enquiries' });
+  const agents = await agentsSummary(ctx);
+  if (agents.paused.length) alerts.push({ tone: 'warn', text: `${agents.paused.length} AI agent${agents.paused.length === 1 ? ' is' : 's are'} paused: ${agents.paused.join(', ')}`, href: '/admin/agents' });
+  if (agents.limited.length) alerts.push({ tone: 'warn', text: `AI usage is near or over its limit for ${agents.limited.join(', ')}`, href: '/admin/agents' });
+  if (agents.blocked24 > 0) alerts.push({ tone: 'info', text: `${agents.blocked24} AI task${agents.blocked24 === 1 ? ' was' : 's were'} refused in the last 24 hours`, href: '/admin/agents' });
   const mailMode = mailConfigured() ? 'smtp' : 'log-only';
   const store = await fileStorage().health();
-  return { counts: c, alerts, recent, health: { database: latency, email: mailMode, storage: store, https: env.appUrl.startsWith('https://') } };
+  return { counts: c, agents, alerts, recent, health: { database: latency, email: mailMode, storage: store, https: env.appUrl.startsWith('https://') } };
 }

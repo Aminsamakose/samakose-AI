@@ -12,6 +12,7 @@ What is verified, where, and what is not yet verified. "Not verified" is stated 
 | Framework versions and immutability | `tests/frameworks.test.ts` | Version link, trigger immutability, publish gating, role limits | None known |
 | Business Health Record | `tests/frameworks.test.ts` | Scope, owner access, funder denial, change reasons | No browser test of the page yet |
 | AI drafts | `tests/journey.test.ts`, `tests/integrations.test.ts`, `tests/ai` | Mock model, injected transport, four synthetic cases with governance checks (no invented figures, no certification claims, evidence ids only from the supplied list) | Not run against the live Claude API. `npm run ai:eval` is ready and waits for a Claude key |
+| AI agent governance | `tests/agents.test.ts`, `e2e/agents.ts` | Lifecycle moves, live-model gate, autonomy cap, version freeze, pause and resume, refused tasks recorded and the requester told, usage limits, role limits | No agent has passed a live evaluation, so the Active path is tested only with a recorded test pass |
 | Payments | `tests/integrations.test.ts`, `pricing.test.ts` | Mock mode and stubbed transport | Not run against live Paystack |
 | Website content and pricing display | `tests/content.test.ts`, `pricing.test.ts` | Automated | Content review is a human task |
 | Browser journeys | `npm run test:e2e` | Playwright journeys at desktop and phone width | Not part of `npm test`; run before releases |

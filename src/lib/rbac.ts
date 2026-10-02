@@ -10,7 +10,7 @@ export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
   'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments',
-  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks'
+  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents'
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -25,12 +25,14 @@ const ADMIN: Grants = {
   audit: [R, X], settings: [R, C, E, D], dashboard: [R, X], integrations: [R, C, E], inquiries: [R, E, X],
   content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D],
   // Only the administrator can approve a framework version, which is the product sign-off.
-  frameworks: [R, C, E, A]
+  frameworks: [R, C, E, A],
+  // AI agents are managed by the administrator only. Executives can see the workforce.
+  agents: [R, C, E, A]
 };
 export const PERMISSIONS: Record<Role, Grants> = {
   ADMIN,
   EXECUTIVE: {
-    frameworks: [R], organisations: [R, X], programmes: [R, X], cohorts: [R], cases: [R, X], scores: [R], diagnoses: [R], prescriptions: [R], actions: [R],
+    agents: [R], frameworks: [R], organisations: [R, X], programmes: [R, X], cohorts: [R], cases: [R, X], scores: [R], diagnoses: [R], prescriptions: [R], actions: [R],
     kpis: [R], reports: [R, X], contracts: [R], invoices: [R, X], payments: [R], dashboard: [R, X]
   },
   PROGRAMME_MANAGER: {

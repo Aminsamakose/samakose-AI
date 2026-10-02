@@ -3726,7 +3726,7 @@
                     "type": "object",
                     "propertyNames": {
                       "type": "string",
-                      "pattern": "^Q\\d{2,3}$"
+                      "pattern": "^[A-Z0-9][A-Z0-9_-]{1,15}$"
                     },
                     "additionalProperties": {
                       "anyOf": [
@@ -3738,6 +3738,9 @@
                           "properties": {
                             "value": {
                               "type": "number"
+                            },
+                            "notApplicable": {
+                              "type": "boolean"
                             },
                             "evidence": {
                               "type": "string",
@@ -3771,10 +3774,7 @@
                                 }
                               ]
                             }
-                          },
-                          "required": [
-                            "value"
-                          ]
+                          }
                         }
                       ]
                     }
@@ -3843,7 +3843,7 @@
                     "type": "object",
                     "propertyNames": {
                       "type": "string",
-                      "pattern": "^Q\\d{2,3}$"
+                      "pattern": "^[A-Z0-9][A-Z0-9_-]{1,15}$"
                     },
                     "additionalProperties": {
                       "anyOf": [
@@ -3855,6 +3855,9 @@
                           "properties": {
                             "value": {
                               "type": "number"
+                            },
+                            "notApplicable": {
+                              "type": "boolean"
                             },
                             "evidence": {
                               "type": "string",
@@ -3888,10 +3891,7 @@
                                 }
                               ]
                             }
-                          },
-                          "required": [
-                            "value"
-                          ]
+                          }
                         }
                       ]
                     }
@@ -9420,6 +9420,95 @@
                           "type": "integer",
                           "minimum": 1,
                           "maximum": 5
+                        },
+                        "subDimension": {
+                          "type": "string",
+                          "maxLength": 8
+                        },
+                        "responseType": {
+                          "type": "string",
+                          "enum": [
+                            "ANCHORED",
+                            "BANDED",
+                            "YNP",
+                            "FREQ"
+                          ]
+                        },
+                        "anchors": {
+                          "minItems": 5,
+                          "maxItems": 5,
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "maxLength": 240
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "evidence": {
+                          "type": "object",
+                          "properties": {
+                            "requirement": {
+                              "type": "string",
+                              "minLength": 3,
+                              "maxLength": 400
+                            },
+                            "method": {
+                              "type": "string",
+                              "minLength": 3,
+                              "maxLength": 40
+                            },
+                            "examples": {
+                              "maxItems": 5,
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              }
+                            }
+                          },
+                          "required": [
+                            "requirement",
+                            "method"
+                          ]
+                        },
+                        "criticality": {
+                          "type": "string",
+                          "enum": [
+                            "Gate",
+                            "Core",
+                            "Standard"
+                          ]
+                        },
+                        "readiness": {
+                          "maxItems": 4,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 16
+                          }
+                        },
+                        "applies": {
+                          "type": "string",
+                          "maxLength": 120
+                        },
+                        "riskTag": {
+                          "type": "string",
+                          "maxLength": 80
+                        },
+                        "consistencyGroup": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "basis": {
+                          "type": "string",
+                          "maxLength": 40
                         }
                       },
                       "required": [
@@ -9502,6 +9591,118 @@
                         "adaptation"
                       ]
                     }
+                  },
+                  "meta": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "architecture": {
+                            "type": "string",
+                            "maxLength": 200
+                          },
+                          "subDimensions": {
+                            "maxItems": 60,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string",
+                                  "maxLength": 8
+                                },
+                                "domain": {
+                                  "type": "string",
+                                  "maxLength": 8
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 100
+                                },
+                                "dimension": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                "mapping": {}
+                              },
+                              "required": [
+                                "code",
+                                "name",
+                                "dimension"
+                              ]
+                            }
+                          },
+                          "readiness": {
+                            "maxItems": 12,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string",
+                                  "maxLength": 16
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 100
+                                },
+                                "purpose": {
+                                  "type": "string",
+                                  "maxLength": 400
+                                },
+                                "unlocks": {
+                                  "type": "string",
+                                  "maxLength": 600
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "name"
+                              ]
+                            }
+                          },
+                          "consistencyChecks": {
+                            "maxItems": 20,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "maxLength": 12
+                                },
+                                "itemA": {
+                                  "type": "string",
+                                  "maxLength": 16
+                                },
+                                "itemB": {
+                                  "type": "string",
+                                  "maxLength": 16
+                                },
+                                "rule": {
+                                  "type": "string",
+                                  "maxLength": 300
+                                },
+                                "condition": {
+                                  "type": "string",
+                                  "maxLength": 40
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "itemA",
+                                "itemB",
+                                "rule",
+                                "condition"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "note": {
                     "anyOf": [
@@ -9646,6 +9847,95 @@
                           "type": "integer",
                           "minimum": 1,
                           "maximum": 5
+                        },
+                        "subDimension": {
+                          "type": "string",
+                          "maxLength": 8
+                        },
+                        "responseType": {
+                          "type": "string",
+                          "enum": [
+                            "ANCHORED",
+                            "BANDED",
+                            "YNP",
+                            "FREQ"
+                          ]
+                        },
+                        "anchors": {
+                          "minItems": 5,
+                          "maxItems": 5,
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "maxLength": 240
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "evidence": {
+                          "type": "object",
+                          "properties": {
+                            "requirement": {
+                              "type": "string",
+                              "minLength": 3,
+                              "maxLength": 400
+                            },
+                            "method": {
+                              "type": "string",
+                              "minLength": 3,
+                              "maxLength": 40
+                            },
+                            "examples": {
+                              "maxItems": 5,
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              }
+                            }
+                          },
+                          "required": [
+                            "requirement",
+                            "method"
+                          ]
+                        },
+                        "criticality": {
+                          "type": "string",
+                          "enum": [
+                            "Gate",
+                            "Core",
+                            "Standard"
+                          ]
+                        },
+                        "readiness": {
+                          "maxItems": 4,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 16
+                          }
+                        },
+                        "applies": {
+                          "type": "string",
+                          "maxLength": 120
+                        },
+                        "riskTag": {
+                          "type": "string",
+                          "maxLength": 80
+                        },
+                        "consistencyGroup": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "basis": {
+                          "type": "string",
+                          "maxLength": 40
                         }
                       },
                       "required": [
@@ -9728,6 +10018,118 @@
                         "adaptation"
                       ]
                     }
+                  },
+                  "meta": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "architecture": {
+                            "type": "string",
+                            "maxLength": 200
+                          },
+                          "subDimensions": {
+                            "maxItems": 60,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string",
+                                  "maxLength": 8
+                                },
+                                "domain": {
+                                  "type": "string",
+                                  "maxLength": 8
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 100
+                                },
+                                "dimension": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                "mapping": {}
+                              },
+                              "required": [
+                                "code",
+                                "name",
+                                "dimension"
+                              ]
+                            }
+                          },
+                          "readiness": {
+                            "maxItems": 12,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string",
+                                  "maxLength": 16
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 100
+                                },
+                                "purpose": {
+                                  "type": "string",
+                                  "maxLength": 400
+                                },
+                                "unlocks": {
+                                  "type": "string",
+                                  "maxLength": 600
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "name"
+                              ]
+                            }
+                          },
+                          "consistencyChecks": {
+                            "maxItems": 20,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "maxLength": 12
+                                },
+                                "itemA": {
+                                  "type": "string",
+                                  "maxLength": 16
+                                },
+                                "itemB": {
+                                  "type": "string",
+                                  "maxLength": 16
+                                },
+                                "rule": {
+                                  "type": "string",
+                                  "maxLength": 300
+                                },
+                                "condition": {
+                                  "type": "string",
+                                  "maxLength": 40
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "itemA",
+                                "itemB",
+                                "rule",
+                                "condition"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "note": {
                     "anyOf": [
@@ -9815,6 +10217,459 @@
                 },
                 "required": [
                   "note"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/agents": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "AI agents with status, owner, usage and limits",
+        "operationId": "get__admin_agents",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "agents:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/agents/{id}": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "One agent with versions, recent requests and audit trail",
+        "operationId": "get__admin_agents_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "agents:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Change an agent owner, description or usage limits",
+        "operationId": "patch__admin_agents_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "agents:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ownerId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 400
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "purpose": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 400
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "limits": {
+                    "type": "object",
+                    "properties": {
+                      "requestsPerDay": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "requestsPerMonth": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "tokensPerDay": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "tokensPerMonth": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "alertPct": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 99
+                      },
+                      "onLimit": {
+                        "type": "string",
+                        "enum": [
+                          "throttle",
+                          "pause"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/agents/{id}/versions": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Create a new agent version (prompt, model or configuration)",
+        "operationId": "post__admin_agents_id_versions",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "agents:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "prompt": {
+                    "type": "string",
+                    "maxLength": 20000
+                  },
+                  "model": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "config": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
+                  "note": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 400
+                  }
+                },
+                "required": [
+                  "note"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/agents/{id}/current-version": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Make a version the one the agent runs",
+        "operationId": "post__admin_agents_id_current_version",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "agents:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "versionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 400
+                  }
+                },
+                "required": [
+                  "versionId",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/agents/{id}/status": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Move an agent through its lifecycle, pause, resume or disable it",
+        "operationId": "post__admin_agents_id_status",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "agents:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "enum": [
+                      "Draft",
+                      "Configured",
+                      "Testing",
+                      "Evaluation",
+                      "Approval required",
+                      "Active",
+                      "Paused",
+                      "Disabled",
+                      "Archived",
+                      "Resume"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 400
+                  }
+                },
+                "required": [
+                  "to",
+                  "reason"
                 ]
               }
             }

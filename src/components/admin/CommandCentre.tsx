@@ -26,6 +26,7 @@ export function CommandCentre() {
         <LinkTile label="Reports released" value={num(c.reports_released)} hint={`${num(c.reports_draft)} still in draft`} href="/reports" />
         <LinkTile label="Website items to review" value={num(c.content_in_review)} hint={`${num(c.content_scheduled)} scheduled to go live`} href="/admin/website" tone={c.content_in_review > 0 ? 'warn' : undefined} />
         <LinkTile label="New enquiries" value={num(c.new_enquiries)} hint="Website messages not yet handled" href="/admin/website?tab=enquiries" />
+        <LinkTile label="AI agents" value={`${d.agents.byStatus.Active ?? 0} active`} hint={`${d.agents.total} registered, ${d.agents.paused.length} paused`} href="/admin/agents" tone={d.agents.paused.length > 0 ? 'warn' : undefined} />
         <LinkTile label="Storage used" value={mb(c.storage_bytes)} hint="Documents and website media" href="/admin/system" />
       </div>
       <div className="grid two">

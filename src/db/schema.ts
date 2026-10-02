@@ -257,8 +257,13 @@ export const aiRequests = pgTable('ai_requests', {
   contextBytes: integer('context_bytes').notNull().default(0),
   requestedBy: uuid('requested_by'),
   ok: boolean('ok'),
+  /** The registered agent and the exact version that handled the request. Null for requests before the registry existed. */
+  agentId: uuid('agent_id'),
+  agentVersionId: uuid('agent_version_id'),
+  /** Set when the request was refused before any model call: paused, disabled, over a limit, or not approved for the live model. */
+  blockedReason: text('blocked_reason'),
   createdAt: created()
-}, (t) => [index('ai_case_idx').on(t.caseId)]);
+}, (t) => [index('ai_case_idx').on(t.caseId), index('ai_agent_idx').on(t.agentId, t.createdAt)]);
 
 export const aiAttempts = pgTable('ai_attempts', {
   id: id(),
@@ -484,7 +489,9 @@ export const auditLog = pgTable('audit_log', {
   entityId: text('entity_id'),
   caseId: uuid('case_id'),
   before: jsonb('before'),
-  after: jsonb('after')
+  after: jsonb('after'),
+  /** HUMAN, AI or HYBRID (an AI draft made at a person's request). */
+  actorType: text('actor_type').notNull().default('HUMAN')
 }, (t) => [index('audit_entity_idx').on(t.entity, t.entityId), index('audit_actor_idx').on(t.actorId), index('audit_at_idx').on(t.at), index('audit_case_idx').on(t.caseId)]);
 
 export const notifications = pgTable('notifications', {
@@ -672,3 +679,40 @@ export const frameworkVersions = pgTable('framework_versions', {
   publishedAt: timestamp('published_at', { withTimezone: true }),
   createdAt: created()
 }, (t) => [uniqueIndex('framework_version_uq').on(t.frameworkId, t.version)]);
+
+/* ------------------------- AI agent registry ------------------------- */
+/** One record per AI agent. The agent has no login. It runs under the requesting person's account and case scope. */
+export const aiAgents = pgTable('ai_agents', {
+  id: id(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  purpose: text('purpose'),
+  /** The platform role this agent works within. Informational: the agent gets no permissions from it. */
+  role: text('role').notNull(),
+  /** The human accountable for this agent. */
+  ownerId: uuid('owner_id').references(() => users.id),
+  status: text('status').notNull().default('Draft'),
+  limits: jsonb('limits').notNull().default({}).$type<Record<string, unknown>>(),
+  currentVersionId: uuid('current_version_id'),
+  pausedFrom: text('paused_from'),
+  statusReason: text('status_reason'),
+  statusBy: uuid('status_by'),
+  statusAt: timestamp('status_at', { withTimezone: true }),
+  createdAt: created(), updatedAt: updated()
+});
+/** A version freezes the prompt, model and configuration. Changing any of them makes a new version. */
+export const aiAgentVersions = pgTable('ai_agent_versions', {
+  id: id(),
+  agentId: uuid('agent_id').notNull().references(() => aiAgents.id),
+  version: integer('version').notNull(),
+  prompt: text('prompt').notNull(),
+  model: text('model'),
+  config: jsonb('config').notNull().$type<Record<string, unknown>>(),
+  note: text('note'),
+  evaluation: text('evaluation').notNull().default('Not run'),
+  evaluatedAt: timestamp('evaluated_at', { withTimezone: true }),
+  evaluationNote: text('evaluation_note'),
+  createdBy: uuid('created_by'),
+  createdAt: created()
+}, (t) => [uniqueIndex('ai_agent_version_uq').on(t.agentId, t.version)]);

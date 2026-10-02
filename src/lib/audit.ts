@@ -16,9 +16,9 @@ export function redact(v: unknown, depth = 0): unknown {
 }
 
 /** Write one audit row inside the caller's transaction. */
-export async function audit(ctx: Ctx, action: string, entity: string, entityId: string | null, before?: unknown, after?: unknown, caseId?: string | null) {
+export async function audit(ctx: Ctx, action: string, entity: string, entityId: string | null, before?: unknown, after?: unknown, caseId?: string | null, actorType: 'HUMAN' | 'AI' | 'HYBRID' = 'HUMAN') {
   await ctx.db.insert(schema.auditLog).values({
     actorId: ctx.user?.id ?? null, actorEmail: ctx.user?.email ?? null, ip: ctx.ip, requestId: ctx.requestId,
-    action, entity, entityId, caseId: caseId ?? null, before: before === undefined ? null : redact(before), after: after === undefined ? null : redact(after)
+    action, entity, entityId, caseId: caseId ?? null, before: before === undefined ? null : redact(before), after: after === undefined ? null : redact(after), actorType
   });
 }

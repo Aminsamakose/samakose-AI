@@ -59,8 +59,8 @@ flowchart LR
 |---|---|
 | Framework | `src/api/framework.ts`, `list.ts`, `openapi.ts`, `schemas.ts` |
 | Routes | `src/api/routes/auth.ts`, `work.ts`, `platform.ts` |
-| Services | `src/services/*.ts`: auth, users, orgs, programmes, cases, diagnostics, evidence, clinical, delivery, reports, finance, dashboards, admin, kobo, ai |
-| Domain rules | `src/domain/logic.ts` (scoring, state machine, gate), `scope.ts`, `events.ts`, `notify.ts`, `jobs.ts`, `job-handlers.ts`, `mockai.ts` |
+| Services | `src/services/*.ts`: auth, users, orgs, programmes, cases, diagnostics, evidence, clinical, delivery, reports, finance, dashboards, admin, kobo, ai, agents (admin), agent-gate (gateway) |
+| Domain rules | `src/domain/logic.ts` (scoring, state machine, gate), `scope.ts`, `events.ts`, `notify.ts`, `jobs.ts`, `job-handlers.ts`, `mockai.ts`, `agents.ts` (agent rules), `prompts.ts` |
 | Security | `src/lib/rbac.ts`, `crypto.ts`, `session.ts`, `audit.ts`, `errors.ts` |
 | Data | `src/db/schema.ts`, `migrations/*.sql`, `seed.ts` |
 | UI | `src/app/(auth)`, `src/app/(app)`, `src/app/pay`, `src/components/**` |
@@ -106,6 +106,17 @@ Case states: PROSPECT, ONBOARDING, PROFILED, DIAGNOSTIC, DIAGNOSED (scored and d
 - **AI steps are asynchronous jobs.** Each call sends only minimal context (no names or contacts), validates the reply against a schema, retries once with the validation errors, and logs every request and attempt. A person always approves: diagnoses by the consultant, prescriptions and reports by the case reviewer (four-eyes: not the author, not the consultant, and not an administrator).
 - **Approving a prescription** turns its interventions into actions and KPIs with owners and due dates.
 - **Payments:** initialise with Paystack (or the labelled test checkout when no key is set), verify on return, and reconcile from the signed webhook (HMAC-SHA512, idempotent by event id, amount and currency checked). A second payment for a paid invoice is recorded as Failed and raises an event for a person to refund or reconcile.
+
+### AI agent governance
+
+- An agent is a worker, not a user. It has no login and no permissions of its own. It runs under the requesting person's account and case scope, so it can never see more than that person.
+- Registry: `ai_agents` and `ai_agent_versions`. A version freezes the prompt, model and configuration (database trigger). Changing any of them makes a new version; only evaluation fields can change on an existing one.
+- Lifecycle: Draft, Configured, Testing, Evaluation, Approval required, Active, Paused, Disabled, Archived. An administrator can pause or disable from any running state. Every move needs a reason and is audited with the version that was current.
+- Autonomy is capped at Level 2 (recommend, a human approves), in the application and by a database check. Levels 3 to 5 are not built.
+- Live model gate: on the mock model any agent in Testing, Evaluation, Approval required or Active may run. On the live model only an Active agent may run, and Active needs a passed evaluation of its current version. The evaluation run itself is the one exception. No live evaluation has passed yet, so no agent can be Active.
+- Usage limits per agent (requests and tokens, day and month, warning at 80%, then throttle or pause). The defaults are placeholders until a monthly cost cap is set.
+- A refused task is recorded in `ai_requests` with the reason and the requester is told to do the work by hand. The audit log records whether an action was by a person, an agent or both (`actor_type`).
+- Roles stay defined in code (`src/lib/rbac.ts`), not in the database. The administrator manages agents; the executive can read.
 
 ## 6. Security
 
