@@ -9,7 +9,7 @@ async function resetLoginLimits() {
   const c = new pg.Client({ connectionString: url });
   try { await c.connect(); await c.query('delete from rate_limits'); } catch { /* the limiter table is optional for the run */ } finally { await c.end().catch(() => {}); }
 }
-const steps = ['sweep', 'journey', 'commercial', 'delivery', 'framework', 'agents', 'trust'];
+const steps = ['sweep', 'journey', 'commercial', 'delivery', 'framework', 'agents', 'trust', 'a11y-structure', 'a11y'];
 let failed = 0;
 (async () => {
 for (const s of steps) {
