@@ -3,7 +3,7 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { ApiError, fieldError, notFound, unprocessable } from '@/lib/errors';
-import { assertCase, isInternal } from '@/domain/scope';
+import { assertCase, isInternal, assertLeadCase } from '@/domain/scope';
 import { confidenceClass, scoreDiagnostic, validateSubmission, type ResponseLite } from '@/domain/logic';
 import { emitEvent } from '@/domain/events';
 import { advanceCase, allow, latestDiagnostic, loadRules, need } from './common';
@@ -34,7 +34,7 @@ function normalise(answers: Record<string, AnswerInput>) {
 /** Dry run of the data quality gate, so a form can warn before it submits. */
 export async function preflight(ctx: Ctx, caseId: string, answers: Record<string, AnswerInput>) {
   allow(ctx, 'diagnostics', 'create');
-  await assertCase(ctx, caseId);
+  await assertLeadCase(ctx, caseId);
   const v = await versionForCase(ctx, caseId);
   return validateSubmission(normalise(answers), questionsOf(v), rulesFor(v, await loadRules(ctx.db)));
 }
@@ -133,13 +133,13 @@ export async function submitDiagnosticCore(ctx: Ctx, caseRow: typeof schema.case
 
 export async function submitDiagnostic(ctx: Ctx, caseId: string, b: { answers: Record<string, AnswerInput>; uuid?: string }) {
   allow(ctx, 'diagnostics', 'create');
-  const cs = await assertCase(ctx, caseId);
+  const cs = await assertLeadCase(ctx, caseId);
   return submitDiagnosticCore(ctx, cs, b.answers, { uuid: b.uuid, source: 'web', persistRejection: false });
 }
 
 export async function rescore(ctx: Ctx, caseId: string) {
   allow(ctx, 'evidence', 'edit');
-  await assertCase(ctx, caseId);
+  await assertLeadCase(ctx, caseId);
   const d = await latestDiagnostic(ctx, caseId);
   if (!d) throw unprocessable('There is no validated diagnostic to score');
   const s = await computeScore(ctx, caseId, d.id);

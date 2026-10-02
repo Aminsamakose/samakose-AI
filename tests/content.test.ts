@@ -10,7 +10,7 @@ import { loadForTest } from './site-load';
 let admin: Session, editor: Session, manager: Session, coach: Session, owner: Session;
 beforeAll(async () => {
   await ensureReference();
-  admin = await makeUser('ADMIN'); editor = await makeUser('CONTENT_EDITOR'); manager = await makeUser('SITE_MANAGER'); coach = await makeUser('COACH');
+  admin = await makeUser('ADMIN'); editor = await makeUser('CONTENT_EDITOR'); manager = await makeUser('SITE_MANAGER'); coach = await makeUser('EXPERT');
   const org = (await api(admin).post('/organisations', { name: `Org ${uniq()}`, type: 'SME', sector: 'Retail', region: 'Northern', district: 'Tamale', consent: true, consentBy: 'Test Owner' })).data;
   owner = await makeUser('OWNER', { orgId: org.id });
 });

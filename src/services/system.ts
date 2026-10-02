@@ -75,7 +75,7 @@ export async function retryEmail(ctx: Ctx, id: string) {
 export async function securityOverview(ctx: Ctx) {
   allow(ctx, 'settings', 'read');
   const q = async (text: ReturnType<typeof sql>) => Number(((await ctx.db.execute(text)).rows[0] as { n: number }).n);
-  const staff = "('ADMIN','EXECUTIVE','PROGRAMME_MANAGER','CONSULTANT','REVIEWER','COACH','FINANCE','CONTENT_EDITOR','SITE_MANAGER')";
+  const staff = "('ADMIN','EXECUTIVE','PROGRAMME_MANAGER','EXPERT','REVIEWER','FINANCE','CONTENT_EDITOR','SITE_MANAGER')";
   const [staffNoMfa, adminsNoMfa, locked, failed24, dormant, activeAdmins] = await Promise.all([
     q(sql.raw(`select count(*)::int n from users where active and mfa_enabled=false and role in ${staff}`)),
     q(sql.raw(`select count(*)::int n from users where active and mfa_enabled=false and role='ADMIN'`)),

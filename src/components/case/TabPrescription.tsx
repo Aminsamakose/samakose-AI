@@ -78,7 +78,7 @@ export default function TabPrescription({ caseId, caseData, reload }: TabProps) 
   </div>;
 }
 
-const OWNER_LABEL: Record<string, string> = { OWNER: 'Business owner', COACH: 'Coach', CONSULTANT: 'Consultant' };
+const OWNER_LABEL: Record<string, string> = { OWNER: 'Business owner', COACH: 'Coaching expert', CONSULTANT: 'Lead expert' };
 function Items({ rx }: { rx: Rx }) {
   return <div className="stack">{rx.items.map((it, i) => <div key={i} className="stack" style={{ gap: 4 }}>
     <h3 style={{ fontSize: '1rem' }}><span className="mono">{it.library_id}</span> {it.title}{it.dimension && <span className="small muted"> ({it.dimension})</span>}</h3>

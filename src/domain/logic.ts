@@ -139,11 +139,11 @@ export function canTransitionCase(from: CaseState, to: CaseState, facts: Facts) 
 export type RxStatus = 'DRAFT' | 'IN REVIEW' | 'APPROVED' | 'RETURNED' | 'SUPERSEDED';
 export type Actor = Role | 'AI';
 export const PRESCRIPTION_TRANSITIONS: { from: RxStatus; to: RxStatus; actors: Actor[] }[] = [
-  { from: 'DRAFT', to: 'IN REVIEW', actors: ['AI', 'CONSULTANT', 'ADMIN'] },
+  { from: 'DRAFT', to: 'IN REVIEW', actors: ['AI', 'EXPERT', 'ADMIN'] },
   { from: 'IN REVIEW', to: 'APPROVED', actors: ['REVIEWER'] },
   { from: 'IN REVIEW', to: 'RETURNED', actors: ['REVIEWER'] },
   { from: 'APPROVED', to: 'SUPERSEDED', actors: ['REVIEWER'] },
-  { from: 'RETURNED', to: 'IN REVIEW', actors: ['CONSULTANT', 'ADMIN'] }
+  { from: 'RETURNED', to: 'IN REVIEW', actors: ['EXPERT', 'ADMIN'] }
 ];
 export function canTransitionPrescription(from: RxStatus, to: RxStatus, actor: Actor) {
   const t = PRESCRIPTION_TRANSITIONS.find((x) => x.from === from && x.to === to);

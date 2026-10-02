@@ -48,7 +48,7 @@ const created = () => timestamp('created_at', { withTimezone: true }).notNull().
 const updated = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow();
 
 /* ------------------------------ enums ------------------------------ */
-export const ROLES = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'CONSULTANT', 'REVIEWER', 'COACH', 'FINANCE', 'OWNER', 'FUNDER', 'CONTENT_EDITOR', 'SITE_MANAGER'] as const;
+export const ROLES = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'EXPERT', 'REVIEWER', 'FINANCE', 'OWNER', 'FUNDER', 'CONTENT_EDITOR', 'SITE_MANAGER'] as const;
 export type Role = (typeof ROLES)[number];
 export const roleEnum = pgEnum('role', ROLES);
 

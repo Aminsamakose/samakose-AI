@@ -3,7 +3,7 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { conflict, fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
-import { assertCase, assertOrg, caseScope, isInternal } from '@/domain/scope';
+import { assertCase, assertOrg, caseScope, isInternal, assertLeadCase } from '@/domain/scope';
 import { CASE_TRANSITIONS, canTransitionCase } from '@/domain/logic';
 import { notifyUsers } from '@/domain/notify';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
@@ -82,25 +82,25 @@ export async function createCase(ctx: Ctx, b: { orgId: string; programmeId?: str
   } else if (u.role === 'PROGRAMME_MANAGER') throw fieldError({ programmeId: 'Choose one of your programmes' });
   const [row] = await ctx.db.insert(c).values({
     orgId: b.orgId, programmeId, cohortId: b.cohortId ?? null, status: b.startState ?? 'PROFILED', createdBy: u.id,
-    consultantId: u.role === 'CONSULTANT' ? u.id : null
+    consultantId: u.role === 'EXPERT' ? u.id : null
   }).returning({ id: c.id, code: c.code, status: c.status });
   await audit(ctx, 'case.created', 'case', row.id, undefined, { orgId: b.orgId, programmeId, cohortId: b.cohortId ?? null, status: row.status }, row.id);
   return row;
 }
 
 export async function assignCase(ctx: Ctx, id: string, b: { consultantId?: string | null; coachId?: string | null; reviewerId?: string | null }) {
-  allow(ctx, 'cases', 'edit');
+  allow(ctx, 'cases', 'assign');
   const u = need(ctx).user;
   if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(u.role)) throw forbidden('Only administrators and programme managers assign people to cases');
-  const before = await assertCase(ctx, id);
+  const before = await assertLeadCase(ctx, id);
   const next = { consultantId: b.consultantId === undefined ? before.consultantId : b.consultantId, coachId: b.coachId === undefined ? before.coachId : b.coachId, reviewerId: b.reviewerId === undefined ? before.reviewerId : b.reviewerId };
   const check = async (uid: string | null, role: string, field: string) => {
     if (!uid) return;
     const [x] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, uid)).limit(1);
     if (!x || !x.active || x.role !== role) throw fieldError({ [field]: `Choose an active ${role.toLowerCase()}` });
   };
-  await check(next.consultantId, 'CONSULTANT', 'consultantId'); await check(next.coachId, 'COACH', 'coachId'); await check(next.reviewerId, 'REVIEWER', 'reviewerId');
-  if (next.consultantId && next.consultantId === next.reviewerId) throw fieldError({ reviewerId: 'The reviewer must be a different person from the consultant' });
+  await check(next.consultantId, 'EXPERT', 'consultantId'); await check(next.coachId, 'EXPERT', 'coachId'); await check(next.reviewerId, 'REVIEWER', 'reviewerId');
+  if (next.consultantId && next.consultantId === next.reviewerId) throw fieldError({ reviewerId: 'The reviewer must be a different person from the lead expert' });
   await ctx.db.update(c).set({ ...next, updatedAt: new Date() }).where(eq(c.id, id));
   await audit(ctx, 'case.assigned', 'case', id, { consultantId: before.consultantId, coachId: before.coachId, reviewerId: before.reviewerId }, next, id);
   const newly = [next.consultantId, next.coachId, next.reviewerId].filter((x, i) => x && x !== [before.consultantId, before.coachId, before.reviewerId][i]) as string[];
@@ -112,7 +112,7 @@ export async function transitionCase(ctx: Ctx, id: string, to: CaseState, reason
   allow(ctx, 'cases', 'edit');
   const u = need(ctx).user;
   if (u.role === 'OWNER') throw forbidden();
-  const cs = await assertCase(ctx, id);
+  const cs = await assertLeadCase(ctx, id);
   const t = CASE_TRANSITIONS.find((x) => x.from === cs.status && x.to === to);
   if (!t) throw unprocessable(`No transition from ${cs.status} to ${to}`);
   if (!t.manual) throw unprocessable('This step happens automatically when its conditions are met');

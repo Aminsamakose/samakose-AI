@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { loadForTest } from './site-load';
 
 let admin: Session, manager: Session, coach: Session;
-beforeAll(async () => { await ensureReference(); admin = await makeUser('ADMIN'); manager = await makeUser('SITE_MANAGER'); coach = await makeUser('COACH'); });
+beforeAll(async () => { await ensureReference(); admin = await makeUser('ADMIN'); manager = await makeUser('SITE_MANAGER'); coach = await makeUser('EXPERT'); });
 
 describe('maintenance mode', () => {
   it('is admin only, shows on the public loader, and pauses non-admin sign-in on request', async () => {

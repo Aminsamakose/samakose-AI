@@ -27,7 +27,7 @@ describe('self-registration', () => {
     expect((await call('GET', '/auth/me', { cookie })).status).toBe(200);
   });
   it('a consultant stays pending and cannot read any data', async () => {
-    const b = reg({ role: 'CONSULTANT', orgName: 'Tamale Advisory' }); await call('POST', '/auth/register', { body: b });
+    const b = reg({ role: 'EXPERT', orgName: 'Tamale Advisory' }); await call('POST', '/auth/register', { body: b });
     expect((await verify(b.email)).data.next).toBe('pending');
     const { r, cookie } = await signIn(b.email);
     expect(r.data.next).toBe('pending');
@@ -51,11 +51,11 @@ describe('self-registration', () => {
     expect((await call('POST', '/auth/register', { body: reg({ orgName: '' }) })).status).toBe(400);
   });
   it('admin approves a pending consultant, who can then read; non-admins cannot decide', async () => {
-    const b = reg({ role: 'CONSULTANT' }); await call('POST', '/auth/register', { body: b }); await verify(b.email);
+    const b = reg({ role: 'EXPERT' }); await call('POST', '/auth/register', { body: b }); await verify(b.email);
     const [u] = await db().select().from(schema.users).where(eq(schema.users.email, b.email));
     const list = await api(admin).get('/users?approval=pending');
     expect(list.data.rows?.some?.((x: any) => x.id === u.id) ?? JSON.stringify(list.body).includes(u.id)).toBe(true);
-    const coach = await makeUser('COACH');
+    const coach = await makeUser('EXPERT');
     expect((await api(coach).post(`/users/${u.id}/approve`, {})).status).toBe(403);
     expect((await api(admin).post(`/users/${u.id}/approve`, { role: 'ADMIN' })).status).toBeGreaterThanOrEqual(400);
     expect((await api(admin).post(`/users/${u.id}/approve`, {})).status).toBe(200);
@@ -86,7 +86,7 @@ describe('required business profile for new owners', () => {
     expect((await call('GET', '/auth/me', { cookie })).data.next).toBe('ok');
   });
   it('only business owners can use the profile endpoint', async () => {
-    const coach = await makeUser('COACH');
+    const coach = await makeUser('EXPERT');
     expect((await api(coach).get('/auth/profile')).status).toBe(403);
   });
 });
@@ -115,7 +115,7 @@ describe('Google sign-in rules', () => {
   });
   it('never signs staff or partners in with Google', async () => {
     const { signInWithGoogle } = await import('@/services/google');
-    const staff = await makeUser('CONSULTANT');
+    const staff = await makeUser('EXPERT');
     const r: any = await signInWithGoogle(ctx(), claims({ email: staff.email }), 'test');
     expect(r.error).toBe('google_not_allowed'); expect(r.token).toBeUndefined();
   });
