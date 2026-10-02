@@ -127,6 +127,13 @@
       "when": 1790973824083,
       "tag": "0017_certificate_verification",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791060224083,
+      "tag": "0018_app_role_owns_new_tables",
+      "breakpoints": true
     }
   ]
 }
