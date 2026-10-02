@@ -124,3 +124,34 @@ describe('certification through the API', () => {
     expect(c.current).toBeNull(); expect(c.history.find((h: any) => h.id === id).status).toBe('Expired');
   });
 });
+
+describe('investment readiness pack with an Investment-ready certificate', () => {
+  it('builds the pack from the certified score and leaves out risks and AI drafts', async () => {
+    // Lift the latest score to Investment-ready: a strong score with one readiness index at Ready.
+    const [sc] = await db().select().from(schema.healthScores).where(eq(schema.healthScores.caseId, caseId)).orderBy(sql`created_at desc`).limit(1);
+    const readiness = [{ code: 'R1', name: 'Loan readiness', level: 'Ready', index: 88, unlocks: 'Unlocks: Access to the partner credit window', blocking: [] }];
+    const { id: _id, createdAt: _c, ...rest } = sc;
+    await db().insert(schema.healthScores).values({ ...rest, run: sc.run + 1, overall: '90.0', confidenceClass: 'High', extras: { ...(sc.extras ?? {}), readiness } });
+    const r = await api(admin).post(`/cases/${caseId}/certification/propose`, { rationale: 'Strong evidence and a Ready loan index.' });
+    expect(r.status).toBe(201);
+    expect(r.data.level).toBe('Investment-ready');
+    expect((await api(reviewer).post(`/certificates/${r.data.id}/decision`, { decision: 'Certify', note: 'Confirmed against the evidence' })).status).toBe(200);
+
+    const pack = await api(owner).get(`/cases/${caseId}/investment-pack`);
+    expect(pack.status).toBe(200);
+    expect(pack.data.certificate.level).toBe('Investment-ready');
+    expect(pack.data.score.overall).toBe(90);
+    expect(pack.data.readiness[0]).toMatchObject({ code: 'R1', level: 'Ready', unlocks: 'Access to the partner credit window' });
+    expect(pack.data.plan.length).toBeGreaterThan(0);
+    expect(pack.data.organisation.name).toBeTruthy();
+    const text = JSON.stringify(pack.data).toLowerCase();
+    for (const banned of ['"risks"', 'aidraft', 'ai_draft', 'rationale']) expect(text).not.toContain(banned);
+    // Other businesses and unrelated reviewers cannot read it.
+    expect([403, 404]).toContain((await api(other).get(`/cases/${caseId}/investment-pack`)).status);
+  });
+  it('stops being available once the certificate is revoked', async () => {
+    const cur = (await api(admin).get(`/cases/${caseId}/certification`)).data.current;
+    expect((await api(reviewer).post(`/certificates/${cur.id}/revoke`, { reason: 'Evidence withdrawn after review' })).status).toBe(200);
+    expect((await api(owner).get(`/cases/${caseId}/investment-pack`)).status).toBe(422);
+  });
+});
