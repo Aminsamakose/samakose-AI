@@ -46,7 +46,7 @@ export function evaluateCertification(f: CertFacts, rules: Rules) {
   }
   const scoreNote = allMet && !level ? `The score ${f.overall} is below the Foundation level of ${n(rules, 'cert.foundation_min')}` : null;
   // Unlocks are the framework's own words for what each readiness index opens. Only indices at Ready or Conditionally ready count.
-  const unlocks: Unlock[] = level ? (f.readiness ?? []).filter((r) => r.unlocks && (r.level === 'Ready' || r.level === 'Conditionally ready')).map((r) => ({ code: r.code, name: r.name, level: r.level, text: r.unlocks! })) : [];
+  const unlocks: Unlock[] = level ? (f.readiness ?? []).filter((r) => r.unlocks && (r.level === 'Ready' || r.level === 'Conditionally ready')).map((r) => ({ code: r.code, name: r.name, level: r.level, text: r.unlocks!.replace(/^\s*unlocks:\s*/i, '') })) : [];
   return { criteria, eligible: level !== null, level, scoreNote, unlocks, investmentReadyNote: allMet && level !== 'Investment-ready' && f.overall >= n(rules, 'cert.investment_ready_min') && !anyReady ? 'The score is high enough for Investment-ready, but no readiness index is Ready yet' : null };
 }
 
