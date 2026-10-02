@@ -46,8 +46,13 @@ SELECT f.id, 1, 'Published',
   jsonb_build_array(jsonb_build_object('component', 'Question bank and weights', 'source', 'Samakose working question bank in use before versioning', 'rationale', 'Baseline carried over so existing scores stay explainable', 'adaptation', 'None', 'approval', 'Approved')),
   'Baseline migrated from the working question bank', now(), now()
 FROM "frameworks" f WHERE f.code = 'SME360' AND EXISTS (SELECT 1 FROM questions WHERE active);--> statement-breakpoint
+-- One-off backfill of a new column: the append-only guards are lifted for these two statements only.--> statement-breakpoint
+ALTER TABLE "diagnostics" DISABLE TRIGGER "diagnostics_versioned";--> statement-breakpoint
+ALTER TABLE "health_scores" DISABLE TRIGGER "health_scores_append_only";--> statement-breakpoint
 UPDATE "diagnostics" SET "framework_version_id" = (SELECT v.id FROM framework_versions v JOIN frameworks f ON f.id = v.framework_id WHERE f.code = 'SME360' AND v.version = 1) WHERE "framework_version_id" IS NULL;--> statement-breakpoint
 UPDATE "health_scores" SET "framework_version_id" = (SELECT v.id FROM framework_versions v JOIN frameworks f ON f.id = v.framework_id WHERE f.code = 'SME360' AND v.version = 1) WHERE "framework_version_id" IS NULL;--> statement-breakpoint
+ALTER TABLE "diagnostics" ENABLE TRIGGER "diagnostics_versioned";--> statement-breakpoint
+ALTER TABLE "health_scores" ENABLE TRIGGER "health_scores_append_only";--> statement-breakpoint
 CREATE FUNCTION "framework_versions_guard"() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   IF OLD.status <> 'Draft' AND (
