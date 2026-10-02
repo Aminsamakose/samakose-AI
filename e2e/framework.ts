@@ -23,6 +23,26 @@ import { check, healthy, launch, login, problems, tally } from './lib';
     check(await page.getByText(name).first().isVisible().catch(() => false), `${name} listed`);
   check(await page.getByText(/Published|v1/).first().isVisible().catch(() => false), 'a published version is shown');
 
+  console.log('Import, review and approve sources');
+  // start clean so the run can be repeated: discard any draft a previous run left behind
+  const fwList = await (await page.context().request.get('/api/v1/settings/frameworks')).json();
+  for (const f of fwList.data) for (const v of f.versions.filter((x: any) => x.status === 'Draft')) await page.context().request.delete(`/api/v1/settings/frameworks/versions/${v.id}`);
+  await page.reload(); await page.waitForLoadState('networkidle'); await page.getByRole('tab', { name: 'Frameworks' }).click(); await page.waitForTimeout(1500);
+  const af = page.locator('section[aria-label="AgriFood360"], section:has(.mono:text-is("AGRIFOOD360"))').first();
+  await af.locator('input[type=file]').setInputFiles('docs/frameworks/drafts/agrifood360-bank-v1-loadable.json');
+  check(await (af.getByRole('button', { name: 'Discard' }).first()).waitFor({ timeout: 15000 }).then(() => true).catch(() => false), 'bank file imports as a draft');
+  await af.getByRole('button', { name: 'Review' }).first().click();
+  const dlg = page.getByRole('dialog');
+  check(await (dlg.getByText(/100 questions in 8 dimensions, 28 sub-dimensions/)).waitFor({ timeout: 10000 }).then(() => true).catch(() => false), 'review shows the version structure');
+  check(await (dlg.getByText(/0 of 42 approved/)).waitFor({ timeout: 5000 }).then(() => true).catch(() => false), 'all sources start unapproved');
+  await dlg.getByRole('button', { name: /Approve all 42 proposed/ }).click();
+  await dlg.getByRole('button', { name: 'Confirm sign-off' }).click();
+  check(await (dlg.getByText(/42 of 42 approved/)).waitFor({ timeout: 15000 }).then(() => true).catch(() => false), 'approve all signs off every source');
+  await dlg.getByRole('button', { name: 'Close' }).first().click();
+  await af.getByRole('button', { name: 'Discard' }).click(); await page.getByRole('button', { name: 'Confirm' }).click();
+  await page.waitForTimeout(1500);
+  check((await af.getByRole('button', { name: 'Discard' }).count()) === 0, 'draft discarded, nothing was published');
+
   console.log('Role restriction');
   const { page: cp } = await login(b, 'consultant@demo.samakose.test');
   const res = await cp.goto('/admin/settings'); await cp.waitForLoadState('networkidle');

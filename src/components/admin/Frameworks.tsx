@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { api, dateFmt, errText } from '@/lib/client/api';
 import { Async, Badge, Button, ConfirmButton, Empty, useApi, useToast } from '@/components/ui';
+import { ImportBank, ReviewVersion } from './FrameworkReview';
 
 type Ver = { id: string; version: number; status: 'Draft' | 'Published' | 'Retired'; questions: number; dimensions: number; sources: number; sourcesApproved: number; note: string | null; publishedAt: string | null };
 type Fw = { id: string; code: string; name: string; orgType: string | null; description: string | null; isDefault: boolean; currentVersion: number | null; unpublishedBankChanges: boolean; versions: Ver[] };
@@ -30,13 +31,16 @@ export function FrameworksPanel({ canCreate, canEdit, canApprove }: { canCreate:
       {f.unpublishedBankChanges && <p role="status" className="small"><b>Unpublished changes.</b> The question bank differs from the live version. New diagnostics still use version {f.currentVersion} until you publish.</p>}
       {!f.isDefault && !f.currentVersion && <p className="small muted">AgriFood360 and ESO360 content is not production-authoritative until the evidence trail is approved and Amin Yahaya signs it off. New diagnostics for these organisation types use the baseline framework until then.</p>}
       {f.versions.length === 0 ? <Empty title="No versions yet" /> : <div className="table-wrap"><table>
-        <thead><tr><th>Version</th><th>Status</th><th>Questions</th><th>Evidence trail</th><th>Published</th>{(canEdit || canApprove) && <th>Actions</th>}</tr></thead>
+        <thead><tr><th>Version</th><th>Status</th><th>Questions</th><th>Evidence trail</th><th>Published</th><th>Actions</th></tr></thead>
         <tbody>{f.versions.map((v) => <tr key={v.id}><td className="num">{v.version}</td><td><Badge tone={tone(v.status)}>{v.status}</Badge></td><td className="num">{v.questions}</td><td>{v.sources ? `${v.sourcesApproved} of ${v.sources} approved` : 'None'}</td><td>{v.publishedAt ? dateFmt(v.publishedAt) : 'Not published'}</td>
-          {(canEdit || canApprove) && <td>{v.status === 'Draft' && <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-            {canApprove && <Publish v={v} reload={st.reload} />}
-            {canEdit && <ConfirmButton size="sm" label="Discard" variant="danger" message={`Discard draft version ${v.version}?`} onConfirm={() => api.del(`/settings/frameworks/versions/${v.id}`).then(st.reload)} />}</span>}</td>}
+          <td><span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <ReviewVersion id={v.id} label={`${f.name}, version ${v.version}`} canEdit={canEdit} canApprove={canApprove} onChanged={st.reload} />
+            {v.status === 'Draft' && canApprove && <Publish v={v} reload={st.reload} />}
+            {v.status === 'Draft' && canEdit && <ConfirmButton size="sm" label="Discard" variant="danger" message={`Discard draft version ${v.version}?`} onConfirm={() => api.del(`/settings/frameworks/versions/${v.id}`).then(st.reload)} />}</span></td>
         </tr>)}</tbody></table></div>}
-      {canCreate && f.isDefault && !f.versions.some((v) => v.status === 'Draft') && <div><Button size="sm" onClick={() => draftFromBank(f.code)}>Create draft from question bank</Button></div>}
+      {canCreate && !f.versions.some((v) => v.status === 'Draft') && <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+        {f.isDefault && <Button size="sm" onClick={() => draftFromBank(f.code)}>Create draft from question bank</Button>}
+        <ImportBank code={f.code} onDone={st.reload} /></div>}
     </section>)}</>}</Async>
   </div>;
 }
