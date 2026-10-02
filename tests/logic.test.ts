@@ -56,7 +56,7 @@ describe('state machines', () => {
   });
   it('lets only the reviewer approve a prescription', () => {
     expect(canTransitionPrescription('IN REVIEW', 'APPROVED', 'REVIEWER').ok).toBe(true);
-    for (const r of ['ADMIN', 'EXPERT', 'AI', 'OWNER'] as const) expect(canTransitionPrescription('IN REVIEW', 'APPROVED', r).ok).toBe(false);
+    for (const r of ['ADMIN', 'CONSULTANT', 'AI', 'COACH', 'OWNER'] as const) expect(canTransitionPrescription('IN REVIEW', 'APPROVED', r).ok).toBe(false);
   });
 });
 

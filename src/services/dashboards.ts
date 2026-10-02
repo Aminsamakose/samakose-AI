@@ -32,8 +32,9 @@ export async function dashboard(ctx: Ctx) {
   const base = { role: u.role, roleLabel: ROLE_LABEL[u.role], generatedAt: new Date().toISOString() };
   switch (u.role) {
     case 'ADMIN': case 'EXECUTIVE': case 'PROGRAMME_MANAGER': return { ...base, kind: 'management', ...(await management(ctx)) };
-    case 'EXPERT': return { ...base, kind: 'expert', lead: await consultant(ctx, 'lead'), coach: await coach(ctx, 'coach') };
+    case 'CONSULTANT': return { ...base, kind: 'consultant', ...(await consultant(ctx)) };
     case 'REVIEWER': return { ...base, kind: 'reviewer', ...(await reviewer(ctx)) };
+    case 'COACH': return { ...base, kind: 'coach', ...(await coach(ctx)) };
     case 'FINANCE': return { ...base, kind: 'finance', ...(await finance(ctx)) };
     case 'OWNER': return { ...base, kind: 'owner', ...(await owner(ctx)) };
     case 'FUNDER': return { ...base, kind: 'funder', ...(await funder(ctx)) };
@@ -79,16 +80,15 @@ async function management(ctx: Ctx) {
   return { totals, byState, maturity, byProgramme, trend, finance, recent };
 }
 
-async function consultant(ctx: Ctx, only?: 'lead') {
+async function consultant(ctx: Ctx) {
   const u = need(ctx).user;
-  const mine = only ? sql`and c.consultant_id = ${u.id}` : sql``;
   const cases = await rows(ctx, sql`select c.id, c.code, c.status, o.name org, s.overall, s.maturity, c.updated_at,
       (select count(*)::int from actions a where a.case_id=c.id and a.status<>'Done' and a.due_date<current_date) overdue
-    from cases c join organisations o on o.id=c.org_id left join ${latestScores(u)} s on s.case_id=c.id where ${scopeC(u)} ${mine} order by c.updated_at desc limit 50`);
+    from cases c join organisations o on o.id=c.org_id left join ${latestScores(u)} s on s.case_id=c.id where ${scopeC(u)} order by c.updated_at desc limit 50`);
   const returned = await rows(ctx, sql`select p.id, p.code, p.case_id, c.code case_code, p.reviewer_note reason from prescriptions p join cases c on c.id=p.case_id
-    where ${scopeC(u)} ${mine} and p.status='RETURNED' and not exists (select 1 from prescriptions x where x.supersedes_id=p.id)`);
+    where ${scopeC(u)} and p.status='RETURNED' and not exists (select 1 from prescriptions x where x.supersedes_id=p.id)`);
   const sessions = await rows(ctx, sql`select s.id, s.scheduled_at, c.code case_code, o.name org from coaching_sessions s join cases c on c.id=s.case_id join organisations o on o.id=c.org_id
-    where ${scopeC(u)} ${mine} and s.status='Scheduled' and s.scheduled_at >= now() order by s.scheduled_at limit 5`);
+    where ${scopeC(u)} and s.status='Scheduled' and s.scheduled_at >= now() order by s.scheduled_at limit 5`);
   return { cases: cases.map((c) => ({ ...c, nextStep: NEXT_STEP[c.status] })), returned, sessions,
     counts: { open: cases.filter((c) => c.status !== 'GRADUATED').length, overdue: cases.reduce((n, c) => n + Number(c.overdue), 0), returned: returned.length } };
 }
@@ -102,14 +102,13 @@ async function reviewer(ctx: Ctx) {
   return { queue, reports, decided };
 }
 
-async function coach(ctx: Ctx, only?: 'coach') {
+async function coach(ctx: Ctx) {
   const u = need(ctx).user;
-  const mine = only ? sql`and c.coach_id = ${u.id}` : sql``;
   const sessions = await rows(ctx, sql`select s.id, s.scheduled_at, s.case_id, c.code case_code, o.name org, s.brief is not null has_brief from coaching_sessions s join cases c on c.id=s.case_id join organisations o on o.id=c.org_id
-    where ${scopeC(u)} ${mine} and s.status='Scheduled' order by s.scheduled_at limit 20`);
+    where ${scopeC(u)} and s.status='Scheduled' order by s.scheduled_at limit 20`);
   const actions = await rows(ctx, sql`select a.id, a.code, a.text, a.due_date, a.status, c.code case_code, (a.due_date < current_date) overdue from actions a join cases c on c.id=a.case_id
-    where ${scopeC(u)} ${mine} and a.assignee_id=${u.id} and a.status<>'Done' order by a.due_date limit 20`);
-  const cases = await rows(ctx, sql`select c.id, c.code, c.status, o.name org, s.overall, s.maturity from cases c join organisations o on o.id=c.org_id left join ${latestScores(u)} s on s.case_id=c.id where ${scopeC(u)} ${mine} order by c.updated_at desc limit 30`);
+    where ${scopeC(u)} and a.assignee_id=${u.id} and a.status<>'Done' order by a.due_date limit 20`);
+  const cases = await rows(ctx, sql`select c.id, c.code, c.status, o.name org, s.overall, s.maturity from cases c join organisations o on o.id=c.org_id left join ${latestScores(u)} s on s.case_id=c.id where ${scopeC(u)} order by c.updated_at desc limit 30`);
   return { sessions, actions, cases };
 }
 

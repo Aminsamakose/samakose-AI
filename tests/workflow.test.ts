@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { TEMPLATES, render, templateProblems } from '@/domain/email-templates';
 
 let admin: Session, coach: Session;
-beforeAll(async () => { await ensureReference(); admin = await makeUser('ADMIN'); coach = await makeUser('EXPERT'); });
+beforeAll(async () => { await ensureReference(); admin = await makeUser('ADMIN'); coach = await makeUser('COACH'); });
 const reg = (o: Record<string, unknown> = {}) => ({ name: 'Ama Mensah', email: `ama.${uniq()}@example.org`, password: PASSWORD, role: 'OWNER', orgName: 'Mensah Foods', orgType: 'SME', consent: true, ...o });
 const sw = (key: string, on: boolean, reason?: string) => api(admin).put(`/settings/switches/${key}`, { on, reason });
 
@@ -27,7 +27,7 @@ describe('switches', () => {
     expect((await sw('switch.role.FUNDER', false)).status).toBe(200);
     expect((await call('POST', '/auth/register', { body: reg({ role: 'FUNDER', orgName: 'Funder Co' }) })).status).toBe(400);
     expect((await call('GET', '/auth/providers')).data.roles).not.toContain('FUNDER');
-    expect((await call('POST', '/auth/register', { body: reg({ role: 'EXPERT', orgName: 'Coach Co' }) })).status).toBe(200);
+    expect((await call('POST', '/auth/register', { body: reg({ role: 'COACH', orgName: 'Coach Co' }) })).status).toBe(200);
     await sw('switch.role.FUNDER', true);
   });
   it('can require approval for new owners', async () => {

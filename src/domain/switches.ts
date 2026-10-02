@@ -10,7 +10,8 @@ export const SWITCHES: Switch[] = [
   { key: 'switch.self_registration', group: 'registration', default: 1, label: 'Allow self-registration', help: 'When off, only people you invite can create an account. The register page shows a closed notice.' },
   { key: 'switch.google_signin', group: 'registration', default: 1, label: 'Allow Google sign-in for new business owners', help: 'Existing owners who linked Google can still sign in. Needs Google keys to be set up as well.' },
   { key: 'switch.owner_needs_approval', group: 'registration', default: 0, label: 'Require administrator approval for new business owners', help: 'When on, owners wait for approval after confirming their email, like other roles.' },
-  { key: 'switch.role.EXPERT', group: 'registration', default: 1, label: 'Experts (consultants and coaches) may self-register', help: 'They still wait for administrator approval.' },
+  { key: 'switch.role.CONSULTANT', group: 'registration', default: 1, label: 'Consultants may self-register', help: 'They still wait for administrator approval.' },
+  { key: 'switch.role.COACH', group: 'registration', default: 1, label: 'Coaches and mentors may self-register', help: 'They still wait for administrator approval.' },
   { key: 'switch.role.PROGRAMME_MANAGER', group: 'registration', default: 1, label: 'Programme managers may self-register', help: 'They still wait for administrator approval.' },
   { key: 'switch.role.FUNDER', group: 'registration', default: 1, label: 'Partners and funders may self-register', help: 'They still wait for administrator approval.' }
 ];

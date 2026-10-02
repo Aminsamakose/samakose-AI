@@ -16,7 +16,6 @@ export default function DashboardPage() {
           case 'management': return <Management d={d} />;
           case 'consultant': return <Consultant d={d} />;
           case 'reviewer': return <Reviewer d={d} />;
-          case 'expert': return <><Consultant d={d.lead} /><Coach d={d.coach} /></>;
           case 'coach': return <Coach d={d} />;
           case 'finance': return <Finance d={d} />;
           case 'owner': return <Owner d={d} />;

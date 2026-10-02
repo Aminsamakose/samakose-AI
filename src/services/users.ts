@@ -141,7 +141,7 @@ export async function setUserProgrammes(ctx: Ctx, id: string, ids: string[]) {
 /** People who can be assigned to work on cases. */
 export async function assignable(ctx: Ctx) {
   allow(ctx, 'users', 'read');
-  return ctx.db.select({ id: u.id, name: u.name, role: u.role }).from(u).where(and(eq(u.active, true), inArray(u.role, ['EXPERT', 'REVIEWER']))).orderBy(u.name);
+  return ctx.db.select({ id: u.id, name: u.name, role: u.role }).from(u).where(and(eq(u.active, true), inArray(u.role, ['CONSULTANT', 'COACH', 'REVIEWER']))).orderBy(u.name);
 }
 export { ApiError };
 

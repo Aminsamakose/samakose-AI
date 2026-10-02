@@ -6,7 +6,7 @@ import { db, schema } from '@/db/client';
 let admin: Session, pm: Session, consultant: Session, reviewer: Session, owner: Session, orgId: string;
 beforeAll(async () => {
   await ensureReference();
-  admin = await makeUser('ADMIN'); pm = await makeUser('PROGRAMME_MANAGER'); consultant = await makeUser('EXPERT'); reviewer = await makeUser('REVIEWER');
+  admin = await makeUser('ADMIN'); pm = await makeUser('PROGRAMME_MANAGER'); consultant = await makeUser('CONSULTANT'); reviewer = await makeUser('REVIEWER');
   const org = await makeOrg(admin); orgId = org.id; owner = await makeUser('OWNER', { orgId });
 });
 

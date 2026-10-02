@@ -12,7 +12,7 @@ async function build() {
   await api(admin).patch(`/programmes/${prog.id}`, { status: 'Active' });
   const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: 'Cohort A', capacity: 40 })).data;
   const pm = await makeUser('PROGRAMME_MANAGER', { programmeIds: [prog.id] });
-  const consultant = await makeUser('EXPERT'), reviewer = await makeUser('REVIEWER'), coach = await makeUser('EXPERT');
+  const consultant = await makeUser('CONSULTANT'), reviewer = await makeUser('REVIEWER'), coach = await makeUser('COACH');
   const finance = await makeUser('FINANCE');
   const funder = await makeUser('FUNDER', { programmeIds: [prog.id] });
   const org = await makeOrg(admin);
@@ -299,7 +299,7 @@ describe('the full case lifecycle', () => {
   });
 
   it('gives each role a dashboard with real numbers', async () => {
-    for (const [s, kind] of [[S().admin, 'management'], [S().pm, 'management'], [S().consultant, 'expert'], [S().reviewer, 'reviewer'], [S().coach, 'expert'], [S().finance, 'finance'], [S().owner, 'owner'], [S().funder, 'funder']] as const) {
+    for (const [s, kind] of [[S().admin, 'management'], [S().pm, 'management'], [S().consultant, 'consultant'], [S().reviewer, 'reviewer'], [S().coach, 'coach'], [S().finance, 'finance'], [S().owner, 'owner'], [S().funder, 'funder']] as const) {
       const r = await api(s).get('/dashboard'); expect(r.status, kind).toBe(200); expect(r.data.kind).toBe(kind);
     }
     const o = (await api(S().owner).get('/dashboard')).data;

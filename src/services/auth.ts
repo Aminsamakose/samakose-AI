@@ -187,7 +187,7 @@ export async function logoutOthers(ctx: Ctx) {
 }
 
 /* ------------------------- self-registration ------------------------- */
-export const SELF_ROLES = ['OWNER', 'EXPERT', 'PROGRAMME_MANAGER', 'FUNDER'] as const;
+export const SELF_ROLES = ['OWNER', 'CONSULTANT', 'COACH', 'PROGRAMME_MANAGER', 'FUNDER'] as const;
 const VERIFY_HOURS = 48;
 
 async function issueVerification(ctx: Ctx, userId: string, email: string, name: string) {

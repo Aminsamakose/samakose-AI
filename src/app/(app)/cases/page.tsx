@@ -17,7 +17,7 @@ export default function CasesPage() {
   const canUsers = ready && can('users', 'read');
   const progs = useApi<{ items: { id: string; name: string }[] }>(canProgrammes ? '/programmes?pageSize=100&sort=name&dir=asc' : null);
   const people = useApi<{ id: string; name: string; role: string }[]>(canUsers ? '/users/assignable' : null);
-  const consultants = (people.data ?? []).filter((p) => p.role === 'EXPERT');
+  const consultants = (people.data ?? []).filter((p) => p.role === 'CONSULTANT');
   const isOwner = me?.role === 'OWNER';
 
   const columns: Col<Row>[] = [

@@ -3,7 +3,7 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { ApiError, conflict, fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
-import { assertCase, caseScope, isInternal, assertLeadCase } from '@/domain/scope';
+import { assertCase, caseScope, isInternal } from '@/domain/scope';
 import { addDays, canTransitionPrescription, isoDate, validateDiagnosis, validatePrescription, type RxStatus } from '@/domain/logic';
 import { emitEvent } from '@/domain/events';
 import { notifyUsers } from '@/domain/notify';
@@ -22,7 +22,7 @@ async function assertNoRunningJob(ctx: Ctx, kind: string, caseId: string) {
 /* ------------------------------ diagnoses ------------------------------ */
 export async function requestDiagnosis(ctx: Ctx, caseId: string) {
   allow(ctx, 'diagnoses', 'create');
-  await assertLeadCase(ctx, caseId);
+  await assertCase(ctx, caseId);
   if (!(await latestScore(ctx, caseId))) throw unprocessable('Score the diagnostic first');
   await assertNoRunningJob(ctx, 'ai_diagnosis', caseId);
   const jobId = await enqueue(ctx, 'ai_diagnosis', { caseId }, { maxAttempts: 2 });
@@ -34,7 +34,7 @@ const evidenceCodes = async (ctx: Ctx, caseId: string) => (await ctx.db.select({
 
 export async function createDiagnosis(ctx: Ctx, caseId: string, b: { summary: string; rootCauses: { cause: string; evidence_ids: string[] }[]; priority: string; risks: { text: string; severity: string }[] }) {
   allow(ctx, 'diagnoses', 'create');
-  const cs = await assertLeadCase(ctx, caseId);
+  const cs = await assertCase(ctx, caseId);
   const d = await latestScore(ctx, caseId);
   if (!d) throw unprocessable('Score the diagnostic first');
   const problems = validateDiagnosis({ summary: b.summary, root_causes: b.rootCauses, priority: b.priority, risks: b.risks }, await evidenceCodes(ctx, caseId));
@@ -49,7 +49,7 @@ export async function reviseDiagnosis(ctx: Ctx, id: string, b: { summary: string
   allow(ctx, 'diagnoses', 'edit');
   const [old] = await ctx.db.select().from(dg).where(eq(dg.id, id)).limit(1);
   if (!old) throw notFound('Diagnosis not found');
-  await assertLeadCase(ctx, old.caseId);
+  await assertCase(ctx, old.caseId);
   const latest = await latestDiagnosis(ctx, old.caseId);
   if (latest!.id !== old.id) throw conflict('A newer version exists. Edit the latest version.');
   if (old.status === 'Reviewed') throw unprocessable('A reviewed diagnosis is replaced by creating a new one');
@@ -68,7 +68,7 @@ export async function reviewDiagnosis(ctx: Ctx, id: string, b: { decision: 'Revi
   allow(ctx, 'diagnoses', 'edit');
   const [d] = await ctx.db.select().from(dg).where(eq(dg.id, id)).for('update').limit(1);
   if (!d) throw notFound('Diagnosis not found');
-  await assertLeadCase(ctx, d.caseId);
+  await assertCase(ctx, d.caseId);
   const latest = await latestDiagnosis(ctx, d.caseId);
   if (latest!.id !== d.id) throw conflict('A newer version exists');
   if (d.status !== 'Draft') throw unprocessable(`This diagnosis is already ${d.status.toLowerCase()}`);
@@ -83,7 +83,7 @@ export async function reviewDiagnosis(ctx: Ctx, id: string, b: { decision: 'Revi
 /* ---------------------------- prescriptions ---------------------------- */
 export async function requestPrescription(ctx: Ctx, caseId: string) {
   allow(ctx, 'prescriptions', 'create');
-  await assertLeadCase(ctx, caseId);
+  await assertCase(ctx, caseId);
   const d = await latestDiagnosis(ctx, caseId);
   if (!d || d.status !== 'Reviewed') throw unprocessable('Review the diagnosis before drafting a prescription');
   await assertNoRunningJob(ctx, 'ai_prescription', caseId);
@@ -104,7 +104,7 @@ async function checkItems(ctx: Ctx, items: PrescriptionItem[]) {
 
 export async function createPrescription(ctx: Ctx, caseId: string, items: PrescriptionItem[]) {
   allow(ctx, 'prescriptions', 'create');
-  await assertLeadCase(ctx, caseId);
+  await assertCase(ctx, caseId);
   const d = await latestDiagnosis(ctx, caseId);
   if (!d || d.status !== 'Reviewed') throw unprocessable('Review the diagnosis before drafting a prescription');
   await checkItems(ctx, items);
@@ -119,7 +119,7 @@ export async function revisePrescription(ctx: Ctx, id: string, items: Prescripti
   allow(ctx, 'prescriptions', 'edit');
   const [old] = await ctx.db.select().from(rx).where(eq(rx.id, id)).limit(1);
   if (!old) throw notFound('Prescription not found');
-  await assertLeadCase(ctx, old.caseId);
+  await assertCase(ctx, old.caseId);
   if (!['DRAFT', 'RETURNED'].includes(old.status)) throw unprocessable('Only a draft or returned prescription can be revised');
   const latest = await latestRx(ctx, old.caseId);
   if (latest!.id !== old.id) throw conflict('A newer version exists');
@@ -133,7 +133,7 @@ export async function submitPrescription(ctx: Ctx, id: string) {
   allow(ctx, 'prescriptions', 'edit');
   const [p] = await ctx.db.select().from(rx).where(eq(rx.id, id)).for('update').limit(1);
   if (!p) throw notFound('Prescription not found');
-  const cs = await assertLeadCase(ctx, p.caseId);
+  const cs = await assertCase(ctx, p.caseId);
   const r = canTransitionPrescription(p.status as RxStatus, 'IN REVIEW', need(ctx).user.role);
   if (!r.ok) throw unprocessable(r.reason);
   const latest = await latestRx(ctx, p.caseId);
@@ -217,7 +217,7 @@ export async function reviewQueue(ctx: Ctx) {
   const rp = schema.reports;
   const reports = await ctx.db.select({ id: rp.id, code: rp.code, caseId: rp.caseId, caseCode: c.code, org: o.name, title: rp.title, createdAt: rp.createdAt })
     .from(rp).innerJoin(c, eq(c.id, rp.caseId)).innerJoin(o, eq(o.id, c.orgId)).where(and(scope, eq(rp.status, 'Draft'))).orderBy(rp.createdAt);
-  const returned = u.role === 'EXPERT'
+  const returned = u.role === 'CONSULTANT'
     ? await ctx.db.select({ id: rx.id, code: rx.code, caseId: rx.caseId, caseCode: c.code, org: o.name, reason: rx.reviewerNote }).from(rx).innerJoin(c, eq(c.id, rx.caseId)).innerJoin(o, eq(o.id, c.orgId))
       .where(and(scope, eq(rx.status, 'RETURNED'), sql`not exists (select 1 from prescriptions x where x.supersedes_id = ${rx.id})`))
     : [];

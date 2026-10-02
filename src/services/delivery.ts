@@ -178,7 +178,7 @@ export async function createSession(ctx: Ctx, caseId: string, b: { scheduledAt: 
   const cs = await assertCase(ctx, caseId);
   const when = new Date(b.scheduledAt);
   if (when.getTime() < Date.now() - 60_000) throw fieldError({ scheduledAt: 'Choose a time in the future' });
-  const [row] = await ctx.db.insert(s).values({ caseId, coachId: cs.coachId ?? (ctx.user!.role === 'EXPERT' ? ctx.user!.id : null), scheduledAt: when }).returning({ id: s.id, code: s.code });
+  const [row] = await ctx.db.insert(s).values({ caseId, coachId: cs.coachId ?? (ctx.user!.role === 'COACH' ? ctx.user!.id : null), scheduledAt: when }).returning({ id: s.id, code: s.code });
   await audit(ctx, 'session.scheduled', 'session', row.id, undefined, { at: when.toISOString() }, caseId);
   return row;
 }

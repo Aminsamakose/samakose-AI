@@ -93,7 +93,7 @@ export function TokenPasswordForm({ mode }: { mode: 'reset' | 'accept' }) {
   </form>;
 }
 
-const SELF = [['OWNER', 'Business owner', 'You run a business and want a health check'], ['EXPERT', 'Expert, consultant or coach', 'You advise, coach or mentor businesses'], ['PROGRAMME_MANAGER', 'Programme manager', 'You run a programme or cohort'], ['FUNDER', 'Partner or funder', 'You support or fund enterprises']] as const;
+const SELF = [['OWNER', 'Business owner', 'You run a business and want a health check'], ['CONSULTANT', 'Consultant', 'You advise businesses'], ['COACH', 'Coach or mentor', 'You coach business owners'], ['PROGRAMME_MANAGER', 'Programme manager', 'You run a programme or cohort'], ['FUNDER', 'Partner or funder', 'You support or fund enterprises']] as const;
 
 export function RegisterForm() {
   const [prov, setProv] = useState<{ selfRegistration: boolean; roles: string[] } | null>(null);

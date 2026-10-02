@@ -10,7 +10,7 @@ import { db, schema } from '@/db/client';
 const NIL = '00000000-0000-4000-8000-000000000000';
 const fill = (p: string) => p.replace(/:reference/g, 'nothing').replace(/:[a-zA-Z]+/g, NIL);
 // The route allows the role, but the service narrows it further by design (documented in ARCHITECTURE.md).
-const NARROWED = new Set(['POST /invoices/:id/manual-payment:OWNER', 'POST /payments/:reference/mock-complete:OWNER', 'POST /kpis/:id/readings:OWNER']);
+const NARROWED = new Set(['POST /cases/:id/assign:CONSULTANT', 'POST /invoices/:id/manual-payment:OWNER', 'POST /payments/:reference/mock-complete:OWNER', 'POST /kpis/:id/readings:OWNER']);
 
 let sessions: Record<Role, Session>;
 beforeAll(async () => {
@@ -55,7 +55,7 @@ describe('tenancy: no one reaches records outside their scope', () => {
     const mk = async () => {
       const org = await makeOrg(admin);
       const owner = await makeUser('OWNER', { orgId: org.id });
-      const consultant = await makeUser('EXPERT'), reviewer = await makeUser('REVIEWER'), coach = await makeUser('EXPERT');
+      const consultant = await makeUser('CONSULTANT'), reviewer = await makeUser('REVIEWER'), coach = await makeUser('COACH');
       const c = (await api(admin).post('/cases', { orgId: org.id })).data;
       await api(admin).post(`/cases/${c.id}/assign`, { consultantId: consultant.userId, coachId: coach.userId, reviewerId: reviewer.userId });
       await api(owner).post(`/cases/${c.id}/diagnostics`, { answers: await answerSheet(2) });

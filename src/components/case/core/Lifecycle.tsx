@@ -72,8 +72,8 @@ export function AssignPanel({ c, reload }: { c: CaseData; reload: () => void }) 
     {people.error ? <div className="alert bad" role="alert">{people.error}</div> : null}
     <form className="stack" onSubmit={f.onSubmit} noValidate>
       <FormError message={f.formError} />
-      <div className="form-grid">{sel('consultantId', 'Lead expert', 'EXPERT')}{sel('coachId', 'Coaching expert', 'EXPERT')}{sel('reviewerId', 'Reviewer', 'REVIEWER')}</div>
-      <p className="small muted">The reviewer must be a different person from the lead expert. People are notified when newly assigned.</p>
+      <div className="form-grid">{sel('consultantId', 'Consultant', 'CONSULTANT')}{sel('coachId', 'Coach', 'COACH')}{sel('reviewerId', 'Reviewer', 'REVIEWER')}</div>
+      <p className="small muted">The reviewer must be a different person from the consultant. People are notified when newly assigned.</p>
       <div className="form-actions"><Button variant="primary" type="submit" loading={f.busy} disabled={people.loading && !people.data}>Save assignments</Button></div>
     </form>
   </Card>;

@@ -2,7 +2,7 @@
 import { check, healthy, launch, login, problems, tally } from './lib';
 import { can, type Resource } from '../src/lib/rbac';
 
-const USERS: [string, string][] = [['ADMIN', 'admin'], ['EXECUTIVE', 'exec'], ['PROGRAMME_MANAGER', 'pm'], ['EXPERT', 'consultant'], ['REVIEWER', 'reviewer'], ['EXPERT', 'coach'], ['FINANCE', 'finance'], ['OWNER', 'owner'], ['FUNDER', 'funder']];
+const USERS: [string, string][] = [['ADMIN', 'admin'], ['EXECUTIVE', 'exec'], ['PROGRAMME_MANAGER', 'pm'], ['CONSULTANT', 'consultant'], ['REVIEWER', 'reviewer'], ['COACH', 'coach'], ['FINANCE', 'finance'], ['OWNER', 'owner'], ['FUNDER', 'funder']];
 const PAGES: { path: string; need?: [Resource, any]; roles?: string[] }[] = [
   { path: '/dashboard', need: ['dashboard', 'read'] }, { path: '/cases', need: ['cases', 'read'] }, { path: '/my-case', roles: ['OWNER'] },
   { path: '/reviews', need: ['prescriptions', 'approve'] }, { path: '/actions', need: ['actions', 'read'] }, { path: '/sessions', need: ['sessions', 'read'] },

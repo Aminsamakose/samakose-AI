@@ -1,12 +1,11 @@
 /**
  * Permission matrix: role x resource x action. Anything not listed is denied.
  * Row-level scoping (which records a role can reach) lives in domain/scope.ts.
- * Ten actions: read, create, edit, approve, delete, export, override, assign, verify, certify.
- * EXPERT is one role. What an expert may do on a case depends on the assignment (lead or coach), enforced in domain/scope.ts.
+ * Seven actions: read, create, edit, approve, delete, export, override.
  */
 import type { Role } from '@/db/schema';
 
-export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export' | 'override' | 'assign' | 'verify' | 'certify';
+export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export' | 'override';
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
   'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments',
@@ -14,12 +13,12 @@ export const RESOURCES = [
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
-const R = 'read' as const, C = 'create' as const, E = 'edit' as const, A = 'approve' as const, D = 'delete' as const, X = 'export' as const, O = 'override' as const, S = 'assign' as const, V = 'verify' as const, T = 'certify' as const;
+const R = 'read' as const, C = 'create' as const, E = 'edit' as const, A = 'approve' as const, D = 'delete' as const, X = 'export' as const, O = 'override' as const;
 type Grants = Partial<Record<Resource, Action[]>>;
 
 const ADMIN: Grants = {
   users: [R, C, E, D, X], organisations: [R, C, E, D, X], programmes: [R, C, E, D, X], cohorts: [R, C, E, D, X],
-  cases: [R, C, E, X, S, T], diagnostics: [R, C], evidence: [R, C, E], documents: [R, C], scores: [R], diagnoses: [R, C],
+  cases: [R, C, E, X], diagnostics: [R, C], evidence: [R, C, E], documents: [R, C], scores: [R], diagnoses: [R, C],
   prescriptions: [R, C], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E], reports: [R, C, X],
   plans: [R, C, E, D], contracts: [R, C, E, X], invoices: [R, C, E, D, X], payments: [R, C, X],
   audit: [R, X], settings: [R, C, E, D], dashboard: [R, X], integrations: [R, C, E], inquiries: [R, E, X],
@@ -34,18 +33,21 @@ export const PERMISSIONS: Record<Role, Grants> = {
     kpis: [R], reports: [R, X], contracts: [R], invoices: [R, X], payments: [R], dashboard: [R, X]
   },
   PROGRAMME_MANAGER: {
-    frameworks: [R], users: [R], organisations: [R, C, E, X], programmes: [R, E, X], cohorts: [R, C, E, X], cases: [R, C, E, X, S], diagnostics: [R], scores: [R],
+    frameworks: [R], users: [R], organisations: [R, C, E, X], programmes: [R, E, X], cohorts: [R, C, E, X], cases: [R, C, E, X], diagnostics: [R], scores: [R],
     diagnoses: [R], prescriptions: [R], actions: [R, X], kpis: [R], sessions: [R], reports: [R, X], contracts: [R], dashboard: [R, X]
   },
-  // One role for people who advise and coach. Lead-only actions (diagnosis, prescription, evidence verification, diagnostics) are limited to cases where the expert is the lead.
-  EXPERT: {
-    frameworks: [R], users: [R], organisations: [R, C, E], cases: [R, C, E], diagnostics: [R, C], evidence: [R, C, E, V], documents: [R, C], scores: [R],
+  CONSULTANT: {
+    frameworks: [R], users: [R], organisations: [R, C, E], cases: [R, C, E], diagnostics: [R, C], evidence: [R, C, E], documents: [R, C], scores: [R],
     diagnoses: [R, C, E, O], prescriptions: [R, C, E, O], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E],
     reports: [R, C], dashboard: [R]
   },
   REVIEWER: {
     frameworks: [R], cases: [R], evidence: [R], documents: [R], scores: [R], diagnoses: [R], prescriptions: [R, A], actions: [R], kpis: [R], risks: [R],
     reports: [R, A], dashboard: [R]
+  },
+  COACH: {
+    frameworks: [R], cases: [R], evidence: [R], scores: [R], diagnoses: [R], prescriptions: [R], actions: [R, E], kpis: [R, C], sessions: [R, C, E],
+    risks: [R], reports: [R], dashboard: [R]
   },
   FINANCE: {
     organisations: [R], plans: [R, C, E], contracts: [R, C, E, X], invoices: [R, C, E, X], payments: [R, C, X], dashboard: [R]
@@ -65,10 +67,10 @@ export function can(role: Role, resource: Resource, action: Action): boolean {
 }
 
 /** Roles that work inside the organisation, as opposed to clients and funders. */
-export const STAFF_ROLES: Role[] = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'EXPERT', 'REVIEWER', 'FINANCE', 'CONTENT_EDITOR', 'SITE_MANAGER'];
+export const STAFF_ROLES: Role[] = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'CONSULTANT', 'REVIEWER', 'COACH', 'FINANCE', 'CONTENT_EDITOR', 'SITE_MANAGER'];
 export const isStaff = (r: Role) => STAFF_ROLES.includes(r);
 export const ROLE_LABEL: Record<Role, string> = {
-  ADMIN: 'Administrator', EXECUTIVE: 'Executive', PROGRAMME_MANAGER: 'Programme manager', EXPERT: 'Expert',
-  REVIEWER: 'Reviewer', FINANCE: 'Finance', OWNER: 'Business owner', FUNDER: 'Funder',
+  ADMIN: 'Administrator', EXECUTIVE: 'Executive', PROGRAMME_MANAGER: 'Programme manager', CONSULTANT: 'Consultant',
+  REVIEWER: 'Reviewer', COACH: 'Coach', FINANCE: 'Finance', OWNER: 'Business owner', FUNDER: 'Funder',
   CONTENT_EDITOR: 'Content editor', SITE_MANAGER: 'Site manager'
 };

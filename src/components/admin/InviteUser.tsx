@@ -4,7 +4,7 @@ import { Button, Field, FormError, Modal, useForm } from '@/components/ui';
 import { fieldFail, OrgPicker, ProgrammePicker, ROLE_OPTIONS, validEmail } from './common';
 
 function InviteForm({ onDone }: { onDone: () => void }) {
-  const f = useForm({ email: '', name: '', role: 'EXPERT', orgId: '', programmeIds: [] as string[] }, async (v) => {
+  const f = useForm({ email: '', name: '', role: 'CONSULTANT', orgId: '', programmeIds: [] as string[] }, async (v) => {
     const e: Record<string, string> = {};
     if (!v.email.trim()) e.email = 'Enter an email address'; else if (!validEmail(v.email)) e.email = 'Enter a valid email address, for example name@example.com';
     if (v.name.trim().length < 2) e.name = 'Enter at least 2 characters';

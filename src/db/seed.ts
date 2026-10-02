@@ -49,9 +49,9 @@ async function seedDemo() {
   const admin = await mk('admin@demo.samakose.test', 'Ama Admin', 'ADMIN');
   await mk('exec@demo.samakose.test', 'Kofi Executive', 'EXECUTIVE');
   const pm = await mk('pm@demo.samakose.test', 'Abena Manager', 'PROGRAMME_MANAGER');
-  await mk('consultant@demo.samakose.test', 'Yaw Consultant', 'EXPERT');
+  await mk('consultant@demo.samakose.test', 'Yaw Consultant', 'CONSULTANT');
   await mk('reviewer@demo.samakose.test', 'Efua Reviewer', 'REVIEWER');
-  await mk('coach@demo.samakose.test', 'Musah Coach', 'EXPERT');
+  await mk('coach@demo.samakose.test', 'Musah Coach', 'COACH');
   await mk('finance@demo.samakose.test', 'Adwoa Finance', 'FINANCE');
   await mk('funder@demo.samakose.test', 'Funder Contact', 'FUNDER');
   await d.insert(schema.userProgrammes).values([{ userId: pm, programmeId: prog.id }]).onConflictDoNothing();

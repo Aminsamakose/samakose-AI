@@ -5,7 +5,7 @@ Owner means the person accountable for the component's behaviour and for approvi
 | Component | Where | Accountable | Reviewing role |
 |---|---|---|---|
 | Auth, sessions, MFA | `src/services/auth*`, `src/lib/crypto.ts` | Amin Yahaya | Security reviewer |
-| RBAC matrix and scoping, including lead and coaching expert rules | `src/lib/rbac.ts`, `src/domain/scope.ts`, `tests/expert.test.ts` | Amin Yahaya | Role and permission tester |
+| RBAC matrix and scoping | `src/lib/rbac.ts`, `src/domain/scope.ts` | Amin Yahaya | Role and permission tester |
 | Scoring and rules | `src/domain/logic.ts`, `tests/regression` | Amin Yahaya (business sign-off) | Diagnostic and scoring specialist |
 | Framework versions | `src/services/frameworks.ts`, migration 0011 | Amin Yahaya (publish sign-off) | Diagnostic and scoring specialist |
 | Case state machine | `src/domain/logic.ts`, `src/services/cases.ts` | Amin Yahaya | Workflow tester |

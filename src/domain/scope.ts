@@ -6,7 +6,7 @@
 import { and, eq, inArray, or, sql, type SQL } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { AuthUser, Ctx } from '@/lib/context';
-import { forbidden, notFound } from '@/lib/errors';
+import { notFound } from '@/lib/errors';
 
 const { cases, organisations } = schema;
 const NONE = sql`false`;
@@ -16,8 +16,9 @@ export function caseScope(u: AuthUser): SQL {
   switch (u.role) {
     case 'ADMIN': case 'EXECUTIVE': return sql`true`;
     case 'PROGRAMME_MANAGER': return u.programmeIds.length ? inArray(cases.programmeId, u.programmeIds) : NONE;
-    case 'EXPERT': return or(eq(cases.consultantId, u.id), eq(cases.coachId, u.id))!;
+    case 'CONSULTANT': return eq(cases.consultantId, u.id);
     case 'REVIEWER': return eq(cases.reviewerId, u.id);
+    case 'COACH': return eq(cases.coachId, u.id);
     case 'OWNER': return u.orgId ? eq(cases.orgId, u.orgId) : NONE;
     default: return NONE;
   }
@@ -29,7 +30,7 @@ export function orgScope(u: AuthUser): SQL {
     case 'ADMIN': case 'EXECUTIVE': case 'FINANCE': return sql`true`;
     case 'OWNER': return u.orgId ? eq(organisations.id, u.orgId) : NONE;
     case 'FUNDER': return NONE;
-    case 'PROGRAMME_MANAGER': case 'EXPERT':
+    case 'PROGRAMME_MANAGER': case 'CONSULTANT':
       // Their own registrations, organisations on their cases, and registry entries no case has claimed yet.
       return or(eq(organisations.createdBy, u.id), inArray(organisations.id, sql`(select org_id from cases where ${caseScope(u)})`),
         sql`not exists (select 1 from cases x where x.org_id = ${organisations.id})`)!;
@@ -67,15 +68,3 @@ export async function assertProgramme(ctx: Ctx, id: string) {
 
 /** Staff are the people who see internal workings. Owners and funders never see AI drafts, evidence internals or risks. */
 export const isInternal = (u: AuthUser) => !['OWNER', 'FUNDER'].includes(u.role);
-
-/** On a case an expert is the lead (consultantId) or the coach (coachId), or both. */
-export const expertKinds = (u: AuthUser, cs: { consultantId: string | null; coachId: string | null }) => ({ lead: cs.consultantId === u.id, coach: cs.coachId === u.id });
-/** Diagnosis, prescription, evidence and diagnostic work is for the lead expert only. A coaching expert keeps read and coaching access. */
-export function leadOnly(u: AuthUser | undefined, cs: { consultantId: string | null; coachId: string | null }) {
-  if (u?.role === 'EXPERT' && !expertKinds(u, cs).lead) throw forbidden('Only the lead expert on this case can do this');
-}
-export async function assertLeadCase(ctx: Ctx, id: string) {
-  const cs = await assertCase(ctx, id);
-  leadOnly(ctx.user ?? undefined, cs);
-  return cs;
-}

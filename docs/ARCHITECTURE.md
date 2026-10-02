@@ -7,7 +7,7 @@ The Business Doctor as a production web application. Next.js (App Router) and Ty
 | Area | State |
 |---|---|
 | Auth: sign in, lockout, MFA (TOTP), reset, invite, sessions | Built and tested |
-| RBAC: 10 roles (one EXPERT role replaces consultant and coach; what an expert may do on a case depends on being its lead or its coach), 29 resources, 10 actions (read, create, edit, approve, delete, export, override, assign, verify, certify), row scoping | Built and tested (every guarded route is checked for every role) |
+| RBAC: 11 roles, 29 resources, 7 actions, row scoping | Built and tested (every guarded route is checked for every role) |
 | Organisations, programmes, cohorts, cases, lifecycle state machine | Built and tested |
 | Diagnostic with evidence classes, quality gate, scoring, rescoring | Built and tested |
 | Framework versions: SME360 baseline, AgriFood360 and ESO360 shells. Diagnostics and scores point at the version they were produced under; published versions are immutable (database trigger); specialised frameworks need an approved evidence trail before publishing | Built and tested. AgriFood360 and ESO360 have no content and are not production-authoritative until approved by Amin Yahaya |

@@ -52,7 +52,7 @@ defineRoute({ method: 'GET', path: '/auth/providers', tag: T, summary: 'Which si
   const s = await allSwitches(ctx.db);
   const open = s['switch.self_registration'];
   return { google: googleEnabled() && open && s['switch.google_signin'], selfRegistration: open,
-    roles: ['OWNER', ...['EXPERT', 'PROGRAMME_MANAGER', 'FUNDER'].filter((r) => s[`switch.role.${r}`])] };
+    roles: ['OWNER', ...['CONSULTANT', 'COACH', 'PROGRAMME_MANAGER', 'FUNDER'].filter((r) => s[`switch.role.${r}`])] };
 } });
 defineRoute({ method: 'GET', path: '/auth/google/start', tag: T, summary: 'Begin Google sign-in (business owners)', auth: 'public', transactional: false, rateLimit: { key: 'gstart:ip:{ip}', limit: 30, windowSec: 600 }, handler: async () => startGoogle() });
 defineRoute({ method: 'GET', path: '/auth/google/callback', tag: T, summary: 'Google returns here after sign-in', auth: 'public', transactional: false, query: z.object({ code: z.string().optional(), state: z.string().optional(), error: z.string().optional() }).passthrough(),
