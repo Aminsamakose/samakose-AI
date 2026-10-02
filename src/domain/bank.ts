@@ -114,3 +114,26 @@ export function analyseBank(responses: ResponseLite[], qs: QuestionLite[], meta:
 
   return { subDimensions, readiness, risks, priorities, notApplicable: naCodes };
 }
+
+/**
+ * Cross-version comparison rule. Two scores from different framework versions are comparable only if enough of the weight
+ * sits in questions that did not change in substance. A question is unchanged if its code, weight, criticality and applicability
+ * are the same; wording, anchors and evidence guidance are minor changes and do not count (they follow the versioning rule).
+ * The share is measured on the newer version, per domain and overall. Pure, no database.
+ */
+export type Comparability = { comparable: boolean; share: number; domains: { dimension: string; share: number; comparable: boolean }[]; threshold: number };
+export function comparability(prev: QuestionLite[], cur: QuestionLite[], rules: Rules): Comparability {
+  const threshold = rv(rules, 'compare.min_unchanged_weight');
+  const pm = new Map(prev.map((q) => [q.code, q]));
+  const same = (a: QuestionLite | undefined, b: QuestionLite) => !!a && a.dimension === b.dimension && a.weight === b.weight && (a.criticality ?? 'Standard') === (b.criticality ?? 'Standard') && (a.applies ?? 'All') === (b.applies ?? 'All');
+  const tot = new Map<string, { all: number; kept: number }>();
+  let all = 0, kept = 0;
+  for (const q of cur) {
+    const t = tot.get(q.dimension) ?? { all: 0, kept: 0 }; t.all += q.weight; all += q.weight;
+    if (same(pm.get(q.code), q)) { t.kept += q.weight; kept += q.weight; }
+    tot.set(q.dimension, t);
+  }
+  const share = all ? kept / all : 0;
+  const domains = [...tot.entries()].map(([dimension, t]) => { const sh = t.all ? t.kept / t.all : 0; return { dimension, share: Math.round(sh * 1000) / 1000, comparable: sh >= threshold }; });
+  return { comparable: share >= threshold && domains.every((d) => d.comparable), share: Math.round(share * 1000) / 1000, domains, threshold };
+}

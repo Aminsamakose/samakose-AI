@@ -8,24 +8,37 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { forbidden } from '@/lib/errors';
 import { assertOrg, caseScope, isInternal } from '@/domain/scope';
-import { allow, need } from './common';
+import { comparability, type Comparability } from '@/domain/bank';
+import type { QuestionLite, Rules } from '@/domain/logic';
+import { allow, need, loadRules } from './common';
+import { questionsOf } from './frameworks';
 
 type Dim = { dimension: string; value: number };
+type Side = { overall: number; dimensions: Dim[]; versionId: string | null; versionLabel: string; questions?: QuestionLite[] };
 
 /** Plain-language reason a score moved. Facts only: the framework version and the dimension deltas. */
-export function explainChange(prev: { overall: number; dimensions: Dim[]; versionId: string | null; versionLabel: string } | null, cur: { overall: number; dimensions: Dim[]; versionId: string | null; versionLabel: string }) {
-  if (!prev) return { delta: null as number | null, dimensions: [] as { dimension: string; delta: number }[], reason: 'First score for this case.' };
+export function explainChange(prev: Side | null, cur: Side, rules: Rules = {}) {
+  type Out = { delta: number | null; dimensions: { dimension: string; delta: number }[]; reason: string; comparable: boolean; comparability: Comparability | null };
+  if (!prev) return { delta: null, dimensions: [], reason: 'First score for this case.', comparable: true, comparability: null } as Out;
+  const differs = prev.versionId !== cur.versionId;
+  const cmp = differs && prev.questions && cur.questions ? comparability(prev.questions, cur.questions, rules) : null;
+  if (cmp && !cmp.comparable) {
+    const low = cmp.domains.filter((d) => !d.comparable).map((d) => d.dimension);
+    return { delta: null, dimensions: [], comparable: false, comparability: cmp,
+      reason: `Not compared. ${prev.versionLabel} and ${cur.versionLabel} differ too much: ${Math.round(cmp.share * 100)}% of the weight is in unchanged questions, and at least ${Math.round(cmp.threshold * 100)}% is needed${low.length ? ` (below the line: ${low.join(', ')})` : ''}. Re-score the earlier answers under the new version to compare.` } as Out;
+  }
   const pm = new Map(prev.dimensions.map((d) => [d.dimension, d.value]));
-  const dims = cur.dimensions.map((d) => ({ dimension: d.dimension, delta: Math.round((d.value - (pm.get(d.dimension) ?? d.value)) * 10) / 10 })).filter((d) => d.delta !== 0);
+  const skip = new Set((cmp?.domains ?? []).filter((d) => !d.comparable).map((d) => d.dimension));
+  const dims = cur.dimensions.filter((d) => !skip.has(d.dimension)).map((d) => ({ dimension: d.dimension, delta: Math.round((d.value - (pm.get(d.dimension) ?? d.value)) * 10) / 10 })).filter((d) => d.delta !== 0);
   const delta = Math.round((cur.overall - prev.overall) * 10) / 10;
   const parts: string[] = [];
-  if (prev.versionId !== cur.versionId) parts.push(`Scored under a different framework version (${prev.versionLabel} to ${cur.versionLabel}), so part of the change may come from the framework and not the business.`);
+  if (differs) parts.push(`Scored under a different framework version (${prev.versionLabel} to ${cur.versionLabel})${cmp ? `, with ${Math.round(cmp.share * 100)}% of the weight in unchanged questions` : ''}, so part of the change may come from the framework and not the business.`);
   if (!dims.length) parts.push('No dimension moved.');
   else {
     const top = [...dims].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 2).map((d) => `${d.dimension} ${d.delta > 0 ? '+' : ''}${d.delta}`);
     parts.push(`Largest movement: ${top.join(', ')}.`);
   }
-  return { delta, dimensions: dims, reason: parts.join(' ') };
+  return { delta, dimensions: dims, reason: parts.join(' '), comparable: true, comparability: cmp } as Out;
 }
 
 export async function healthRecord(ctx: Ctx, orgId: string) {
@@ -49,17 +62,20 @@ export async function healthRecord(ctx: Ctx, orgId: string) {
     internal ? ctx.db.select().from(schema.coachingSessions).where(inArray(schema.coachingSessions.caseId, ids)).orderBy(asc(schema.coachingSessions.scheduledAt)) : Promise.resolve([]),
     internal ? ctx.db.select().from(schema.approvals).where(inArray(schema.approvals.caseId, ids)).orderBy(asc(schema.approvals.createdAt)) : Promise.resolve([]),
     ctx.db.select().from(schema.reports).where(and(inArray(schema.reports.caseId, ids), internal ? sql`true` : eq(schema.reports.status, 'Released'))).orderBy(asc(schema.reports.createdAt)),
-    ctx.db.select({ id: schema.frameworkVersions.id, version: schema.frameworkVersions.version, code: schema.frameworks.code, status: schema.frameworkVersions.status })
+    ctx.db.select({ id: schema.frameworkVersions.id, questions: schema.frameworkVersions.questions, version: schema.frameworkVersions.version, code: schema.frameworks.code, status: schema.frameworkVersions.status })
       .from(schema.frameworkVersions).innerJoin(schema.frameworks, eq(schema.frameworks.id, schema.frameworkVersions.frameworkId))
   ]);
   const label = (id: string | null) => { const v = versions.find((x) => x.id === id); return v ? `${v.code} v${v.version}` : 'unversioned'; };
 
+  const rules = await loadRules(ctx.db);
+  const qCache = new Map<string, QuestionLite[]>();
+  const qsOf = (id: string | null) => { if (!id) return undefined; if (!qCache.has(id)) { const v = versions.find((x) => x.id === id); if (v) qCache.set(id, questionsOf(v as any)); } return qCache.get(id); };
   const out = cases.map((c) => {
     const cs = scores.filter((s) => s.caseId === c.id);
-    let prev: Parameters<typeof explainChange>[0] = null;
+    let prev: Side | null = null;
     const scoreRuns = cs.map((s) => {
-      const cur = { overall: Number(s.overall), dimensions: s.dimensions, versionId: s.frameworkVersionId, versionLabel: label(s.frameworkVersionId) };
-      const why = explainChange(prev, cur); prev = cur;
+      const cur: Side = { overall: Number(s.overall), dimensions: s.dimensions, versionId: s.frameworkVersionId, versionLabel: label(s.frameworkVersionId), questions: qsOf(s.frameworkVersionId) };
+      const why = explainChange(prev, cur, rules); prev = cur;
       return { id: s.id, run: s.run, at: s.createdAt, overall: cur.overall, maturity: s.maturity, confidence: s.confidenceClass, framework: cur.versionLabel, dimensions: s.dimensions, change: why };
     });
     return {

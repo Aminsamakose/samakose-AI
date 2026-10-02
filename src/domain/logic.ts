@@ -34,7 +34,8 @@ export const DEFAULT_RULES: Rules = {
   'risk.concentration_min': 3,
   'priority.readiness_bonus': 0.25,
   'priority.gate_factor': 1.25,
-  'priority.top_n': 5
+  'priority.top_n': 5,
+  'compare.min_unchanged_weight': 0.7
 };
 export const RULE_NOTES: Record<string, string> = {
   'evidence.multiplier.Verified': 'Share of a stated answer that counts when the evidence is verified',
@@ -63,7 +64,8 @@ export const RULE_NOTES: Record<string, string> = {
   'risk.concentration_min': 'This many critical items in one sub-dimension mark it Critical',
   'priority.readiness_bonus': 'Extra priority per readiness index a question feeds',
   'priority.gate_factor': 'Priority multiplier for a gate question',
-  'priority.top_n': 'Number of priority sub-dimensions reported'
+  'priority.top_n': 'Number of priority sub-dimensions reported',
+  'compare.min_unchanged_weight': 'Scores from two framework versions are compared only if at least this share of weight sits in questions that did not change'
 };
 const rv = (rules: Rules, k: string) => (rules[k] !== undefined ? rules[k] : DEFAULT_RULES[k]);
 const num = (rules: Rules, k: string) => Number(rv(rules, k));

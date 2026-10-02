@@ -4,7 +4,8 @@ import { eq } from 'drizzle-orm';
 import { api, ensureReference, makeUser, type Session } from './helpers';
 import { db, schema } from '@/db/client';
 import { DEFAULT_RULES, NOT_APPLICABLE, scoreDiagnostic, validateSubmission, type QuestionLite, type ResponseLite } from '@/domain/logic';
-import { analyseBank, parseCondition, readinessLevel } from '@/domain/bank';
+import { analyseBank, comparability, parseCondition, readinessLevel } from '@/domain/bank';
+import { explainChange } from '@/services/record';
 import { questionsOf, validateContent } from '@/services/frameworks';
 import type { FrameworkMeta } from '@/db/schema';
 
@@ -155,5 +156,41 @@ describe('Kobo field names for bank codes', () => {
     expect(m.answers['SM-052']).toEqual({ notApplicable: true });
     expect(m.answers['ES-007']).toEqual({ notApplicable: true });
     expect(m.answers.Q01).toMatchObject({ value: 4 });
+  });
+});
+
+describe('cross-version comparison rule', () => {
+  const mk = (code: string, dimension: string, weight: number, extra: Partial<QuestionLite> = {}): QuestionLite => ({ code, dimension, text: code, weight, ...extra });
+  const v1 = [mk('A1', 'D1', 3), mk('A2', 'D1', 3), mk('B1', 'D2', 4), mk('B2', 'D2', 2)];
+
+  it('treats an identical or reworded version as comparable', () => {
+    const v2 = v1.map((q) => ({ ...q, text: q.text + ' reworded' }));
+    const c = comparability(v1, v2, {});
+    expect(c.comparable).toBe(true); expect(c.share).toBe(1);
+  });
+  it('flags a version where a weight change leaves under 70% unchanged', () => {
+    const v2 = [mk('A1', 'D1', 3), mk('A2', 'D1', 5), mk('B1', 'D2', 4), mk('B2', 'D2', 2)];
+    const c = comparability(v1, v2, {});
+    expect(c.domains.find((d) => d.dimension === 'D1')!.share).toBeCloseTo(0.375, 3);
+    expect(c.comparable).toBe(false);
+  });
+  it('counts a new question as changed, a gate change as changed', () => {
+    const v2 = [mk('A1', 'D1', 3), mk('A2', 'D1', 3), mk('B1', 'D2', 4, { criticality: 'Gate' }), mk('B2', 'D2', 2), mk('B3', 'D2', 4)];
+    const c = comparability(v1, v2, {});
+    expect(c.domains.find((d) => d.dimension === 'D2')!.share).toBeCloseTo(0.2, 3);
+    expect(c.comparable).toBe(false);
+  });
+  it('honours the rule override', () => {
+    const v2 = [mk('A1', 'D1', 3), mk('A2', 'D1', 3), mk('B1', 'D2', 4), mk('B2', 'D2', 2), mk('B3', 'D2', 4)];
+    expect(comparability(v1, v2, {}).comparable).toBe(false);
+    expect(comparability(v1, v2, { 'compare.min_unchanged_weight': 0.6 }).comparable).toBe(true);
+  });
+  it('explainChange withholds the delta when not comparable and keeps it otherwise', () => {
+    const side = (id: string, overall: number, questions: QuestionLite[]) => ({ overall, dimensions: [{ dimension: 'D1', value: overall }], versionId: id, versionLabel: id, questions });
+    const bad = explainChange(side('x1', 50, v1), side('x2', 70, [mk('A1', 'D1', 5), mk('Z', 'D1', 5)]));
+    expect(bad.delta).toBeNull(); expect(bad.comparable).toBe(false); expect(bad.reason).toMatch(/Not compared/);
+    const ok = explainChange(side('x1', 50, v1), side('x2', 60, v1));
+    expect(ok.delta).toBe(10); expect(ok.comparable).toBe(true);
+    expect(explainChange(side('x1', 50, v1), side('x1', 55, v1)).delta).toBe(5);
   });
 });
