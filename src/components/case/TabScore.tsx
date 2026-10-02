@@ -5,10 +5,19 @@ import { dateFmt, dateTime } from '@/lib/client/api';
 import type { TabProps } from './types';
 import { CLASS_TONE, CONFIDENCE_TONE, MaturityBadge, one, pct } from './core/shared';
 
+type Extras = {
+  subDimensions: { code: string; name: string; dimension: string; value: number; answered: number }[];
+  readiness: { code: string; name: string; index: number | null; level: string; questions: number; blocking: { code: string; value: number | null; label: string }[]; unlocks: string | null }[];
+  risks: { rule: string; code?: string; label: string; detail?: string }[];
+  priorities: { code: string; name: string; score: number }[];
+  notApplicable: string[];
+};
+const LEVEL_TONE: Record<string, string> = { 'Not ready': 'bad', Emerging: 'warn', 'Conditionally ready': 'info', Ready: 'ok' };
+const RULE_NAME: Record<string, string> = { R1: 'Critical item', R2: 'Domain', R3: 'Evidence', R4: 'Contradiction', R5: 'Concentration' };
 type Scores = {
   history: { id: string; run: number; overall: number; maturity: string; confidenceClass: string; at: string }[];
-  latest: { overall: number; maturity: string; confidenceClass: string; dimensions: { dimension: string; value: number }[]; evidenceShare: Record<string, number>; at: string } | null;
-  answers: { questionCode: string; dimension?: string; text?: string; value: number; evidenceClass: string; evidenceId: string | null }[];
+  latest: { overall: number; maturity: string; confidenceClass: string; dimensions: { dimension: string; value: number }[]; evidenceShare: Record<string, number>; extras?: Extras | null; at: string } | null;
+  answers: { questionCode: string; dimension?: string; text?: string; value: number; notApplicable?: boolean; evidenceClass: string; evidenceId: string | null }[];
 };
 
 export default function TabScore({ caseId }: TabProps) {
@@ -42,6 +51,7 @@ export default function TabScore({ caseId }: TabProps) {
           <p className="small muted" style={{ marginTop: 8 }}>Better evidence raises the score and the confidence. Upload or verify evidence in the <Link href={`/cases/${caseId}?tab=evidence`}>Evidence tab</Link>.</p>
         </Card>
       </div>
+      {l.extras && <Extended x={l.extras} />}
       <Card title="Score history">
         <LineChart label="Overall score by run" points={d.history.map((h) => ({ x: `#${h.run} ${dateFmt(h.at)}`, y: h.overall }))} />
         <div className="table-wrap" style={{ marginTop: 10 }}><table>
@@ -54,9 +64,42 @@ export default function TabScore({ caseId }: TabProps) {
         <div className="table-wrap"><table>
           <caption className="sr">Answers used in the latest score</caption>
           <thead><tr><th>Question</th><th>Dimension</th><th className="r">Value (0 to 4)</th><th>Evidence</th></tr></thead>
-          <tbody>{[...d.answers].sort((a, b) => a.questionCode.localeCompare(b.questionCode)).map((a) => <tr key={a.questionCode}><td><span className="mono">{a.questionCode}</span> {a.text}</td><td>{a.dimension ?? '-'}</td><td className="r num">{a.value}</td><td><Badge tone={CLASS_TONE[a.evidenceClass]}>{a.evidenceClass}</Badge></td></tr>)}</tbody>
+          <tbody>{[...d.answers].sort((a, b) => a.questionCode.localeCompare(b.questionCode)).map((a) => <tr key={a.questionCode}><td><span className="mono">{a.questionCode}</span> {a.text}</td><td>{a.dimension ?? '-'}</td><td className="r num">{a.notApplicable ? 'N/A' : a.value}</td><td><Badge tone={CLASS_TONE[a.evidenceClass]}>{a.evidenceClass}</Badge></td></tr>)}</tbody>
         </table></div>
       </Card>}
     </div>;
   }}</Async>;
+}
+
+/** Results only banks with sub-dimensions and readiness rules produce. These are rule outputs. Interpretation stays with a person. */
+function Extended({ x }: { x: Extras }) {
+  return <>
+    {x.readiness.length > 0 && <Card title="Readiness">
+      <div className="table-wrap"><table>
+        <caption className="sr">Readiness by opportunity</caption>
+        <thead><tr><th>Opportunity</th><th className="r">Index (0 to 100)</th><th>Level</th><th>What stands in the way</th></tr></thead>
+        <tbody>{x.readiness.map((r) => <tr key={r.code}>
+          <td>{r.name}<div className="small muted">{r.questions} questions</div></td>
+          <td className="r num">{r.index === null ? '-' : one(r.index)}</td>
+          <td><Badge tone={LEVEL_TONE[r.level]}>{r.level}</Badge></td>
+          <td>{r.blocking.length ? <ul style={{ margin: 0, paddingLeft: 18 }}>{r.blocking.map((b) => <li key={b.code}><span className="mono">{b.code}</span> {b.label}{b.value === null ? ' (not answered)' : ` (rated ${b.value})`}</li>)}</ul> : <span className="muted">Nothing blocking</span>}</td></tr>)}</tbody>
+      </table></div>
+      <p className="small muted" style={{ marginTop: 8 }}>Levels follow the framework rules and are indicators for a consultant to review. They are not a certification or a funding decision.</p>
+    </Card>}
+    <div className="grid two">
+      <Card title="Priority areas">
+        {x.priorities.length === 0 ? <Empty title="No priority areas" hint="Every answered item is at the top rating." /> : <ol style={{ margin: 0, paddingLeft: 20 }}>{x.priorities.map((p) => <li key={p.code}>{p.name} <span className="muted num">({one(p.score)})</span></li>)}</ol>}
+      </Card>
+      <Card title="Risks and gaps">
+        {x.risks.length === 0 ? <Empty title="No risks flagged by the rules" /> : <ul style={{ margin: 0, paddingLeft: 18 }}>{x.risks.map((r, i) => <li key={i}><Badge tone={r.rule === 'R1' || r.rule === 'R5' ? 'bad' : r.rule === 'R4' ? 'warn' : 'info'}>{RULE_NAME[r.rule] ?? r.rule}</Badge> {r.label}{r.detail && <span className="small muted"> ({r.detail})</span>}</li>)}</ul>}
+      </Card>
+    </div>
+    <Card title="Score by sub-dimension" actions={x.notApplicable.length ? <span className="small muted">{x.notApplicable.length} question{x.notApplicable.length === 1 ? '' : 's'} marked not applicable</span> : undefined}>
+      <div className="table-wrap"><table>
+        <caption className="sr">Score by sub-dimension, out of 100</caption>
+        <thead><tr><th>Sub-dimension</th><th>Dimension</th><th className="r">Questions</th><th className="r">Score</th></tr></thead>
+        <tbody>{x.subDimensions.map((s) => <tr key={s.code}><td><span className="mono muted">{s.code}</span> {s.name}</td><td>{s.dimension}</td><td className="r num">{s.answered}</td><td className="r num">{one(s.value)}</td></tr>)}</tbody>
+      </table></div>
+    </Card>
+  </>;
 }

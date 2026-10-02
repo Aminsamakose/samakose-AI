@@ -5,10 +5,11 @@ import { Async, Badge, Button, Card, Empty, Modal, useApi, useToast } from '@/co
 import type { TabProps } from './types';
 import { CASE_STATE_ORDER, CLASS_TONE, MaturityBadge, pct, useMe } from './core/shared';
 
-type Q = { code: string; dimension: string; text: string; weight: number };
+type Q = { code: string; dimension: string; text: string; weight: number; subDimension?: string; anchors?: (string | null)[]; evidence?: { requirement: string; method: string; examples?: string[] }; criticality?: string; applies?: string };
+const isCond = (q: Q) => !!q.applies && q.applies.trim().toLowerCase() !== 'all';
 type Diag = { id: string; code: string; status: string; source: string; completion: string | number; validationNotes: string | null; version: number; createdAt: string };
 type Doc = { id: string; code: string; filename: string };
-type Ans = { value: string; evidence: string; ref: string; note: string };
+type Ans = { value: string; evidence: string; ref: string; note: string; na?: boolean };
 type Gate = { ok: boolean; problems: string[]; completion: number };
 type Done = { version: number; overall: number; maturity: string; confidenceClass: string; caseStatus: string };
 
@@ -19,7 +20,7 @@ const blank = (): Ans => ({ value: '', evidence: 'Self-reported', ref: '', note:
 
 export default function TabDiagnostic({ caseId, caseData, role, reload }: TabProps) {
   const { can, ready } = useMe();
-  const qs = useApi<Q[]>('/questions');
+  const qs = useApi<Q[]>(`/questions?caseId=${caseId}`);
   const hist = useApi<Diag[]>(`/cases/${caseId}/diagnostics`);
   const docs = useApi<Doc[]>(ready && can('documents', 'read') ? `/documents?caseId=${caseId}` : null);
   const canSubmit = can('diagnostics', 'create');
@@ -71,14 +72,19 @@ function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, can
   const groups = useMemo(() => { const m = new Map<string, Q[]>(); questions.forEach((q) => m.set(q.dimension, [...(m.get(q.dimension) ?? []), q])); return [...m.entries()]; }, [questions]);
   const get = (c: string) => ans[c] ?? blank();
   const patch = (c: string, p: Partial<Ans>) => { setAns((a) => ({ ...a, [c]: { ...(a[c] ?? blank()), ...p } })); setErrs((e) => { if (!e[c]) return e; const n = { ...e }; delete n[c]; return n; }); setGate(null); setBlocked(null); };
-  const answered = questions.filter((q) => get(q.code).value !== '').length;
-  const completion = questions.length ? answered / questions.length : 0;
+  const isDone = (q: Q) => { const a = get(q.code); return a.value !== '' || !!a.na; };
+  const naCount = questions.filter((q) => get(q.code).na).length;
+  const answered = questions.filter(isDone).length;
+  // Not applicable questions leave the denominator, as on the server.
+  const applicable = questions.length - naCount;
+  const completion = applicable > 0 ? (answered - naCount) / applicable : 0;
 
   /** Per-question checks that mirror the server rules. */
   const validate = () => {
     const e: Record<string, string> = {};
     for (const q of questions) {
       const a = get(q.code);
+      if (a.na) continue;
       if (a.value === '') { if (a.note || a.ref) e[q.code] = 'Choose a value from 0 to 4 or clear this answer'; continue; }
       const n = Number(a.value);
       if (!Number.isInteger(n) || n < 0 || n > 4) e[q.code] = 'The value must be a whole number from 0 to 4';
@@ -91,8 +97,8 @@ function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, can
     setFormErr(null); return true;
   };
   const payload = () => {
-    const out: Record<string, { value: number; evidence: string; ref: string | null; note: string | null }> = {};
-    for (const q of questions) { const a = get(q.code); if (a.value === '') continue; out[q.code] = { value: Number(a.value), evidence: a.evidence, ref: a.evidence === 'Document-supported' ? a.ref || null : null, note: a.note.trim() || null }; }
+    const out: Record<string, { value?: number; notApplicable?: boolean; evidence?: string; ref?: string | null; note?: string | null }> = {};
+    for (const q of questions) { const a = get(q.code); if (a.na && isCond(q)) { out[q.code] = { notApplicable: true, note: a.note.trim() || null }; continue; } if (a.value === '') continue; out[q.code] = { value: Number(a.value), evidence: a.evidence, ref: a.evidence === 'Document-supported' ? a.ref || null : null, note: a.note.trim() || null }; }
     return out;
   };
 
@@ -118,9 +124,9 @@ function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, can
   };
   const prefill = async () => {
     try {
-      const r = await api.get<{ answers: { questionCode: string; value: number; evidenceClass: string }[] }>(`/cases/${caseId}/scores`);
+      const r = await api.get<{ answers: { questionCode: string; value: number; notApplicable?: boolean; evidenceClass: string }[] }>(`/cases/${caseId}/scores`);
       const next: Record<string, Ans> = {}; let downgraded = 0;
-      for (const a of r.answers ?? []) { const doc = a.evidenceClass === 'Document-supported'; if (doc) downgraded++; next[a.questionCode] = { value: String(a.value), evidence: doc ? 'Self-reported' : classes.includes(a.evidenceClass) ? a.evidenceClass : 'Self-reported', ref: '', note: '' }; }
+      for (const a of r.answers ?? []) { if (a.notApplicable) { next[a.questionCode] = { ...blank(), na: true }; continue; } const doc = a.evidenceClass === 'Document-supported'; if (doc) downgraded++; next[a.questionCode] = { value: String(a.value), evidence: doc ? 'Self-reported' : classes.includes(a.evidenceClass) ? a.evidenceClass : 'Self-reported', ref: '', note: '' }; }
       setAns(next); setGate(null); setBlocked(null); setErrs({});
       setNote(Object.keys(next).length ? `Loaded ${Object.keys(next).length} answers from the latest version.${downgraded ? ' Answers that relied on a document were set to Self-reported. Choose the document again to restore them.' : ''}` : 'The latest version has no answers to load.');
     } catch (e) { setFormErr(errText(e)); }
@@ -134,16 +140,23 @@ function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, can
       <div className="bar-track" aria-hidden style={{ marginTop: 4 }}><div className="bar-fill" style={{ width: `${completion * 100}%` }} /></div>
       {note && <div className="alert info" role="status" style={{ marginTop: 10 }}>{note}</div>}
     </Card>
-    {groups.map(([dim, list]) => <Card key={dim} title={dim} actions={<span className="small muted">{list.filter((q) => get(q.code).value !== '').length} of {list.length} answered</span>}>
+    {groups.map(([dim, list]) => <Card key={dim} title={dim} actions={<span className="small muted">{list.filter(isDone).length} of {list.length} answered</span>}>
       <div className="stack" style={{ gap: 18 }}>{list.map((q) => {
         const a = get(q.code); const err = errs[q.code]; const eid = `err-${q.code}`;
         return <fieldset key={q.code} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }} aria-describedby={err ? eid : undefined}>
-          <legend style={{ fontWeight: 600 }}><span className="mono muted">{q.code}</span> {q.text}</legend>
+          <legend style={{ fontWeight: 600 }}><span className="mono muted">{q.code}</span> {q.text}{q.criticality === 'Gate' && <> <Badge tone="warn">Gate</Badge></>}</legend>
+          {isCond(q) && <p className="small muted" style={{ margin: '2px 0 0' }}>Applies to: {q.applies}</p>}
           <div className="row" role="radiogroup" style={{ marginTop: 6 }}>
-            {SCALE.map((s) => <label key={s} className="row" style={{ gap: 4 }}><input type="radio" name={`v-${q.code}`} value={s} checked={a.value === s} onChange={() => patch(q.code, { value: s })} aria-invalid={err ? true : undefined} /><span className="num">{s}</span></label>)}
-            {a.value !== '' && <Button size="sm" variant="ghost" type="button" onClick={() => patch(q.code, { value: '' })}>Clear<span className="sr"> answer for {q.code}</span></Button>}
+            {SCALE.map((s) => <label key={s} className="row" style={{ gap: 4 }}><input type="radio" name={`v-${q.code}`} value={s} checked={a.value === s && !a.na} disabled={!!a.na} onChange={() => patch(q.code, { value: s })} aria-invalid={err ? true : undefined} /><span className="num">{s}</span></label>)}
+            {a.value !== '' && !a.na && <Button size="sm" variant="ghost" type="button" onClick={() => patch(q.code, { value: '' })}>Clear<span className="sr"> answer for {q.code}</span></Button>}
+            {isCond(q) && <label className="row" style={{ gap: 4, marginLeft: 8 }}><input type="checkbox" checked={!!a.na} onChange={(e) => patch(q.code, { na: e.target.checked, value: e.target.checked ? '' : a.value })} /><span>Does not apply to this business<span className="sr"> ({q.code})</span></span></label>}
           </div>
-          {a.value !== '' && <div className="form-grid" style={{ marginTop: 8 }}>
+          {q.anchors && q.anchors.length === 5 && <>
+            {a.value !== '' && !a.na && q.anchors[Number(a.value)] && <p className="small" style={{ margin: '6px 0 0' }}><strong>{a.value}:</strong> {q.anchors[Number(a.value)]}</p>}
+            <details className="small muted" style={{ marginTop: 4 }}><summary>What each rating means</summary>
+              <ol start={0} style={{ margin: '4px 0 0', paddingLeft: 22 }}>{q.anchors.map((t, i) => t ? <li key={i} value={i}>{t}</li> : null)}</ol></details></>}
+          {a.value !== '' && !a.na && q.evidence && <p className="small muted" style={{ margin: '6px 0 0' }}><strong>Evidence to look for ({q.evidence.method}):</strong> {q.evidence.requirement}{q.evidence.examples?.length ? ` For example: ${q.evidence.examples.join('; ')}.` : ''}</p>}
+          {a.value !== '' && !a.na && <div className="form-grid" style={{ marginTop: 8 }}>
             <div className="field"><label htmlFor={`ev-${q.code}`}>Evidence type for {q.code}</label>
               <select id={`ev-${q.code}`} value={a.evidence} onChange={(e) => patch(q.code, { evidence: e.target.value, ref: '' })}>{classes.map((c) => <option key={c}>{c}</option>)}</select></div>
             {a.evidence === 'Document-supported' && <div className="field"><label htmlFor={`ref-${q.code}`}>Supporting document</label>

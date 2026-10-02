@@ -8,7 +8,7 @@ import { confidenceClass, isConditional, NOT_APPLICABLE, scoreDiagnostic, valida
 import { analyseBank } from '@/domain/bank';
 import { emitEvent } from '@/domain/events';
 import { advanceCase, allow, latestDiagnostic, loadRules, need } from './common';
-import { questionsOf, resolveVersion, rulesFor, versionForRow, type VersionRow } from './frameworks';
+import { formQuestionsOf, questionsOf, resolveVersion, rulesFor, versionForRow, type VersionRow } from './frameworks';
 import { CASE_STATES, EVIDENCE_CLASSES, type EvidenceClass } from '@/db/schema';
 
 /** A rating from 0 to 4, or notApplicable for a conditional question that does not apply to this enterprise. */
@@ -20,7 +20,7 @@ const stateIndex = (s: string) => CASE_STATES.indexOf(s as any);
 /** The questions a form shows: the current published version for this kind of organisation (the default framework when none is given). */
 export async function activeQuestions(ctx: Ctx, caseId?: string) {
   const v = await versionForCase(ctx, caseId);
-  return questionsOf(v);
+  return formQuestionsOf(v);
 }
 async function versionForCase(ctx: Ctx, caseId?: string): Promise<VersionRow> {
   if (!caseId) return resolveVersion(ctx.db);

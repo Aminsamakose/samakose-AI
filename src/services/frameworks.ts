@@ -28,6 +28,12 @@ export const questionsOf = (v: Pick<VersionRow, 'questions'>): QuestionLite[] =>
   if (q.riskTag) l.riskTag = q.riskTag;
   return l;
 });
+/** What a form needs: the scoring fields plus the guidance a person answers from. Version 1 questions stay four fields. */
+export const formQuestionsOf = (v: Pick<VersionRow, 'questions'>) => v.questions.map((q) => {
+  const o: Record<string, unknown> = { code: q.code, dimension: q.dimension, text: q.text, weight: q.weight };
+  for (const k of ['subDimension', 'responseType', 'anchors', 'evidence', 'criticality', 'applies'] as const) if (q[k] !== undefined) o[k] = q[k];
+  return o as { code: string; dimension: string; text: string; weight: number; subDimension?: string; responseType?: string; anchors?: (string | null)[]; evidence?: { requirement: string; method: string; examples?: string[] }; criticality?: string; applies?: string };
+});
 /** Global rules with the version's own overrides on top. The merged set is stored with every score. */
 export const rulesFor = (v: Pick<VersionRow, 'rules'>, global: Rules): Rules => ({ ...global, ...(v.rules ?? {}) });
 
