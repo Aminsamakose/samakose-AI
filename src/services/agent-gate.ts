@@ -19,6 +19,8 @@ const BUILT_INS: BuiltIn[] = [
     resources: ['Approved intervention library', 'Reviewed diagnosis', 'Prescription rules'], permitted: ['Read the case context supplied to it', 'Draft a prescription from library items'], approval: 'The expert edits it and a reviewer approves it.' },
   { code: 'brief', name: 'Coaching Brief Agent', description: 'Prepares a one page coaching brief for a session.', purpose: 'Draft a session brief for the expert.',
     resources: ['Case summary', 'Latest score and actions'], permitted: ['Read the case summary supplied to it', 'Draft a coaching brief'], approval: 'The expert reads the brief before the session. The owner never sees it.' },
+  { code: 'enquiry', name: 'Enquiry Assistant', description: 'Answers website visitors from published content only and hands anything else to a person.', purpose: 'Answer public questions from published website content and pass the rest to the team.',
+    resources: ['Published website content (FAQs and articles)'], permitted: ['Read the published passages supplied to it', 'Answer a visitor question from those passages', 'Hand the visitor to a person'], approval: 'It publishes nothing and records nothing about the visitor. Anything it cannot answer goes to a person.' },
   { code: 'report', name: 'Progress Report Agent', description: 'Writes a plain-language progress report from the figures given.', purpose: 'Draft a progress report for reviewer release.',
     resources: ['Scores and KPI figures', 'Evidence classes'], permitted: ['Read the figures supplied to it', 'Draft a progress report'], approval: 'A reviewer releases the report to the owner.' }
 ];

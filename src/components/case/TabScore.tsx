@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { Async, Badge, Card, Empty, LineChart, Tile, useApi } from '@/components/ui';
 import { dateFmt, dateTime } from '@/lib/client/api';
+import CertificationCard from './CertificationCard';
 import type { TabProps } from './types';
 import { CLASS_TONE, CONFIDENCE_TONE, MaturityBadge, one, pct } from './core/shared';
 
@@ -28,6 +29,7 @@ export default function TabScore({ caseId }: TabProps) {
     const dims = Array.isArray(l.dimensions) ? [...l.dimensions] : [];
     const share = Object.entries(l.evidenceShare ?? {}).sort((a, b) => b[1] - a[1]);
     return <div className="stack">
+      <CertificationCard caseId={caseId} />
       <div className="grid">
         <Tile label="Overall score" value={one(l.overall)} hint="Out of 100" />
         <Tile label="Maturity" value={<MaturityBadge value={l.maturity} />} hint="Band from the scoring rules" />

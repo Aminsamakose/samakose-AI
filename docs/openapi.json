@@ -3973,6 +3973,254 @@
         }
       }
     },
+    "/cases/{id}/certification": {
+      "get": {
+        "tags": [
+          "Diagnostic and evidence"
+        ],
+        "summary": "Certificate status, eligibility criteria and history",
+        "operationId": "get__cases_id_certification",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "cases:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/cases/{id}/certification/propose": {
+      "post": {
+        "tags": [
+          "Diagnostic and evidence"
+        ],
+        "summary": "Propose a business health certificate (lead expert or administrator)",
+        "operationId": "post__cases_id_certification_propose",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "cases:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rationale": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 800
+                  }
+                },
+                "required": [
+                  "rationale"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/certificates/{id}/decision": {
+      "post": {
+        "tags": [
+          "Diagnostic and evidence"
+        ],
+        "summary": "Certify or decline a proposal. Must be a different person from the proposer",
+        "operationId": "post__certificates_id_decision",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "cases:certify",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "type": "string",
+                    "enum": [
+                      "Certify",
+                      "Decline"
+                    ]
+                  },
+                  "note": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 600
+                  }
+                },
+                "required": [
+                  "decision",
+                  "note"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/certificates/{id}/revoke": {
+      "post": {
+        "tags": [
+          "Diagnostic and evidence"
+        ],
+        "summary": "Revoke a certificate, with a reason",
+        "operationId": "post__certificates_id_revoke",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "cases:certify",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 600
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
     "/cases/{id}/scores": {
       "get": {
         "tags": [
@@ -11812,6 +12060,112 @@
                   "kind",
                   "email",
                   "consent"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/public/assistant": {
+      "get": {
+        "tags": [
+          "Website"
+        ],
+        "summary": "Whether the website assistant is switched on",
+        "operationId": "get__public_assistant",
+        "security": [],
+        "x-permission": "public",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Website"
+        ],
+        "summary": "Ask the website assistant a question. Answers come from published content only",
+        "operationId": "post__public_assistant",
+        "security": [],
+        "x-permission": "public",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500
+                  },
+                  "history": {
+                    "maxItems": 6,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "user",
+                            "assistant"
+                          ]
+                        },
+                        "text": {
+                          "type": "string",
+                          "maxLength": 900
+                        }
+                      },
+                      "required": [
+                        "role",
+                        "text"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "message"
                 ]
               }
             }

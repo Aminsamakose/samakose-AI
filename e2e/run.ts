@@ -1,6 +1,6 @@
 /** Runs every browser journey against a running app (E2E_BASE, default http://localhost:3100) seeded with SEED_DEMO=1. */
 import { spawnSync } from 'node:child_process';
-const steps = ['sweep', 'journey', 'commercial', 'delivery', 'framework', 'agents'];
+const steps = ['sweep', 'journey', 'commercial', 'delivery', 'framework', 'agents', 'trust'];
 let failed = 0;
 for (const s of steps) {
   console.log(`\n=== e2e/${s}.ts ===`);

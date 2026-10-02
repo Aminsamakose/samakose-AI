@@ -3,6 +3,7 @@ import { SiteHeader } from '@/components/site/SiteHeader';
 import { ScrollProgress } from '@/components/site/ScrollProgress';
 import { SiteFooter } from '@/components/site/SiteFooter';
 import { AnnouncementBar } from '@/components/site/AnnouncementBar';
+import { AssistantChat } from '@/components/site/AssistantChat';
 import { getSite } from '@/lib/site-content';
 
 const DNT = "if(navigator.doNotTrack==='1'||window.doNotTrack==='1')window.__noTrack=true;";
@@ -27,6 +28,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <SiteHeader nav={site.nav} />
       <main id="main" className="flex-1">{children}</main>
       <SiteFooter site={site} />
+      <AssistantChat />
       {(ga || pl) && <Script id="dnt" strategy="afterInteractive">{DNT}</Script>}
       {ga && <>
         <Script id="ga-src" src={`https://www.googletagmanager.com/gtag/js?id=${ga}`} strategy="afterInteractive" />

@@ -716,3 +716,29 @@ export const aiAgentVersions = pgTable('ai_agent_versions', {
   createdBy: uuid('created_by'),
   createdAt: created()
 }, (t) => [uniqueIndex('ai_agent_version_uq').on(t.agentId, t.version)]);
+
+/* ------------------------- certification ------------------------- */
+export const CERT_STATUSES = ['Proposed', 'Certified', 'Declined', 'Revoked'] as const;
+/** A business health certificate. Proposed by the lead expert, decided by a different person, valid for a fixed period. The criteria results are frozen at each step. */
+export const certificates = pgTable('certificates', {
+  id: id(),
+  caseId: uuid('case_id').notNull().references(() => cases.id),
+  orgId: uuid('org_id').notNull().references(() => organisations.id),
+  scoreId: uuid('score_id').notNull().references(() => healthScores.id),
+  frameworkVersionId: uuid('framework_version_id').references((): any => frameworkVersions.id),
+  level: text('level').notNull(),
+  status: text('status').notNull().default('Proposed'),
+  overall: numeric('overall', { precision: 5, scale: 1 }).notNull(),
+  criteria: jsonb('criteria').notNull(),
+  unlocks: jsonb('unlocks').notNull().default(sql`'[]'::jsonb`),
+  rationale: text('rationale').notNull(),
+  proposedBy: uuid('proposed_by').notNull().references(() => users.id),
+  proposedAt: timestamp('proposed_at', { withTimezone: true }).notNull().defaultNow(),
+  decidedBy: uuid('decided_by').references(() => users.id),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  decisionNote: text('decision_note'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  revokedBy: uuid('revoked_by').references(() => users.id),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  revokeReason: text('revoke_reason')
+}, (t) => [index('cert_case_idx').on(t.caseId, t.proposedAt), index('cert_org_idx').on(t.orgId)]);

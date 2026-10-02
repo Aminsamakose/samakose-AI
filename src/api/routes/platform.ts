@@ -7,6 +7,7 @@ import * as kobo from '@/services/kobo';
 import * as dash from '@/services/dashboards';
 import * as adm from '@/services/admin';
 import * as fw from '@/services/frameworks';
+import * as asst from '@/services/assistant';
 import * as ag from '@/services/agents';
 import { AGENT_STATUSES } from '@/domain/agents';
 import * as sw from '@/services/switches';
@@ -136,6 +137,14 @@ defineRoute({ method: 'POST', path: '/public/inquiries', tag: W, summary: 'Send 
     }
   }),
   handler: ({ ctx, body }) => inq.submitInquiry(ctx, body as any) });
+defineRoute({ method: 'GET', path: '/public/assistant', tag: W, summary: 'Whether the website assistant is switched on', auth: 'public', handler: async () => ({ on: await asst.assistantOn() }) });
+defineRoute({ method: 'POST', path: '/public/assistant', tag: W, summary: 'Ask the website assistant a question. Answers come from published content only', auth: 'public',
+  rateLimit: { key: 'assistant:ip:{ip}', limit: 20, windowSec: 900 },
+  body: z.object({ message: z.string().trim().min(3, 'Type your question').max(500), history: z.array(z.object({ role: z.enum(['user', 'assistant']), text: z.string().max(900) })).max(6).optional() }),
+  handler: async ({ body }) => {
+    if (!(await asst.assistantOn())) throw notFound('The assistant is not switched on');
+    return asst.ask(body.message, body.history ?? []);
+  } });
 defineRoute({ method: 'GET', path: '/inquiries', tag: AD, summary: 'Website enquiries', permission: ['inquiries', 'read'], query: listQuery.extend({ status: z.string().optional(), kind: z.string().optional() }), handler: ({ ctx, query }) => inq.listInquiries(ctx, query) });
 defineRoute({ method: 'PATCH', path: '/inquiries/:id', tag: AD, summary: 'Mark an enquiry handled, spam or new', permission: ['inquiries', 'edit'], body: z.object({ status: z.enum(['New', 'Handled', 'Spam']) }), handler: ({ ctx, params, body }) => inq.setInquiryStatus(ctx, params.id, (body as any).status) });
 

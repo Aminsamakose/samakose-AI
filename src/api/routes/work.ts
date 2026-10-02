@@ -1,3 +1,4 @@
+import * as cert from '@/services/certificates';
 import { z } from 'zod';
 import { badRequest } from '@/lib/errors';
 import { defineRoute, status } from '../framework';
@@ -49,6 +50,10 @@ defineRoute({ method: 'GET', path: '/questions', tag: D, summary: 'Questions of 
 defineRoute({ method: 'POST', path: '/cases/:id/diagnostics/validate', tag: D, summary: 'Check answers against the data quality gate without saving', permission: ['diagnostics', 'create'], body: z.object({ answers }), handler: ({ ctx, params, body }) => diag.preflight(ctx, params.id, body.answers as any) });
 defineRoute({ method: 'POST', path: '/cases/:id/diagnostics', tag: D, summary: 'Submit a diagnostic. It is validated and scored at once.', permission: ['diagnostics', 'create'], body: z.object({ answers, uuid: z.string().max(80).optional() }), handler: async ({ ctx, params, body }) => status(201, await diag.submitDiagnostic(ctx, params.id, body as any)) });
 defineRoute({ method: 'GET', path: '/cases/:id/diagnostics', tag: D, summary: 'Diagnostic submissions for a case', permission: ['diagnostics', 'read'], handler: ({ ctx, params }) => diag.listDiagnostics(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/cases/:id/certification', tag: D, summary: 'Certificate status, eligibility criteria and history', permission: ['cases', 'read'], handler: ({ ctx, params }) => cert.certification(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/cases/:id/certification/propose', tag: D, summary: 'Propose a business health certificate (lead expert or administrator)', permission: ['cases', 'edit'], body: z.object({ rationale: z.string().trim().min(10).max(800) }), handler: async ({ ctx, params, body }) => status(201, await cert.propose(ctx, params.id, body.rationale)) });
+defineRoute({ method: 'POST', path: '/certificates/:id/decision', tag: D, summary: 'Certify or decline a proposal. Must be a different person from the proposer', permission: ['cases', 'certify'], body: z.object({ decision: z.enum(['Certify', 'Decline']), note: z.string().trim().min(5).max(600) }), handler: ({ ctx, params, body }) => cert.decide(ctx, params.id, body) });
+defineRoute({ method: 'POST', path: '/certificates/:id/revoke', tag: D, summary: 'Revoke a certificate, with a reason', permission: ['cases', 'certify'], body: z.object({ reason: z.string().trim().min(5).max(600) }), handler: ({ ctx, params, body }) => cert.revoke(ctx, params.id, body.reason) });
 defineRoute({ method: 'GET', path: '/cases/:id/scores', tag: D, summary: 'Score history and latest breakdown', permission: ['scores', 'read'], handler: ({ ctx, params }) => diag.caseScores(ctx, params.id) });
 defineRoute({ method: 'POST', path: '/cases/:id/rescore', tag: D, summary: 'Score again from the current evidence', permission: ['evidence', 'edit'], body: empty, handler: ({ ctx, params }) => diag.rescore(ctx, params.id) });
 defineRoute({ method: 'GET', path: '/cases/:id/evidence', tag: D, summary: 'Evidence items for a case', permission: ['evidence', 'read'], handler: ({ ctx, params }) => ev.listEvidence(ctx, params.id) });

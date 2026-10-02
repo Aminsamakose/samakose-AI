@@ -59,7 +59,7 @@ flowchart LR
 |---|---|
 | Framework | `src/api/framework.ts`, `list.ts`, `openapi.ts`, `schemas.ts` |
 | Routes | `src/api/routes/auth.ts`, `work.ts`, `platform.ts` |
-| Services | `src/services/*.ts`: auth, users, orgs, programmes, cases, diagnostics, evidence, clinical, delivery, reports, finance, dashboards, admin, kobo, ai, agents (admin), agent-gate (gateway) |
+| Services | `src/services/*.ts`: auth, users, orgs, programmes, cases, diagnostics, evidence, clinical, delivery, reports, finance, dashboards, admin, kobo, ai, agents (admin), agent-gate (gateway), certificates, assistant |
 | Domain rules | `src/domain/logic.ts` (scoring, state machine, gate), `scope.ts`, `events.ts`, `notify.ts`, `jobs.ts`, `job-handlers.ts`, `mockai.ts`, `agents.ts` (agent rules), `prompts.ts` |
 | Security | `src/lib/rbac.ts`, `crypto.ts`, `session.ts`, `audit.ts`, `errors.ts` |
 | Data | `src/db/schema.ts`, `migrations/*.sql`, `seed.ts` |
@@ -117,6 +117,13 @@ Case states: PROSPECT, ONBOARDING, PROFILED, DIAGNOSTIC, DIAGNOSED (scored and d
 - Usage limits per agent (requests and tokens, day and month, warning at 80%, then throttle or pause). The defaults are placeholders until a monthly cost cap is set.
 - A refused task is recorded in `ai_requests` with the reason and the requester is told to do the work by hand. The audit log records whether an action was by a person, an agent or both (`actor_type`).
 - Roles stay defined in code (`src/lib/rbac.ts`), not in the database. The administrator manages agents; the executive can read.
+
+### Certification and the website assistant
+
+- **Certificate** (`certificates`, migration 0016, rules in `src/domain/certification.ts`). A business is certified on verified evidence, not on a score alone. Eligibility needs: a validated score on a published framework version, no blocking gate question, no Critical domain, confidence Medium or High, verified or document-supported evidence covering the set share of answers, a reviewed diagnosis and an approved prescription. Levels: Foundation, Established, Investment-ready (the last also needs a Ready readiness index). All thresholds, the evidence share and the validity period are rules in Settings.
+- **Four eyes:** the lead expert (or an administrator) proposes. A different person, a reviewer or administrator who is not on the case team, decides. Enforced in the service and by a database check. Eligibility is checked again at the decision. A certificate lasts the set number of months, shows as Expired after that, and can be revoked with a reason. Declined and revoked records are final and nothing is deleted.
+- **Unlocks** are the framework's own text: each readiness index states what reaching it opens, and a certificate lists those for indices that are Ready or Conditionally ready. Wiring an unlock to a real feature is done per item.
+- **Enquiry Assistant** (`src/services/assistant.ts`). A public chat on the website that answers only from published FAQs and articles, runs through the AI gateway as a registered agent (pause, limits, cost cap, audit), refuses prices, promises, scores, certification claims and links, never reads drafts, and hands anything else to a person. It is off until an administrator turns on the switch in Settings. Pages are built ahead of time, so the widget asks the server whether it is on.
 
 ## 6. Security
 

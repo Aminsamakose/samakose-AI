@@ -11,6 +11,8 @@ Owner means the person accountable for the component's behaviour and for approvi
 | Case state machine | `src/domain/logic.ts`, `src/services/cases.ts` | Amin Yahaya | Workflow tester |
 | AI gateway and prompts | `src/services/ai.ts`, `src/domain/mockai.ts` | Amin Yahaya | AI tester, AI governance |
 | AI agent registry and governance | `src/services/agents.ts`, `agent-gate.ts`, `src/domain/agents.ts`, migration 0015 | Amin Yahaya (human owner of all four agents) | AI governance |
+| Certification | `src/services/certificates.ts`, `src/domain/certification.ts`, migration 0016 | Amin Yahaya (certification sign-off) | Diagnostic and scoring specialist, AI governance |
+| Website assistant | `src/services/assistant.ts`, `src/domain/assistant.ts`, `AssistantChat.tsx` | Amin Yahaya | AI governance, content owner |
 | Business Health Record | `src/services/record.ts` | Amin Yahaya | Integration tester |
 | Finance and billing | `src/services/finance.ts`, `billing.ts` | Amin Yahaya | Finance reviewer |
 | Website and content engine | `src/services/content.ts` | Amin Yahaya | Content owner |

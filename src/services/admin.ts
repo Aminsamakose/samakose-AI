@@ -58,6 +58,9 @@ export async function updateRules(ctx: Ctx, values: Record<string, number>) {
     if (k.startsWith('maturity.') && (v <= 0 || v >= 100)) errors[k] = 'Use a value between 0 and 100';
     if (k.startsWith('confidence.') && (v <= 0 || v > 1)) errors[k] = 'Use a value above 0 and up to 1';
     if (k.startsWith('ai.') && (v < 0 || v > 100000)) errors[k] = 'Use a value from 0 to 100000';
+    if (k.startsWith('cert.') && k !== 'cert.min_evidence_share' && k !== 'cert.valid_months' && (v <= 0 || v > 100)) errors[k] = 'Use a score above 0 and up to 100';
+    if (k === 'cert.min_evidence_share' && (v <= 0 || v > 1)) errors[k] = 'Use a value above 0 and up to 1';
+    if (k === 'cert.valid_months' && (!Number.isInteger(v) || v < 1 || v > 60)) errors[k] = 'Use whole months from 1 to 60';
     if (k === 'privacy.min_cell_size' && (v < 3 || v > 50)) errors[k] = 'Use a value from 3 to 50';
     if (k.startsWith('prescription.') && (!Number.isInteger(v) || v < 1 || v > 730)) errors[k] = 'Use whole days from 1 to 730';
     if (k === 'session.min_for_monitoring' && (!Number.isInteger(v) || v < 1 || v > 12)) errors[k] = 'Use a whole number from 1 to 12';
@@ -66,6 +69,7 @@ export async function updateRules(ctx: Ctx, values: Record<string, number>) {
   const m = { ...cur, ...next } as Record<string, number>;
   if (!(m['maturity.critical_below'] < m['maturity.fragile_below'] && m['maturity.fragile_below'] < m['maturity.developing_below'])) errors['maturity.fragile_below'] = 'Critical must be below Fragile, and Fragile below Developing';
   if (!(m['confidence.medium_share'] < m['confidence.high_share'])) errors['confidence.high_share'] = 'The High share must be above the Medium share';
+  if (!(m['cert.foundation_min'] < m['cert.established_min'] && m['cert.established_min'] < m['cert.investment_ready_min'])) errors['cert.established_min'] = 'Foundation must be below Established, and Established below Investment-ready';
   if (!(m['prescription.min_days'] <= m['prescription.max_days'])) errors['prescription.max_days'] = 'Longest deadline must be at least the shortest';
   if (Object.keys(errors).length) throw fieldError(errors);
   const before: Record<string, unknown> = {};

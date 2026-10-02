@@ -36,6 +36,11 @@ export const DEFAULT_RULES: Rules = {
   'priority.gate_factor': 1.25,
   'priority.top_n': 5,
   'compare.min_unchanged_weight': 0.7,
+  'cert.foundation_min': 60,
+  'cert.established_min': 75,
+  'cert.investment_ready_min': 85,
+  'cert.min_evidence_share': 0.6,
+  'cert.valid_months': 12,
   'ai.monthly_cost_cap_usd': 25,
   'ai.usd_per_million_input_tokens': 3,
   'ai.usd_per_million_output_tokens': 15
@@ -69,6 +74,11 @@ export const RULE_NOTES: Record<string, string> = {
   'priority.gate_factor': 'Priority multiplier for a gate question',
   'priority.top_n': 'Number of priority sub-dimensions reported',
   'compare.min_unchanged_weight': 'Scores from two framework versions are compared only if at least this share of weight sits in questions that did not change',
+  'cert.foundation_min': 'Lowest overall score for a Foundation certificate (all other criteria must also be met)',
+  'cert.established_min': 'Lowest overall score for an Established certificate',
+  'cert.investment_ready_min': 'Lowest overall score for an Investment-ready certificate. At least one readiness index must also be Ready',
+  'cert.min_evidence_share': 'Share of scored answers that must be verified or document-supported before a certificate can be proposed',
+  'cert.valid_months': 'How long a certificate stays valid, in months',
   'ai.monthly_cost_cap_usd': 'Most the live AI may cost in a calendar month, in US dollars, across all agents. New live tasks are refused once it is reached. 0 means no cap. The starting figure is a placeholder',
   'ai.usd_per_million_input_tokens': 'Estimated price per million input tokens, used only to estimate spend. Check it against your Anthropic invoice',
   'ai.usd_per_million_output_tokens': 'Estimated price per million output tokens, used only to estimate spend. Check it against your Anthropic invoice'

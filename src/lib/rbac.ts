@@ -46,7 +46,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
     reports: [R, C], dashboard: [R]
   },
   REVIEWER: {
-    frameworks: [R], cases: [R], evidence: [R], documents: [R], scores: [R], diagnoses: [R], prescriptions: [R, A], actions: [R], kpis: [R], risks: [R],
+    frameworks: [R], cases: [R, T], evidence: [R], documents: [R], scores: [R], diagnoses: [R], prescriptions: [R, A], actions: [R], kpis: [R], risks: [R],
     reports: [R, A], dashboard: [R]
   },
   FINANCE: {
