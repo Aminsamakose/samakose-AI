@@ -44,7 +44,7 @@ defineRoute({ method: 'GET', path: '/cases/:id/activity', tag: C, summary: 'Acti
 
 /* ------------------------- diagnostic, evidence ------------------------ */
 const D = 'Diagnostic and evidence';
-const answers = z.record(z.string().regex(/^Q\d{2,3}$/), z.union([z.number(), z.object({ value: z.number(), evidence: evidenceClass.optional(), ref: z.string().max(40).nullish(), note: z.string().max(500).nullish() })]));
+const answers = z.record(z.string().regex(/^[A-Z0-9][A-Z0-9_-]{1,15}$/), z.union([z.number(), z.object({ value: z.number().optional(), notApplicable: z.boolean().optional(), evidence: evidenceClass.optional(), ref: z.string().max(40).nullish(), note: z.string().max(500).nullish() })]));
 defineRoute({ method: 'GET', path: '/questions', tag: D, summary: 'Questions of the current published framework version (for the given case when caseId is sent)', permission: ['diagnostics', 'read'], query: z.object({ caseId: z.string().uuid().optional() }), handler: ({ ctx, query }) => diag.activeQuestions(ctx, query.caseId) });
 defineRoute({ method: 'POST', path: '/cases/:id/diagnostics/validate', tag: D, summary: 'Check answers against the data quality gate without saving', permission: ['diagnostics', 'create'], body: z.object({ answers }), handler: ({ ctx, params, body }) => diag.preflight(ctx, params.id, body.answers as any) });
 defineRoute({ method: 'POST', path: '/cases/:id/diagnostics', tag: D, summary: 'Submit a diagnostic. It is validated and scored at once.', permission: ['diagnostics', 'create'], body: z.object({ answers, uuid: z.string().max(80).optional() }), handler: async ({ ctx, params, body }) => status(201, await diag.submitDiagnostic(ctx, params.id, body as any)) });

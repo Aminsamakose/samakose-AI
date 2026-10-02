@@ -86,7 +86,7 @@ Every source in the bank's `sources` map: id (S1...), title, publisher, year, ur
 
 ## 10. Rules added after the first authoring pass
 
-- Not applicable: a conditional question (applies is not "All") that does not apply is excluded from the numerator and denominator of every score and from the completion gate. A conditional Gate that does not apply counts as passed for readiness. The platform needs an N/A response for this (engine change, not yet built). Until then the loadable export carries these questions as ordinary items and the verifier scores them at the middle value only when they truly apply.
+- Not applicable: a conditional question (applies is not "All") that does not apply is excluded from the numerator and denominator of every score and from the completion gate. A conditional Gate that does not apply counts as passed for readiness. The platform now supports this (migration 0013): an answer of `{ "notApplicable": true }` is accepted only for questions whose `applies` is not "All", is stored with `responses.not_applicable`, and is left out of every score, index and completion count. Not built yet: the form control for N/A in the web UI, and Kobo import for v2 question codes (Kobo still reads Q-codes only).
 - Readiness breadth: an index that draws on more than 40 percent of the bank (some AgriFood360 and ESO360 indices do) is a screening indicator, not a discriminating one. Calibrate and narrow after pilot data.
 - Thin indices: ESO360 RDY-LNK has the minimum 10 questions. Treat its level as indicative until more items are added in version 1.1.
 - Legal items (Ghana statutes, registration forms, licence rules) must be checked by a Ghanaian lawyer before the instrument is used in the field.

@@ -65,9 +65,22 @@ defineRoute({ method: 'GET', path: '/settings/report-text', tag: AD, summary: 'R
 defineRoute({ method: 'PUT', path: '/settings/report-text', tag: AD, summary: 'Save report wording', permission: ['settings', 'edit'], body: z.object({ values: z.record(z.string(), z.string().max(2000)) }), handler: ({ ctx, body }) => sw.saveReportText(ctx, body.values) });
 defineRoute({ method: 'PUT', path: '/settings/rules', tag: AD, summary: 'Change rule values (validated, audited)', permission: ['settings', 'edit'], body: z.object({ values: z.record(z.string(), z.number()) }), handler: ({ ctx, body }) => adm.updateRules(ctx, body.values) });
 defineRoute({ method: 'GET', path: '/settings/questions', tag: AD, summary: 'Diagnostic questions', permission: ['settings', 'read'], handler: ({ ctx }) => adm.listQuestions(ctx) });
-const fwQuestion = z.object({ code: z.string().trim().regex(/^[A-Z0-9_-]{2,12}$/, 'Use a short code like Q19 or AG01'), dimension: text(3, 60), text: text(5, 300), weight: z.number().int().min(1).max(5) });
+const fwQuestion = z.object({
+  code: z.string().trim().regex(/^[A-Z0-9_-]{2,12}$/, 'Use a short code like Q19 or AG01'), dimension: text(3, 60), text: text(5, 300), weight: z.number().int().min(1).max(5),
+  subDimension: z.string().trim().max(8).optional(), responseType: z.enum(['ANCHORED', 'BANDED', 'YNP', 'FREQ']).optional(),
+  anchors: z.array(z.string().max(240).nullable()).length(5).optional(),
+  evidence: z.object({ requirement: text(3, 400), method: text(3, 40), examples: z.array(text(1, 160)).max(5).optional() }).optional(),
+  criticality: z.enum(['Gate', 'Core', 'Standard']).optional(), readiness: z.array(z.string().max(16)).max(4).optional(),
+  applies: z.string().trim().max(120).optional(), riskTag: z.string().trim().max(80).optional(), consistencyGroup: z.string().trim().max(20).optional(), basis: z.string().max(40).optional()
+});
+const fwMeta = z.object({
+  architecture: z.string().max(200).optional(),
+  subDimensions: z.array(z.object({ code: z.string().max(8), domain: z.string().max(8).optional(), name: z.string().max(100), dimension: z.string().max(60), mapping: z.unknown().optional() })).max(60).optional(),
+  readiness: z.array(z.object({ code: z.string().max(16), name: z.string().max(100), purpose: z.string().max(400).optional(), unlocks: z.string().max(600).optional() })).max(12).optional(),
+  consistencyChecks: z.array(z.object({ id: z.string().max(12), itemA: z.string().max(16), itemB: z.string().max(16), rule: z.string().max(300), condition: z.string().max(40) })).max(20).optional()
+});
 const fwSource = z.object({ component: text(3, 120), source: text(3, 400), rationale: text(3, 600), adaptation: text(2, 600), approval: z.enum(['Proposed', 'Approved', 'Rejected']).default('Proposed') });
-const fwDraft = z.object({ questions: z.array(fwQuestion).min(1).max(120), dimensions: z.array(text(3, 60)).min(1).max(12), rules: z.record(z.string(), z.union([z.string(), z.number()])).nullable().optional(), sources: z.array(fwSource).max(80).optional(), note: optText(600).nullish() });
+const fwDraft = z.object({ questions: z.array(fwQuestion).min(1).max(120), dimensions: z.array(text(3, 60)).min(1).max(12), rules: z.record(z.string(), z.union([z.string(), z.number()])).nullable().optional(), sources: z.array(fwSource).max(80).optional(), meta: fwMeta.nullable().optional(), note: optText(600).nullish() });
 defineRoute({ method: 'GET', path: '/settings/frameworks', tag: AD, summary: 'Frameworks and their versions', permission: ['frameworks', 'read'], handler: ({ ctx }) => fw.listFrameworks(ctx) });
 defineRoute({ method: 'GET', path: '/settings/frameworks/versions/:id', tag: AD, summary: 'One framework version with its evidence trail', permission: ['frameworks', 'read'], handler: ({ ctx, params }) => fw.getVersion(ctx, params.id) });
 defineRoute({ method: 'POST', path: '/settings/frameworks/:code/versions', tag: AD, summary: 'Start a draft version', permission: ['frameworks', 'create'], body: fwDraft.partial().extend({ fromBank: z.boolean().optional() }), handler: async ({ ctx, params, body }) => status(201, await fw.createDraft(ctx, params.code, body as never)) });

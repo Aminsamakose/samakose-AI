@@ -22,7 +22,19 @@ export const DEFAULT_RULES: Rules = {
   'prescription.min_days': 5,
   'prescription.max_days': 400,
   'session.min_for_monitoring': 3,
-  'privacy.min_cell_size': 5
+  'privacy.min_cell_size': 5,
+  'readiness.not_ready_below': 45,
+  'readiness.emerging_below': 60,
+  'readiness.conditional_below': 75,
+  'readiness.gate_block_below': 2,
+  'readiness.gate_ready_min': 3,
+  'risk.critical_weight_min': 4,
+  'risk.critical_score_max': 1,
+  'risk.evidence_gap_share': 0.35,
+  'risk.concentration_min': 3,
+  'priority.readiness_bonus': 0.25,
+  'priority.gate_factor': 1.25,
+  'priority.top_n': 5
 };
 export const RULE_NOTES: Record<string, string> = {
   'evidence.multiplier.Verified': 'Share of a stated answer that counts when the evidence is verified',
@@ -39,26 +51,49 @@ export const RULE_NOTES: Record<string, string> = {
   'prescription.min_days': 'Shortest allowed action deadline',
   'prescription.max_days': 'Longest allowed action deadline',
   'session.min_for_monitoring': 'Held coaching sessions needed before a case moves to MONITORING',
-  'privacy.min_cell_size': 'Funder views hide any group smaller than this'
+  'privacy.min_cell_size': 'Funder views hide any group smaller than this',
+  'readiness.not_ready_below': 'Readiness index below this is Not ready',
+  'readiness.emerging_below': 'Readiness index below this is Emerging',
+  'readiness.conditional_below': 'Readiness index below this is Conditionally ready, otherwise Ready',
+  'readiness.gate_block_below': 'A tagged gate question rated below this blocks readiness',
+  'readiness.gate_ready_min': 'Every tagged gate must reach this rating for Ready',
+  'risk.critical_weight_min': 'A question at or above this weight is a critical item when rated low',
+  'risk.critical_score_max': 'A critical item rated at or below this is a risk',
+  'risk.evidence_gap_share': 'A domain whose verified or document backed weight share is below this has an evidence gap',
+  'risk.concentration_min': 'This many critical items in one sub-dimension mark it Critical',
+  'priority.readiness_bonus': 'Extra priority per readiness index a question feeds',
+  'priority.gate_factor': 'Priority multiplier for a gate question',
+  'priority.top_n': 'Number of priority sub-dimensions reported'
 };
 const rv = (rules: Rules, k: string) => (rules[k] !== undefined ? rules[k] : DEFAULT_RULES[k]);
 const num = (rules: Rules, k: string) => Number(rv(rules, k));
 
-export type QuestionLite = { code: string; dimension: string; text: string; weight: number };
-export type ResponseLite = { questionCode: string; value: number; evidenceClass: EvidenceClass };
+export type QuestionLite = {
+  code: string; dimension: string; text: string; weight: number;
+  subDimension?: string; criticality?: 'Gate' | 'Core' | 'Standard'; readiness?: string[]; applies?: string; riskTag?: string;
+};
+export type ResponseLite = { questionCode: string; value: number; evidenceClass: EvidenceClass; notApplicable?: boolean };
+/** Marker the answer map uses for "does not apply". Only conditional questions accept it. */
+export const NOT_APPLICABLE = 'NA';
+export const isConditional = (q: Pick<QuestionLite, 'applies'>) => !!q.applies && q.applies.trim().toLowerCase() !== 'all';
 
 /* ----------------------- data quality gate ----------------------- */
 export function validateSubmission(answers: Record<string, unknown>, questions: QuestionLite[], rules: Rules, seenUuids: string[] = [], uuid?: string) {
   const problems: string[] = [];
-  let answered = 0;
+  let answered = 0, na = 0;
   for (const q of questions) {
     const v = answers[q.code];
     if (v === undefined || v === null || v === '') continue;
+    if (v === NOT_APPLICABLE) {
+      if (isConditional(q)) na++; else problems.push(`${q.code} cannot be marked not applicable`);
+      continue;
+    }
     const n = Number(v);
     if (!Number.isInteger(n) || n < 0 || n > 4) problems.push(`Value out of range for ${q.code}`);
     else answered++;
   }
-  const completion = questions.length ? answered / questions.length : 0;
+  const applicable = questions.length - na;
+  const completion = applicable > 0 ? answered / applicable : 0;
   const min = num(rules, 'validation.min_completion');
   if (completion < min) problems.push(`Completion ${Math.round(completion * 100)} percent is below ${Math.round(min * 100)} percent`);
   if (uuid && seenUuids.includes(uuid)) problems.push('Duplicate submission');
@@ -80,7 +115,7 @@ export function scoreDiagnostic(responses: ResponseLite[], questions: QuestionLi
   let totalW = 0;
   for (const q of questions) {
     const r = byQ.get(q.code);
-    if (!r) continue;
+    if (!r || r.notApplicable) continue;
     const mult = Number(rv(rules, `evidence.multiplier.${r.evidenceClass}`));
     const w = q.weight || 1;
     const d = dims.get(q.dimension) ?? { num: 0, den: 0 };

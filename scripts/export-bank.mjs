@@ -6,7 +6,17 @@ const b = JSON.parse(fs.readFileSync(file, 'utf8'));
 const P = plan.platforms[b.framework];
 const dimOf = (d) => P.domainNames[d];
 const dimensions = Object.keys(P.domainNames).map(dimOf);
-const questions = b.questions.map((q) => ({ code: q.code, dimension: dimOf(q.domain), text: q.text, weight: q.weight }));
+const questions = b.questions.map((q) => {
+  const o = { code: q.code, dimension: dimOf(q.domain), text: q.text, weight: q.weight, subDimension: q.subDimension, responseType: q.responseType, anchors: q.anchors, evidence: q.evidence, criticality: q.criticality, readiness: q.readiness, applies: q.applies, riskTag: q.riskTag, basis: q.basis };
+  if (q.consistencyGroup) o.consistencyGroup = q.consistencyGroup;
+  return o;
+});
+const meta = {
+  architecture: `Business Health Architecture v2, ${b.framework} ${b.version}`,
+  subDimensions: b.subDimensions.map((s) => ({ code: s.code, domain: s.domain, name: s.name, dimension: dimOf(s.domain), mapping: s.mapping })),
+  readiness: b.readiness.map((r) => ({ code: r.code, name: r.name, purpose: r.purpose, unlocks: r.unlocks })),
+  consistencyChecks: b.consistencyChecks.map((c) => ({ id: c.id, itemA: c.itemA, itemB: c.itemB, rule: c.rule, condition: c.condition }))
+};
 const used = [...new Set(b.questions.flatMap((q) => q.sources || []))].sort((a, c) => Number(a.slice(1)) - Number(c.slice(1)));
 const sources = used.map((id) => {
   const s = b.sources[id];
@@ -19,5 +29,5 @@ const sources = used.map((id) => {
     approval: 'Proposed'
   };
 });
-fs.writeFileSync(out, JSON.stringify({ questions, dimensions, rules: null, sources, note: `DRAFT ${b.version}. ${b.status}` }, null, 1));
+fs.writeFileSync(out, JSON.stringify({ questions, dimensions, rules: null, sources, meta, note: `DRAFT ${b.version}. ${b.status}` }, null, 1));
 console.log(`${b.framework}: ${questions.length} questions, ${dimensions.length} dimensions, ${sources.length} sources -> ${out}`);

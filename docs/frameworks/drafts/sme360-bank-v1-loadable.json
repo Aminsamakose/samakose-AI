@@ -4,601 +4,3017 @@
    "code": "SM-001",
    "dimension": "Strategy, Market and Customers",
    "text": "The business has a written plan for the next 12 months that sets sales and profit targets.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No plan exists; direction is only in the owner's head",
+    "Owner can describe goals verbally but nothing is written",
+    "Written plan lists activities but has no numbers for sales or profit",
+    "Written plan states sales and profit targets in cedis",
+    "Written plan with targets, updated within the last 12 months with changes recorded"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the current plan and check it has numeric targets and a date of last update.",
+    "method": "Document",
+    "examples": [
+     "Business plan or annual plan document",
+     "Notebook page with dated sales and profit targets"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No written business plan",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-002",
    "dimension": "Strategy, Market and Customers",
    "text": "Staff who run sales, production or service can state the current target for their own area.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "1.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No targets exist for any area of the business",
+    "Owner has targets in mind but staff do not know them",
+    "Some staff can state a target when asked",
+    "All staff in charge of an area can state their target",
+    "All can state their target and the latest result against it"
+   ],
+   "evidence": {
+    "requirement": "Ask two or three staff or helpers, separately, what their target is and how they are doing against it.",
+    "method": "Interview",
+    "examples": [
+     "Shop attendant states daily sales target",
+     "Production lead states weekly output target and last week's result"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Staff unaware of targets",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-003",
    "dimension": "Strategy, Market and Customers",
    "text": "Before any large spend on equipment, stock or expansion, the owner writes down the cost, the expected extra income and the payback time.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "1.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Large purchases are made on impulse with no calculation",
+    "Owner thinks about the benefit but writes nothing down",
+    "Cost is written but expected return is not",
+    "Cost, expected extra income and payback time are written for the last large spend",
+    "Written for every large spend in 12 months and actual results later compared"
+   ],
+   "evidence": {
+    "requirement": "Ask for the calculation behind the last large purchase or expansion and check it was done before the spend.",
+    "method": "Document",
+    "examples": [
+     "Page showing machine cost, extra sales expected and months to recover cost",
+     "Quotation with owner's handwritten payback calculation"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Large spends not appraised",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-004",
    "dimension": "Strategy, Market and Customers",
    "text": "The business has customers who come back to buy again, and the records can show this.",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "1.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No repeat buyers, or no sales record that could show any",
+    "Owner says some customers return but cannot name any",
+    "Owner can name three to five repeat customers",
+    "Records show more than five customers who bought in at least two of the last six months",
+    "Repeat customers account for over half of sales and repeat orders grew over the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "Check sales records for the same customers buying in different months and ask two customers by phone.",
+    "method": "Third party",
+    "examples": [
+     "Customer ledger showing repeat orders",
+     "Mobile money history with repeat payers",
+     "Call to two named customers"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-MKT",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No proof of repeat demand",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-005",
    "dimension": "Strategy, Market and Customers",
    "text": "In the last 12 months the business changed a product, service or delivery method because customers told it what they wanted.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Never asks customers and has changed nothing",
+    "Hears complaints but changes nothing",
+    "Asked customers once and noted views without acting",
+    "Made one change after customer feedback and can say what it was",
+    "Made several changes from feedback and checked sales or satisfaction afterwards"
+   ],
+   "evidence": {
+    "requirement": "Ask for a specific change, its date and the feedback behind it, and check with a customer if possible.",
+    "method": "Third party",
+    "examples": [
+     "New pack size after buyers asked for smaller units",
+     "Opening hours changed after customer survey notes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "No customer feedback loop",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-006",
    "dimension": "Strategy, Market and Customers",
    "text": "The business can say clearly why customers choose it over a competitor, and customers give the same reason when asked.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Cannot say why customers choose it",
+    "Gives only a general reason such as good quality or low price",
+    "Gives one specific reason but customers have not confirmed it",
+    "Gives a specific reason and two of three customers called give the same one",
+    "Specific reason confirmed by customers and used in the business's selling or marketing"
+   ],
+   "evidence": {
+    "requirement": "Ask the owner for the reason, then ask three customers why they buy from the business.",
+    "method": "Third party",
+    "examples": [
+     "Customers say the business delivers same day",
+     "Banner or social media post stating the main reason"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-MKT",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Unclear reason customers buy",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-007",
    "dimension": "Strategy, Market and Customers",
    "text": "A written plan says how and where new customers will be found this year.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "1.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No plan to find new customers",
+    "Owner has ideas but nothing is written",
+    "Written list of ideas with no person or dates",
+    "Written plan with actions, a responsible person and dates",
+    "Written plan, actions carried out and the number of new customers recorded"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the plan and the count of new customers won against it.",
+    "method": "Document",
+    "examples": [
+     "Marketing plan with named actions",
+     "Notebook list of target buyers with visit dates"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "No plan for new buyers",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-008",
    "dimension": "Strategy, Market and Customers",
    "text": "The business keeps a list of customer names and phone numbers and uses it to reach customers directly.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "1.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No customer list exists",
+    "Numbers are only on the owner's phone and are not used",
+    "A list exists but is used rarely",
+    "List is kept up to date and used at least monthly, for example a WhatsApp broadcast list",
+    "List includes purchase history and is used for targeted offers with results noted"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the list and a recent message or call log showing how it was used.",
+    "method": "Digital record",
+    "examples": [
+     "WhatsApp Business broadcast list",
+     "Customer contact notebook",
+     "Spreadsheet of customers and last purchase"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "No customer contact list",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-009",
    "dimension": "Strategy, Market and Customers",
    "text": "Share of sales in the last 12 months that came from the single largest customer.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "1.3",
+   "responseType": "BANDED",
+   "anchors": [
+    "Above 60 percent, or the share is not known",
+    "41 to 60 percent",
+    "31 to 40 percent",
+    "16 to 30 percent",
+    "15 percent or less"
+   ],
+   "evidence": {
+    "requirement": "Calculate the largest customer's share from the sales ledger, invoices or payment history.",
+    "method": "Document",
+    "examples": [
+     "Sales ledger totals by customer",
+     "Invoice register for the last 12 months"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV",
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "Over-dependence on one buyer",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-010",
    "dimension": "Strategy, Market and Customers",
    "text": "The business knows which way of reaching customers (referral, shop location, WhatsApp, social media, radio, agents) brings the most new customers.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "1.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No deliberate marketing and no idea how customers arrive",
+    "Does some marketing but has no idea which part works",
+    "Owner estimates the best channel from memory",
+    "Asks new customers how they heard and has counts for the last three months",
+    "Counts new customers by channel monthly and has moved effort or money to the best channel"
+   ],
+   "evidence": {
+    "requirement": "Ask for counts of new customers by source and an example of a decision based on them.",
+    "method": "Document",
+    "examples": [
+     "Tally of 'how did you hear about us' answers",
+     "Social media page insights with enquiry counts"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "Marketing results not tracked",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-011",
    "dimension": "Strategy, Market and Customers",
    "text": "The price of each main product or service is set from its cost plus a target margin.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "1.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Prices are guessed or copied without any cost calculation",
+    "Prices follow competitors only; cost is not worked out",
+    "Cost is roughly worked out for the main items only",
+    "Prices come from a written cost plus margin for all main items",
+    "As before, and the sheet is dated and updated at least twice a year or when input costs change"
+   ],
+   "evidence": {
+    "requirement": "Ask for the costing sheet behind two main prices and check the date.",
+    "method": "Document",
+    "examples": [
+     "Costing sheet with ingredients, labour, transport and margin",
+     "Spreadsheet with cost and selling price per item"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Prices not based on cost",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-012",
    "dimension": "Strategy, Market and Customers",
    "text": "How often does the owner check competitors' prices and offers?",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "1.4",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never checks competitors",
+    "Rarely, only when customers complain about price",
+    "Sometimes, about once a year, from memory",
+    "Often, at least every six months, with notes",
+    "Always, every quarter, in a written comparison used when setting prices"
+   ],
+   "evidence": {
+    "requirement": "Ask when the last check was done and for any notes or comparison.",
+    "method": "Interview",
+    "examples": [
+     "Notebook of competitor prices with dates",
+     "Photos of competitor price lists"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Competitor prices not checked",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-013",
    "dimension": "Strategy, Market and Customers",
    "text": "Discounts and price reductions are given under a rule, not case by case on request.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "1.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Discounts are given freely with no limit",
+    "Owner decides case by case and nothing is recorded",
+    "An informal limit exists that only the owner knows",
+    "A written rule exists and sales staff know it",
+    "Written rule applied, discounts recorded and their total cost reviewed monthly"
+   ],
+   "evidence": {
+    "requirement": "Ask for the discount rule and a record of discounts given last month.",
+    "method": "Document",
+    "examples": [
+     "Written discount policy",
+     "Sales book with a discount column"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Uncontrolled discounting",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-014",
    "dimension": "Operations and Value Delivery",
    "text": "Orders are delivered on the agreed day and to the agreed specification.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "2.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Orders are often late or wrong and no record is kept",
+    "More than one in five orders is late or wrong, according to customers",
+    "Orders are sometimes late or wrong and this is not tracked",
+    "Orders are rarely late or wrong and late orders are noted",
+    "On-time and correct rate is tracked monthly and is above 90 percent"
+   ],
+   "evidence": {
+    "requirement": "Ask two buyers about reliability and check any delivery or order log.",
+    "method": "Third party",
+    "examples": [
+     "Buyer confirms deliveries arrive on time",
+     "Delivery book with dates promised and dates delivered"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "Unreliable delivery to buyers",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-015",
    "dimension": "Operations and Value Delivery",
    "text": "Products or work are checked against a stated standard before they reach the customer.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No checks are done",
+    "Checks happen only when the owner is present",
+    "Checks are usually done but nothing is written",
+    "A written checklist exists and is used for most sales or jobs",
+    "Checklist is used for every batch or job, failures are recorded and causes fixed"
+   ],
+   "evidence": {
+    "requirement": "Observe a check being done and look at the checklist and failure records.",
+    "method": "Observation",
+    "examples": [
+     "Quality checklist at the packing table",
+     "Inspection sheet signed before dispatch"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-MKT",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No quality checks before sale",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-016",
    "dimension": "Operations and Value Delivery",
    "text": "Customer complaints, returns and refunds are written down and followed up.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Complaints are ignored or not handled",
+    "Complaints are handled informally and forgotten",
+    "The owner remembers complaints but nothing is written",
+    "A written log exists with the action taken",
+    "Log records cause and action, complaints are closed within an agreed time and patterns reviewed"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the complaints or returns log for the last three months.",
+    "method": "Document",
+    "examples": [
+     "Complaints notebook",
+     "WhatsApp complaint messages with replies and outcome"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "Complaints not tracked",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-017",
    "dimension": "Operations and Value Delivery",
    "text": "The main products or services are made or delivered by following set steps, so different staff produce the same result.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "2.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Every person does the work their own way and results differ widely",
+    "Only the owner knows the right way",
+    "Steps are shown to new staff by demonstration but not written",
+    "Steps are written or illustrated for the main product or service",
+    "Steps are written, staff are trained on them and they were updated in the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "Watch two staff do the same task and compare with any written steps.",
+    "method": "Observation",
+    "examples": [
+     "Recipe or production sheet on the wall",
+     "Step list for a standard repair or service"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Work done inconsistently",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-018",
    "dimension": "Operations and Value Delivery",
    "text": "Stock, materials or supplies on hand are physically counted and compared with the stock records.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Stock is never counted",
+    "Counted once a year or only when a problem appears",
+    "Counted every two to three months",
+    "Counted every month and compared with records",
+    "Counted every month, differences investigated and the cause recorded"
+   ],
+   "evidence": {
+    "requirement": "Observe or ask for the latest count sheet and the record it was compared with.",
+    "method": "Observation",
+    "examples": [
+     "Stock count sheet signed by two people",
+     "Stock book with count date and variance column"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "Holds stock or materials",
+   "riskTag": "Stock not counted",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-019",
    "dimension": "Operations and Value Delivery",
    "text": "Each key input or item for resale can be bought from at least two known suppliers.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Depends on one supplier and knows no alternative",
+    "One main supplier; alternatives have never been checked",
+    "An alternative supplier is named but has not been used",
+    "Two suppliers have been used in the last six months for each key input",
+    "As before, and prices from suppliers are compared in writing at least twice a year"
+   ],
+   "evidence": {
+    "requirement": "Review purchase records for each key input and ask for alternative supplier contacts.",
+    "method": "Document",
+    "examples": [
+     "Purchase book showing two suppliers per item",
+     "Written supplier price comparison"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "Single supplier dependence",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-020",
    "dimension": "Operations and Value Delivery",
    "text": "Waste, spoilage, breakage or loss is measured as a share of what is bought or produced.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Not measured and the owner cannot estimate it",
+    "Estimated from memory only",
+    "Recorded occasionally for the main item",
+    "Recorded every month for the main items",
+    "Recorded monthly with causes noted, and losses are falling or below a set target"
+   ],
+   "evidence": {
+    "requirement": "Ask for loss records and check how the percentage is worked out.",
+    "method": "Document",
+    "examples": [
+     "Spoilage book",
+     "Production sheet showing input quantity and good output"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Losses not measured",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-021",
    "dimension": "Operations and Value Delivery",
    "text": "Each month the main cost lines (inputs, transport, power, rent, wages) are compared with the previous month and rises are explained.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Costs are never compared",
+    "Costs are looked at only when cash runs short",
+    "Owner notices big changes informally",
+    "Main cost lines are compared monthly and rises are queried",
+    "Compared monthly against a budget or target and corrective action is recorded"
+   ],
+   "evidence": {
+    "requirement": "Ask for the last two months' cost comparison and the action taken on any rise.",
+    "method": "Document",
+    "examples": [
+     "Spreadsheet with monthly cost columns",
+     "Notebook comparing fuel and input costs"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "All",
+   "riskTag": "Cost increases not tracked",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-022",
    "dimension": "Operations and Value Delivery",
    "text": "Equipment and vehicles are serviced on a planned schedule rather than only after they break down.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Repairs only after breakdown",
+    "Servicing happens when someone remembers",
+    "Informal schedule for the main items",
+    "Written schedule for main assets and mostly followed",
+    "Schedule followed, service log kept and breakdown time recorded"
+   ],
+   "evidence": {
+    "requirement": "Ask for the service schedule and log and inspect one key machine or vehicle.",
+    "method": "Document",
+    "examples": [
+     "Vehicle service book",
+     "Machine maintenance card with dates"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "No planned maintenance",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-023",
    "dimension": "Operations and Value Delivery",
    "text": "The business keeps a list of its equipment and other assets with purchase cost, date and condition.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "2.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No list exists",
+    "The owner lists assets only from memory",
+    "A list of main items exists without values",
+    "A list shows cost, purchase date, condition and location",
+    "List is checked physically at least yearly and updated, with serial or chassis numbers"
+   ],
+   "evidence": {
+    "requirement": "Ask for the asset list and tick three items from the list at the premises.",
+    "method": "Observation",
+    "examples": [
+     "Fixed asset register",
+     "Spreadsheet of machines with purchase receipts attached"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No asset register",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-024",
    "dimension": "Operations and Value Delivery",
    "text": "Output or work completed per worker or per day is measured for the main product or service.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "2.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Not measured",
+    "Estimated from memory",
+    "Counted occasionally",
+    "Counted every week for the main product or service",
+    "Counted routinely, compared with a target and acted on"
+   ],
+   "evidence": {
+    "requirement": "Ask for output counts for the last four weeks and any target.",
+    "method": "Document",
+    "examples": [
+     "Daily production tally sheet",
+     "Jobs completed per technician record"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Productivity not measured",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-025",
    "dimension": "Operations and Value Delivery",
    "text": "The main work process has no regular bottleneck that delays orders.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "2.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Orders are delayed every day by the same problem",
+    "Orders are delayed weekly and nothing is done",
+    "The bottleneck is known but there is no plan to fix it",
+    "The bottleneck is known and a fix is in progress",
+    "The bottleneck is solved, or capacity is checked each quarter against orders"
+   ],
+   "evidence": {
+    "requirement": "Walk the process with the owner and ask what slows orders most and what has been done.",
+    "method": "Observation",
+    "examples": [
+     "Single dryer or machine causing queues",
+     "Order backlog list with reasons for delay"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Process bottleneck delaying orders",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-026",
    "dimension": "Financial Management and Performance",
    "text": "All cash and mobile money received and paid out is written in a cash book or other record every week.",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "3.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No record of money in or out is kept",
+    "Only some sales are noted and not regularly",
+    "Receipts and payments are recorded but more than a month behind",
+    "Cash and mobile money in and out are recorded at least weekly",
+    "Recorded daily and checked weekly against cash on hand and the mobile money or bank balance"
+   ],
+   "evidence": {
+    "requirement": "Inspect the cash book or spreadsheet for the last eight weeks and check entry dates against statements.",
+    "method": "Document",
+    "examples": [
+     "Cash book with weekly totals",
+     "Spreadsheet matching mobile money statement entries"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No cash records",
+   "basis": "Partly sourced",
+   "consistencyGroup": "CC1+CC2+CC6"
   },
   {
    "code": "SM-027",
    "dimension": "Financial Management and Performance",
    "text": "Business money is kept separate from the owner's household and personal money.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Business and personal money are in the same pocket, wallet or account",
+    "Sometimes separate, but the owner takes cash freely with no record",
+    "Separate account or wallet exists but personal use still happens and is not recorded",
+    "Separate money, and the owner's withdrawals are recorded as drawings or salary",
+    "Separate accounts, a fixed monthly owner pay, and no unrecorded personal withdrawals in the last three months"
+   ],
+   "evidence": {
+    "requirement": "Review three months of bank and mobile money statements for personal spending and compare with drawings records.",
+    "method": "Digital record",
+    "examples": [
+     "Business account statement with only business payments",
+     "Drawings page in the cash book"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Business and household money mixed",
+   "basis": "Design judgement",
+   "consistencyGroup": "CC6"
   },
   {
    "code": "SM-028",
    "dimension": "Financial Management and Performance",
    "text": "Sales and purchases are recorded in a ledger or software with the date, amount and the customer or supplier.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No ledger exists",
+    "Receipts and invoices are kept loosely but not recorded",
+    "Sales are recorded but purchases are not",
+    "Both sales and purchases are recorded with dates, amounts and names",
+    "As before, and monthly totals agree with bank and mobile money statements"
+   ],
+   "evidence": {
+    "requirement": "Sample ten entries and trace them to receipts, invoices or statements.",
+    "method": "Document",
+    "examples": [
+     "Sales and purchases day books",
+     "Accounting software export"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "riskTag": "No sales and purchases ledger",
+   "basis": "Partly sourced",
+   "consistencyGroup": "CC1+CC8"
   },
   {
    "code": "SM-029",
    "dimension": "Financial Management and Performance",
    "text": "Receipts, invoices and waybills are filed so that any transaction in the last 12 months can be traced.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "3.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No supporting documents are kept",
+    "Some are kept loose and unsorted",
+    "Kept in a box or bag but not sorted by date",
+    "Filed by month and can be found when asked",
+    "Filed and cross-referenced to ledger entries; five random transactions are found within ten minutes"
+   ],
+   "evidence": {
+    "requirement": "Pick five ledger entries at random and ask for the supporting document for each.",
+    "method": "Document",
+    "examples": [
+     "Monthly folders of receipts",
+     "Scanned invoices stored by date in a cloud folder"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-CMP",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Supporting documents not filed",
+   "basis": "Partly sourced",
+   "consistencyGroup": "CC7"
   },
   {
    "code": "SM-030",
    "dimension": "Financial Management and Performance",
    "text": "Weeks of fixed costs (rent, wages, loan repayments, power, transport) that cash on hand and in accounts could pay today.",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "3.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "Less than 1 week of fixed costs, or the balance is not known",
+    "1 week to under 2 weeks",
+    "2 weeks to under 4 weeks",
+    "4 weeks to under 8 weeks",
+    "8 weeks or more"
+   ],
+   "evidence": {
+    "requirement": "Add cash, bank and mobile money balances on the day and divide by weekly fixed costs from the records.",
+    "method": "Digital record",
+    "examples": [
+     "Bank and mobile money balances shown on the day",
+     "Monthly fixed cost list"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Thin cash cover",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-031",
    "dimension": "Financial Management and Performance",
    "text": "A written cash forecast shows the money expected in and out over the coming weeks.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No forecast of any kind",
+    "Owner thinks about upcoming cash but writes nothing",
+    "A list of big upcoming payments only",
+    "A written four week forecast updated at least monthly",
+    "A rolling 13 week forecast updated every two weeks and compared with actual results"
+   ],
+   "evidence": {
+    "requirement": "Ask for the current forecast and the last update date.",
+    "method": "Document",
+    "examples": [
+     "Four week cash plan in a notebook",
+     "Spreadsheet forecast with actual columns"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No cash flow forecast",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-032",
    "dimension": "Financial Management and Performance",
    "text": "Average number of days customers take to pay on credit sales.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "Not known, or more than 60 days",
+    "46 to 60 days",
+    "31 to 45 days",
+    "16 to 30 days",
+    "15 days or fewer"
+   ],
+   "evidence": {
+    "requirement": "Compute from the list of unpaid invoices and recent payment dates.",
+    "method": "Document",
+    "examples": [
+     "Debtors list with invoice and payment dates",
+     "Customer credit book"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "Sells on credit",
+   "riskTag": "Slow customer payment",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-033",
    "dimension": "Financial Management and Performance",
    "text": "The gross margin (sales less direct cost) is known for each main product or service.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Not known at all",
+    "Owner guesses an overall margin",
+    "Calculated once for the whole business in the last year",
+    "Calculated for each main product or service in the last six months",
+    "Calculated for each main item every month and used in decisions"
+   ],
+   "evidence": {
+    "requirement": "Ask for the margin calculation for the top three items and check it uses real costs.",
+    "method": "Document",
+    "examples": [
+     "Margin per product table",
+     "Monthly gross margin worksheet"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Gross margin unknown",
+   "basis": "Partly sourced",
+   "consistencyGroup": "CC3"
   },
   {
    "code": "SM-034",
    "dimension": "Financial Management and Performance",
    "text": "The monthly sales needed to cover all costs (break-even) has been calculated.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "3.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Never heard of break-even and not calculated",
+    "Owner has a vague idea of what sales are needed",
+    "Rough estimate not based on records",
+    "Calculated from fixed and variable costs in the last 12 months",
+    "Calculated and compared with actual sales every month"
+   ],
+   "evidence": {
+    "requirement": "Ask for the calculation and check the fixed and variable costs used.",
+    "method": "Document",
+    "examples": [
+     "Break-even worksheet",
+     "Notebook page listing fixed costs and margin"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Break-even not known",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-035",
    "dimension": "Financial Management and Performance",
    "text": "Net profit or loss after all costs, including the owner's own pay, has been worked out for the last 12 months.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Never worked out",
+    "Owner estimates profit by feel",
+    "Estimated from bank or mobile money movement only",
+    "Worked out from records but without the owner's pay",
+    "Worked out from records after owner's pay and tax, and the figure agrees with the books"
+   ],
+   "evidence": {
+    "requirement": "Ask for the profit calculation and check it against the ledger totals.",
+    "method": "Document",
+    "examples": [
+     "Income statement for last year",
+     "Profit and loss worksheet"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Profit not calculated",
+   "basis": "Partly sourced",
+   "consistencyGroup": "CC2"
   },
   {
    "code": "SM-036",
    "dimension": "Financial Management and Performance",
    "text": "Financial statements (income statement and balance sheet) have been prepared for the last full year.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No financial statements have ever been prepared",
+    "Owner has written a rough summary only",
+    "A one page profit summary exists without a balance sheet",
+    "Full statements prepared for the last year by the owner or a bookkeeper",
+    "Statements prepared for the last two years and reviewed or audited by an external accountant"
+   ],
+   "evidence": {
+    "requirement": "Ask for the statements and check they cover a full year and balance.",
+    "method": "Document",
+    "examples": [
+     "Annual accounts prepared by an accountant",
+     "Statements drawn from accounting software"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No financial statements",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-037",
    "dimension": "Financial Management and Performance",
    "text": "Payments above a set limit need approval from someone other than the person asking for the money.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "3.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Anyone can pay out money freely",
+    "The owner approves in theory but not in practice",
+    "The owner approves verbally with no record",
+    "A written limit exists and a named person approves above it",
+    "Written limit, approvals are recorded and the owner checks them monthly"
+   ],
+   "evidence": {
+    "requirement": "Ask for the limit and look at three recent large payments for approval evidence.",
+    "method": "Document",
+    "examples": [
+     "Payment voucher with two signatures",
+     "Approval message on WhatsApp saved with the receipt"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No approval control on payments",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-038",
    "dimension": "Financial Management and Performance",
    "text": "Cash, bank and mobile money balances are reconciled to the business records at least monthly.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Never reconciled",
+    "Only when an error is suspected",
+    "Done about once a quarter",
+    "Done every month by the owner",
+    "Done every month by someone who does not record the money, with differences explained in writing"
+   ],
+   "evidence": {
+    "requirement": "Ask for the last three reconciliations and compare with statements.",
+    "method": "Document",
+    "examples": [
+     "Bank reconciliation statement",
+     "Cash count sheet matched to cash book and MoMo balance"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-FIN"
+   ],
+   "applies": "All",
+   "riskTag": "No monthly reconciliation",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-039",
    "dimension": "Funding and Capital Readiness",
    "text": "All loans and supplier credit are repaid on or before the due date.",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "4.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Currently in default or in arrears of more than 90 days",
+    "Late payments in the last 12 months with penalties charged",
+    "One or two late payments in the last 12 months, no penalties",
+    "All repayments on time in the last 12 months, shown by statements",
+    "All repayments on time for 24 months with written repayment schedules"
+   ],
+   "evidence": {
+    "requirement": "Review loan statements or lender letters and supplier statements for the last 12 months.",
+    "method": "Third party",
+    "examples": [
+     "Bank or microfinance loan statement",
+     "Supplier statement of account",
+     "Credit bureau report"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "Has loans or credit",
+   "riskTag": "Late or missed loan repayments",
+   "basis": "Partly sourced",
+   "consistencyGroup": "CC5"
   },
   {
    "code": "SM-040",
    "dimension": "Funding and Capital Readiness",
    "text": "Monthly cash available before loan repayments compared with the monthly loan repayments (debt cover).",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "4.1",
+   "responseType": "BANDED",
+   "anchors": [
+    "Below 1.0 times, or not known",
+    "1.0 to under 1.2 times",
+    "1.2 to under 1.5 times",
+    "1.5 to under 2.0 times",
+    "2.0 times or more"
+   ],
+   "evidence": {
+    "requirement": "Divide average monthly cash surplus before debt payments by monthly repayments using records.",
+    "method": "Document",
+    "examples": [
+     "Cash book summary and loan schedule",
+     "Bank statements and repayment schedule"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "Has loans or credit",
+   "riskTag": "Loan repayments not covered by cash",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-041",
    "dimension": "Funding and Capital Readiness",
    "text": "The business keeps an up to date list of everything it owes (loans, supplier balances, advances) with amounts and due dates.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "4.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No list of debts exists",
+    "The owner knows the debts from memory only",
+    "A list of loans exists but not supplier balances",
+    "All debts are listed with amounts and due dates and updated monthly",
+    "List updated monthly and checked against lender and supplier statements"
+   ],
+   "evidence": {
+    "requirement": "Ask for the list and check three items against a statement.",
+    "method": "Document",
+    "examples": [
+     "Creditors list",
+     "Loan schedule and supplier balances sheet"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Total debt not known",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-042",
    "dimension": "Funding and Capital Readiness",
    "text": "Borrowed money is used for stock, equipment or other items that earn income, not for routine shortfalls or personal spending.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "4.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Loans mostly pay for personal or routine bills",
+    "Sometimes used for personal or routine bills",
+    "Mixed use, not tracked",
+    "Used mainly for income earning items, shown by receipts",
+    "Each loan has a written purpose and expected return before it is taken, and use was verified"
+   ],
+   "evidence": {
+    "requirement": "Trace the last loan's use through receipts and records.",
+    "method": "Document",
+    "examples": [
+     "Receipts for equipment bought with a loan",
+     "Loan application stating purpose, matched to spending"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "All",
+   "riskTag": "Loans used for non-productive spending",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-043",
    "dimension": "Funding and Capital Readiness",
    "text": "The business and its owner have no unresolved loan default, court judgement or blacklisting with a lender or credit bureau.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "4.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "In default or blacklisted now",
+    "Arrears or a dispute is currently being renegotiated",
+    "A past default has been fully cleared and the owner can show proof",
+    "No default is known but this has not been checked with a bureau",
+    "No default, confirmed by a credit report obtained in the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "Ask for a credit report and lender clearance letters for any past default.",
+    "method": "Third party",
+    "examples": [
+     "Credit bureau report",
+     "Lender letter confirming a loan is fully repaid"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "All",
+   "riskTag": "Default or blacklist on record",
+   "basis": "Partly sourced",
+   "consistencyGroup": "CC5"
   },
   {
    "code": "SM-044",
    "dimension": "Funding and Capital Readiness",
    "text": "The owner has obtained a copy of their own credit report from a licensed credit bureau and checked it for errors.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "4.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Has never heard of credit bureaus",
+    "Knows bureaus exist but has not asked for a report",
+    "Requested a report but did not review it",
+    "Obtained and reviewed a report in the last 24 months",
+    "Obtained a report in the last 12 months and challenged any errors in writing"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the report and any dispute letter to the bureau.",
+    "method": "Document",
+    "examples": [
+     "Credit report printout",
+     "Dispute letter and bureau reply"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "All",
+   "riskTag": "Credit report never checked",
+   "basis": "Sourced"
   },
   {
    "code": "SM-045",
    "dimension": "Funding and Capital Readiness",
    "text": "The business or owner saves regularly in a bank, susu or VSLA for planned business needs.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "4.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No regular saving",
+    "Saves only occasionally",
+    "Saves regularly but the money is mixed with personal funds",
+    "Regular business saving in a separate account or group for at least six months",
+    "Saved for 12 months or more and used for planned purchases or to part fund a loan, with records"
+   ],
+   "evidence": {
+    "requirement": "Ask for savings statements or the susu or VSLA book showing contributions.",
+    "method": "Digital record",
+    "examples": [
+     "Savings account statement",
+     "VSLA passbook",
+     "Susu collector's contribution card"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No regular saving",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-046",
    "dimension": "Funding and Capital Readiness",
    "text": "The business has prepared and submitted a complete loan, grant or investment application in the last three years.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "4.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Has never applied",
+    "Applied but the application was incomplete or missing documents",
+    "Submitted one complete application and kept no feedback",
+    "Submitted a complete application and kept the lender or funder feedback",
+    "Submitted more than one, used the feedback to improve, and at least one succeeded"
+   ],
+   "evidence": {
+    "requirement": "Ask for copies of applications and decision or feedback letters.",
+    "method": "Document",
+    "examples": [
+     "Loan application file",
+     "Grant proposal with acknowledgement",
+     "Rejection letter with reasons"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No application track record",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-047",
    "dimension": "Funding and Capital Readiness",
    "text": "A written funding plan states how much money is needed, for what, from which source and by when.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "4.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No funding plan",
+    "An amount is in the owner's mind but not written",
+    "Amount and purpose are written without a source",
+    "Amount, purpose, source and timing are written and costed",
+    "As before, with supplier quotations and projected repayment or returns"
+   ],
+   "evidence": {
+    "requirement": "Ask for the funding plan and supporting quotations.",
+    "method": "Document",
+    "examples": [
+     "One page funding request",
+     "Quotation for equipment with a funding table"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT",
+    "RDY-FIN"
+   ],
+   "applies": "All",
+   "riskTag": "No funding plan",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-048",
    "dimension": "Funding and Capital Readiness",
    "text": "The business can show financial projections for the next 12 to 36 months with the assumptions written down.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "4.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No projections",
+    "Only a growth target without figures",
+    "Sales projection only, without costs",
+    "A 12 month projection of sales, costs and profit with assumptions",
+    "A three year projection, monthly in year one, with assumptions compared with actual results"
+   ],
+   "evidence": {
+    "requirement": "Ask for the projection and check that its assumptions are stated and plausible.",
+    "method": "Document",
+    "examples": [
+     "Spreadsheet projection with an assumptions sheet",
+     "Business plan financial section"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No financial projections",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-049",
    "dimension": "Funding and Capital Readiness",
    "text": "Who owns the business, and in what shares, is written down and can be shown.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "4.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Ownership is unclear or disputed",
+    "Only a verbal understanding exists",
+    "Owners are known informally but nothing is written",
+    "Ownership is recorded in a signed document or registration record",
+    "As before, and the ownership filed with the Registrar General is up to date"
+   ],
+   "evidence": {
+    "requirement": "Ask for registration papers, partnership deed or shareholder records and check names match.",
+    "method": "Document",
+    "examples": [
+     "Company regulations and shareholder register",
+     "Business name registration certificate",
+     "Partnership agreement"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-INV",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "riskTag": "Ownership not documented",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-050",
    "dimension": "Funding and Capital Readiness",
    "text": "The owner can put together a funder information pack (records, statements and registration documents) within one working day.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "4.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Cannot be assembled",
+    "Could be assembled within a week with great effort",
+    "Could be assembled within two to three days",
+    "Could be assembled within one day but is not kept together",
+    "A ready folder, on paper or digital, was updated within the last six months"
+   ],
+   "evidence": {
+    "requirement": "Ask the owner to produce the pack now and time it.",
+    "method": "Observation",
+    "examples": [
+     "Digital folder with certificates, statements and ledger summary",
+     "Box file with up to date documents"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Records not ready for funders",
+   "basis": "Partly sourced",
+   "consistencyGroup": "CC7"
   },
   {
    "code": "SM-051",
    "dimension": "People, Leadership and Governance",
    "text": "The business can run for a week without the owner on site, with sales and daily decisions continuing.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "5.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "The business stops or fails when the owner is away",
+    "Major activities stop and customers are turned away",
+    "Routine work continues but every decision waits for the owner",
+    "Routine work and daily decisions are handled by a named deputy for a week",
+    "This has happened in the last 12 months with no loss, and a written handover was used"
+   ],
+   "evidence": {
+    "requirement": "Ask staff and the deputy what happens when the owner travels or is ill and when it last occurred.",
+    "method": "Third party",
+    "examples": [
+     "Deputy describes decisions taken during owner's absence",
+     "Handover note from the owner's last trip"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Business depends on the owner",
+   "basis": "Design judgement",
+   "consistencyGroup": "CC9"
   },
   {
    "code": "SM-052",
    "dimension": "People, Leadership and Governance",
    "text": "A deputy or successor for the owner's role has been named in writing.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No one has been considered",
+    "The owner intends to name someone but has not",
+    "Someone is named verbally and known to staff or family",
+    "A successor or deputy is named in a signed or dated document",
+    "Named in writing, briefed on key accounts and contacts, and has already acted in the role"
+   ],
+   "evidence": {
+    "requirement": "Ask for the document and interview the named person.",
+    "method": "Document",
+    "examples": [
+     "Letter naming a deputy",
+     "Board or family meeting minutes naming a successor"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No named successor",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-053",
    "dimension": "People, Leadership and Governance",
    "text": "How often does the owner set aside time to work on the business (planning, review, improving), not only in it?",
-   "weight": 1
+   "weight": 1,
+   "subDimension": "5.1",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never; all time goes on daily tasks",
+    "Rarely, only in a crisis",
+    "Sometimes, about once a month",
+    "Often, a weekly slot in the diary",
+    "Always, a weekly slot with decisions or actions recorded"
+   ],
+   "evidence": {
+    "requirement": "Ask for the diary or notes showing the planning time and what was decided.",
+    "method": "Interview",
+    "examples": [
+     "Weekly planning notes",
+     "Diary entry blocking Friday review time"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "No time for planning",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-054",
    "dimension": "People, Leadership and Governance",
    "text": "In the last 12 months the owner changed a business practice after training, coaching or advice.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "5.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No training or advice received and none sought",
+    "Attended training but changed nothing",
+    "Attended and tried one idea once",
+    "Changed one practice and still uses it",
+    "Changed several practices and measured the result"
+   ],
+   "evidence": {
+    "requirement": "Ask for the practice changed, the date, and evidence it is still used.",
+    "method": "Interview",
+    "examples": [
+     "New cash book started after a bookkeeping workshop",
+     "Pricing sheet introduced after coaching visit"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "No learning applied",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-055",
    "dimension": "People, Leadership and Governance",
    "text": "Every person's role and who they report to is written down.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "5.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No roles are defined",
+    "Roles are only understood verbally",
+    "Written for some roles",
+    "Written for all roles and known to staff",
+    "Written, signed by staff and reviewed within the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "Ask for role descriptions or an organisation chart and check staff know theirs.",
+    "method": "Document",
+    "examples": [
+     "Job descriptions",
+     "Simple organisation chart on the wall"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "Has two or more people working in the business",
+   "riskTag": "Roles not written down",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-056",
    "dimension": "People, Leadership and Governance",
    "text": "People working in the business (staff, apprentices, helpers) are trained for their jobs when they join and when their tasks change.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No training is given",
+    "People learn by watching and there is no plan",
+    "A basic induction is given to some people",
+    "Induction for all new people and training when tasks change, recorded",
+    "Annual training plan with a budget, and results checked against performance"
+   ],
+   "evidence": {
+    "requirement": "Ask for induction or training records and ask two people what training they received.",
+    "method": "Third party",
+    "examples": [
+     "Training attendance list",
+     "Induction checklist signed by the new worker"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Staff not trained",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-057",
    "dimension": "People, Leadership and Governance",
    "text": "People who perform well are recognised or rewarded in a clear and fair way.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "5.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Same pay and no recognition whatever the performance",
+    "Rewards go to favourites",
+    "Occasional bonuses decided by the owner",
+    "Criteria for rewards are known to staff and applied",
+    "Written reward scheme with criteria, applied and reviewed each year"
+   ],
+   "evidence": {
+    "requirement": "Ask two staff how rewards are decided and ask for the criteria and recent examples.",
+    "method": "Third party",
+    "examples": [
+     "Written bonus rules",
+     "Staff describe how the best seller was rewarded"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Performance not rewarded fairly",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-058",
    "dimension": "People, Leadership and Governance",
    "text": "The business knows how many people left in the last 12 months and why.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "5.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No idea how many have left",
+    "The owner recalls some leavers",
+    "Count is known but not the reasons",
+    "Count and reasons are recorded",
+    "Recorded, and action was taken on a repeated reason"
+   ],
+   "evidence": {
+    "requirement": "Ask for the leaver list and reasons, and the action taken on any pattern.",
+    "method": "Document",
+    "examples": [
+     "Staff register with leaving dates and reasons",
+     "Exit conversation notes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Staff turnover not tracked",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-059",
    "dimension": "People, Leadership and Governance",
    "text": "How often does the owner meet staff or the management team to review sales, costs, cash and actions?",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.3",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never",
+    "Rarely, only when there is a problem",
+    "Quarterly",
+    "Monthly",
+    "Monthly with written minutes and actions followed up"
+   ],
+   "evidence": {
+    "requirement": "Ask for minutes or an action list from the last three meetings.",
+    "method": "Document",
+    "examples": [
+     "Meeting minutes book",
+     "WhatsApp group summary of monthly review"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No regular management review",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-060",
    "dimension": "People, Leadership and Governance",
    "text": "Someone outside the business and the owner's family (adviser, mentor, board member) regularly challenges major decisions.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No outside person is consulted",
+    "Occasional chats with a friend",
+    "An adviser is consulted occasionally on major decisions",
+    "An advisory group or board meets at least twice a year",
+    "Meets quarterly with minutes, tracked actions and at least one independent member"
+   ],
+   "evidence": {
+    "requirement": "Ask for minutes or advice notes and interview the adviser.",
+    "method": "Third party",
+    "examples": [
+     "Advisory group minutes",
+     "Mentor session notes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No outside challenge on decisions",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-061",
    "dimension": "People, Leadership and Governance",
    "text": "Staff know in writing which decisions they can make without asking the owner (spending, pricing, hiring, discounts).",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "The owner decides everything and nothing is stated",
+    "Staff guess what they may decide",
+    "Verbal limits are given for some decisions",
+    "Written limits exist for spending, pricing and hiring",
+    "Written limits signed by staff and reviewed within the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "Ask for the written limits and ask two staff what they can decide alone.",
+    "method": "Third party",
+    "examples": [
+     "Delegation of authority sheet",
+     "Manager appointment letter listing limits"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Decision rights unclear",
+   "basis": "Design judgement",
+   "consistencyGroup": "CC9"
   },
   {
    "code": "SM-062",
    "dimension": "People, Leadership and Governance",
    "text": "Employees have a written statement of their job, pay, hours and leave.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No written terms for anyone",
+    "Terms are verbal only",
+    "Written for some staff, for example only senior staff",
+    "Written for all permanent staff",
+    "Written for all staff, signed by both sides, copy held by the worker, and pay and leave records match"
+   ],
+   "evidence": {
+    "requirement": "Sample three employee contracts or statements and check pay and leave records.",
+    "method": "Document",
+    "examples": [
+     "Signed employment contract",
+     "Appointment letter with pay and leave terms"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-GRT"
+   ],
+   "applies": "Has employees",
+   "riskTag": "No written employment terms",
+   "basis": "Sourced"
   },
   {
    "code": "SM-063",
    "dimension": "People, Leadership and Governance",
    "text": "Basic safety measures are in place for the main hazards of the work.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Obvious hazards are uncontrolled",
+    "Hazards are known but nothing is done",
+    "Some measures exist, such as a first aid box, without a routine",
+    "Measures are in place for each main hazard, for example first aid, fire safety and protective gear",
+    "As before, with incidents recorded and safety checks done at least quarterly"
+   ],
+   "evidence": {
+    "requirement": "Walk the premises and check safety items, and ask for any incident record.",
+    "method": "Observation",
+    "examples": [
+     "First aid box and fire extinguisher with service date",
+     "Protective gear in use",
+     "Incident book"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Unsafe working conditions",
+   "basis": "Sourced"
   },
   {
    "code": "SM-064",
    "dimension": "Records, Data and Systems",
    "text": "Registration certificates, licences, permits, leases, contracts and insurance papers are kept together in one safe place.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Papers are scattered or lost",
+    "Some are held but the owner does not know where all are",
+    "Most are at the owner's home or shop with no copies",
+    "All are in one place with a list of what is held",
+    "In one place with scanned copies kept elsewhere, and the list is updated yearly"
+   ],
+   "evidence": {
+    "requirement": "Ask the owner to produce three named documents and the list.",
+    "method": "Observation",
+    "examples": [
+     "Lever arch file of legal documents",
+     "Cloud folder of scanned certificates"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "riskTag": "Key documents not kept safely",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-065",
    "dimension": "Records, Data and Systems",
    "text": "Every sale of value is supported by an invoice, receipt or order note that the business keeps a copy of.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No sales documents are issued",
+    "Issued only when the customer asks",
+    "Issued for some sales",
+    "All credit sales and sales above a set amount have numbered documents",
+    "All sales are documented in number order and checked against the ledger"
+   ],
+   "evidence": {
+    "requirement": "Inspect the invoice or receipt books for sequence and compare with the ledger.",
+    "method": "Document",
+    "examples": [
+     "Numbered receipt book",
+     "POS receipts or e-invoice records"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "Sales not documented",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-066",
    "dimension": "Records, Data and Systems",
    "text": "The three most important routine tasks (for example cash handling, receiving goods, processing orders) each have written steps.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "6.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "None are written or explained",
+    "Steps are known verbally only",
+    "One task has written steps",
+    "All three tasks have written steps",
+    "All three are written, staff are trained on them and they were updated in the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "Ask for the three step lists and ask a staff member to describe one.",
+    "method": "Document",
+    "examples": [
+     "Cash handling checklist",
+     "Goods received procedure sheet"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Routine tasks not documented",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-067",
    "dimension": "Records, Data and Systems",
    "text": "Someone other than the owner can find and read the main business records.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "6.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Only the owner knows where records are and how they work",
+    "Only the owner can use the records",
+    "One trusted person knows where they are",
+    "A named records person has access and can use them",
+    "A written index exists and two people have been trained to use the records"
+   ],
+   "evidence": {
+    "requirement": "Ask a second person to find a stated record while the owner is not helping.",
+    "method": "Observation",
+    "examples": [
+     "Bookkeeper retrieves last month's ledger unaided",
+     "Index sheet to the filing system"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Records known only to the owner",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-068",
    "dimension": "Records, Data and Systems",
    "text": "Share of sales receipts that go through mobile money or a bank account.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "6.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "Under 10 percent",
+    "10 to 29 percent",
+    "30 to 49 percent",
+    "50 to 79 percent",
+    "80 percent or more"
+   ],
+   "evidence": {
+    "requirement": "Compare digital receipts on statements with total sales in the same month.",
+    "method": "Digital record",
+    "examples": [
+     "Mobile money merchant statement",
+     "Bank statement against sales ledger"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "All",
+   "riskTag": "Most sales are in untraceable cash",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-069",
    "dimension": "Records, Data and Systems",
    "text": "The business has a bank account or mobile money business wallet in the business's name that is in regular use.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "6.2",
+   "responseType": "YNP",
+   "anchors": [
+    "No account or wallet in the business's name",
+    null,
+    "Account or wallet exists but has no transactions in the last three months",
+    null,
+    "Account or wallet in the business's name shows transactions in each of the last three months"
+   ],
+   "evidence": {
+    "requirement": "Review statements from the last three months in the business's name.",
+    "method": "Digital record",
+    "examples": [
+     "Bank statement in business name",
+     "MoMo merchant account statement"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-FIN",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No business account or wallet",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-070",
    "dimension": "Records, Data and Systems",
    "text": "Sales and accounts are kept in a spreadsheet or software, not only on paper or in the owner's head.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Nothing is kept in any digital form",
+    "Notes on a phone only",
+    "Spreadsheet used occasionally",
+    "Spreadsheet or software used for the ledger every month",
+    "Accounting or point of sale software with backups, and reports used every month"
+   ],
+   "evidence": {
+    "requirement": "Open the file or software and check entries and dates.",
+    "method": "Digital record",
+    "examples": [
+     "Excel ledger",
+     "Accounting software or POS reports"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Records not digital",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-071",
    "dimension": "Records, Data and Systems",
    "text": "Customers can reach the business through a dedicated business phone number, WhatsApp Business or email address.",
-   "weight": 1
+   "weight": 1,
+   "subDimension": "6.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No way for customers to reach the business except by visiting",
+    "Only the owner's personal number is available",
+    "A business number exists but is not displayed",
+    "A dedicated number or email is displayed on signage, cards or social media",
+    "Dedicated contact is displayed and enquiries are answered within a set time and logged"
+   ],
+   "evidence": {
+    "requirement": "Check signage, social media page and send a test enquiry.",
+    "method": "Observation",
+    "examples": [
+     "WhatsApp Business profile",
+     "Banner showing the business phone number"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "No business contact channel",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-072",
    "dimension": "Records, Data and Systems",
    "text": "The business tracks a small set of numbers every month (sales, gross margin, cash balance, money owed by customers, stock).",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "6.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No numbers are tracked",
+    "Sales only",
+    "Sales and cash",
+    "Four or more measures in writing every month",
+    "Monthly dashboard with targets and a trend over six months"
+   ],
+   "evidence": {
+    "requirement": "Ask for the last three months' figures.",
+    "method": "Document",
+    "examples": [
+     "Monthly scorecard",
+     "Notebook of monthly key numbers"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Key numbers not tracked",
+   "basis": "Partly sourced",
+   "consistencyGroup": "CC8"
   },
   {
    "code": "SM-073",
    "dimension": "Records, Data and Systems",
    "text": "In the last six months the owner has made a decision that was clearly based on the recorded figures.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Decisions are made by gut feeling alone",
+    "Records exist but are not consulted",
+    "The owner occasionally looks at figures",
+    "Two decisions in the last six months can be traced to the figures",
+    "Figures are used routinely and decisions are written with the numbers behind them"
+   ],
+   "evidence": {
+    "requirement": "Ask for two decisions and the figures used, and check dates.",
+    "method": "Interview",
+    "examples": [
+     "Dropped a slow product after stock figures",
+     "Raised a price after margin calculation"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Decisions not data driven",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-074",
    "dimension": "Records, Data and Systems",
    "text": "The owner compares this year's results with last year's at least once a year.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "6.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No records to compare",
+    "Compares from memory only",
+    "Compares sales only",
+    "Compares sales, costs and profit once a year",
+    "Compares every quarter and writes down the reasons for changes"
+   ],
+   "evidence": {
+    "requirement": "Ask for the comparison and the reasons noted.",
+    "method": "Document",
+    "examples": [
+     "Year on year sales and costs table",
+     "Annual review notes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "No year on year review",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-075",
    "dimension": "Records, Data and Systems",
    "text": "At least each quarter, actual results are compared with the plan or budget and the differences are explained in writing.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Never compared",
+    "Compared informally once a year",
+    "Compared informally each quarter",
+    "Written comparison each quarter",
+    "Written comparison each month with corrective actions closed"
+   ],
+   "evidence": {
+    "requirement": "Ask for the last two comparisons and the actions that followed.",
+    "method": "Document",
+    "examples": [
+     "Budget versus actual sheet",
+     "Quarterly review note"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Results not compared with plan",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-076",
    "dimension": "Legal, Regulatory and Risk",
    "text": "The business is legally registered and its registration is current (certificate valid, annual renewal or annual return up to date).",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "7.1",
+   "responseType": "YNP",
+   "anchors": [
+    "Not registered with the Registrar General's Department",
+    null,
+    "Registered, but the annual renewal or annual return is overdue or the details are out of date",
+    null,
+    "Valid certificate in the business's name, with annual renewal or annual return up to date"
+   ],
+   "evidence": {
+    "requirement": "Inspect the certificate and the latest renewal or annual return acknowledgement.",
+    "method": "Document",
+    "examples": [
+     "Business name or company registration certificate",
+     "Registrar General annual return or renewal receipt"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-FIN",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Business not properly registered",
+   "basis": "Sourced",
+   "consistencyGroup": "CC4"
   },
   {
    "code": "SM-077",
    "dimension": "Legal, Regulatory and Risk",
    "text": "All tax returns that fell due in the last 12 months have been filed on time with the Ghana Revenue Authority.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "7.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No TIN, or no returns have been filed",
+    "Has a TIN but has filed no returns",
+    "Some returns have been filed",
+    "All returns have been filed but some were late",
+    "All returns filed on time, with GRA acknowledgements kept"
+   ],
+   "evidence": {
+    "requirement": "Ask for the TIN and filing acknowledgements, and check dates against due dates.",
+    "method": "Document",
+    "examples": [
+     "GRA portal filing acknowledgement",
+     "Tax clearance certificate"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-FIN",
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "Tax returns not filed on time",
+   "basis": "Partly sourced",
+   "consistencyGroup": "CC4"
   },
   {
    "code": "SM-078",
    "dimension": "Legal, Regulatory and Risk",
    "text": "The owner can say which GRA taxes apply to the business (income tax, VAT, PAYE, withholding) and keeps a calendar of due dates.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Unaware which taxes apply",
+    "Knows only about income tax",
+    "Knows the main taxes but has no calendar",
+    "Has a calendar of the taxes that apply, with due dates",
+    "Calendar kept, payments tracked with receipts, and advice taken from a tax practitioner or GRA"
+   ],
+   "evidence": {
+    "requirement": "Ask for the calendar and the payment receipts for the last quarter.",
+    "method": "Document",
+    "examples": [
+     "Tax calendar on the office wall",
+     "Spreadsheet of tax due dates and payment dates"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "riskTag": "Tax obligations not mapped",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-079",
    "dimension": "Legal, Regulatory and Risk",
    "text": "Employee SSNIT contributions and PAYE are paid by the due date every month.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "7.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Employees are not registered with SSNIT and PAYE is not deducted",
+    "Registered but contributions are in arrears",
+    "Paid, but often late",
+    "Paid on time in most months, with proof",
+    "Paid on time every month for 12 months, with SSNIT and GRA proof"
+   ],
+   "evidence": {
+    "requirement": "Ask for SSNIT contribution schedules, payment proof and PAYE payment evidence for the last six months.",
+    "method": "Third party",
+    "examples": [
+     "SSNIT employer contribution report",
+     "GRA PAYE payment acknowledgement"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-CMP"
+   ],
+   "applies": "Has employees",
+   "riskTag": "SSNIT or PAYE not paid",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-080",
    "dimension": "Legal, Regulatory and Risk",
    "text": "Important sales and supply arrangements (large customers, key suppliers, premises) are in written agreements.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No written agreements",
+    "Everything is verbal",
+    "Some arrangements are in messages or notes only",
+    "Written, signed agreements exist for large buyers and key suppliers",
+    "Signed agreements cover price, payment, delivery and ending the contract, and are filed and reviewed"
+   ],
+   "evidence": {
+    "requirement": "Ask for the agreements with the three largest customers or suppliers.",
+    "method": "Document",
+    "examples": [
+     "Supply agreement",
+     "Signed local purchase order terms"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-MKT",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No written commercial agreements",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-081",
    "dimension": "Legal, Regulatory and Risk",
    "text": "The business has a right to use its premises for at least the next 12 months, shown in a lease, tenancy agreement or title.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No right to the premises and a risk of being moved",
+    "A verbal arrangement only",
+    "A written agreement exists but expires within six months",
+    "A written lease or tenancy valid for at least 12 months",
+    "Title, or a lease of three years or more"
+   ],
+   "evidence": {
+    "requirement": "Inspect the lease, tenancy agreement or title document and check dates.",
+    "method": "Document",
+    "examples": [
+     "Tenancy agreement",
+     "Land title or allocation letter"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "All",
+   "riskTag": "Insecure premises",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-082",
    "dimension": "Legal, Regulatory and Risk",
    "text": "The business has taken a step to stop its brand name, logo or product design being copied.",
-   "weight": 1
+   "weight": 1,
+   "subDimension": "7.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Unaware this is possible and copying has occurred",
+    "Aware but has done nothing",
+    "Business name registered only",
+    "Trademark or design application filed, or staff have signed confidentiality terms",
+    "Trademark or design granted, or confidentiality is in force and breaches are handled"
+   ],
+   "evidence": {
+    "requirement": "Ask for the registration, application or signed confidentiality terms.",
+    "method": "Document",
+    "examples": [
+     "Trademark filing receipt",
+     "Staff confidentiality clause in contract"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Brand or designs unprotected",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-083",
    "dimension": "Legal, Regulatory and Risk",
    "text": "The owner has written a list of the main risks to the business (fire, theft, price changes, loss of a key customer, illness) and what will be done about each.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Has not thought about risks",
+    "Aware of risks but nothing is discussed or written",
+    "An informal list exists",
+    "A written list names the main risks, an owner and an action for each",
+    "Written list reviewed at least yearly and after any incident, with actions checked"
+   ],
+   "evidence": {
+    "requirement": "Ask for the risk list and the last review date.",
+    "method": "Document",
+    "examples": [
+     "Risk register",
+     "Notebook page of risks and responses"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No risk list",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-084",
    "dimension": "Legal, Regulatory and Risk",
    "text": "The business holds valid insurance for its biggest insurable risks (stock, premises, vehicles, workers).",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No insurance of any kind",
+    "Knows the options but holds none",
+    "Holds only compulsory cover such as vehicle third party",
+    "Main assets and stock are insured with valid policies",
+    "Valid policies with values checked at least yearly"
+   ],
+   "evidence": {
+    "requirement": "Inspect the policy documents, the cover amounts and the expiry dates.",
+    "method": "Document",
+    "examples": [
+     "Fire and stock insurance policy",
+     "Motor insurance certificate"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FIN"
+   ],
+   "applies": "All",
+   "riskTag": "Key risks uninsured",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-085",
    "dimension": "Legal, Regulatory and Risk",
    "text": "Valuable stock and cash are protected by physical controls (locks, safe, limited keyholders, cash banked regularly).",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Stock and cash are left exposed",
+    "Locked at night only",
+    "Locked, with some limits on who has access",
+    "Secured storage with a limited number of keyholders and cash banked at least weekly",
+    "As before, plus daily banking and a record of access and incidents"
+   ],
+   "evidence": {
+    "requirement": "Inspect storage, ask who holds keys and check banking dates.",
+    "method": "Observation",
+    "examples": [
+     "Locked store with keyholder list",
+     "Deposit slips showing regular banking"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Stock and cash exposed to theft",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-086",
    "dimension": "Legal, Regulatory and Risk",
    "text": "Written steps exist for keeping key activities running after a disruption (fire, power cut, illness of a key person, loss of premises).",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No plan of any kind",
+    "Owner has a plan in mind only",
+    "Informal notes for one scenario",
+    "A written plan for the main disruptions with a contact list",
+    "Written plan tested or practised within the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "Ask for the plan and any record of a practice or real use.",
+    "method": "Document",
+    "examples": [
+     "Continuity checklist with contacts",
+     "Notes from a power cut drill"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No continuity plan",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-087",
    "dimension": "Legal, Regulatory and Risk",
    "text": "Business records and customer data are backed up so they could be recovered after loss of a phone, computer or the premises.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No backup; one copy only",
+    "A second copy is kept in the same place",
+    "Occasional backups with no routine",
+    "Monthly backup kept in a separate place (cloud, other premises) and recovery within a week is possible",
+    "At least weekly off site backup and a recovery test done in the last 12 months, recovering within a day"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the backup and the date of the last one, and ask for a test restore.",
+    "method": "Digital record",
+    "examples": [
+     "Cloud backup log",
+     "External drive with dated copies kept off site"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Records not backed up",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-088",
    "dimension": "Legal, Regulatory and Risk",
    "text": "The business handles personal data about customers and staff in line with the Data Protection Act, including registration with the Data Protection Commission.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Unaware of the rules; personal data is on open or shared phones and papers",
+    "Aware of the rules but has taken no steps",
+    "Basic security (lock, passcodes) but not registered",
+    "Registered with the Data Protection Commission and basic security in place",
+    "Registration renewed, written data handling rules, staff briefed and a way to answer data requests"
+   ],
+   "evidence": {
+    "requirement": "Ask for the registration certificate and inspect how personal data is stored.",
+    "method": "Document",
+    "examples": [
+     "Data Protection Commission registration certificate",
+     "Locked cabinet for staff files and password protected customer list"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "riskTag": "Personal data not protected or registered",
+   "basis": "Sourced"
   },
   {
    "code": "SM-089",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "Electricity, fuel and water use and cost are tracked every month.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "8.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Not tracked",
+    "Bills are paid but not compared",
+    "Bills are kept and total cost is known",
+    "Monthly cost is compared and the biggest users are identified",
+    "Units used are tracked against output and a reduction target is set"
+   ],
+   "evidence": {
+    "requirement": "Ask for the last six months of utility bills and the comparison.",
+    "method": "Document",
+    "examples": [
+     "ECG electricity bills and prepaid meter records",
+     "Fuel purchase log"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Energy and water use not tracked",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-090",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "In the last 12 months the business has taken at least one action to cut energy or water use (LED lighting, solar, efficient equipment, repairing leaks).",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "8.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No action and none planned",
+    "An action is being considered",
+    "One low cost action has been taken",
+    "Two or more actions taken and savings estimated",
+    "Savings measured and further actions planned"
+   ],
+   "evidence": {
+    "requirement": "Inspect the measures and compare bills before and after.",
+    "method": "Observation",
+    "examples": [
+     "Solar panel or LED bulbs installed",
+     "Leak repair receipts"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "No resource saving actions",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-091",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "Waste (packaging, scrap, used oil, chemicals, electronic waste, organic waste) is sorted, reused or disposed of safely.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Waste is dumped or burnt in the open",
+    "Left for general collection with no separation",
+    "Some waste is reused or collected",
+    "Waste is sorted, reused or sold, and hazardous items go to an approved collector",
+    "As before, with waste measured and reduced"
+   ],
+   "evidence": {
+    "requirement": "Inspect waste handling and ask for collector or buyer receipts for hazardous or recyclable items.",
+    "method": "Observation",
+    "examples": [
+     "Separate bins for scrap and plastics",
+     "Receipt from approved waste collector"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-MKT"
+   ],
+   "applies": "All",
+   "riskTag": "Waste handled unsafely",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-092",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "The business has taken a practical step against a climate hazard that affects it (flood, heat, drought, storm, power outages).",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "8.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Has not considered climate hazards",
+    "Has considered them but done nothing",
+    "Has a plan but not yet acted",
+    "One practical step is in place, such as drainage, shade, water storage or backup power",
+    "Several steps in place and reviewed after each event"
+   ],
+   "evidence": {
+    "requirement": "Inspect the measure and ask what hazard it addresses and when it was done.",
+    "method": "Observation",
+    "examples": [
+     "Raised storage racks against flooding",
+     "Backup power supply for a cold room"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No climate hazard response",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-093",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "Women and men doing the same work in the business are paid equally and have the same chance of promotion.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "8.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Clear pay gaps or exclusion from promotion",
+    "Inequality is known and accepted",
+    "No rule on equal pay, but no known gap",
+    "Pay scales are the same for the same role and have been checked",
+    "Pay and role data by gender are reviewed yearly and gaps acted on"
+   ],
+   "evidence": {
+    "requirement": "Compare pay for the same role across women and men and ask staff about promotion.",
+    "method": "Document",
+    "examples": [
+     "Payroll listing pay by role",
+     "Promotion decisions in the last two years"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Unequal pay or promotion",
+   "basis": "Sourced"
   },
   {
    "code": "SM-094",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "Both women and people under 35 hold jobs with real responsibility (supervisor, technician, manager), not only casual or lowest paid roles.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "8.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Neither group holds any role of responsibility, or any role at all",
+    "Both groups work only in casual or lowest paid roles",
+    "One of the two groups holds a role of responsibility",
+    "Both groups hold at least one role of responsibility",
+    "Both groups hold several such roles and a training or apprenticeship route is recorded"
+   ],
+   "evidence": {
+    "requirement": "Review the staff list by role, sex and age band and ask about training routes.",
+    "method": "Document",
+    "examples": [
+     "Staff list showing supervisors by sex and age",
+     "Apprenticeship records"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Women and youth excluded from responsibility",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-095",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "Women who own, work in or help run the business take part in decisions about how its income is spent.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "8.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Women have no say in decisions",
+    "Women are consulted rarely",
+    "Women are consulted but the owner decides alone",
+    "Women take part in business decisions that affect them",
+    "Women confirm, when asked separately, that they take part in decisions and control the income they earn"
+   ],
+   "evidence": {
+    "requirement": "Speak separately to the women connected to the business about their role in decisions and income.",
+    "method": "Interview",
+    "examples": [
+     "Wife or female partner confirms joint decisions on spending",
+     "Female staff describe how bonuses and tasks are decided"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Women excluded from business decisions",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-096",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "The workplace has a rule against harassment and a safe way for staff to report it.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No rule and harassment is tolerated",
+    "A verbal rule only",
+    "An informal open door with the owner",
+    "A written rule known to staff, with a named person to report to",
+    "Written rule, staff briefed, and a reporting process that is used and logged"
+   ],
+   "evidence": {
+    "requirement": "Ask for the written rule and ask two staff how they would report a concern.",
+    "method": "Third party",
+    "examples": [
+     "Staff handbook clause on harassment",
+     "Notice naming the person to report to"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "riskTag": "No harassment rule or reporting route",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-097",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "The owner has written down what the business would do if monthly sales fell by a quarter for three months.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Has no idea what would be done",
+    "Would cut staff or borrow personally, with no plan",
+    "Actions are described verbally",
+    "A written response with triggers and cost cuts",
+    "Written response that has been rehearsed or used before"
+   ],
+   "evidence": {
+    "requirement": "Ask for the written response and when it was last reviewed.",
+    "method": "Document",
+    "examples": [
+     "Page of cost cuts and triggers",
+     "Plan used during a previous sales drop"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No plan for a sales drop",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-098",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "Share of sales in the last 12 months that came from the largest single product or service line.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.3",
+   "responseType": "BANDED",
+   "anchors": [
+    "Above 90 percent",
+    "76 to 90 percent",
+    "61 to 75 percent",
+    "41 to 60 percent",
+    "40 percent or less"
+   ],
+   "evidence": {
+    "requirement": "Calculate from sales records by product or service line.",
+    "method": "Document",
+    "examples": [
+     "Sales by product report",
+     "Ledger totals by product line"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Dependence on one product",
+   "basis": "Design judgement"
   },
   {
    "code": "SM-099",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "The owner belongs to a business association, cooperative, trade group or peer network and has attended its meetings.",
-   "weight": 1
+   "weight": 1,
+   "subDimension": "8.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Not a member of any network and works alone",
+    "Member but not active",
+    "Attended one meeting in the last six months",
+    "Attended two or more meetings in the last six months",
+    "Active, and has used the network for a concrete benefit in the last 12 months (referral, shared purchase, guarantee)"
+   ],
+   "evidence": {
+    "requirement": "Ask for membership proof and a recent benefit received.",
+    "method": "Third party",
+    "examples": [
+     "Association membership card",
+     "Group purchasing receipt"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Isolated owner with no network",
+   "basis": "Partly sourced"
   },
   {
    "code": "SM-100",
    "dimension": "Resilience, Inclusion and Sustainability",
    "text": "At least two people can perform each critical task (taking orders, bookkeeping, production, delivery).",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Each task depends on one person and nobody can cover",
+    "Informal cover for some tasks only",
+    "Backup named for one critical task",
+    "Backups named for all critical tasks",
+    "Backups named and tested through cross training in the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "Ask who covers each critical task and when cover was last used.",
+    "method": "Interview",
+    "examples": [
+     "Cover roster",
+     "Second person trained to do invoicing"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "riskTag": "Critical tasks depend on one person",
+   "basis": "Partly sourced"
   }
  ],
  "dimensions": [
@@ -740,5 +3156,779 @@
    "approval": "Proposed"
   }
  ],
+ "meta": {
+  "architecture": "Business Health Architecture v2, SME360 1.0.0-draft",
+  "subDimensions": [
+   {
+    "code": "1.1",
+    "domain": "D1",
+    "name": "Vision, strategy and planning",
+    "dimension": "Strategy, Market and Customers",
+    "mapping": {
+     "gapPattern": "Plans live in the owner's head or on loose paper, have no cedi targets, and staff cannot say what they are aiming for. Big purchases are made without a payback calculation.",
+     "diagnosis": "The business is steered by instinct, so growth is reactive and spending on equipment or stock is not tested against expected return.",
+     "prescription": "Write a one page 12 month plan with sales, gross margin and profit targets by quarter, share the targets with the team, and use a payback sheet before any purchase above an agreed cedi limit.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 30,
+      "resources": "One page annual plan template, payback calculator sheet, three coaching sessions"
+     },
+     "measurement": {
+      "kpi": "Quarters with a written target reviewed against actual results",
+      "baselineMethod": "Inspect current plan and last large purchase calculation at assessment",
+      "provisionalTarget": "Written plan with numeric targets in place and two quarterly reviews held within six months",
+      "dataSource": "Plan document and review notes",
+      "frequency": "Quarterly"
+     }
+    }
+   },
+   {
+    "code": "1.2",
+    "domain": "D1",
+    "name": "Customers and value proposition",
+    "dimension": "Strategy, Market and Customers",
+    "mapping": {
+     "gapPattern": "Owner believes customers are loyal but cannot name repeat buyers, has not asked why they buy and cannot state what makes the business different.",
+     "diagnosis": "Demand is assumed rather than evidenced, which makes sales fragile and weakens any case to a lender, buyer or investor.",
+     "prescription": "Keep a simple customer record, call ten recent customers to ask why they buy and what they would change, write the main reason customers choose the business, and make one change from the feedback within 60 days.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 30,
+      "resources": "Customer record template, ten question call guide, coach visit to review findings"
+     },
+     "measurement": {
+      "kpi": "Repeat customers in the last six months, from the customer record",
+      "baselineMethod": "Count customers who bought in at least two of the last six months from records",
+      "provisionalTarget": "Customer record in use and repeat customer count up by 20 percent",
+      "dataSource": "Customer ledger or mobile money history",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "1.3",
+    "domain": "D1",
+    "name": "Sales and marketing",
+    "dimension": "Strategy, Market and Customers",
+    "mapping": {
+     "gapPattern": "New customers come by chance, there is no contact list, one buyer takes most of the sales and nobody knows which channel works.",
+     "diagnosis": "Sales growth is unplanned and concentrated, so the loss of a single buyer would threaten the business.",
+     "prescription": "Build a customer contact list, write a six month plan to win five new buyers, count new customers by source each month, and set a ceiling for the share any one buyer can take.",
+     "intervention": {
+      "type": "Tool or template",
+      "ownerRole": "COACH",
+      "typicalDays": 45,
+      "resources": "WhatsApp Business setup guide, new buyer pipeline sheet, marketing source tally sheet"
+     },
+     "measurement": {
+      "kpi": "Largest customer's share of sales and number of new customers per month",
+      "baselineMethod": "Calculate from the last 12 months of sales records",
+      "provisionalTarget": "Largest customer under 40 percent of sales and at least two new customers per month",
+      "dataSource": "Sales ledger and new customer tally",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "1.4",
+    "domain": "D1",
+    "name": "Pricing and competitive position",
+    "dimension": "Strategy, Market and Customers",
+    "mapping": {
+     "gapPattern": "Prices are copied from the next trader or guessed, competitors are rarely checked and discounts are given on request without limit.",
+     "diagnosis": "Prices may not cover true cost, so margins are eroded without the owner realising.",
+     "prescription": "Cost the top five products or services, set prices as cost plus a target margin, compare with three competitors twice a year and write a discount limit that staff follow.",
+     "intervention": {
+      "type": "Training",
+      "ownerRole": "COACH",
+      "typicalDays": 20,
+      "resources": "SIYB style costing exercise, pricing sheet template, competitor price comparison form"
+     },
+     "measurement": {
+      "kpi": "Share of main items priced from a written cost sheet",
+      "baselineMethod": "Review costing sheets for the five best selling items",
+      "provisionalTarget": "All five main items priced from a cost sheet and reviewed at least once",
+      "dataSource": "Costing sheet and price list",
+      "frequency": "Every six months"
+     }
+    }
+   },
+   {
+    "code": "2.1",
+    "domain": "D2",
+    "name": "Delivery and quality",
+    "dimension": "Operations and Value Delivery",
+    "mapping": {
+     "gapPattern": "Orders are sometimes late or wrong, complaints are handled from memory, there is no checklist and different staff produce different results.",
+     "diagnosis": "Quality and delivery depend on individuals, which risks losing buyers and prevents access to demanding markets.",
+     "prescription": "Write a quality checklist for the main product, keep a complaints and returns book, record promised and actual delivery dates and review results weekly.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 30,
+      "resources": "Quality checklist, delivery log template, complaints register, on site visit to map the process"
+     },
+     "measurement": {
+      "kpi": "On time and correct delivery rate, and complaints per 100 orders",
+      "baselineMethod": "Count one month of orders from the order book and complaints notes",
+      "provisionalTarget": "On time and correct rate of at least 90 percent, with complaints logged and closed",
+      "dataSource": "Delivery log and complaints register",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "2.2",
+    "domain": "D2",
+    "name": "Supply, inventory and cost control",
+    "dimension": "Operations and Value Delivery",
+    "mapping": {
+     "gapPattern": "Stock is not counted, one supplier is relied on, losses are guessed and cost rises are noticed only when cash runs short.",
+     "diagnosis": "Leakage through loss, theft and unnoticed price rises is reducing margin and the business is exposed to supply failure.",
+     "prescription": "Count stock monthly against a stock book, record losses for the main item, name two suppliers per key input and compare monthly cost lines.",
+     "intervention": {
+      "type": "Tool or template",
+      "ownerRole": "COACH",
+      "typicalDays": 30,
+      "resources": "Stock book, monthly count sheet, loss record, supplier comparison sheet"
+     },
+     "measurement": {
+      "kpi": "Stock count variance percent and loss percent for the main item",
+      "baselineMethod": "Do a physical count and compare with the book, and estimate losses from the last month",
+      "provisionalTarget": "Monthly counts held, variance under 5 percent and losses recorded for three months",
+      "dataSource": "Stock count sheets and loss record",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "2.3",
+    "domain": "D2",
+    "name": "Productivity, assets and technology",
+    "dimension": "Operations and Value Delivery",
+    "mapping": {
+     "gapPattern": "Equipment is repaired only after it breaks, there is no asset list, output is not counted and one step always delays orders.",
+     "diagnosis": "Avoidable downtime and an unmeasured work process limit capacity and weaken collateral and insurance cases.",
+     "prescription": "Create an asset register, set a service schedule for key machines and vehicles, count output weekly and tackle the main bottleneck.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 25,
+      "resources": "Asset register template, maintenance schedule, process walk through and bottleneck review"
+     },
+     "measurement": {
+      "kpi": "Unplanned downtime days per month and output per worker per week",
+      "baselineMethod": "Record downtime and output for four weeks",
+      "provisionalTarget": "Asset register complete, service schedule followed and downtime reduced by a third",
+      "dataSource": "Maintenance log and production tally",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "3.1",
+    "domain": "D3",
+    "name": "Bookkeeping and financial records",
+    "dimension": "Financial Management and Performance",
+    "mapping": {
+     "gapPattern": "Money in and out is not written down, personal and business money are mixed, receipts are loose and the ledger is months behind.",
+     "diagnosis": "The owner cannot show what the business earns or owes, which blocks lender and funder trust and hides losses.",
+     "prescription": "Open a separate business account or wallet, start a weekly cash book, file receipts monthly and set a fixed owner pay.",
+     "intervention": {
+      "type": "Training",
+      "ownerRole": "COACH",
+      "typicalDays": 45,
+      "resources": "Simple cash book, filing box and monthly folders, owner pay agreement, two bookkeeping sessions and weekly check ins"
+     },
+     "measurement": {
+      "kpi": "Weeks in the last 12 with complete cash book entries",
+      "baselineMethod": "Inspect the cash book and statements for the last eight weeks",
+      "provisionalTarget": "At least 24 of the next 26 weeks complete, with no unrecorded personal withdrawals",
+      "dataSource": "Cash book and mobile money or bank statements",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "3.2",
+    "domain": "D3",
+    "name": "Cash flow management",
+    "dimension": "Financial Management and Performance",
+    "mapping": {
+     "gapPattern": "The owner does not know how many weeks of costs cash can cover, there is no forecast and customers pay late.",
+     "diagnosis": "Cash shortages are managed by crisis borrowing, which makes the business vulnerable to even small shocks.",
+     "prescription": "Count cash weekly, build a four week cash forecast, agree payment terms in writing, chase debtors weekly and build a cash buffer of at least four weeks of fixed costs.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 40,
+      "resources": "Four week cash forecast template, debtors list, debtor chasing script, weekly coaching call"
+     },
+     "measurement": {
+      "kpi": "Weeks of fixed costs covered by cash, and debtor days",
+      "baselineMethod": "Add balances on the day and divide by weekly fixed costs; compute debtor days from the debtors list",
+      "provisionalTarget": "Cash cover at least four weeks and debtor days under 45",
+      "dataSource": "Cash balances, debtors list and fixed cost list",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "3.3",
+    "domain": "D3",
+    "name": "Costing, margins and profitability",
+    "dimension": "Financial Management and Performance",
+    "mapping": {
+     "gapPattern": "Margins are guessed, the break even point is unknown and profit is judged by whether there is cash in hand.",
+     "diagnosis": "The owner cannot tell which products pay, so effort and capital go to items that may lose money.",
+     "prescription": "Calculate gross margin per main item, work out monthly break even and calculate net profit after owner pay for the last year.",
+     "intervention": {
+      "type": "Training",
+      "ownerRole": "COACH",
+      "typicalDays": 30,
+      "resources": "Margin per product worksheet, break even calculator, profit and loss template"
+     },
+     "measurement": {
+      "kpi": "Gross margin percent per main product and monthly net profit",
+      "baselineMethod": "Compute from the last three months of records",
+      "provisionalTarget": "Margins known for all main items and net profit tracked monthly for six months",
+      "dataSource": "Costing sheets and ledger totals",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "3.4",
+    "domain": "D3",
+    "name": "Financial reporting and controls",
+    "dimension": "Financial Management and Performance",
+    "mapping": {
+     "gapPattern": "No annual financial statements, one person records and handles all money, payments need no approval and balances are never reconciled.",
+     "diagnosis": "Weak controls leave the business open to error and fraud and cannot satisfy lenders or grant makers who need accountable financial reports.",
+     "prescription": "Engage a bookkeeper or accountant to prepare statements, set a payment approval limit, reconcile cash, bank and mobile money monthly with a second person and file monthly management accounts.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 60,
+      "resources": "Accountant or bookkeeper engagement, reconciliation template, payment voucher book, internal control checklist"
+     },
+     "measurement": {
+      "kpi": "Months with a completed reconciliation, and statements prepared",
+      "baselineMethod": "Inspect last statements and reconciliations at assessment",
+      "provisionalTarget": "Six consecutive monthly reconciliations and annual statements prepared",
+      "dataSource": "Reconciliation sheets and financial statements",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "4.1",
+    "domain": "D4",
+    "name": "Capital structure and debt service",
+    "dimension": "Funding and Capital Readiness",
+    "mapping": {
+     "gapPattern": "Repayments are sometimes late, the total debt is not known, loans pay for routine bills and repayments are not covered by cash surplus.",
+     "diagnosis": "Debt is straining cash flow and the business is at risk of default, which would damage its credit record.",
+     "prescription": "List all debts with due dates, work out monthly debt cover, restructure or stop non productive borrowing and set up a repayment reserve account.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 30,
+      "resources": "Debt list template, debt cover calculator, repayment reserve account, lender engagement support"
+     },
+     "measurement": {
+      "kpi": "Debt cover ratio and number of late repayments",
+      "baselineMethod": "Compute from loan schedules and monthly cash surplus",
+      "provisionalTarget": "Debt cover of at least 1.5 times and no late repayments for six months",
+      "dataSource": "Loan statements and cash book",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "4.2",
+    "domain": "D4",
+    "name": "Credit history and finance access",
+    "dimension": "Funding and Capital Readiness",
+    "mapping": {
+     "gapPattern": "The owner has never seen their credit report, may have unresolved arrears, has no regular savings and has little history of complete applications.",
+     "diagnosis": "Finance access is limited by an unknown or weak credit record and thin application experience.",
+     "prescription": "Obtain and check the credit report, clear and document any arrears, save a fixed amount monthly into a business account or group, and prepare one complete application using lender feedback.",
+     "intervention": {
+      "type": "Linkage",
+      "ownerRole": "COACH",
+      "typicalDays": 45,
+      "resources": "Credit bureau enquiry, savings plan template, lender introduction, application checklist"
+     },
+     "measurement": {
+      "kpi": "Clean credit report on file and months of regular business saving",
+      "baselineMethod": "Obtain the credit report and savings statements at assessment",
+      "provisionalTarget": "Credit report checked, errors resolved, and six months of regular saving",
+      "dataSource": "Credit report and savings statements",
+      "frequency": "Quarterly"
+     }
+    }
+   },
+   {
+    "code": "4.3",
+    "domain": "D4",
+    "name": "Investor-grade information and funding plan",
+    "dimension": "Funding and Capital Readiness",
+    "mapping": {
+     "gapPattern": "The business has no funding plan or projections, ownership is not documented and information for funders takes weeks to assemble.",
+     "diagnosis": "Even a bankable business may fail to attract funding because it cannot present itself credibly.",
+     "prescription": "Build a one page funding request, a 12 month projection with assumptions, an ownership record, and a ready information folder that can be sent within one day.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 60,
+      "resources": "Funding request template, projection model, funder information folder checklist, review by a consultant"
+     },
+     "measurement": {
+      "kpi": "Funder information folder completeness and time to assemble",
+      "baselineMethod": "Ask the owner to assemble the folder and time it",
+      "provisionalTarget": "Folder complete and assembled in under one working day",
+      "dataSource": "Funder information folder checklist",
+      "frequency": "Every six months"
+     }
+    }
+   },
+   {
+    "code": "5.1",
+    "domain": "D5",
+    "name": "Owner leadership and succession",
+    "dimension": "People, Leadership and Governance",
+    "mapping": {
+     "gapPattern": "Everything stops when the owner is away, no deputy is named and the owner has no time for planning or learning.",
+     "diagnosis": "The business is a one person dependency and cannot grow, borrow or be sold.",
+     "prescription": "Name a deputy, write a handover note, delegate three recurring decisions, and block a weekly planning hour.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 40,
+      "resources": "Delegation checklist, handover note template, deputy briefing sessions, weekly planning slot"
+     },
+     "measurement": {
+      "kpi": "Days the business ran without the owner and decisions delegated",
+      "baselineMethod": "Ask the owner and deputy about the last absence",
+      "provisionalTarget": "Deputy named in writing and one week run without the owner with no loss",
+      "dataSource": "Handover note and deputy interview",
+      "frequency": "Every six months"
+     }
+    }
+   },
+   {
+    "code": "5.2",
+    "domain": "D5",
+    "name": "Staff roles, capability and retention",
+    "dimension": "People, Leadership and Governance",
+    "mapping": {
+     "gapPattern": "Roles are unwritten, new staff learn by watching, good performance is not recognised and nobody knows why people leave.",
+     "diagnosis": "Weak role clarity and no recognition leads to errors, low motivation and costly turnover.",
+     "prescription": "Write roles for each person, run induction for new starters, introduce clear and fair recognition criteria and record reasons for leaving.",
+     "intervention": {
+      "type": "Training",
+      "ownerRole": "COACH",
+      "typicalDays": 30,
+      "resources": "Role description template, induction checklist, simple recognition rules, staff register"
+     },
+     "measurement": {
+      "kpi": "Share of staff with a written role and staff turnover in 12 months",
+      "baselineMethod": "Count written roles and leavers in the last 12 months",
+      "provisionalTarget": "All staff with a written role and induction used for every new starter",
+      "dataSource": "Role descriptions and staff register",
+      "frequency": "Every six months"
+     }
+    }
+   },
+   {
+    "code": "5.3",
+    "domain": "D5",
+    "name": "Governance and decision rights",
+    "dimension": "People, Leadership and Governance",
+    "mapping": {
+     "gapPattern": "No regular management meeting, nobody outside the business challenges decisions and staff do not know what they may decide.",
+     "diagnosis": "Decisions rest on one person, which weakens accountability and funder confidence.",
+     "prescription": "Hold a monthly review with minutes, form a small advisory group with at least one independent person, and write a delegation of authority sheet.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 45,
+      "resources": "Meeting minute template, advisory group terms of reference, delegation of authority sheet"
+     },
+     "measurement": {
+      "kpi": "Monthly reviews held with minutes and advisory meetings held",
+      "baselineMethod": "Inspect minutes for the last six months",
+      "provisionalTarget": "Six monthly reviews with minutes and two advisory meetings in six months",
+      "dataSource": "Meeting minutes",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "5.4",
+    "domain": "D5",
+    "name": "Workplace practices and decent work",
+    "dimension": "People, Leadership and Governance",
+    "mapping": {
+     "gapPattern": "Staff have no written terms and the workplace has unchecked hazards, no first aid and no incident record.",
+     "diagnosis": "The business risks legal exposure, injuries, disputes and loss of grant or buyer eligibility.",
+     "prescription": "Issue written contracts to all employees, set up first aid and fire safety, and keep an incident book reviewed quarterly.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 20,
+      "resources": "Employment contract template, safety walk through checklist, first aid kit, incident book"
+     },
+     "measurement": {
+      "kpi": "Employees with a signed written statement of terms and recorded safety checks",
+      "baselineMethod": "Sample contracts and inspect safety measures at assessment",
+      "provisionalTarget": "All employees with written terms and quarterly safety checks recorded",
+      "dataSource": "Contract file and safety check records",
+      "frequency": "Quarterly"
+     }
+    }
+   },
+   {
+    "code": "6.1",
+    "domain": "D6",
+    "name": "Business records and documentation",
+    "dimension": "Records, Data and Systems",
+    "mapping": {
+     "gapPattern": "Key papers are scattered, sales have no receipts, routine tasks are not written down and only the owner can find records.",
+     "diagnosis": "The business cannot prove its transactions or hand over operations, which weakens compliance and lender confidence.",
+     "prescription": "Set up one document file with an index, issue numbered receipts for all sales above an agreed amount, write steps for three routine tasks and train a second person on the records.",
+     "intervention": {
+      "type": "Tool or template",
+      "ownerRole": "COACH",
+      "typicalDays": 25,
+      "resources": "Document file and index sheet, numbered receipt books, procedure templates"
+     },
+     "measurement": {
+      "kpi": "Key documents found within ten minutes and share of sales with a receipt",
+      "baselineMethod": "Ask for five named documents and sample ten sales",
+      "provisionalTarget": "All key documents found in ten minutes and over 90 percent of sales receipted",
+      "dataSource": "Document file and receipt books",
+      "frequency": "Quarterly"
+     }
+    }
+   },
+   {
+    "code": "6.2",
+    "domain": "D6",
+    "name": "Digital tools and payments",
+    "dimension": "Records, Data and Systems",
+    "mapping": {
+     "gapPattern": "Most receipts are cash, there is no business account or wallet, accounts are on paper only and customers can reach the business only through the owner's phone.",
+     "diagnosis": "Untraceable money and a lack of digital records limit credit access and slow the business down.",
+     "prescription": "Open a business account or merchant wallet, move customer payments to digital channels, set up a spreadsheet or basic accounting app and publish a business contact number.",
+     "intervention": {
+      "type": "Tool or template",
+      "ownerRole": "COACH",
+      "typicalDays": 30,
+      "resources": "Merchant wallet or business account opening support, spreadsheet ledger template, WhatsApp Business setup"
+     },
+     "measurement": {
+      "kpi": "Share of sales received through mobile money or bank",
+      "baselineMethod": "Compare digital receipts with total sales for the last month",
+      "provisionalTarget": "At least 50 percent of sales received digitally and a business wallet in regular use",
+      "dataSource": "Mobile money or bank statements and sales ledger",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "6.3",
+    "domain": "D6",
+    "name": "Data use and performance tracking",
+    "dimension": "Records, Data and Systems",
+    "mapping": {
+     "gapPattern": "Few or no numbers are tracked, decisions are made by feel and results are never compared with last year or with a plan.",
+     "diagnosis": "Management is blind to trends, so problems are found late.",
+     "prescription": "Choose five monthly key numbers, build a one page monthly scorecard, review it with the team and compare actual results with plan each quarter.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 30,
+      "resources": "Monthly scorecard template, quarterly budget versus actual sheet, coaching reviews"
+     },
+     "measurement": {
+      "kpi": "Months with a completed scorecard",
+      "baselineMethod": "Inspect scorecards or notes for the last three months",
+      "provisionalTarget": "Six consecutive monthly scorecards and two quarterly plan comparisons",
+      "dataSource": "Scorecard file",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "7.1",
+    "domain": "D7",
+    "name": "Registration, tax and statutory compliance",
+    "dimension": "Legal, Regulatory and Risk",
+    "mapping": {
+     "gapPattern": "Registration is not current, returns are filed late or not at all, the owner does not know which taxes apply and SSNIT or PAYE is in arrears.",
+     "diagnosis": "The business is exposed to penalties and is ineligible for contracts, loans and grants that require registration and tax clearance.",
+     "prescription": "Renew or complete registration with the Registrar General, file outstanding GRA returns, set a tax calendar and clear or schedule SSNIT and PAYE arrears.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 45,
+      "resources": "Registrar General and GRA portal support, tax calendar template, tax practitioner engagement, SSNIT payment plan"
+     },
+     "measurement": {
+      "kpi": "Compliance items current out of registration, returns, SSNIT and PAYE",
+      "baselineMethod": "Check each item against certificates, acknowledgements and schedules",
+      "provisionalTarget": "All applicable items current within six months",
+      "dataSource": "Certificates, GRA acknowledgements and SSNIT reports",
+      "frequency": "Quarterly"
+     }
+    }
+   },
+   {
+    "code": "7.2",
+    "domain": "D7",
+    "name": "Contracts and intellectual property",
+    "dimension": "Legal, Regulatory and Risk",
+    "mapping": {
+     "gapPattern": "Agreements with buyers and suppliers are verbal, premises are insecure and the brand has no protection.",
+     "diagnosis": "The business has weak recourse in disputes and could lose premises or its brand.",
+     "prescription": "Put agreements with the largest buyers and suppliers in writing, secure a lease or tenancy for at least 12 months, and record the business name and brand.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 30,
+      "resources": "Simple supply agreement template, lease review, brand registration guidance"
+     },
+     "measurement": {
+      "kpi": "Written agreements held with top three buyers and suppliers",
+      "baselineMethod": "Count signed agreements at assessment",
+      "provisionalTarget": "Signed agreements with the top three buyers and suppliers and a 12 month lease",
+      "dataSource": "Agreement file and lease",
+      "frequency": "Every six months"
+     }
+    }
+   },
+   {
+    "code": "7.3",
+    "domain": "D7",
+    "name": "Risk management and insurance",
+    "dimension": "Legal, Regulatory and Risk",
+    "mapping": {
+     "gapPattern": "There is no risk list, stock and assets are uninsured and stock and cash are poorly secured.",
+     "diagnosis": "A single fire, theft or loss could end the business with no recovery route.",
+     "prescription": "Write a risk list with a response for each main risk, buy insurance for stock and premises, and secure stock and cash with locks and regular banking.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 20,
+      "resources": "Risk register template, insurance broker introduction, storage security checklist"
+     },
+     "measurement": {
+      "kpi": "Main risks with a named response and insurance policies in force",
+      "baselineMethod": "Review risk list and policies at assessment",
+      "provisionalTarget": "Risk list complete and insurance on stock and premises in force",
+      "dataSource": "Risk register and policy documents",
+      "frequency": "Every six months"
+     }
+    }
+   },
+   {
+    "code": "7.4",
+    "domain": "D7",
+    "name": "Continuity and data protection",
+    "dimension": "Legal, Regulatory and Risk",
+    "mapping": {
+     "gapPattern": "There is no continuity plan, records have one copy and personal data is held without safeguards or registration.",
+     "diagnosis": "A disruption or data loss could stop operations and expose the business to legal action.",
+     "prescription": "Write a continuity plan for the three most likely disruptions, set up monthly backups off site, and register with the Data Protection Commission and lock personal data.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 20,
+      "resources": "Continuity checklist, cloud backup setup, Data Protection Commission registration support"
+     },
+     "measurement": {
+      "kpi": "Continuity plan in place, backup age in days and registration status",
+      "baselineMethod": "Check plan, last backup date and registration certificate",
+      "provisionalTarget": "Plan written, weekly backups running and registration complete",
+      "dataSource": "Backup log and certificate",
+      "frequency": "Quarterly"
+     }
+    }
+   },
+   {
+    "code": "8.1",
+    "domain": "D8",
+    "name": "Environmental and climate practice",
+    "dimension": "Resilience, Inclusion and Sustainability",
+    "mapping": {
+     "gapPattern": "Energy and water use are untracked, waste is dumped and no action has been taken against climate hazards.",
+     "diagnosis": "Avoidable resource costs and exposure to flood, heat or power cuts are eroding margin and resilience.",
+     "prescription": "Track utility use monthly, take two low cost saving actions, set up safe waste handling and make one climate hazard adjustment.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 25,
+      "resources": "Utility tracking sheet, resource efficiency walk through, waste handling guidance"
+     },
+     "measurement": {
+      "kpi": "Monthly utility cost per unit of output",
+      "baselineMethod": "Compute from six months of bills and output records",
+      "provisionalTarget": "Utility cost per unit down by 10 percent and waste sorted",
+      "dataSource": "Utility bills and production records",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "8.2",
+    "domain": "D8",
+    "name": "Gender, youth and social inclusion",
+    "dimension": "Resilience, Inclusion and Sustainability",
+    "mapping": {
+     "gapPattern": "Pay and promotion differ by sex without clear reason, women and young people hold only the lowest roles and there is no harassment rule.",
+     "diagnosis": "The business is losing talent and may be exposed to legal and donor risk.",
+     "prescription": "Review pay by role and sex, open a path to responsibility for women and young people, hear women's views on decisions and write a harassment rule with a reporting route.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 25,
+      "resources": "Pay by role review sheet, harassment policy template, staff briefing session"
+     },
+     "measurement": {
+      "kpi": "Pay gap by role and share of women and young people in responsible roles",
+      "baselineMethod": "Analyse the payroll and staff list at assessment",
+      "provisionalTarget": "No unexplained pay gap, harassment rule issued and staff briefed",
+      "dataSource": "Payroll and staff list",
+      "frequency": "Every six months"
+     }
+    }
+   },
+   {
+    "code": "8.3",
+    "domain": "D8",
+    "name": "Shock resilience and adaptability",
+    "dimension": "Resilience, Inclusion and Sustainability",
+    "mapping": {
+     "gapPattern": "There is no plan for a sales drop, one product earns almost all income, the owner is isolated and critical tasks have no cover.",
+     "diagnosis": "The business has little buffer against shocks and has few adaptation options.",
+     "prescription": "Write a sales drop response, test a second product or service, join a trade group or peer network and train a second person on each critical task.",
+     "intervention": {
+      "type": "Peer learning",
+      "ownerRole": "COACH",
+      "typicalDays": 40,
+      "resources": "Stress test worksheet, peer group sessions, cross training plan"
+     },
+     "measurement": {
+      "kpi": "Share of sales from the largest product line and critical tasks with a trained backup",
+      "baselineMethod": "Compute from sales by product and list critical tasks",
+      "provisionalTarget": "Largest product line under 60 percent of sales and backups for all critical tasks",
+      "dataSource": "Sales records and cover roster",
+      "frequency": "Every six months"
+     }
+    }
+   }
+  ],
+  "readiness": [
+   {
+    "code": "RDY-FIN",
+    "name": "Bank finance readiness",
+    "purpose": "Shows whether a lender would find the business bankable: reliable cash records, separate money, repayment history, current registration and tax status, and a business account.",
+    "unlocks": "Not ready or Emerging: fix the blocking gate items first (cash book, separate accounts, reconciliation, registration, tax filing). Ready: prepare the funder information pack and approach a bank or microfinance lender with a costed request."
+   },
+   {
+    "code": "RDY-MKT",
+    "name": "Market and buyer readiness",
+    "purpose": "Shows whether the business can supply a larger or more demanding buyer: proven repeat demand, reliable delivery, quality control, tax compliance, written terms and traceable sales documents.",
+    "unlocks": "Not ready or Emerging: build delivery reliability, quality checks and evidence of repeat buyers. Ready: pitch to institutional, wholesale or contract buyers who require tax clearance and written agreements."
+   },
+   {
+    "code": "RDY-INV",
+    "name": "Investment readiness (equity, impact or blended capital)",
+    "purpose": "Shows whether the business could stand up to investor due diligence: evidenced demand, financial statements, documented ownership, margin and projection discipline, and owner independence.",
+    "unlocks": "Not ready or Emerging: close the gate items (demand evidence, records, statements, ownership) and the owner dependence gap. Ready: begin investor conversations with a pitch pack and projections."
+   },
+   {
+    "code": "RDY-GRT",
+    "name": "Grant and donor readiness",
+    "purpose": "Shows whether the business can receive and account for grant money: financial controls, reconciliation, registration, workable governance, safety and inclusion practices.",
+    "unlocks": "Not ready or Emerging: put in place financial controls, reconciliation, a business account and registration. Ready: apply to donor and development programmes and bid for cofinanced support."
+   },
+   {
+    "code": "RDY-CMP",
+    "name": "Statutory compliance readiness",
+    "purpose": "Shows whether the business meets its basic legal duties: registration, tax filing, SSNIT and PAYE, written employment terms, safety, data protection and documented ownership.",
+    "unlocks": "Not ready or Emerging: clear registration, filing and SSNIT arrears with a compliance calendar. Ready: apply for tenders, licences, supplier listings and programmes that require compliance evidence."
+   }
+  ],
+  "consistencyChecks": [
+   {
+    "id": "CC1",
+    "itemA": "SM-026",
+    "itemB": "SM-028",
+    "rule": "If cash and mobile money are recorded at least weekly, sales and purchases should also be recorded in a ledger. High on one and very low on the other suggests inflated answers or records that are not real.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC2",
+    "itemA": "SM-035",
+    "itemB": "SM-026",
+    "rule": "A net profit worked out from records cannot be credible if cash and mobile money are not recorded.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC3",
+    "itemA": "SM-011",
+    "itemB": "SM-033",
+    "rule": "Prices set from a written cost sheet imply the gross margin is known for the main items.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC4",
+    "itemA": "SM-077",
+    "itemB": "SM-076",
+    "rule": "Tax returns cannot be filed on time if the business has no registration; check which answer is wrong.",
+    "condition": "A>=3 and B<=0"
+   },
+   {
+    "id": "CC5",
+    "itemA": "SM-039",
+    "itemB": "SM-043",
+    "rule": "Loans reported as repaid on time should be consistent with no unresolved default or blacklisting.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC6",
+    "itemA": "SM-027",
+    "itemB": "SM-026",
+    "rule": "Business money kept separate from household money implies the money in and out of the business is written down.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC7",
+    "itemA": "SM-050",
+    "itemB": "SM-029",
+    "rule": "A funder information pack ready within a day implies supporting documents are filed and traceable.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC8",
+    "itemA": "SM-072",
+    "itemB": "SM-028",
+    "rule": "Monthly key numbers cannot be reliable if sales and purchases are not recorded in a ledger.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC9",
+    "itemA": "SM-051",
+    "itemB": "SM-061",
+    "rule": "A business that runs for a week without the owner should have written limits on what staff may decide.",
+    "condition": "A>=3 and B<=1"
+   }
+  ]
+ },
  "note": "DRAFT 1.0.0-draft. DRAFT, NOT AUTHORITATIVE. Nothing here is production-authoritative until Amin Yahaya signs off."
 }

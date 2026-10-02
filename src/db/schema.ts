@@ -197,6 +197,8 @@ export const responses = pgTable('responses', {
   diagnosticId: uuid('diagnostic_id').notNull().references(() => diagnostics.id),
   questionCode: text('question_code').notNull(),
   value: integer('value').notNull(),
+  /** True when a conditional question does not apply. The value is stored as 0 and ignored by scoring. */
+  notApplicable: boolean('not_applicable').notNull().default(false),
   evidenceClass: evidenceClassEnum('evidence_class').notNull().default('Self-reported'),
   evidenceRef: text('evidence_ref'),
   createdAt: created()
@@ -241,6 +243,8 @@ export const healthScores = pgTable('health_scores', {
   evidenceShare: jsonb('evidence_share').notNull().$type<Record<string, number>>(),
   rulesSnapshot: jsonb('rules_snapshot').$type<Record<string, unknown>>(),
   frameworkVersionId: uuid('framework_version_id').references((): any => frameworkVersions.id),
+  /** Sub-dimension scores, readiness levels, risks and priorities for banks that define them. Null for version 1 scoring. */
+  extras: jsonb('extras').$type<Record<string, unknown>>(),
   createdAt: created()
 }, (t) => [index('score_case_idx').on(t.caseId)]);
 
@@ -618,7 +622,23 @@ export const emailTemplates = pgTable('email_templates', {
 
 
 /* ------------------- Business Health frameworks and versions ------------------- */
-export type FrameworkQuestion = { code: string; dimension: string; text: string; weight: number };
+/** Optional Business Health Architecture v2 metadata. Version 1 questions carry none of it and score exactly as before. */
+export type QuestionEvidence = { requirement: string; method: string; examples?: string[] };
+export type FrameworkQuestion = {
+  code: string; dimension: string; text: string; weight: number;
+  subDimension?: string; responseType?: 'ANCHORED' | 'BANDED' | 'YNP' | 'FREQ';
+  anchors?: (string | null)[]; evidence?: QuestionEvidence;
+  criticality?: 'Gate' | 'Core' | 'Standard'; readiness?: string[];
+  /** 'All' or a short condition. A conditional question may be answered not applicable. */
+  applies?: string; riskTag?: string; consistencyGroup?: string; basis?: string;
+};
+/** Version-level structure: sub-dimensions, readiness indices, consistency checks and the diagnosis to measurement mapping. */
+export type FrameworkMeta = {
+  architecture?: string;
+  subDimensions?: { code: string; domain?: string; name: string; dimension: string; mapping?: unknown }[];
+  readiness?: { code: string; name: string; purpose?: string; unlocks?: string }[];
+  consistencyChecks?: { id: string; itemA: string; itemB: string; rule: string; condition: string }[];
+};
 /** Evidence-to-framework audit trail: where a framework component came from and who approved it. */
 export type FrameworkSource = {
   component: string; source: string; rationale: string; adaptation: string;
@@ -644,6 +664,7 @@ export const frameworkVersions = pgTable('framework_versions', {
   dimensions: jsonb('dimensions').notNull().$type<string[]>(),
   rules: jsonb('rules').$type<Record<string, string | number>>(),
   sources: jsonb('sources').notNull().$type<FrameworkSource[]>().default(sql`'[]'::jsonb`),
+  meta: jsonb('meta').$type<FrameworkMeta>(),
   note: text('note'),
   createdBy: uuid('created_by'),
   approvedBy: uuid('approved_by'),

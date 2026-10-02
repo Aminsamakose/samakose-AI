@@ -4,601 +4,3200 @@
    "code": "AF-001",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "No single crop or product gave more than 70 percent of our sales income last year.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.1",
+   "responseType": "BANDED",
+   "anchors": [
+    "One crop or product gave over 90 percent of sales",
+    "One crop or product gave 71 to 90 percent of sales",
+    "One crop or product gave 51 to 70 percent of sales",
+    "Largest crop or product gave 36 to 50 percent of sales",
+    "Largest crop or product gave 35 percent or less of sales"
+   ],
+   "evidence": {
+    "requirement": "Sales records or invoices by crop or product for the last 12 months, to work out the largest share.",
+    "method": "Document",
+    "examples": [
+     "Sales book by crop",
+     "Buyer invoices",
+     "Mobile money sales log"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Depends on one crop",
+   "basis": "Partly sourced",
+   "consistencyGroup": "conc"
   },
   {
    "code": "AF-002",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "We have a written business plan with targets and a budget for the next 1 to 3 years, and we reviewed it in the last 12 months.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No written plan of any kind",
+    "Only a verbal plan or a list of ideas",
+    "Written plan with targets but no budget, not reviewed in 12 months",
+    "Written plan with targets and budget, reviewed once in 12 months",
+    "Plan with targets and budget, reviewed at least twice with changes noted and shared with members or staff"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the plan and the dated review notes or minutes.",
+    "method": "Document",
+    "examples": [
+     "Business plan document",
+     "Annual budget",
+     "Minutes showing plan review"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No written business plan",
+   "basis": "Sourced"
   },
   {
    "code": "AF-003",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "Before each season we check which crop or product has a ready buyer and a positive margin, and we choose what to plant, process or stock on that basis.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We plant or stock what we did last year without checking",
+    "We choose by what neighbours plant or what seed is available",
+    "We ask one buyer or trader informally, with nothing written",
+    "We compare at least two crops or products using buyer prices and our own costs",
+    "We have a written crop or product comparison with buyer commitments before planting or stocking"
+   ],
+   "evidence": {
+    "requirement": "Ask how the last crop choice was made and look for notes, buyer quotes or a margin comparison.",
+    "method": "Interview",
+    "examples": [
+     "Margin comparison sheet",
+     "Buyer quotes",
+     "Season plan notes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-OFF"
+   ],
+   "applies": "All",
+   "riskTag": "Crops chosen without market check",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-004",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "We have a written agreement (offtake, supply or purchase) with at least one buyer, covering volume, price basis and quality.",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "1.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No agreement, we sell to whoever pays on the day",
+    "Verbal understanding with a buyer only",
+    "A written order or note for one delivery, missing price basis or quality",
+    "Written agreement covering volume, price basis and quality for the current season",
+    "Signed agreement covering volume, price basis, quality and payment terms, honoured by both sides last season"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the signed agreement or purchase order and compare it with last season deliveries.",
+    "method": "Document",
+    "examples": [
+     "Signed offtake contract",
+     "Purchase order from processor or institution",
+     "Warehouse or aggregator supply agreement"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "No written buyer agreement",
+   "basis": "Sourced"
   },
   {
    "code": "AF-005",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "In the last 12 months we delivered at least 95 percent of the volume our buyers ordered, on the agreed dates.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "1.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "Delivered under 50 percent of ordered volume on time, or lost a buyer for failure to deliver",
+    "Delivered 50 to 69 percent on time",
+    "Delivered 70 to 84 percent on time",
+    "Delivered 85 to 94 percent on time",
+    "Delivered 95 percent or more on time, shown by delivery notes"
+   ],
+   "evidence": {
+    "requirement": "Compare orders with delivery notes or goods received notes for the last 12 months.",
+    "method": "Document",
+    "examples": [
+     "Delivery notes",
+     "Buyer goods received notes",
+     "Order book"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Late or short deliveries",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-006",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "No single buyer took more than half of our sales last year.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "One buyer took over 90 percent of sales",
+    "One buyer took 71 to 90 percent of sales",
+    "One buyer took 51 to 70 percent of sales",
+    "Largest buyer took 31 to 50 percent of sales",
+    "Largest buyer took 30 percent or less, and we have at least three active buyers"
+   ],
+   "evidence": {
+    "requirement": "Sales records by buyer for the last 12 months.",
+    "method": "Document",
+    "examples": [
+     "Buyer ledger",
+     "Invoices",
+     "Mobile money receipts by buyer"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Depends on one buyer",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-007",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "Our buyers paid us on the agreed date for most deliveries in the last season.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "Buyers paid on the agreed date for under 25 percent of deliveries",
+    "Paid on time for 25 to 49 percent of deliveries",
+    "Paid on time for 50 to 74 percent of deliveries",
+    "Paid on time for 75 to 89 percent of deliveries",
+    "Paid on time for 90 percent or more, and we follow up late payments in writing"
+   ],
+   "evidence": {
+    "requirement": "Compare invoice dates, agreed payment dates and receipt dates for last season.",
+    "method": "Document",
+    "examples": [
+     "Invoices with due dates",
+     "Bank or mobile money statements",
+     "Payment follow-up messages"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Slow buyer payment",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-008",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "Before agreeing a selling price, we check current prices from at least two sources, such as markets, buyers, aggregators or a price information service.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.3",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never, we accept the first price offered",
+    "Rarely, only when a neighbour tells us",
+    "Sometimes, from one source",
+    "Usually, from at least two sources, but not recorded",
+    "Always from at least two sources, with prices written down before we agree"
+   ],
+   "evidence": {
+    "requirement": "Ask when the last price was agreed and look for the price notes or messages used.",
+    "method": "Interview",
+    "examples": [
+     "Price notebook",
+     "Phone messages with buyers",
+     "Market price screenshots"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-OFF"
+   ],
+   "applies": "All",
+   "riskTag": "Selling without price check",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-009",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "We have a plan for when to sell, such as selling in stages or storing for a better price, and we did not sell all our produce at the harvest glut last season.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We sold all produce straight after harvest at the lowest price",
+    "We sold most produce at harvest because we needed cash, with no plan",
+    "We sold some later, but only by chance",
+    "We planned to sell in at least two stages and followed the plan for most produce",
+    "Written selling plan tied to cash needs and storage, followed, with sales dates and prices recorded"
+   ],
+   "evidence": {
+    "requirement": "Look at sales dates and prices through the season and any selling plan.",
+    "method": "Document",
+    "examples": [
+     "Sales records with dates",
+     "Selling plan",
+     "Stock and warehouse receipts"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "All produce sold at harvest glut",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-010",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "We sell part of our produce after cleaning, grading, shelling, drying or processing, so that we earn more than the raw farm-gate price.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "1.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We sell everything raw and ungraded",
+    "We clean or grade sometimes but sell at the same price as raw",
+    "We clean or grade most produce and sometimes get a better price",
+    "We clean, grade or process more than half of our produce and get a better price from at least one buyer",
+    "We sell graded or processed produce under a price premium shown in sales records"
+   ],
+   "evidence": {
+    "requirement": "Compare prices for graded or processed lots with raw lots in sales records.",
+    "method": "Document",
+    "examples": [
+     "Price lists by grade",
+     "Sales records",
+     "Buyer premium notes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No value captured above raw price",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-011",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "We check every lot we buy or collect for moisture and for foreign or damaged material before we accept it.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "1.4",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never, we accept produce by sight",
+    "Rarely, only when a buyer complains",
+    "Sometimes, for some suppliers",
+    "Usually, with a meter or standard test, but results not recorded",
+    "Always for every lot, with results recorded and poor lots rejected or graded"
+   ],
+   "evidence": {
+    "requirement": "Observe an intake or ask to see the intake record and the moisture meter or test tools.",
+    "method": "Observation",
+    "examples": [
+     "Intake book with moisture readings",
+     "Moisture meter",
+     "Grading or rejection slips"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "No quality check at intake",
+   "basis": "Sourced"
   },
   {
    "code": "AF-012",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "We can show a buyer where each lot came from (member or farm, village and date of purchase).",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "1.4",
+   "responseType": "YNP",
+   "anchors": [
+    "We cannot say where any lot came from",
+    null,
+    "We can name the source for some lots, from memory or loose notes",
+    null,
+    "Every lot has a written source (member or farm, village, date) that we can show a buyer within a day"
+   ],
+   "evidence": {
+    "requirement": "Pick three recent lots and ask for their source records.",
+    "method": "Document",
+    "examples": [
+     "Lot or batch register",
+     "Purchase receipts with member IDs",
+     "Farmer registration list"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "Cannot trace lots",
+   "basis": "Sourced"
   },
   {
    "code": "AF-013",
    "dimension": "Market Access, Offtake and Traceability",
    "text": "Our last delivery to our main buyer passed the buyer's quality check without rejection or price cut.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "1.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Last delivery was rejected, or we do not know the buyer's requirements",
+    "Delivery was accepted only with a price cut for quality",
+    "Delivery was accepted but we hold no written quality requirement from the buyer",
+    "Delivery passed and we hold the buyer's written quality or certification requirements",
+    "Delivery passed, we hold the written requirements, and we check our lots against them before dispatch"
+   ],
+   "evidence": {
+    "requirement": "Ask for the buyer's written requirements and the last quality or rejection report.",
+    "method": "Third party",
+    "examples": [
+     "Buyer quality report",
+     "Written specification",
+     "Rejection or deduction notes"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "Fails buyer quality check",
+   "basis": "Sourced"
   },
   {
    "code": "AF-014",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "We write a plan before each season showing area per crop, expected yield, and the inputs, labour and money we will need.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No plan, we decide as the rains start",
+    "Plan kept in our heads only",
+    "Written plan for area and inputs, without yield or labour",
+    "Written plan covering area, expected yield, inputs and labour",
+    "Written plan covering all four, with costs, approved by the leaders or owner, and compared with results after harvest"
+   ],
+   "evidence": {
+    "requirement": "Ask for this season's plan and last season's comparison of plan against actual.",
+    "method": "Document",
+    "examples": [
+     "Season plan sheet",
+     "Farm map with plot areas",
+     "Input and labour budget"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No seasonal production plan",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-015",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "We know our own average yield per acre for our main crop over the last 3 seasons, from records and not from guesswork.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We do not know our yield per acre",
+    "We give a rough guess, with no records",
+    "We know last season's yield from records for our main crop",
+    "We know yields for the last 2 seasons from records",
+    "We hold yield per acre records for 3 seasons, by plot or group, and can explain changes"
+   ],
+   "evidence": {
+    "requirement": "Ask for harvest records and area measures, then recompute yield per acre.",
+    "method": "Document",
+    "examples": [
+     "Harvest book (bags and area)",
+     "Plot register",
+     "Aggregator weighing slips"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Yield not known",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-016",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "Most of the area we plant each season uses certified or improved seed of varieties suited to our rainfall, bought from a registered seller.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.1",
+   "responseType": "BANDED",
+   "anchors": [
+    "None of our area uses certified or improved seed",
+    "Under 25 percent of area uses certified or improved seed",
+    "25 to 49 percent of area uses certified or improved seed",
+    "50 to 79 percent of area uses certified or improved seed",
+    "80 percent or more of area uses certified or improved seed, with receipts and variety names kept"
+   ],
+   "evidence": {
+    "requirement": "Check seed receipts, bag labels and the area planted against the plan.",
+    "method": "Document",
+    "examples": [
+     "Seed purchase receipts",
+     "Seed bag labels with lot number",
+     "Variety list"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Low use of improved seed",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-017",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "For our main crop we follow the planting time, spacing and fertiliser rate advised by extension or the seed or fertiliser supplier, and we can show what we did.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We follow no advice and keep no record of what we apply",
+    "We follow advice for some practices but do not know the recommended rates",
+    "We know the advised practices and follow some of them",
+    "We follow most advised practices on most of the area and keep field notes",
+    "We follow advised practices on nearly all the area, record each operation, and an extension officer has visited this season"
+   ],
+   "evidence": {
+    "requirement": "Ask for field notes and visit a plot, or ask an extension officer or lead farmer to confirm.",
+    "method": "Third party",
+    "examples": [
+     "Field activity notebook",
+     "Extension visit record",
+     "Input application record"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Advised practices not followed",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-018",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "We receive the seed, fertiliser and chemicals we need before planting time in most seasons, without delays that cost us yield.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "2.2",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never on time, planting is often late for lack of inputs",
+    "Rarely on time",
+    "Sometimes on time",
+    "Usually on time, with a small delay in some seasons",
+    "Always on time, ordered ahead with a written order and delivery date"
+   ],
+   "evidence": {
+    "requirement": "Compare input delivery dates with planting dates for the last two seasons.",
+    "method": "Document",
+    "examples": [
+     "Input delivery notes",
+     "Order records",
+     "Planting date record"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Inputs arrive late",
+   "basis": "Sourced"
   },
   {
    "code": "AF-019",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "We buy inputs from known registered suppliers and compare prices or terms from at least two before we buy.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.2",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never, we buy from whoever is nearby",
+    "Rarely compare, and suppliers are not registered",
+    "Sometimes compare",
+    "Usually compare at least two suppliers, using registered dealers",
+    "Always compare at least two registered suppliers, with quotes kept"
+   ],
+   "evidence": {
+    "requirement": "Ask for the last input purchase and the quotes or messages used to compare suppliers.",
+    "method": "Document",
+    "examples": [
+     "Supplier quotes",
+     "Dealer registration or licence copy",
+     "Purchase receipts"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Single supplier, no comparison",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-020",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "We record who received which inputs from us, how much, and what each person still owes.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "2.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No record of inputs given out",
+    "Some names noted in a notebook, without amounts owed",
+    "Names and quantities recorded, amounts owed not tracked",
+    "Names, quantities and amounts owed recorded for all recipients",
+    "Complete ledger updated at each issue and repayment, balanced against stock and checked by a second person"
+   ],
+   "evidence": {
+    "requirement": "Sample five recipients and match issue records with repayment records.",
+    "method": "Document",
+    "examples": [
+     "Input issue register",
+     "Member or outgrower ledger",
+     "Repayment receipts"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INP",
+    "RDY-OFF"
+   ],
+   "applies": "Supplies inputs on credit to members, outgrowers or customers only",
+   "riskTag": "Input credit not tracked",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-021",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "We buy sealed, labelled seed, fertiliser and chemicals from licensed sellers, and we check the label and expiry date before use or resale.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We use or sell repacked or unlabelled inputs, or do not check expiry",
+    "We buy from market traders and rarely check labels",
+    "We check labels or expiry on some purchases",
+    "We buy from licensed sellers and check label and expiry on most purchases",
+    "We buy only sealed, labelled inputs from licensed sellers, check every pack, and keep receipts and batch numbers"
+   ],
+   "evidence": {
+    "requirement": "Inspect the input store and a sample of packs, and ask for purchase receipts.",
+    "method": "Observation",
+    "examples": [
+     "Input store with labelled packs",
+     "Receipts with batch numbers",
+     "Dealer licence copy"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "Unchecked or fake inputs",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-022",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "We dry and clean produce to the buyer's or national moisture standard before storing or selling, and we measure moisture to confirm.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "2.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We store or sell produce without drying to a standard",
+    "We dry by sight on the ground and never measure moisture",
+    "We dry on tarpaulins or a drying floor, and measure moisture sometimes",
+    "We dry on tarpaulins or a drying floor and measure moisture on most lots",
+    "We dry on clean surfaces or a dryer, measure moisture on every lot, and record readings before storage"
+   ],
+   "evidence": {
+    "requirement": "Observe drying and look for moisture records on lots going into store.",
+    "method": "Observation",
+    "examples": [
+     "Moisture meter and readings log",
+     "Tarpaulin or drying floor",
+     "Storage intake record"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "Produce stored wet",
+   "basis": "Sourced"
   },
   {
    "code": "AF-023",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "Our store is clean, dry and off the ground with a written pest control routine that we follow.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "2.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Produce is stored on the floor or in a leaking or dirty place",
+    "Store is roughly clean but produce touches walls or floor, no pest routine",
+    "Store is clean and dry with produce on pallets, pest control done only when pests appear",
+    "Store is clean, dry, on pallets, with a pest routine followed but not recorded",
+    "Store clean, dry and on pallets, with a written routine and dated pest control records, checked by an inspector or buyer"
+   ],
+   "evidence": {
+    "requirement": "Visit the store and ask for the pest control routine and records.",
+    "method": "Observation",
+    "examples": [
+     "Pallets and clean walls",
+     "Pest control log",
+     "FDA or buyer inspection report"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "Unsafe or pest-prone storage",
+   "basis": "Sourced"
   },
   {
    "code": "AF-024",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "We have measured how much produce we lost after harvest in the last season and can name the main causes.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We have never thought about post-harvest loss",
+    "We say there is loss but have no figure",
+    "We have a rough estimate for one crop, without causes",
+    "We measured loss for our main crop and named at least two causes",
+    "We measured loss at each step (drying, storage, transport) for our main crops and acted on the biggest cause"
+   ],
+   "evidence": {
+    "requirement": "Ask for the loss figures and what was changed in response.",
+    "method": "Interview",
+    "examples": [
+     "Stock-in versus stock-out records",
+     "Loss estimate sheet",
+     "Notes on changes made"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Post-harvest loss not measured",
+   "basis": "Sourced"
   },
   {
    "code": "AF-025",
    "dimension": "Production, Inputs and Post-harvest",
    "text": "We rotate stock first in, first out, and the oldest lots are sold or processed before newer ones.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "2.3",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never, newest stock is taken first or old stock is forgotten",
+    "Rarely",
+    "Sometimes, when we remember",
+    "Usually, and old stock is marked",
+    "Always, with dated lots stacked so the oldest is reached first and checked monthly"
+   ],
+   "evidence": {
+    "requirement": "Walk the store and check dates on lots against what has been sold.",
+    "method": "Observation",
+    "examples": [
+     "Dated stacks",
+     "Stock card",
+     "Dispatch record by lot date"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "Old stock left to spoil",
+   "basis": "Sourced"
   },
   {
    "code": "AF-026",
    "dimension": "Financial Management and Performance",
    "text": "We keep a business bank account or business mobile money wallet separate from personal or household money, and business money passes through it.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No separate account, business and personal money are mixed",
+    "Separate account exists but is mostly unused",
+    "Separate account used for some receipts or payments",
+    "Separate account used for most receipts and payments, with some personal use",
+    "All business receipts and payments go through the separate account, with no personal use seen in statements"
+   ],
+   "evidence": {
+    "requirement": "Review three months of statements for the business account or wallet.",
+    "method": "Digital record",
+    "examples": [
+     "Bank statements",
+     "Mobile money merchant statement",
+     "Group account passbook"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Business and personal money mixed",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-027",
    "dimension": "Financial Management and Performance",
    "text": "We write every sale and every expense in a cash book, notebook or app within one week of it happening.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.1",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never, we rely on memory",
+    "Rarely, only large transactions",
+    "Sometimes, but with gaps of more than a month",
+    "Usually within a week, with occasional gaps",
+    "Always within a week, with receipts or mobile money messages attached"
+   ],
+   "evidence": {
+    "requirement": "Take five transactions from bank or mobile money statements and find them in the book.",
+    "method": "Document",
+    "examples": [
+     "Cash book",
+     "Accounting app records",
+     "Receipts file"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Sales and costs not recorded",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-028",
    "dimension": "Financial Management and Performance",
    "text": "We can show written records of sales, costs and loan repayments for the last 2 to 3 seasons.",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "3.1",
+   "responseType": "BANDED",
+   "anchors": [
+    "No records for any past season",
+    "Records for part of the last season only",
+    "Complete records for the last season only",
+    "Complete records for the last 2 seasons",
+    "Complete records for the last 3 seasons, summarised by season"
+   ],
+   "evidence": {
+    "requirement": "Ask for season summaries and trace two entries to source documents.",
+    "method": "Document",
+    "examples": [
+     "Season income and cost summary",
+     "Loan repayment schedule with receipts",
+     "Ledgers"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No multi-season records",
+   "basis": "Sourced"
   },
   {
    "code": "AF-029",
    "dimension": "Financial Management and Performance",
    "text": "At any time we can say how much buyers or members owe us, and how much we owe suppliers and lenders, from written lists.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "3.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We do not know what we are owed or what we owe",
+    "We know roughly from memory",
+    "We keep a list of what we are owed but not of what we owe",
+    "We keep lists of both, updated at least monthly",
+    "Both lists are updated weekly, dated, and agree with the cash book"
+   ],
+   "evidence": {
+    "requirement": "Ask for the lists as of today and check two items against receipts.",
+    "method": "Document",
+    "examples": [
+     "Debtors and creditors list",
+     "Credit sales book",
+     "Supplier statements"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Debts owed and owing unknown",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-030",
    "dimension": "Financial Management and Performance",
    "text": "We prepare a month-by-month cash plan across the season showing when money will come in and go out.",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "3.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No cash plan",
+    "Verbal idea of when money is needed",
+    "Written list of big costs, without months for income",
+    "Written monthly cash plan for the season covering income and costs",
+    "Monthly plan updated at least quarterly against actual cash, and used to decide borrowing and selling"
+   ],
+   "evidence": {
+    "requirement": "Ask for the current season cash plan and the last update.",
+    "method": "Document",
+    "examples": [
+     "Cash flow plan spreadsheet or notebook page",
+     "Season budget by month",
+     "Loan application cash flow"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No seasonal cash flow plan",
+   "basis": "Sourced"
   },
   {
    "code": "AF-031",
    "dimension": "Financial Management and Performance",
    "text": "We know how much money we need before harvest (for weeding, labour, hired services and household needs) and where it will come from.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We do not know and borrow when we run short",
+    "We know roughly but have no source lined up",
+    "We know the amount and have a possible source, not confirmed",
+    "We know the amount and have a confirmed source, such as savings, a loan or a buyer advance",
+    "We know the amount, have confirmed funding, and a back-up source, written in the cash plan"
+   ],
+   "evidence": {
+    "requirement": "Ask for the pre-harvest budget and evidence of the funding source.",
+    "method": "Document",
+    "examples": [
+     "Pre-harvest budget",
+     "Savings or VSLA record",
+     "Loan or advance letter"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Pre-harvest cash gap",
+   "basis": "Sourced"
   },
   {
    "code": "AF-032",
    "dimension": "Financial Management and Performance",
    "text": "We keep a cash or savings reserve that could cover at least one month of running costs in the lean season.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "3.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "No reserve at all",
+    "Reserve covers under 1 week of running costs",
+    "Reserve covers 1 to 3 weeks of running costs",
+    "Reserve covers 4 to 7 weeks of running costs",
+    "Reserve covers 8 weeks or more of running costs, held in a safe account"
+   ],
+   "evidence": {
+    "requirement": "Compare the balance on the statement or passbook with monthly running costs.",
+    "method": "Digital record",
+    "examples": [
+     "Savings account statement",
+     "VSLA savings record",
+     "Monthly cost summary"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No cash reserve for lean season",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-033",
    "dimension": "Financial Management and Performance",
    "text": "At least once each season we compare our cash plan with actual cash in and out, and change our plan when the two differ.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "3.2",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never, there is no plan to compare",
+    "Once in several seasons",
+    "Once a season, without changing the plan",
+    "Twice a season, with the plan changed after one comparison",
+    "At least quarterly, with a written note of the changes made"
+   ],
+   "evidence": {
+    "requirement": "Look for the dated comparison and the revised plan.",
+    "method": "Document",
+    "examples": [
+     "Plan versus actual sheet",
+     "Notes of review meeting",
+     "Revised budget"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Cash plan never reviewed",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-034",
    "dimension": "Financial Management and Performance",
    "text": "We have recorded the full cost of production per acre for our main crop in the last season, including labour, inputs and hired services.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We have never worked out our cost of production",
+    "We have a rough guess with no records",
+    "We counted inputs only, not labour or services",
+    "We counted inputs, hired labour and services for our main crop",
+    "We counted all costs, including family labour valued at a local rate, for each main crop, from records"
+   ],
+   "evidence": {
+    "requirement": "Ask for the cost sheet and trace three costs to receipts.",
+    "method": "Document",
+    "examples": [
+     "Cost of production sheet",
+     "Input and labour records",
+     "Machinery hire receipts"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Cost of production unknown",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-035",
    "dimension": "Financial Management and Performance",
    "text": "We know the profit per acre, or per bag, kg or litre, for each of our main crops or products from last season.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "3.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We do not know whether we made a profit on any crop",
+    "We feel we profited, with no figures",
+    "We know profit for one crop or product from rough figures",
+    "We know profit for each main crop or product using records",
+    "We know profit for each main crop or product and compared them to choose what to expand or drop"
+   ],
+   "evidence": {
+    "requirement": "Ask for the margin calculation and compare revenue and cost records.",
+    "method": "Document",
+    "examples": [
+     "Gross margin sheet",
+     "Sales and cost records by crop",
+     "Season summary"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Profit per crop unknown",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-036",
    "dimension": "Financial Management and Performance",
    "text": "We know our break-even price per bag or kg, and we do not sell below it unless the leaders or owner decide so.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "3.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We do not know our break-even price",
+    "We guess a minimum price with no calculation",
+    "We calculated break-even once, but do not use it when selling",
+    "We calculated break-even this season and use it as a minimum in most sales",
+    "Break-even is updated each season, written, and every sale below it is approved and recorded"
+   ],
+   "evidence": {
+    "requirement": "Ask for the break-even figure and sales below it in the last season.",
+    "method": "Interview",
+    "examples": [
+     "Break-even calculation",
+     "Minimum price note",
+     "Sales record showing approvals"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Selling below cost",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-037",
    "dimension": "Financial Management and Performance",
    "text": "An independent person (an auditor, accountant or trained reviewer who is not the book-keeper) checks our accounts at least once a year.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "3.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Nobody outside the book-keeper ever checks our books",
+    "Informal check by a leader or friend, with nothing written",
+    "Independent check done once in the last 2 years, with a written note",
+    "Independent check each year with a written report",
+    "Annual audit or review by a qualified accountant, report shared with members or lenders, and findings acted on"
+   ],
+   "evidence": {
+    "requirement": "Ask for the latest review or audit report and action list.",
+    "method": "Document",
+    "examples": [
+     "Audit or review report",
+     "Registrar audit letter",
+     "Management letter and action list"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No independent check of accounts",
+   "basis": "Sourced"
   },
   {
    "code": "AF-038",
    "dimension": "Financial Management and Performance",
    "text": "The person who receives cash is not the same person who records it or who approves large payments.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "3.4",
+   "responseType": "YNP",
+   "anchors": [
+    "One person receives, records and approves cash and payments",
+    null,
+    "Two people are involved in some transactions only",
+    null,
+    "Receiving, recording and approving are done by different people, with approval signatures on payments above a set limit"
+   ],
+   "evidence": {
+    "requirement": "Observe a cash receipt and a payment, and look for signatures on payment vouchers.",
+    "method": "Observation",
+    "examples": [
+     "Payment vouchers with two signatures",
+     "Receipt book",
+     "Approval limit note"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "One person controls all cash",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-039",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "In the last 3 years we repaid every loan (bank, microfinance, input credit or group loan) in full and by the due date, shown by lender records.",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "4.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We defaulted, or have an overdue unpaid loan today",
+    "We repaid most loans late, or had loans rescheduled twice or more",
+    "We have never borrowed, so there is no repayment record",
+    "We repaid all loans, but at least one was more than a month late",
+    "We repaid every loan in full by the due date, confirmed by lender or group records"
+   ],
+   "evidence": {
+    "requirement": "Ask for lender statements or letters, repayment schedules and receipts.",
+    "method": "Third party",
+    "examples": [
+     "Lender statement or reference letter",
+     "Repayment receipts",
+     "Group loan record"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Poor repayment history",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-040",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "Repayment dates on any loan match when we get paid, such as after harvest sales, and not before.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "4.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Repayments fall before harvest with no income to meet them",
+    "Repayments are monthly with no link to our income dates",
+    "Some repayments follow harvest and some do not",
+    "Most repayments follow the months when we are paid",
+    "Repayment dates were set from our cash plan, or we have no loan and know the timing we would need"
+   ],
+   "evidence": {
+    "requirement": "Compare the repayment schedule with the cash plan and sales dates.",
+    "method": "Document",
+    "examples": [
+     "Loan schedule",
+     "Cash plan",
+     "Sales dates"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Repayment dates do not match income",
+   "basis": "Sourced"
   },
   {
    "code": "AF-041",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "Money we borrow is used for what we said it was for, and we keep receipts showing how loan money was spent.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "4.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Loan money was used for other purposes with no record",
+    "Part of loan money went to household spending, with no record",
+    "We used the loan for the stated purpose, but kept few receipts",
+    "We used the loan for the stated purpose and have receipts for most spending",
+    "All loan spending is matched to the plan with receipts and a short report to the lender or group"
+   ],
+   "evidence": {
+    "requirement": "Compare the loan application purpose with receipts and cash book entries.",
+    "method": "Document",
+    "examples": [
+     "Loan application",
+     "Receipts for inputs or equipment",
+     "Cash book entries"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Loan used for other purposes",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-042",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "Our yearly loan repayments take less than a third of our yearly net income in a normal season.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "4.1",
+   "responseType": "BANDED",
+   "anchors": [
+    "Repayments take over 60 percent of net income",
+    "Repayments take 46 to 60 percent of net income",
+    "Repayments take 34 to 45 percent of net income",
+    "Repayments take 20 to 33 percent of net income",
+    "Repayments take under 20 percent of net income, or we have no loans and can show net income"
+   ],
+   "evidence": {
+    "requirement": "Compute repayments over net income from season summaries and repayment schedules.",
+    "method": "Document",
+    "examples": [
+     "Season income summary",
+     "Repayment schedule",
+     "Loan statements"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Heavy debt burden",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-043",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "Our savings group or cooperative savings follow written rules on shares, loans, interest and fines, and the rules are linked to the group's farming or business activity.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "4.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No written rules for savings or loans",
+    "Verbal rules only, applied unevenly",
+    "Written rules exist, but are not followed on loan size or repayment",
+    "Written rules followed for savings and loans, and passbooks are up to date",
+    "Written constitution followed, all transactions in front of the group with passbooks and ledger, and a yearly share-out"
+   ],
+   "evidence": {
+    "requirement": "Ask for the constitution, ledger and passbooks and attend or ask about a meeting.",
+    "method": "Document",
+    "examples": [
+     "VSLA constitution",
+     "Passbooks and ledger",
+     "Share-out record"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INP"
+   ],
+   "applies": "Cooperative or group only",
+   "riskTag": "Group savings without clear rules",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-044",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "We have used at least two different sources of finance in the last 2 years, such as a bank, microfinance, VSLA, supplier credit, buyer advance or asset finance.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "4.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "No outside finance used and none available to us",
+    "Used one source only, on informal terms",
+    "Used one formal or group source",
+    "Used two different sources",
+    "Used three or more sources and compared terms before choosing"
+   ],
+   "evidence": {
+    "requirement": "Ask for evidence of each source used and the terms compared.",
+    "method": "Interview",
+    "examples": [
+     "Loan agreements",
+     "VSLA loan records",
+     "Supplier credit invoices"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Only one finance source",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-045",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "We know the terms of any input credit, buyer advance or outgrower deal we take, including interest or price deduction, and these are written down.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "4.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We take advances or input credit with no written terms",
+    "We know the terms in outline only, nothing written",
+    "Terms written, but we do not know the total cost to us",
+    "Terms written and we can say the total cost of the credit in cedis or bags",
+    "Terms written, total cost worked out, and compared with a bank or other option before we agreed"
+   ],
+   "evidence": {
+    "requirement": "Ask for the credit or advance agreement and the cost calculation.",
+    "method": "Document",
+    "examples": [
+     "Input credit agreement",
+     "Outgrower contract",
+     "Cost comparison note"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-OFF"
+   ],
+   "applies": "All",
+   "riskTag": "Credit terms not understood",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-046",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "We have used or checked a warehouse receipt, asset finance or lease option for equipment or storage, and we know the requirements to qualify.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "4.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We do not know of any such options",
+    "We have heard of them but have not checked requirements",
+    "We have asked about one option and know part of the requirements",
+    "We know the requirements of at least one option and have a plan to meet them",
+    "We have used one option, or applied, with documents prepared"
+   ],
+   "evidence": {
+    "requirement": "Ask for application papers, quotes or notes on requirements.",
+    "method": "Interview",
+    "examples": [
+     "Warehouse receipt",
+     "Quotation or lease offer",
+     "Application documents"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Finance options not explored",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-047",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "We prepare yearly financial statements (income statement, balance sheet and cash flow) that a lender or investor could read.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "4.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No financial statements prepared",
+    "A list of sales and costs only",
+    "Income statement only, prepared for one year",
+    "Income statement and balance sheet for the last year, prepared from records",
+    "Income statement, balance sheet and cash flow for the last 2 years, reviewed or audited"
+   ],
+   "evidence": {
+    "requirement": "Ask for the latest statements and check they agree with the cash book.",
+    "method": "Document",
+    "examples": [
+     "Annual financial statements",
+     "Management accounts",
+     "Audit report"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No financial statements",
+   "basis": "Sourced"
   },
   {
    "code": "AF-048",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "We hold a written list of our assets (land, equipment, buildings, stock) with their approximate value and who owns each.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "4.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No list of assets",
+    "Verbal list only",
+    "Written list without values or owners",
+    "Written list with values and owners for most assets",
+    "Written register with values, owners, condition and documents (receipts, site plan), updated yearly"
+   ],
+   "evidence": {
+    "requirement": "Ask for the asset register and see two items.",
+    "method": "Document",
+    "examples": [
+     "Asset register",
+     "Equipment receipts",
+     "Valuation note"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Assets not listed",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-049",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "We hold documents that a lender would accept as security, such as land documents, warehouse receipts, stock records or a buyer contract assignment.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "4.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We hold no document a lender could use",
+    "We hold documents that are in someone else's name or are disputed",
+    "We hold one acceptable document of small value",
+    "We hold acceptable documents covering part of a typical loan",
+    "We hold acceptable documents covering a typical seasonal loan, checked by a lender or advisor"
+   ],
+   "evidence": {
+    "requirement": "Ask for the documents and a lender or advisor view if available.",
+    "method": "Document",
+    "examples": [
+     "Land lease or title",
+     "Warehouse receipts",
+     "Contract assignment letter"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No acceptable collateral",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-050",
    "dimension": "Seasonal Finance and Capital Readiness",
    "text": "We have a written funding request showing how much we need, what it will buy, how it will earn money, and when it will be repaid.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "4.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No written funding request",
+    "Written note with the amount only",
+    "Written request with amount and use, no repayment plan",
+    "Written request with amount, use and expected return, with simple figures",
+    "Funding request with budget, cash flow, repayment plan and supporting records, shown to a lender or partner"
+   ],
+   "evidence": {
+    "requirement": "Ask for the latest funding request or application.",
+    "method": "Document",
+    "examples": [
+     "Loan or grant application",
+     "Investment case",
+     "Budget and cash flow"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No investor-ready funding request",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-051",
    "dimension": "People, Leadership and Member Governance",
    "text": "If the owner, manager or chairperson is away for two weeks, another named person can run buying, selling and payments using written instructions.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Nothing works when the main person is away",
+    "Someone helps informally, but cannot access money or contracts",
+    "A named deputy exists, but has no written instructions or access",
+    "A named deputy has written instructions and can approve routine payments",
+    "Deputy tested during an absence in the last 12 months, with written instructions and signing rights"
+   ],
+   "evidence": {
+    "requirement": "Ask who deputised last time and look for written instructions and signing rights.",
+    "method": "Interview",
+    "examples": [
+     "Deputy letter",
+     "Bank signatory list",
+     "Handover notes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Business stops without one person",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-052",
    "dimension": "People, Leadership and Member Governance",
    "text": "Our owner, manager or leaders completed training in business, farm or group management in the last 2 years, and we can show it.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No training in the last 2 years",
+    "Attended one short event, with no certificate or notes",
+    "Attended training and can describe what was learned",
+    "Attended training and used at least one new practice, shown in records",
+    "Attended training and use several new practices, with a plan for further training of leaders"
+   ],
+   "evidence": {
+    "requirement": "Ask for certificates, attendance lists or training notes and one example of change made.",
+    "method": "Document",
+    "examples": [
+     "Training certificate",
+     "Attendance list",
+     "Records showing new practice"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Leaders without management training",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-053",
    "dimension": "People, Leadership and Member Governance",
    "text": "We have a written plan for who leads or owns the enterprise or group if the current leader leaves, falls ill or dies.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "5.1",
+   "responseType": "YNP",
+   "anchors": [
+    "No plan, and nobody has discussed it",
+    null,
+    "Plan discussed but not written down",
+    null,
+    "Written plan naming successors or a process, known to the board, family or members"
+   ],
+   "evidence": {
+    "requirement": "Ask for the written plan and who knows about it.",
+    "method": "Document",
+    "examples": [
+     "Succession note",
+     "Board or family minutes",
+     "By-laws article on replacing leaders"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No succession plan",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-054",
    "dimension": "People, Leadership and Member Governance",
    "text": "Our members elect leaders at a general meeting, and each member has one vote.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "5.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Leaders were never elected, or are appointed by one person",
+    "Leaders were elected more than 4 years ago and not since",
+    "Leaders elected in the last 4 years, but voting was by show of a few people",
+    "Leaders elected at a general meeting with most members voting, one member one vote",
+    "Elections held on schedule in by-laws, with voter list, minutes and results shown to members"
+   ],
+   "evidence": {
+    "requirement": "Ask for the election minutes, attendance list and by-laws.",
+    "method": "Document",
+    "examples": [
+     "Election minutes",
+     "Attendance register",
+     "By-laws"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INV"
+   ],
+   "applies": "Cooperative or group only",
+   "riskTag": "Leaders not properly elected",
+   "basis": "Sourced"
   },
   {
    "code": "AF-055",
    "dimension": "People, Leadership and Member Governance",
    "text": "Most members attend our general meetings, and each year they receive a report on money, sales and decisions.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "5.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No general meeting held in the last 2 years",
+    "General meeting held but under a third of members attended, no report given",
+    "A meeting held in the last year, with a verbal report only",
+    "Meeting held in the last year with over half of members and a written or read-out annual report",
+    "Yearly meeting with over two thirds of members and a written report on accounts, sales and decisions, with questions recorded"
+   ],
+   "evidence": {
+    "requirement": "Ask for the meeting minutes, attendance list and last annual report.",
+    "method": "Document",
+    "examples": [
+     "Minutes",
+     "Attendance register",
+     "Annual report"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INV"
+   ],
+   "applies": "Cooperative or group only",
+   "riskTag": "Members not informed",
+   "basis": "Sourced"
   },
   {
    "code": "AF-056",
    "dimension": "People, Leadership and Member Governance",
    "text": "Most members sell most of their crop through the group, and we know how much they sold elsewhere.",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "5.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "Members sell under 10 percent of their crop through the group, or we do not know",
+    "Members sell 10 to 24 percent through the group",
+    "Members sell 25 to 49 percent through the group",
+    "Members sell 50 to 74 percent through the group, measured for at least half of members",
+    "Members sell 75 percent or more through the group, measured from member records"
+   ],
+   "evidence": {
+    "requirement": "Compare group purchase records with member production estimates for last season.",
+    "method": "Document",
+    "examples": [
+     "Group purchase register",
+     "Member production survey",
+     "Side-selling notes"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-INP"
+   ],
+   "applies": "Cooperative or group only",
+   "riskTag": "Members sell outside the group",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-057",
    "dimension": "People, Leadership and Member Governance",
    "text": "The roles of owner or board, managers and staff or members, and who can approve spending and sign contracts, are written down and followed.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "5.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Roles and approval powers are not written",
+    "Roles are known verbally, with no approval limits",
+    "Roles are written, but approval powers are unclear",
+    "Roles and approval limits are written and mostly followed",
+    "Roles, approval limits and signing powers are written, signed, followed and reviewed yearly"
+   ],
+   "evidence": {
+    "requirement": "Ask for job descriptions, by-laws or an approval policy and check one recent contract or payment.",
+    "method": "Document",
+    "examples": [
+     "Job descriptions",
+     "By-laws or governance policy",
+     "Approval limit schedule"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Roles and authority unclear",
+   "basis": "Sourced"
   },
   {
    "code": "AF-058",
    "dimension": "People, Leadership and Member Governance",
    "text": "No child below 15 works in our enterprise or on our farm, and no one under 18 does hazardous work such as spraying chemicals or carrying heavy loads.",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "5.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Children below 15 work regularly on our farm or enterprise, or do hazardous work",
+    "Children help during school time or do hazardous tasks sometimes",
+    "Children help only outside school hours on light tasks, with no policy",
+    "We have a rule against child labour and children do not do hazardous tasks, but we do not check",
+    "Written rule, ages checked for all workers and suppliers, school attendance protected, and issues recorded and fixed"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the rule, worker ages and what is done when a child is found working.",
+    "method": "Observation",
+    "examples": [
+     "Worker register with ages",
+     "Child labour policy",
+     "Monitoring notes"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-CRT",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Child labour risk",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-059",
    "dimension": "People, Leadership and Member Governance",
    "text": "In the last 12 months our staff, members or workers received training in a skill we need, such as good farming practice, storage or record keeping, with an attendance list.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No training in the last 12 months",
+    "Informal advice only",
+    "One training session with an attendance list",
+    "Two or more sessions covering different skills, with attendance lists",
+    "A yearly training plan based on gaps, delivered, attendance recorded and results checked"
+   ],
+   "evidence": {
+    "requirement": "Ask for the training plan, attendance lists and examples of skills used afterwards.",
+    "method": "Document",
+    "examples": [
+     "Attendance lists",
+     "Training plan",
+     "Photos or notes of sessions"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "No skills training",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-060",
    "dimension": "People, Leadership and Member Governance",
    "text": "An extension officer, agronomist or technical adviser visited our farms or members at least once in the last season, and we recorded the advice.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.3",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never visited",
+    "Rarely visited, advice not recorded",
+    "Visited once, advice recorded",
+    "Visited at least twice with advice recorded",
+    "Visited regularly (about monthly in the season) with advice recorded and applied"
+   ],
+   "evidence": {
+    "requirement": "Look for visit notes, officer names and what changed after visits.",
+    "method": "Third party",
+    "examples": [
+     "Extension visit record",
+     "Adviser report",
+     "Lead farmer notes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No extension support",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-061",
    "dimension": "People, Leadership and Member Governance",
    "text": "Members or outgrowers who take group inputs or credit repay on time, and we keep a record of who owes what.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "5.4",
+   "responseType": "BANDED",
+   "anchors": [
+    "Under 50 percent of credit was repaid on time, or no record is kept",
+    "50 to 69 percent repaid on time, records incomplete",
+    "70 to 84 percent repaid on time, records complete",
+    "85 to 94 percent repaid on time, records complete",
+    "95 percent or more repaid on time, from a complete signed ledger"
+   ],
+   "evidence": {
+    "requirement": "Compare the ledger of credit given with repayments received last season.",
+    "method": "Document",
+    "examples": [
+     "Input credit ledger",
+     "Repayment receipts",
+     "Recovery report"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INP",
+    "RDY-OFF"
+   ],
+   "applies": "Cooperative or group only",
+   "riskTag": "Members not repaying group credit",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-062",
    "dimension": "People, Leadership and Member Governance",
    "text": "We pay the farmers, members or suppliers who sell to us on the date we promised, and they receive a payment slip or message.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "5.4",
+   "responseType": "BANDED",
+   "anchors": [
+    "Under 50 percent of payments are on the promised date",
+    "50 to 69 percent on the promised date",
+    "70 to 84 percent on the promised date",
+    "85 to 94 percent on the promised date",
+    "95 percent or more on the promised date, with slips or messages kept"
+   ],
+   "evidence": {
+    "requirement": "Compare promised dates, payment dates and slips for three suppliers.",
+    "method": "Document",
+    "examples": [
+     "Payment slips",
+     "Mobile money records",
+     "Supplier payment register"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Late payment to suppliers",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-063",
    "dimension": "People, Leadership and Member Governance",
    "text": "Members, outgrowers, workers and suppliers have a known way to raise a complaint, and we record and answer complaints.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "5.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No way to complain",
+    "Complaints are heard informally, with no record",
+    "A person is named for complaints, but nothing is recorded",
+    "Complaints are recorded and most are answered within a month",
+    "Known channel (box, phone, committee), all complaints recorded, answered and reported to leaders or members"
+   ],
+   "evidence": {
+    "requirement": "Ask for the complaints log and one case history.",
+    "method": "Document",
+    "examples": [
+     "Complaints register",
+     "Suggestion box",
+     "Meeting minutes with complaints"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-CRT",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No complaints channel",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-064",
    "dimension": "Records, Data and Systems",
    "text": "We keep a register of the farms or plots we farm or buy from, showing the owner, crop, area in acres and where the plot is.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No register of farms or plots",
+    "A list of names only",
+    "Register with names and crops, no areas or location",
+    "Register with names, crops, area and village or landmark for most plots",
+    "Register with names, crops, measured area and GPS point or sketch map for nearly all plots, updated each season"
+   ],
+   "evidence": {
+    "requirement": "Ask for the register and check three plots against it.",
+    "method": "Document",
+    "examples": [
+     "Farmer or plot register",
+     "GPS list",
+     "Sketch maps"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-CRT",
+    "RDY-GRT",
+    "RDY-OFF"
+   ],
+   "applies": "All",
+   "riskTag": "Farms and plots not registered",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-065",
    "dimension": "Records, Data and Systems",
    "text": "We keep batch and stock records that show what came in, what went out and what is in the store, updated each time stock moves.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "6.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No stock records",
+    "Stock counted occasionally, nothing written",
+    "Stock book written, but updated only weekly or monthly",
+    "Stock book updated at each movement, with batch numbers on most lots",
+    "Stock cards by batch updated at each movement, counted monthly and matched to the book"
+   ],
+   "evidence": {
+    "requirement": "Do a physical count of one product and compare with the stock record.",
+    "method": "Observation",
+    "examples": [
+     "Stock card",
+     "Goods received note",
+     "Monthly stock count sheet"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-CRT",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Stock records missing",
+   "basis": "Sourced"
   },
   {
    "code": "AF-066",
    "dimension": "Records, Data and Systems",
    "text": "We give a receipt or delivery note for every sale or purchase, and keep a copy.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.1",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never",
+    "Rarely, only if asked",
+    "Sometimes, for large transactions",
+    "Usually, for most transactions with copies kept",
+    "Always, numbered, with copies filed and matched to the cash book"
+   ],
+   "evidence": {
+    "requirement": "Check three recent transactions for numbered receipts or notes with copies.",
+    "method": "Document",
+    "examples": [
+     "Receipt book with carbon copies",
+     "Delivery notes",
+     "Purchase vouchers"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-OFF"
+   ],
+   "applies": "All",
+   "riskTag": "Sales without receipts",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-067",
    "dimension": "Records, Data and Systems",
    "text": "We keep important records (contracts, receipts, member lists, accounts) for at least 2 years in a safe place, with a copy kept elsewhere.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Records are lost, scattered or kept for less than a year",
+    "Records are kept loosely at home or in the store",
+    "Records are filed in one place, with no copy",
+    "Records are filed in one safe place and key items are copied or photographed",
+    "Records are filed, copied or backed up off site, and we can find any item from the last 2 years in a day"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the file store and retrieve a record from last season.",
+    "method": "Observation",
+    "examples": [
+     "Lockable file box",
+     "Phone photos or scanned copies",
+     "Cloud or flash drive backup"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "Records lost or insecure",
+   "basis": "Sourced"
   },
   {
    "code": "AF-068",
    "dimension": "Records, Data and Systems",
    "text": "We use mobile money or bank transfers to pay farmers and workers, and to receive payment from buyers, for most of our transactions.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "Almost all transactions are in cash (under 10 percent digital)",
+    "10 to 29 percent of transactions are digital",
+    "30 to 59 percent of transactions are digital",
+    "60 to 89 percent of transactions are digital",
+    "90 percent or more of transactions are digital, with statements kept"
+   ],
+   "evidence": {
+    "requirement": "Compare cash and digital payments over a month of records.",
+    "method": "Digital record",
+    "examples": [
+     "Mobile money statements",
+     "Bank transfer records",
+     "Payment register"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Cash-only transactions",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-069",
    "dimension": "Records, Data and Systems",
    "text": "We keep our records on a phone app, spreadsheet or computer system, with backups, and not only on paper.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No digital records",
+    "Photos of paper records only",
+    "One spreadsheet or app used for one record type",
+    "Spreadsheet or app used for sales, stock and costs, backed up occasionally",
+    "Spreadsheet or app used for all core records, backed up weekly, with named person responsible"
+   ],
+   "evidence": {
+    "requirement": "Ask to see the app or spreadsheet and the last backup.",
+    "method": "Digital record",
+    "examples": [
+     "Spreadsheet",
+     "Accounting or farm app",
+     "Backup folder"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No digital records",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-070",
    "dimension": "Records, Data and Systems",
    "text": "Each month we compare our mobile money or bank statement with our own records and explain any difference.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.2",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never",
+    "Rarely, only when something is missing",
+    "Sometimes, but we do not explain differences",
+    "Usually monthly, with differences noted",
+    "Every month, differences explained and signed by a second person"
+   ],
+   "evidence": {
+    "requirement": "Look for a reconciliation sheet for the last three months.",
+    "method": "Document",
+    "examples": [
+     "Reconciliation sheet",
+     "Marked statements",
+     "Signed review note"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Statements not reconciled",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-071",
    "dimension": "Records, Data and Systems",
    "text": "Passwords, PINs and signing rights for our accounts and wallets are held only by authorised people and are not shared informally.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "PINs and passwords are shared widely or written openly",
+    "Several informal users share one wallet or login",
+    "Authorised users are known, but one login is shared",
+    "Each authorised person has own login and PIN, with some informal sharing seen",
+    "Each authorised person has own login and PIN, access is reviewed when roles change, and no sharing is observed"
+   ],
+   "evidence": {
+    "requirement": "Ask who can access each account and check the signatory list.",
+    "method": "Interview",
+    "examples": [
+     "Signatory list",
+     "Access list",
+     "Account mandate"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Account access not controlled",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-072",
    "dimension": "Records, Data and Systems",
    "text": "Leaders or owners review sales, costs, stock and loan balances at least monthly in a meeting or written note.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.3",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never",
+    "Once or twice a year",
+    "Quarterly",
+    "Monthly, but without written notes",
+    "Monthly with written notes and actions followed up"
+   ],
+   "evidence": {
+    "requirement": "Look for the last three review notes or minutes.",
+    "method": "Document",
+    "examples": [
+     "Minutes",
+     "Monthly summary sheet",
+     "Action list"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No regular performance review",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-073",
    "dimension": "Records, Data and Systems",
    "text": "We track at least five measures with targets, such as yield per acre, cost per bag, deliveries on time, repayment rate and post-harvest loss.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.3",
+   "responseType": "BANDED",
+   "anchors": [
+    "We track none",
+    "We track one or two measures with no targets",
+    "We track three or four measures, targets for some",
+    "We track five or more measures with targets, reviewed each season",
+    "We track five or more measures with targets and trends over 3 seasons, shown to leaders or members"
+   ],
+   "evidence": {
+    "requirement": "Ask for the scorecard or dashboard and the last season values.",
+    "method": "Document",
+    "examples": [
+     "Scorecard",
+     "Dashboard",
+     "Season report"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No performance measures",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-074",
    "dimension": "Records, Data and Systems",
    "text": "We collect data from our members, outgrowers or suppliers each season (area, expected and actual output, inputs received) and use it to plan.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "6.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No data collected",
+    "Data from a few leaders only",
+    "Data from half of members or suppliers, not used for planning",
+    "Data from most members or suppliers and used for planning volumes",
+    "Data from nearly all members or suppliers, checked on a sample, and used to plan purchases, inputs and finance"
+   ],
+   "evidence": {
+    "requirement": "Ask for the last season data sheets and the plan that used them.",
+    "method": "Document",
+    "examples": [
+     "Member survey",
+     "Production estimate sheet",
+     "Aggregation plan"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-OFF",
+    "RDY-INP",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "No member or supplier data",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-075",
    "dimension": "Records, Data and Systems",
    "text": "Last season's results changed something we did this season, and we can name the change and the result that led to it.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "6.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Nothing changed, and results were not discussed",
+    "We talked about results, but changed nothing",
+    "We changed one thing without linking to records",
+    "We changed one thing and can link it to a recorded result",
+    "We changed several things, linked to records, and we tracked whether the change worked"
+   ],
+   "evidence": {
+    "requirement": "Ask for an example and the record that led to the change.",
+    "method": "Interview",
+    "examples": [
+     "Meeting notes",
+     "Revised plan",
+     "Before and after figures"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Results not used",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-076",
    "dimension": "Regulation, Certification and Risk",
    "text": "Our business, farm group or cooperative is legally registered with the right body (Registrar General or Department of Cooperatives) and the registration is current.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "7.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Not registered",
+    "Registration started but not completed",
+    "Registered, but certificate or annual returns are out of date",
+    "Registered, certificate current, annual returns filed in the last year",
+    "Registered, certificate current, returns filed, and by-laws or regulations on file and followed"
+   ],
+   "evidence": {
+    "requirement": "Ask for the registration certificate and the latest annual return or audit letter.",
+    "method": "Document",
+    "examples": [
+     "Certificate of registration",
+     "Annual returns",
+     "Cooperative registration and by-laws"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Not legally registered",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-077",
    "dimension": "Regulation, Certification and Risk",
    "text": "We have a Tax Identification Number and we filed the tax returns that apply to us on time in the last year.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No TIN and no returns filed",
+    "TIN held, but no returns filed in the last year",
+    "Returns filed late or incomplete",
+    "Returns filed on time for the last year",
+    "Returns filed on time for the last 2 years with proof of filing and any payments"
+   ],
+   "evidence": {
+    "requirement": "Ask for the TIN certificate and filing acknowledgements.",
+    "method": "Document",
+    "examples": [
+     "TIN certificate",
+     "Filing acknowledgement",
+     "Tax clearance certificate"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INV",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "Tax filings not up to date",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-078",
    "dimension": "Regulation, Certification and Risk",
    "text": "We hold written proof of our right to use the land we farm or store on (lease, allocation letter, customary grant record or title), covering at least the next 3 years.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "7.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No proof of right to use the land",
+    "Verbal permission only",
+    "Written note from the owner without witnesses or dates",
+    "Written agreement with the owner or traditional authority covering the next 3 years",
+    "Registered or witnessed document covering at least the crop cycle or tree life, held by the enterprise"
+   ],
+   "evidence": {
+    "requirement": "Ask for the land documents and check the signatories and dates.",
+    "method": "Document",
+    "examples": [
+     "Lease agreement",
+     "Allocation letter",
+     "Customary land secretariat record"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Insecure land rights",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-079",
    "dimension": "Regulation, Certification and Risk",
    "text": "We know whether our farming or processing activity qualifies for a tax incentive, and we have claimed what applies to us.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "7.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We do not know of any tax incentive",
+    "We have heard of incentives but have not checked if we qualify",
+    "We checked and qualify, but have not claimed",
+    "We checked and claimed one incentive that applies",
+    "We checked all that apply, claimed them, and hold proof from the tax authority or our tax adviser"
+   ],
+   "evidence": {
+    "requirement": "Ask for the tax advice, claim or approval letter.",
+    "method": "Document",
+    "examples": [
+     "Tax adviser note",
+     "Incentive claim form",
+     "GRA correspondence"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Tax incentives not used",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-080",
    "dimension": "Regulation, Certification and Risk",
    "text": "We hold the current registrations, licences and permits that our activity needs from the agencies that regulate us (for example FDA, EPA, PPRSD, TCDA or Department of Cooperatives).",
-   "weight": 5
+   "weight": 5,
+   "subDimension": "7.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We hold none and do not know which apply",
+    "We know some apply but hold none",
+    "We hold some, and know of gaps",
+    "We hold all we need, current",
+    "We hold all we need, current, with a renewal calendar kept and followed"
+   ],
+   "evidence": {
+    "requirement": "Ask for a list of applicable regulators and each certificate or licence with expiry dates.",
+    "method": "Document",
+    "examples": [
+     "Licence or permit copies",
+     "Regulator list with expiry dates",
+     "Renewal receipts"
+    ]
+   },
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-CRT",
+    "RDY-INV",
+    "RDY-OFF"
+   ],
+   "applies": "All",
+   "riskTag": "Missing licences or permits",
+   "basis": "Sourced"
   },
   {
    "code": "AF-081",
    "dimension": "Regulation, Certification and Risk",
    "text": "We hold a TCDA export permit and proof of payment of the development levy before each export shipment of raw shea or cashew.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "7.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We export raw shea or cashew without a permit",
+    "We have applied for a permit but have not received it",
+    "We hold a permit but have no levy proof for shipments",
+    "We hold a permit and levy proof for most shipments",
+    "We hold a current permit and levy proof for every shipment, filed with phytosanitary papers"
+   ],
+   "evidence": {
+    "requirement": "Ask for the TCDA permit, levy receipts and the file for the last shipment.",
+    "method": "Document",
+    "examples": [
+     "TCDA permit",
+     "Levy payment receipts",
+     "Phytosanitary certificate file"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CRT"
+   ],
+   "applies": "Exports raw shea or cashew only",
+   "riskTag": "No TCDA export permit",
+   "basis": "Sourced"
   },
   {
    "code": "AF-082",
    "dimension": "Regulation, Certification and Risk",
    "text": "Our store or processing site and the food products we sell meet FDA requirements for what we do (licence, premises, labelling and records).",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "7.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No FDA licence or inspection, and we do not know the requirements",
+    "We know the requirements but meet few of them",
+    "We meet some requirements, with open gaps from an inspection or checklist",
+    "We meet most requirements and hold a valid licence",
+    "We meet all requirements, hold a valid licence, and have no open inspection findings"
+   ],
+   "evidence": {
+    "requirement": "Review the FDA licence and the last inspection report, and visit the premises.",
+    "method": "Third party",
+    "examples": [
+     "FDA licence",
+     "Inspection report",
+     "Product registration and label copies"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CRT",
+    "RDY-OFF"
+   ],
+   "applies": "All",
+   "riskTag": "Premises not FDA compliant",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-083",
    "dimension": "Regulation, Certification and Risk",
    "text": "We are certified, or following a written plan with dates to be certified, for the standard our target markets require (for example organic, Fairtrade, GlobalG.A.P. or the Global Shea Alliance programme).",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "7.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No certification and no knowledge of what markets require",
+    "We know the standard but have no plan",
+    "We have started preparation, with no dates",
+    "We have a written plan with dates and a budget, and have done a gap check",
+    "We hold a current certificate or approved status, and passed the last audit"
+   ],
+   "evidence": {
+    "requirement": "Ask for the certificate, audit report or the written plan and gap check.",
+    "method": "Document",
+    "examples": [
+     "Certificate",
+     "Audit report",
+     "Certification plan"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-CRT",
+    "RDY-OFF"
+   ],
+   "applies": "All",
+   "riskTag": "Not certified or planning to be",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-084",
    "dimension": "Regulation, Certification and Risk",
    "text": "At least once a year we check our own practices against the standard or buyer rules we follow, and fix what we find.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.3",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never, we do not check",
+    "Only when a buyer or auditor visits",
+    "Once in the last 2 years",
+    "Yearly, with findings listed",
+    "Yearly, with findings listed, fixed by a date and checked"
+   ],
+   "evidence": {
+    "requirement": "Look for the self-assessment checklist and the corrective actions.",
+    "method": "Document",
+    "examples": [
+     "Self-assessment checklist",
+     "Internal inspection report",
+     "Action list"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-CRT",
+    "RDY-OFF"
+   ],
+   "applies": "All",
+   "riskTag": "No internal checks",
+   "basis": "Sourced"
   },
   {
    "code": "AF-085",
    "dimension": "Regulation, Certification and Risk",
    "text": "We use only registered pesticides, applied by trained people wearing protective gear, and we record what was applied, where and when.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "7.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Unregistered or banned chemicals are used, or no protection and no records",
+    "Registered chemicals mostly, but no protective gear or records",
+    "Registered chemicals and some protective gear, no records",
+    "Registered chemicals, trained sprayers with protective gear, records kept for most applications",
+    "Registered chemicals only, trained sprayers, protective gear, empty containers handled safely, and complete records"
+   ],
+   "evidence": {
+    "requirement": "Inspect the chemical store, sprayer equipment and the application record.",
+    "method": "Observation",
+    "examples": [
+     "Application record",
+     "Protective clothing",
+     "Trained sprayer certificate"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CRT",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Unsafe pesticide use",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-086",
    "dimension": "Regulation, Certification and Risk",
    "text": "We have a written list of the main risks to our enterprise (weather, price, theft, buyer default, illness) with at least one action for each.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No list of risks",
+    "Risks discussed verbally",
+    "Written list of risks without actions",
+    "Written list with an action for most risks",
+    "Written list with actions, owners and dates, reviewed each season"
+   ],
+   "evidence": {
+    "requirement": "Ask for the risk list and a recent update.",
+    "method": "Document",
+    "examples": [
+     "Risk register",
+     "Season plan with risks",
+     "Meeting minutes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Risks not identified",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-087",
    "dimension": "Regulation, Certification and Risk",
    "text": "We have insurance on at least one major risk to our crop, livestock, stock or equipment, and we know what the policy covers.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No insurance and no knowledge of options",
+    "We know of options but have none",
+    "Insurance on one asset, but we cannot say what it covers",
+    "Insurance on our main crop, livestock or stock, with cover known",
+    "Insurance on our main risks, with premium budgeted, policy on file, and a claim process known"
+   ],
+   "evidence": {
+    "requirement": "Ask for the policy, premium receipt and cover summary.",
+    "method": "Document",
+    "examples": [
+     "Insurance policy",
+     "Premium receipt",
+     "Index insurance certificate"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "No insurance cover",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-088",
    "dimension": "Regulation, Certification and Risk",
    "text": "Before we sell on credit or give inputs on credit to a new customer or member, we check their record and set a credit limit in writing.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "7.4",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We give credit to anyone who asks",
+    "We give credit to people we know, with no limits",
+    "We set limits for some customers, not written",
+    "We check record and set written limits for most customers",
+    "We check record, set written limits, and review overdue accounts monthly"
+   ],
+   "evidence": {
+    "requirement": "Ask for the credit policy and the aged debtors list.",
+    "method": "Document",
+    "examples": [
+     "Credit policy",
+     "Customer credit limits",
+     "Aged debtors list"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-INP",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Uncontrolled credit sales",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-089",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "We have a written plan with at least two actions for a dry spell, flood or pest outbreak, such as early maturing seed, staggered planting or a second income.",
-   "weight": 4
+   "weight": 4,
+   "subDimension": "8.1",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No plan for any weather or pest shock",
+    "We talk about shocks but have no plan",
+    "Plan for one shock only, with one action",
+    "Plan covering two or three shocks with at least two actions each",
+    "Written plan with actions, owners and costs, tested or used in the last 3 seasons"
+   ],
+   "evidence": {
+    "requirement": "Ask for the plan and an example of when it was last used.",
+    "method": "Document",
+    "examples": [
+     "Risk and response plan",
+     "Season plan notes",
+     "Seed purchase for early maturing varieties"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "No plan for climate shocks",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-090",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "Each season we obtain the seasonal rainfall forecast or weather advisory (for example from the Ghana Meteorological Agency or a radio or phone service) and use it to time planting and other work.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.1",
+   "responseType": "FREQ",
+   "anchors": [
+    "Never use any forecast",
+    "Rarely, only if we hear it by chance",
+    "Sometimes, but we do not change our plans",
+    "Usually receive it and have changed timing at least once",
+    "Always receive it before planting, record how it changed our timing, and share it with members or staff"
+   ],
+   "evidence": {
+    "requirement": "Ask for the forecast received and an example of changed planting or spraying dates.",
+    "method": "Interview",
+    "examples": [
+     "Seasonal forecast copy",
+     "SMS advisories",
+     "Planting date notes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "No use of weather forecasts",
+   "basis": "Sourced"
   },
   {
    "code": "AF-091",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "Last season we spread risk by planting on staggered dates, or by planting drought or heat tolerant varieties on part of our area.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.1",
+   "responseType": "BANDED",
+   "anchors": [
+    "No staggering and no tolerant varieties",
+    "Under 10 percent of area used one of these methods",
+    "10 to 24 percent of area used one of these methods",
+    "25 to 49 percent of area used one of these methods",
+    "50 percent or more of area used one or both of these methods, shown in the season plan"
+   ],
+   "evidence": {
+    "requirement": "Check the planting dates by plot and seed receipts or variety names.",
+    "method": "Document",
+    "examples": [
+     "Plot planting dates",
+     "Seed receipts with variety names",
+     "Season plan"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Weather risk not spread",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-092",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "We keep a record of weather and pest shocks (dry spells, floods, outbreaks) and their cost to us in each of the last 3 seasons.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.1",
+   "responseType": "BANDED",
+   "anchors": [
+    "No record of any shocks",
+    "Verbal memory of shocks, with no figures",
+    "Written notes for the last season, with no cost",
+    "Written record with cost for the last season",
+    "Written record with dates and cost for the last 3 seasons"
+   ],
+   "evidence": {
+    "requirement": "Ask for the record and compare with yield or loss records.",
+    "method": "Document",
+    "examples": [
+     "Shock log",
+     "Loss estimate sheets",
+     "Insurance claim records"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Climate losses not recorded",
+   "basis": "Design judgement"
   },
   {
    "code": "AF-093",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "We have a plan to look after our land, trees and water, for example tree planting, soil care and no bush burning, and we followed it last season.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "8.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No plan, and bush burning or tree cutting without replanting is common",
+    "Informal intention only",
+    "Written plan covering one area (trees, soil or water)",
+    "Written plan covering trees, soil and water, followed in part",
+    "Written plan with targets, followed and counted (trees planted, plots under soil care, fire breaks)"
+   ],
+   "evidence": {
+    "requirement": "Ask for the plan, then visit a plot or tree site to check.",
+    "method": "Observation",
+    "examples": [
+     "Environmental plan",
+     "Tree planting records",
+     "Fire break photos"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "No land and water care plan",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-094",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "On most of our area we use practices that keep soil fertile, such as legume rotation, manure or compost, crop residue cover or contour ridges.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.2",
+   "responseType": "BANDED",
+   "anchors": [
+    "No soil care practice on any area",
+    "Practices on under 10 percent of area",
+    "Practices on 10 to 29 percent of area",
+    "Practices on 30 to 59 percent of area",
+    "Practices on 60 percent or more of area, recorded in the season plan or field notes"
+   ],
+   "evidence": {
+    "requirement": "Check field notes and visit two plots to see the practice.",
+    "method": "Observation",
+    "examples": [
+     "Field notes",
+     "Compost heap or manure records",
+     "Plot visit"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INP"
+   ],
+   "applies": "All",
+   "riskTag": "Poor soil care",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-095",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "Our farm, processing site or store holds the EPA registration or permit that its size and activity require, or EPA has confirmed in writing that none is needed.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We do not know whether we need an EPA registration or permit",
+    "We know it may apply but have not applied",
+    "We applied and are waiting, with receipts",
+    "We hold the registration or permit required",
+    "We hold the permit, meet its conditions, and keep the compliance records"
+   ],
+   "evidence": {
+    "requirement": "Ask for the permit or EPA letter and compare the size of operation with EPA thresholds.",
+    "method": "Document",
+    "examples": [
+     "EPA permit",
+     "EPA registration letter",
+     "Environmental management plan"
+    ]
+   },
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CRT",
+    "RDY-GRT",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "No EPA permit or confirmation",
+   "basis": "Sourced"
   },
   {
    "code": "AF-096",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "We dispose of waste from our farm or site (empty chemical containers, processing waste, plastic) safely, away from water sources and food.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "8.2",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Waste is dumped or burned near water, food or homes",
+    "Waste is left in the open and empty chemical containers are reused",
+    "Waste is gathered in one place but not safely disposed",
+    "Waste is separated, and empty chemical containers are punctured and stored away from food",
+    "Waste is separated, safely disposed or reused, with a written routine and a named person"
+   ],
+   "evidence": {
+    "requirement": "Visit the waste area and ask how containers and processing waste are handled.",
+    "method": "Observation",
+    "examples": [
+     "Waste area",
+     "Container storage",
+     "Waste routine note"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-CRT",
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Unsafe waste disposal",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-097",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "Women who farm with us, supply us or work for us take part in decisions and have a say in how money from sales is used.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Women are not asked, and men decide how sales money is used",
+    "Women are asked occasionally, but men decide",
+    "Women speak in meetings, but do not influence how sales money is used",
+    "Women take part in decisions and influence some spending of sales money",
+    "Women take part in decisions and share control over use of sales money, shown in minutes or reports"
+   ],
+   "evidence": {
+    "requirement": "Ask women members or staff directly, and review minutes or payment records.",
+    "method": "Interview",
+    "examples": [
+     "Meeting minutes",
+     "Women's focus group",
+     "Payment records by person"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "Women excluded from decisions",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-098",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "Women who farm with us can own or use the land, trees, tools and equipment they need through our group or enterprise, in their own name or jointly.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Women have no access to land, trees or equipment through us",
+    "Women can use assets only through male relatives",
+    "Women can use some assets, with no written rights",
+    "Women have written use rights to some assets",
+    "Women have written rights in own name or jointly to land, trees or equipment, with examples checked"
+   ],
+   "evidence": {
+    "requirement": "Ask women members to describe their access and check lease, share or allocation records.",
+    "method": "Interview",
+    "examples": [
+     "Allocation records",
+     "Equipment use register",
+     "Women's group agreements"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-INV"
+   ],
+   "applies": "All",
+   "riskTag": "Women lack access to assets",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-099",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "Women hold leadership roles or sit on committees, and at least one third of leaders or managers are women.",
-   "weight": 3
+   "weight": 3,
+   "subDimension": "8.3",
+   "responseType": "BANDED",
+   "anchors": [
+    "No women in any leadership role",
+    "Women hold under 10 percent of leadership roles",
+    "Women hold 10 to 24 percent of leadership roles",
+    "Women hold 25 to 33 percent of leadership roles",
+    "Women hold more than one third of leadership roles, including at least one office-bearer post"
+   ],
+   "evidence": {
+    "requirement": "Count leaders and committee members from the current list.",
+    "method": "Document",
+    "examples": [
+     "Leader list",
+     "Committee list",
+     "Election minutes"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT",
+    "RDY-CRT"
+   ],
+   "applies": "All",
+   "riskTag": "Women absent from leadership",
+   "basis": "Partly sourced"
   },
   {
    "code": "AF-100",
    "dimension": "Climate, Inclusion and Sustainability",
    "text": "Young people (aged 18 to 35) have defined roles or paid work with us, such as in production, aggregation, processing or records, and we know how many.",
-   "weight": 2
+   "weight": 2,
+   "subDimension": "8.3",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No young people involved",
+    "A few young people help informally, unpaid",
+    "Young people have some paid work, but we have no count",
+    "We can count the young people in paid or defined roles",
+    "We count young people by role, they take part in decisions or training, and we track their numbers each season"
+   ],
+   "evidence": {
+    "requirement": "Ask for the list of young workers or members and their roles.",
+    "method": "Document",
+    "examples": [
+     "Staff or member list with ages",
+     "Youth roles list",
+     "Training records"
+    ]
+   },
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-GRT"
+   ],
+   "applies": "All",
+   "riskTag": "Young people not involved",
+   "basis": "Design judgement"
   }
  ],
  "dimensions": [
@@ -908,5 +3507,779 @@
    "approval": "Proposed"
   }
  ],
+ "meta": {
+  "architecture": "Business Health Architecture v2, AGRIFOOD360 1.0.0-draft",
+  "subDimensions": [
+   {
+    "code": "1.1",
+    "domain": "D1",
+    "name": "Enterprise strategy and crop or product portfolio",
+    "dimension": "Market Access, Offtake and Traceability",
+    "mapping": {
+     "gapPattern": "Enterprise grows whatever it grew last year, depends on one crop, and has no written plan beyond the next planting.",
+     "diagnosis": "The enterprise is exposed to one crop and one season, and has no written direction that a lender, buyer or partner can assess.",
+     "prescription": "Before the next land preparation (March to April in the north), write a one to three year plan with a crop or product margin comparison, and add a second income line such as a processed product or a legume rotation crop.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 20,
+      "resources": "Business plan template, crop margin comparison sheet, three coaching sessions before planting"
+     },
+     "measurement": {
+      "kpi": "Share of sales from the largest crop or product",
+      "baselineMethod": "Sales records by crop for the last 12 months",
+      "provisionalTarget": "Largest crop under 70 percent of sales, written plan approved",
+      "dataSource": "Sales book, plan document",
+      "frequency": "Every season"
+     }
+    }
+   },
+   {
+    "code": "1.2",
+    "domain": "D1",
+    "name": "Buyers, contracts and offtake",
+    "dimension": "Market Access, Offtake and Traceability",
+    "mapping": {
+     "gapPattern": "Selling to whoever pays on the day, verbal buyer promises, late or short deliveries and one dominant buyer.",
+     "diagnosis": "Sales are not secured by contract, so deliveries, prices and payment dates are unpredictable and cannot support input credit.",
+     "prescription": "Negotiate a written offtake or supply agreement with at least one buyer before planting (April to June), with volume, price basis, quality and payment date, and agree a delivery calendar the enterprise can meet.",
+     "intervention": {
+      "type": "Linkage",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 30,
+      "resources": "Buyer introductions (processors, institutional buyers, aggregators), model offtake agreement, legal review"
+     },
+     "measurement": {
+      "kpi": "Written buyer agreements in force and on-time delivery rate",
+      "baselineMethod": "Contract file and delivery notes for last season",
+      "provisionalTarget": "At least one signed agreement and 90 percent on-time delivery",
+      "dataSource": "Contracts, delivery notes, buyer reports",
+      "frequency": "Every season"
+     }
+    }
+   },
+   {
+    "code": "1.3",
+    "domain": "D1",
+    "name": "Pricing, market information and value capture",
+    "dimension": "Market Access, Offtake and Traceability",
+    "mapping": {
+     "gapPattern": "Price taken from the first offer, all produce sold at the harvest glut, and no grading or processing to earn more.",
+     "diagnosis": "The enterprise captures the lowest price in the year because it sells unprepared, unpriced produce at the point of greatest supply.",
+     "prescription": "Collect prices from at least two sources every week of the marketing season (October to March), set a minimum price from break-even, and plan staged sales with cleaning and grading so part of the crop is sold after the glut.",
+     "intervention": {
+      "type": "Tool or template",
+      "ownerRole": "COACH",
+      "typicalDays": 15,
+      "resources": "Weekly price tracker, selling plan template, grading guide, access to price information service"
+     },
+     "measurement": {
+      "kpi": "Average price received compared with the seasonal average price",
+      "baselineMethod": "Price notes and sales records for last marketing season",
+      "provisionalTarget": "Average price at or above the seasonal mean, two or more sales tranches",
+      "dataSource": "Sales records, price tracker",
+      "frequency": "Monthly in marketing season"
+     }
+    }
+   },
+   {
+    "code": "1.4",
+    "domain": "D1",
+    "name": "Quality-linked markets and traceability",
+    "dimension": "Market Access, Offtake and Traceability",
+    "mapping": {
+     "gapPattern": "Produce is bought or collected without testing, lots cannot be traced to a farm or village, and buyer rejections are common.",
+     "diagnosis": "The enterprise cannot prove quality or origin, so it is excluded from quality-linked and institutional markets and loses premiums.",
+     "prescription": "Before the buying season starts (September to October), install intake testing with a calibrated moisture meter, a lot register that records farm or member, village and date, and adopt the written specification of the main buyer.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 30,
+      "resources": "Moisture meters, lot register template, intake grading training, buyer specification review"
+     },
+     "measurement": {
+      "kpi": "Share of lots with an intake test and a traced source",
+      "baselineMethod": "Sample of 20 lots at the start of the buying season",
+      "provisionalTarget": "95 percent of lots tested and traced, rejection rate falling",
+      "dataSource": "Intake book, lot register, buyer quality reports",
+      "frequency": "Monthly in buying season"
+     }
+    }
+   },
+   {
+    "code": "2.1",
+    "domain": "D2",
+    "name": "Production practice and productivity",
+    "dimension": "Production, Inputs and Post-harvest",
+    "mapping": {
+     "gapPattern": "No written plan per season, yield per acre unknown, late planting and local seed with unrecorded practices.",
+     "diagnosis": "Production is run by habit, so the enterprise cannot forecast volumes, cost inputs or show lenders and buyers a credible yield.",
+     "prescription": "Before planting (April to June), prepare a season plan per plot with area, expected yield, inputs and labour, use certified or improved seed and advised practices, and record harvest per plot to calculate yield per acre.",
+     "intervention": {
+      "type": "Training",
+      "ownerRole": "COACH",
+      "typicalDays": 25,
+      "resources": "Season plan template, harvest record book, extension officer visits, demonstration plot"
+     },
+     "measurement": {
+      "kpi": "Average yield per acre for the main crop compared with district average",
+      "baselineMethod": "Harvest records for last three seasons, or farmer recall with sampling",
+      "provisionalTarget": "Yield per acre recorded for all main plots, 10 percent improvement against baseline",
+      "dataSource": "Harvest book, weighing slips",
+      "frequency": "Every harvest"
+     }
+    }
+   },
+   {
+    "code": "2.2",
+    "domain": "D2",
+    "name": "Input access and supplier relations",
+    "dimension": "Production, Inputs and Post-harvest",
+    "mapping": {
+     "gapPattern": "Inputs arrive after the first rains, there is one supplier, input credit is untracked and packs are unlabelled or repacked.",
+     "diagnosis": "Late, untested or untracked inputs lower yield and create credit losses that break the link with members and lenders.",
+     "prescription": "Order inputs by March for the main season, compare at least two licensed suppliers, buy only sealed labelled packs, and keep an input ledger of every issue and repayment.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 20,
+      "resources": "Input order calendar, supplier comparison sheet, input ledger template, list of licensed dealers"
+     },
+     "measurement": {
+      "kpi": "Share of inputs received before planting date, and input credit recovery rate",
+      "baselineMethod": "Delivery notes and ledger from last season",
+      "provisionalTarget": "90 percent of inputs on time, input ledger complete",
+      "dataSource": "Delivery notes, input ledger",
+      "frequency": "Every season"
+     }
+    }
+   },
+   {
+    "code": "2.3",
+    "domain": "D2",
+    "name": "Post-harvest handling, storage and processing",
+    "dimension": "Production, Inputs and Post-harvest",
+    "mapping": {
+     "gapPattern": "Produce stored wet or on the floor, no moisture reading, no pest routine, stock rotated by chance and losses unmeasured.",
+     "diagnosis": "Post-harvest handling is losing quantity and quality and creating aflatoxin and rejection risk, especially for maize and groundnut.",
+     "prescription": "Before harvest (August to September), set a drying standard with a moisture meter, upgrade the store with pallets and hermetic or triple bags, adopt a written pest routine and FIFO, and measure loss over one storage season.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 30,
+      "resources": "Moisture meters, tarpaulins or dryer plan, hermetic bags, store checklist, loss measurement sheet"
+     },
+     "measurement": {
+      "kpi": "Post-harvest loss percentage and share of lots stored below the moisture standard",
+      "baselineMethod": "Stock in and out records and moisture readings at store intake",
+      "provisionalTarget": "Loss measured and falling, 100 percent of lots under the standard at intake",
+      "dataSource": "Stock cards, moisture log, store inspection",
+      "frequency": "Monthly during storage"
+     }
+    }
+   },
+   {
+    "code": "3.1",
+    "domain": "D3",
+    "name": "Farm and enterprise accounting",
+    "dimension": "Financial Management and Performance",
+    "mapping": {
+     "gapPattern": "Business and household money mixed, no cash book, gaps in records and debts unknown.",
+     "diagnosis": "Without separate money and written records the enterprise cannot prove income, repay reliably or qualify for credit.",
+     "prescription": "Open a business account or mobile money wallet immediately, start a cash book that is written within a week, and rebuild a season summary of sales, costs and repayments for the last two seasons from receipts and statements.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 25,
+      "resources": "Cash book or app, account opening support, receipt book, season summary template"
+     },
+     "measurement": {
+      "kpi": "Share of transactions recorded within one week and months of complete records",
+      "baselineMethod": "Review of the last three months of statements against the cash book",
+      "provisionalTarget": "90 percent recorded within a week, two seasons of summaries built",
+      "dataSource": "Cash book, statements",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "3.2",
+    "domain": "D3",
+    "name": "Seasonal cash flow and working capital",
+    "dimension": "Financial Management and Performance",
+    "mapping": {
+     "gapPattern": "No cash plan, money runs out in the lean months (about June to August), pre-harvest costs unfunded and no reserve.",
+     "diagnosis": "The enterprise is exposed to a seasonal cash gap, so it borrows at bad terms or sells early and cheaply.",
+     "prescription": "Build a month-by-month cash plan before planting (April), identify the pre-harvest gap and fund it from a reserve, VSLA or buyer advance, and compare plan with actual every quarter.",
+     "intervention": {
+      "type": "Tool or template",
+      "ownerRole": "COACH",
+      "typicalDays": 20,
+      "resources": "Seasonal cash plan template, pre-harvest budget sheet, quarterly review checklist"
+     },
+     "measurement": {
+      "kpi": "Months of the season with a funded cash plan and reserve in weeks of running costs",
+      "baselineMethod": "Interview and review of last season bank or wallet balances",
+      "provisionalTarget": "Cash plan complete and updated quarterly, reserve of four weeks",
+      "dataSource": "Cash plan, statements",
+      "frequency": "Quarterly"
+     }
+    }
+   },
+   {
+    "code": "3.3",
+    "domain": "D3",
+    "name": "Cost of production and margins",
+    "dimension": "Financial Management and Performance",
+    "mapping": {
+     "gapPattern": "Cost of production never calculated, profit per crop unknown and sales sometimes below cost.",
+     "diagnosis": "Decisions on crops, prices and borrowing are made without knowing margins, so some activities lose money unnoticed.",
+     "prescription": "After harvest (November to January) calculate full cost per acre and per bag for each main crop, compute margins, set a break-even minimum price and use it in the next planting decision.",
+     "intervention": {
+      "type": "Training",
+      "ownerRole": "COACH",
+      "typicalDays": 15,
+      "resources": "Cost of production template, margin calculator, break-even sheet"
+     },
+     "measurement": {
+      "kpi": "Cost per acre and break-even price for each main crop",
+      "baselineMethod": "Cost records and receipts for last season",
+      "provisionalTarget": "Costs and break-even known for all main crops",
+      "dataSource": "Cost sheets, sales records",
+      "frequency": "Every season"
+     }
+    }
+   },
+   {
+    "code": "3.4",
+    "domain": "D3",
+    "name": "Financial controls and reporting",
+    "dimension": "Financial Management and Performance",
+    "mapping": {
+     "gapPattern": "The book-keeper handles all cash, nobody checks the books and the accounts have never been reviewed independently.",
+     "diagnosis": "Weak controls leave the enterprise open to loss and fraud and block access to credit that needs reviewed accounts.",
+     "prescription": "Separate receiving, recording and approving cash, set approval limits, and commission an independent review of the accounts after the season closes (December to February).",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 10,
+      "resources": "Cash control checklist, voucher templates, independent reviewer or accountant"
+     },
+     "measurement": {
+      "kpi": "Independent review completed and number of control gaps open",
+      "baselineMethod": "Controls checklist at baseline",
+      "provisionalTarget": "Annual review done, no high risk gap open",
+      "dataSource": "Review report, voucher files",
+      "frequency": "Yearly"
+     }
+    }
+   },
+   {
+    "code": "4.1",
+    "domain": "D4",
+    "name": "Credit use and repayment performance",
+    "dimension": "Seasonal Finance and Capital Readiness",
+    "mapping": {
+     "gapPattern": "Late or defaulted loans, repayment dates set without regard to harvest, loan money used for other things and heavy debt burden.",
+     "diagnosis": "Repayment problems signal weak cash management and make lenders unwilling to extend seasonal credit.",
+     "prescription": "Renegotiate or time new loans so repayment follows harvest sales, use loans only for the purpose in the application with receipts, and cap yearly repayments at about one third of net income.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 20,
+      "resources": "Loan timing worksheet, repayment calendar, lender statement review, one lender meeting"
+     },
+     "measurement": {
+      "kpi": "Repayment on time rate and debt service as a share of net income",
+      "baselineMethod": "Lender statements and repayment schedules",
+      "provisionalTarget": "All repayments on time, debt service under one third of net income",
+      "dataSource": "Lender statements, repayment receipts",
+      "frequency": "Quarterly"
+     }
+    }
+   },
+   {
+    "code": "4.2",
+    "domain": "D4",
+    "name": "Alternative and group finance (VSLA, outgrower, asset finance)",
+    "dimension": "Seasonal Finance and Capital Readiness",
+    "mapping": {
+     "gapPattern": "One source of finance, group savings without clear rules, credit terms not understood and no use of warehouse receipts or asset finance.",
+     "diagnosis": "The enterprise relies on a single, often expensive source and misses cheaper or group-based finance that fits the season.",
+     "prescription": "Map finance options (VSLA, bank, input credit, buyer advance, warehouse receipt), calculate the total cost of each, write savings group rules and adopt the VSLA cycle of weekly meetings and a yearly share-out.",
+     "intervention": {
+      "type": "Linkage",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 30,
+      "resources": "Finance options map, credit cost calculator, VSLA training manual, introductions to lenders and warehouse operators"
+     },
+     "measurement": {
+      "kpi": "Number of finance sources used and cost of credit known in cedis",
+      "baselineMethod": "Interview and credit agreements",
+      "provisionalTarget": "Two or more sources, total cost known for each",
+      "dataSource": "Agreements, VSLA ledger",
+      "frequency": "Every season"
+     }
+    }
+   },
+   {
+    "code": "4.3",
+    "domain": "D4",
+    "name": "Investor-grade information, assets and collateral",
+    "dimension": "Seasonal Finance and Capital Readiness",
+    "mapping": {
+     "gapPattern": "No financial statements, assets unlisted, no acceptable security and no written funding request.",
+     "diagnosis": "The enterprise cannot present itself to a lender or investor, even when it is operationally sound.",
+     "prescription": "Prepare income statement, balance sheet and cash flow for the last year, list assets with owners and values, gather security documents, and write a funding request with budget and repayment plan.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 40,
+      "resources": "Financial statement templates, asset register, funding request template, mock lender review"
+     },
+     "measurement": {
+      "kpi": "Investor-ready pack completeness (statements, asset register, security documents, funding request)",
+      "baselineMethod": "Checklist against a lender requirements list",
+      "provisionalTarget": "Four of four pack items complete",
+      "dataSource": "Pack documents, lender feedback",
+      "frequency": "Yearly"
+     }
+    }
+   },
+   {
+    "code": "5.1",
+    "domain": "D5",
+    "name": "Management capability and succession",
+    "dimension": "People, Leadership and Member Governance",
+    "mapping": {
+     "gapPattern": "The owner or chair is the only person who can act, no leader training and no succession plan.",
+     "diagnosis": "The enterprise depends on one person, so illness, absence or exit can stop buying, selling and payments.",
+     "prescription": "Name a deputy with written instructions and signing rights, enrol leaders in business management training in the off-season, and write a short succession plan.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 15,
+      "resources": "Deputy handover template, leadership training list, succession note template"
+     },
+     "measurement": {
+      "kpi": "Deputy in place with signing rights and leader training in last two years",
+      "baselineMethod": "Interview and signatory list",
+      "provisionalTarget": "Deputy tested once, leaders trained, succession plan on file",
+      "dataSource": "Letters, certificates",
+      "frequency": "Yearly"
+     }
+    }
+   },
+   {
+    "code": "5.2",
+    "domain": "D5",
+    "name": "Cooperative and member governance",
+    "dimension": "People, Leadership and Member Governance",
+    "mapping": {
+     "gapPattern": "Leaders not elected, meetings rare, members sell outside the group and roles and approval powers are unwritten.",
+     "diagnosis": "Member trust and loyalty are weak, so volumes are unreliable and the group cannot honour buyer contracts.",
+     "prescription": "Hold a general meeting with elections and a written annual report after harvest (December to February), measure side-selling, write roles and approval limits, and agree member rules on selling through the group.",
+     "intervention": {
+      "type": "Training",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 30,
+      "resources": "By-laws review, meeting templates, annual report template, member loyalty survey"
+     },
+     "measurement": {
+      "kpi": "Share of members' crop sold through the group and meeting attendance",
+      "baselineMethod": "Group purchase records against member production survey",
+      "provisionalTarget": "50 percent sold through the group, over half of members at the yearly meeting",
+      "dataSource": "Purchase register, minutes",
+      "frequency": "Yearly"
+     }
+    }
+   },
+   {
+    "code": "5.3",
+    "domain": "D5",
+    "name": "Labour, skills and extension access",
+    "dimension": "People, Leadership and Member Governance",
+    "mapping": {
+     "gapPattern": "Child labour risk, no skills training, no extension visits and labour shortages at planting.",
+     "diagnosis": "People risks (child labour, unskilled work, no advice) threaten buyer acceptance, certification and productivity.",
+     "prescription": "Adopt a child labour rule with age checks before the planting rush (April), train workers and members before the main season, and arrange extension visits during crop growth (June to September).",
+     "intervention": {
+      "type": "Training",
+      "ownerRole": "COACH",
+      "typicalDays": 20,
+      "resources": "Child labour policy and checklist, worker register, training attendance lists, extension officer schedule"
+     },
+     "measurement": {
+      "kpi": "Child labour incidents found and share of workers or members trained in last 12 months",
+      "baselineMethod": "Worker register and spot checks",
+      "provisionalTarget": "No incidents, 70 percent trained, two extension visits per season",
+      "dataSource": "Worker register, attendance lists",
+      "frequency": "Every season"
+     }
+    }
+   },
+   {
+    "code": "5.4",
+    "domain": "D5",
+    "name": "Member, outgrower and service relationships",
+    "dimension": "People, Leadership and Member Governance",
+    "mapping": {
+     "gapPattern": "Group credit not repaid, farmers paid late, and no way to raise complaints.",
+     "diagnosis": "Weak member and supplier relations lead to side-selling, defaults and loss of trust that undermine every contract.",
+     "prescription": "Keep a signed credit ledger, pay suppliers on promised dates with slips, and open a complaints channel with a log reviewed by leaders every quarter.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 15,
+      "resources": "Credit ledger template, payment slip book, complaints register"
+     },
+     "measurement": {
+      "kpi": "Credit recovery rate and share of supplier payments on the promised date",
+      "baselineMethod": "Ledger and payment records from last season",
+      "provisionalTarget": "90 percent recovery, 90 percent of payments on time, complaints logged",
+      "dataSource": "Ledger, payment records, complaints log",
+      "frequency": "Quarterly"
+     }
+    }
+   },
+   {
+    "code": "6.1",
+    "domain": "D6",
+    "name": "Production, stock and sales records",
+    "dimension": "Records, Data and Systems",
+    "mapping": {
+     "gapPattern": "No plot register, stock or sales records, no receipts and records lost or kept loosely.",
+     "diagnosis": "Without records the enterprise cannot trace produce, prove sales or show a track record to buyers and lenders.",
+     "prescription": "Set up a plot register, stock cards, a numbered receipt book and a filing routine with photo backup before the buying season (September).",
+     "intervention": {
+      "type": "Tool or template",
+      "ownerRole": "COACH",
+      "typicalDays": 15,
+      "resources": "Plot register, stock card, receipt book, file box and backup routine"
+     },
+     "measurement": {
+      "kpi": "Core records complete (plots, stock, receipts, filing)",
+      "baselineMethod": "Checklist of four record types",
+      "provisionalTarget": "Four of four in use and checked monthly",
+      "dataSource": "Registers, stock cards",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "6.2",
+    "domain": "D6",
+    "name": "Digital tools, payments and market information",
+    "dimension": "Records, Data and Systems",
+    "mapping": {
+     "gapPattern": "Mostly cash payments, paper-only records, statements never checked and PINs shared.",
+     "diagnosis": "Cash handling and informal access raise fraud and loss risk and leave no digital trail for lenders.",
+     "prescription": "Move farmer and worker payments to mobile money, keep records in a simple app or spreadsheet with backup, reconcile monthly, and restrict PIN and signing rights.",
+     "intervention": {
+      "type": "Tool or template",
+      "ownerRole": "COACH",
+      "typicalDays": 15,
+      "resources": "Mobile money merchant set-up, spreadsheet template, monthly reconciliation sheet"
+     },
+     "measurement": {
+      "kpi": "Share of payments made digitally and months reconciled",
+      "baselineMethod": "Statement analysis for three months",
+      "provisionalTarget": "70 percent digital, reconciled every month",
+      "dataSource": "Statements, reconciliation sheet",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "6.3",
+    "domain": "D6",
+    "name": "Data use and performance tracking",
+    "dimension": "Records, Data and Systems",
+    "mapping": {
+     "gapPattern": "No regular review, no measures with targets, no member data and no learning from results.",
+     "diagnosis": "Leaders manage by feel, so problems are seen late and improvements are not tracked.",
+     "prescription": "Agree five measures with targets, hold a monthly review of sales, costs, stock and loans, collect member production data at planting, and write one change per season linked to results.",
+     "intervention": {
+      "type": "Coaching",
+      "ownerRole": "COACH",
+      "typicalDays": 20,
+      "resources": "Scorecard template, monthly review agenda, member data sheet"
+     },
+     "measurement": {
+      "kpi": "Measures tracked with targets and monthly reviews held",
+      "baselineMethod": "Scorecard check and minutes",
+      "provisionalTarget": "Five measures tracked, 10 reviews held a year",
+      "dataSource": "Scorecard, minutes",
+      "frequency": "Monthly"
+     }
+    }
+   },
+   {
+    "code": "7.1",
+    "domain": "D7",
+    "name": "Registration, tax and land tenure",
+    "dimension": "Regulation, Certification and Risk",
+    "mapping": {
+     "gapPattern": "Not registered, tax filings missing and no proof of land rights.",
+     "diagnosis": "Legal and land gaps block contracts, loans, grants and investment and risk eviction from the farm.",
+     "prescription": "Complete registration with the Registrar General or Department of Cooperatives, obtain a TIN and file returns, and record customary or leased land rights in writing before planting.",
+     "intervention": {
+      "type": "Linkage",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 30,
+      "resources": "Registration checklist, tax adviser, Customary Land Secretariat or lawyer, land document templates"
+     },
+     "measurement": {
+      "kpi": "Registration, tax filing and land documents in order (count of three)",
+      "baselineMethod": "Document review",
+      "provisionalTarget": "Three of three in place and current",
+      "dataSource": "Certificates, filings, land documents",
+      "frequency": "Yearly"
+     }
+    }
+   },
+   {
+    "code": "7.2",
+    "domain": "D7",
+    "name": "Sector regulation and permits",
+    "dimension": "Regulation, Certification and Risk",
+    "mapping": {
+     "gapPattern": "Licences and permits not held, TCDA export rules not followed, and premises do not meet FDA requirements.",
+     "diagnosis": "Regulatory gaps risk seizure, fines and loss of buyers and block certification and export.",
+     "prescription": "List every regulator that applies, apply for missing licences before the buying season (August to September), follow TCDA permit and levy rules for raw shea and cashew exports, and fix FDA inspection findings.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 30,
+      "resources": "Regulator checklist, FDA and TCDA application support, premises gap check"
+     },
+     "measurement": {
+      "kpi": "Required licences and permits held and current",
+      "baselineMethod": "Regulator list against certificates",
+      "provisionalTarget": "All applicable permits current, no open FDA finding",
+      "dataSource": "Licences, inspection reports",
+      "frequency": "Yearly"
+     }
+    }
+   },
+   {
+    "code": "7.3",
+    "domain": "D7",
+    "name": "Standards, certification and buyer compliance",
+    "dimension": "Regulation, Certification and Risk",
+    "mapping": {
+     "gapPattern": "No certification plan, no internal checks and unsafe pesticide use.",
+     "diagnosis": "The enterprise cannot meet buyer and export compliance requirements and risks rejection for chemical residues.",
+     "prescription": "Choose the standard the target buyers need, do a gap check, run an internal inspection each year before harvest, and train sprayers and keep application records.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 45,
+      "resources": "Standard gap check, internal inspection checklist, pesticide safety training, application record sheet"
+     },
+     "measurement": {
+      "kpi": "Gap check completed and open non-conformities against the chosen standard",
+      "baselineMethod": "Gap check against the standard",
+      "provisionalTarget": "Plan with dates, internal inspection done, pesticide records for all sprays",
+      "dataSource": "Gap check, inspection report",
+      "frequency": "Yearly"
+     }
+    }
+   },
+   {
+    "code": "7.4",
+    "domain": "D7",
+    "name": "Risk management and insurance",
+    "dimension": "Regulation, Certification and Risk",
+    "mapping": {
+     "gapPattern": "No risk list, no insurance and credit given to customers without limits.",
+     "diagnosis": "The enterprise carries all weather, price and credit risk alone, so one bad season can end it.",
+     "prescription": "Write a risk list with actions, price and take up crop, livestock or stock insurance before planting (April to June), and set written credit limits for customers.",
+     "intervention": {
+      "type": "Tool or template",
+      "ownerRole": "COACH",
+      "typicalDays": 15,
+      "resources": "Risk register template, insurance quotes from GAIP or other insurers, credit policy template"
+     },
+     "measurement": {
+      "kpi": "Insured share of main crop value and risks with actions",
+      "baselineMethod": "Policy review and risk list",
+      "provisionalTarget": "Main crop or stock insured, risk list with actions",
+      "dataSource": "Policy, risk register",
+      "frequency": "Every season"
+     }
+    }
+   },
+   {
+    "code": "8.1",
+    "domain": "D8",
+    "name": "Climate exposure and adaptation",
+    "dimension": "Climate, Inclusion and Sustainability",
+    "mapping": {
+     "gapPattern": "No plan for dry spells or floods, forecasts unused, planting not staggered and shocks unrecorded.",
+     "diagnosis": "Climate variability, strong in northern Ghana, can wipe out a season because the enterprise has no response plan.",
+     "prescription": "Write a shock plan with two actions per risk, collect the seasonal forecast before planting (April), stagger planting or use tolerant varieties on part of the area, and record shocks and losses.",
+     "intervention": {
+      "type": "Training",
+      "ownerRole": "COACH",
+      "typicalDays": 20,
+      "resources": "Seasonal forecast access, shock plan template, climate smart practice guide, shock log"
+     },
+     "measurement": {
+      "kpi": "Share of area using staggering or tolerant varieties and shock plan in place",
+      "baselineMethod": "Season plan and seed receipts",
+      "provisionalTarget": "25 percent of area, plan in place, forecast used",
+      "dataSource": "Season plan, forecast copy, shock log",
+      "frequency": "Every season"
+     }
+    }
+   },
+   {
+    "code": "8.2",
+    "domain": "D8",
+    "name": "Soil, water and environmental stewardship",
+    "dimension": "Climate, Inclusion and Sustainability",
+    "mapping": {
+     "gapPattern": "No land and water care plan, little soil care, no EPA permit and unsafe waste disposal.",
+     "diagnosis": "Soil and environmental neglect lowers future yield and blocks grants, certification and permits.",
+     "prescription": "Write a land, trees and water plan, apply soil care on at least 30 percent of the area in the next season, obtain EPA registration or written confirmation, and set a waste routine.",
+     "intervention": {
+      "type": "Technical assistance",
+      "ownerRole": "CONSULTANT",
+      "typicalDays": 30,
+      "resources": "Land and water plan template, soil care guide, EPA registration support, waste routine"
+     },
+     "measurement": {
+      "kpi": "Share of area under soil care and EPA status",
+      "baselineMethod": "Field visit and permit check",
+      "provisionalTarget": "30 percent of area under soil care, EPA status confirmed",
+      "dataSource": "Field notes, permits",
+      "frequency": "Every season"
+     }
+    }
+   },
+   {
+    "code": "8.3",
+    "domain": "D8",
+    "name": "Gender, youth and social inclusion",
+    "dimension": "Climate, Inclusion and Sustainability",
+    "mapping": {
+     "gapPattern": "Women lack a voice, assets and leadership roles, and young people have no defined roles.",
+     "diagnosis": "Exclusion reduces production, loyalty and funding access, since donors and certifiers now check gender and youth inclusion.",
+     "prescription": "Set targets for women's participation in decisions and leadership, record women's land and equipment access, and define roles for young people in the next season plan.",
+     "intervention": {
+      "type": "Peer learning",
+      "ownerRole": "COACH",
+      "typicalDays": 20,
+      "resources": "Women's group dialogues, pro-WEAI based checklist, youth roles list, leadership coaching"
+     },
+     "measurement": {
+      "kpi": "Share of leadership roles held by women and number of young people in defined roles",
+      "baselineMethod": "Leader list and member survey",
+      "provisionalTarget": "One third of leaders women, young people counted by role",
+      "dataSource": "Leader list, member survey",
+      "frequency": "Yearly"
+     }
+    }
+   }
+  ],
+  "readiness": [
+   {
+    "code": "RDY-INP",
+    "name": "Input and working capital credit readiness",
+    "purpose": "Whether the enterprise can safely take and repay input and working capital credit for the season.",
+    "unlocks": "Unlocks: apply for seasonal input credit or a working capital loan, timed for April to June."
+   },
+   {
+    "code": "RDY-OFF",
+    "name": "Offtake and institutional market readiness",
+    "purpose": "Whether the enterprise can supply buyers, processors and institutional markets reliably with quality produce.",
+    "unlocks": "Unlocks: bid for an offtake contract or institutional supply with a processor, aggregator or programme."
+   },
+   {
+    "code": "RDY-CRT",
+    "name": "Certification and export readiness",
+    "purpose": "Whether the enterprise could pass a certification or export audit on quality, traceability, safety and legal basics.",
+    "unlocks": "Unlocks: start certification (organic, Fairtrade, GlobalG.A.P., Global Shea Alliance programme) or an export permit process."
+   },
+   {
+    "code": "RDY-INV",
+    "name": "Investment readiness",
+    "purpose": "Whether the enterprise has the records, governance and legal base for an investor or term lender.",
+    "unlocks": "Unlocks: approach lenders and investors for equipment, storage or processing capital."
+   },
+   {
+    "code": "RDY-GRT",
+    "name": "Grant and climate-finance readiness",
+    "purpose": "Whether the enterprise can receive and account for grants and climate finance.",
+    "unlocks": "Unlocks: apply for grants and climate-smart agriculture funding with inclusion and environmental safeguards in place."
+   }
+  ],
+  "consistencyChecks": [
+   {
+    "id": "CC-01",
+    "itemA": "AF-028",
+    "itemB": "AF-027",
+    "rule": "Multi-season records are claimed but the habit of writing transactions is absent.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC-02",
+    "itemA": "AF-026",
+    "itemB": "AF-068",
+    "rule": "A separate business account is claimed, yet almost all transactions are in cash.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC-03",
+    "itemA": "AF-015",
+    "itemB": "AF-064",
+    "rule": "Yield per acre is claimed from records, yet there is no register of plots or areas to compute it.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC-04",
+    "itemA": "AF-012",
+    "itemB": "AF-064",
+    "rule": "Lot origin is claimed, yet there is no register of farms or plots to trace to.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC-05",
+    "itemA": "AF-047",
+    "itemB": "AF-028",
+    "rule": "Yearly financial statements are claimed, yet there are no multi-season records to build them from.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC-06",
+    "itemA": "AF-056",
+    "itemB": "AF-074",
+    "rule": "High sales through the group are claimed, yet no member production data exist to measure them.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC-07",
+    "itemA": "AF-022",
+    "itemB": "AF-011",
+    "rule": "Moisture measured before storage is claimed, yet no moisture test is done at intake.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC-08",
+    "itemA": "AF-034",
+    "itemB": "AF-027",
+    "rule": "Full cost of production is claimed, yet costs are not written down as they occur.",
+    "condition": "A>=3 and B<=1"
+   },
+   {
+    "id": "CC-09",
+    "itemA": "AF-080",
+    "itemB": "AF-076",
+    "rule": "Regulator licences are claimed, yet the enterprise is not legally registered.",
+    "condition": "A>=3 and B<=1"
+   }
+  ]
+ },
  "note": "DRAFT 1.0.0-draft. DRAFT, NOT AUTHORITATIVE. Nothing here is production-authoritative until Amin Yahaya signs off."
 }

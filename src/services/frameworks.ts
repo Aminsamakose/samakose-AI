@@ -10,14 +10,24 @@ import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { fieldError, notFound, unprocessable } from '@/lib/errors';
 import { DEFAULT_RULES, type QuestionLite, type Rules } from '@/domain/logic';
-import type { FrameworkQuestion, FrameworkSource } from '@/db/schema';
+import type { FrameworkMeta, FrameworkQuestion, FrameworkSource } from '@/db/schema';
+import { parseCondition } from '@/domain/bank';
 import { can } from '@/lib/rbac';
 import { allow, need } from './common';
 
 export type VersionRow = typeof schema.frameworkVersions.$inferSelect;
 type Db = Ctx['db'];
 
-export const questionsOf = (v: Pick<VersionRow, 'questions'>): QuestionLite[] => v.questions.map((q) => ({ code: q.code, dimension: q.dimension, text: q.text, weight: q.weight }));
+export const questionsOf = (v: Pick<VersionRow, 'questions'>): QuestionLite[] => v.questions.map((q) => {
+  const l: QuestionLite = { code: q.code, dimension: q.dimension, text: q.text, weight: q.weight };
+  // Version 1 questions stay exactly four fields. v2 metadata is copied only when present.
+  if (q.subDimension) l.subDimension = q.subDimension;
+  if (q.criticality) l.criticality = q.criticality;
+  if (q.readiness?.length) l.readiness = q.readiness;
+  if (q.applies) l.applies = q.applies;
+  if (q.riskTag) l.riskTag = q.riskTag;
+  return l;
+});
 /** Global rules with the version's own overrides on top. The merged set is stored with every score. */
 export const rulesFor = (v: Pick<VersionRow, 'rules'>, global: Rules): Rules => ({ ...global, ...(v.rules ?? {}) });
 
@@ -57,7 +67,7 @@ export async function bankSnapshot(db: Db): Promise<{ questions: FrameworkQuesti
 const sameQuestions = (a: FrameworkQuestion[], b: FrameworkQuestion[]) => JSON.stringify(a) === JSON.stringify(b);
 
 /* ------------------------------------ validation ------------------------------------ */
-export function validateContent(c: { questions: FrameworkQuestion[]; dimensions: string[]; rules?: Record<string, string | number> | null }) {
+export function validateContent(c: { questions: FrameworkQuestion[]; dimensions: string[]; rules?: Record<string, string | number> | null; meta?: FrameworkMeta | null }) {
   const e: Record<string, string> = {};
   if (!c.dimensions.length) e.dimensions = 'Add at least one dimension';
   if (new Set(c.dimensions).size !== c.dimensions.length) e.dimensions = 'Dimension names must be unique';
@@ -70,6 +80,23 @@ export function validateContent(c: { questions: FrameworkQuestion[]; dimensions:
     if (q.text.trim().length < 5 || q.text.length > 300) { e.questions = `Question ${q.code} needs 5 to 300 characters`; break; }
     if (!Number.isInteger(q.weight) || q.weight < 1 || q.weight > 5) { e.questions = `Question ${q.code} needs a whole weight from 1 to 5`; break; }
     if (!c.dimensions.includes(q.dimension)) { e.questions = `Question ${q.code} uses a dimension that is not in the list`; break; }
+    if (q.anchors && (q.anchors.length !== 5 || q.anchors.some((a) => a !== null && (typeof a !== 'string' || !a.trim())))) { e.questions = `Question ${q.code} needs five anchors for the values 0 to 4`; break; }
+    if (q.criticality === 'Gate' && q.weight < 4) { e.questions = `Question ${q.code} is a gate and needs a weight of 4 or 5`; break; }
+  }
+  const m = c.meta;
+  if (m && !e.questions) {
+    const subs = new Set((m.subDimensions ?? []).map((s) => s.code)), reds = new Set((m.readiness ?? []).map((r) => r.code));
+    for (const q of c.questions) {
+      if (q.subDimension && m.subDimensions && !subs.has(q.subDimension)) { e.questions = `Question ${q.code} uses sub-dimension ${q.subDimension} that is not defined`; break; }
+      const bad = (q.readiness ?? []).find((r) => !reds.has(r));
+      if (bad) { e.questions = `Question ${q.code} feeds readiness index ${bad} that is not defined`; break; }
+    }
+    for (const s of m.subDimensions ?? []) if (!c.dimensions.includes(s.dimension)) { e.meta = `Sub-dimension ${s.code} points to a dimension that is not in the list`; break; }
+    const codes = new Set(c.questions.map((q) => q.code));
+    for (const k of m.consistencyChecks ?? []) {
+      if (!codes.has(k.itemA) || !codes.has(k.itemB)) { e.meta = `Consistency check ${k.id} names a question that does not exist`; break; }
+      if (!parseCondition(k.condition)) { e.meta = `Consistency check ${k.id} has a condition that cannot be read. Use the form A>=3 and B<=1`; break; }
+    }
   }
   if (!e.questions && !e.dimensions) for (const d of c.dimensions) if (!c.questions.some((q) => q.dimension === d)) { e.dimensions = `Dimension ${d} has no questions`; break; }
   for (const k of Object.keys(c.rules ?? {})) if (!(k in DEFAULT_RULES)) { e.rules = `Unknown rule ${k}`; break; }
@@ -121,7 +148,7 @@ export async function getVersion(ctx: Ctx, id: string) {
 }
 
 /* ------------------------------------- writing ------------------------------------- */
-type DraftInput = { fromBank?: boolean; questions?: FrameworkQuestion[]; dimensions?: string[]; rules?: Record<string, string | number> | null; sources?: FrameworkSource[]; note?: string | null };
+type DraftInput = { fromBank?: boolean; questions?: FrameworkQuestion[]; dimensions?: string[]; rules?: Record<string, string | number> | null; sources?: FrameworkSource[]; meta?: FrameworkMeta | null; note?: string | null };
 export async function createDraft(ctx: Ctx, code: string, b: DraftInput) {
   allow(ctx, 'frameworks', 'create');
   const u = need(ctx).user;
@@ -137,12 +164,12 @@ export async function createDraft(ctx: Ctx, code: string, b: DraftInput) {
     if (!b.questions || !b.dimensions) throw fieldError({ questions: 'Send the questions and dimensions, or build the draft from the question bank' });
     content = { questions: b.questions, dimensions: b.dimensions };
   }
-  validateContent({ ...content, rules: b.rules });
+  validateContent({ ...content, rules: b.rules, meta: b.meta });
   const [{ n }] = await ctx.db.select({ n: sql<number>`coalesce(max(${schema.frameworkVersions.version}), 0)::int` }).from(schema.frameworkVersions).where(eq(schema.frameworkVersions.frameworkId, f.id));
   const sources = mergeSources([], b.sources ?? [], false, u.id);
   const [row] = await ctx.db.insert(schema.frameworkVersions).values({
     frameworkId: f.id, version: Number(n) + 1, status: 'Draft', questions: content.questions, dimensions: content.dimensions,
-    rules: b.rules ?? null, sources, note: b.note ?? null, createdBy: u.id
+    rules: b.rules ?? null, sources, meta: b.meta ?? null, note: b.note ?? null, createdBy: u.id
   }).returning();
   await audit(ctx, 'framework.draft_created', 'framework_version', row.id, undefined, { framework: code, version: row.version, questions: content.questions.length });
   return row;
@@ -156,7 +183,7 @@ export async function updateDraft(ctx: Ctx, id: string, b: Omit<DraftInput, 'fro
   if (v.status !== 'Draft') throw unprocessable('Only a draft can be edited. Published versions are permanent; create a new version instead');
   const next = {
     questions: b.questions ?? v.questions, dimensions: b.dimensions ?? v.dimensions,
-    rules: b.rules === undefined ? v.rules : b.rules, note: b.note === undefined ? v.note : b.note
+    rules: b.rules === undefined ? v.rules : b.rules, meta: b.meta === undefined ? v.meta : b.meta, note: b.note === undefined ? v.note : b.note
   };
   validateContent(next);
   const canApprove = !!ctx.user && can(ctx.user.role, 'frameworks', 'approve');
@@ -184,7 +211,7 @@ export async function publishVersion(ctx: Ctx, id: string, note: string) {
   if (!v) throw notFound('Framework version not found');
   if (v.status !== 'Draft') throw unprocessable('This version is already published');
   const [f] = await ctx.db.select().from(schema.frameworks).where(eq(schema.frameworks.id, v.frameworkId));
-  validateContent({ questions: v.questions, dimensions: v.dimensions, rules: v.rules });
+  validateContent({ questions: v.questions, dimensions: v.dimensions, rules: v.rules, meta: v.meta });
   if (!f.isDefault) {
     if (!v.sources.length) throw unprocessable('A specialised framework needs an evidence trail. Add the sources behind each component before publishing');
     const open = v.sources.filter((s) => s.approval !== 'Approved');
