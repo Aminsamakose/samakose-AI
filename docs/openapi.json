@@ -4156,6 +4156,114 @@
         }
       }
     },
+    "/certificates/{id}/verification": {
+      "post": {
+        "tags": [
+          "Diagnostic and evidence"
+        ],
+        "summary": "Owner agrees, or stops agreeing, that the certificate can be confirmed from its link",
+        "operationId": "post__certificates_id_verification",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "cases:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "on": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "on"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/cases/{id}/investment-pack": {
+      "get": {
+        "tags": [
+          "Diagnostic and evidence"
+        ],
+        "summary": "Investment readiness summary for a valid Investment-ready certificate",
+        "operationId": "get__cases_id_investment_pack",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "cases:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
     "/certificates/{id}/revoke": {
       "post": {
         "tags": [
@@ -12065,6 +12173,47 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/public/certificates/{id}": {
+      "get": {
+        "tags": [
+          "Website"
+        ],
+        "summary": "Confirm a certificate the owner has agreed to share",
+        "operationId": "get__public_certificates_id_",
+        "security": [],
+        "x-permission": "public",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Body is { data }"

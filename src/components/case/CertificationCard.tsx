@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { api, dateFmt, errText } from '@/lib/client/api';
 import { Async, Badge, Button, Card, Empty, Field, useApi, useToast } from '@/components/ui';
 
@@ -17,6 +18,20 @@ function Step({ label, variant, field, url, body, done, hint }: { label: string;
   </div>;
 }
 
+/** The owner decides whether a lender or partner can confirm the certificate from a link. Off until they turn it on. */
+function Share({ cert, done }: { cert: any; done: () => void }) {
+  const toast = useToast(); const [busy, setBusy] = useState(false);
+  const link = typeof window === 'undefined' ? '' : `${window.location.origin}/verify/${cert.id}`;
+  return <div className="alert info stack">
+    <span>{cert.verifyPublic ? 'Anyone with this link can confirm your business name, level and dates. They see no scores or records.' : 'Sharing is off. Turn it on if you want a lender or partner to be able to confirm your certificate from a link.'}</span>
+    {cert.verifyPublic && <span className="mono small" style={{ overflowWrap: 'anywhere' }}>{link}</span>}
+    <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+      <Button size="sm" variant={cert.verifyPublic ? undefined : 'primary'} loading={busy} onClick={async () => { setBusy(true); try { await api.post(`/certificates/${cert.id}/verification`, { on: !cert.verifyPublic }); toast(cert.verifyPublic ? 'Sharing turned off' : 'Sharing turned on'); done(); } catch (e) { toast(errText(e), 'bad'); } finally { setBusy(false); } }}>{cert.verifyPublic ? 'Turn sharing off' : 'Turn sharing on'}</Button>
+      {cert.verifyPublic && <Button size="sm" onClick={async () => { try { await navigator.clipboard.writeText(link); toast('Link copied'); } catch { toast('Copy failed. Select the link and copy it.', 'bad'); } }}>Copy link</Button>}
+    </div>
+  </div>;
+}
+
 export default function CertificationCard({ caseId }: { caseId: string }) {
   const st = useApi<any>(`/cases/${caseId}/certification`);
   return <Async state={st}>{(d) => {
@@ -25,6 +40,10 @@ export default function CertificationCard({ caseId }: { caseId: string }) {
       <div className="stack">
         {cur ? <p>Certified at <b>{cur.level}</b> on {dateFmt(cur.decidedAt)}. Valid until {dateFmt(cur.expiresAt)}.</p> : <p className="muted">No current certificate. Certification rests on verified evidence, not on the score alone. Two different people are involved: the lead expert proposes and a reviewer or administrator decides.</p>}
         {cur?.unlocks?.length > 0 && <div><h3 className="small">What it opens, in the framework&apos;s words</h3><ul>{cur.unlocks.map((u: any) => <li key={u.code}><b>{u.name}</b> ({u.level}): {u.text}</li>)}</ul></div>}
+        {cur && <div className="stack" style={{ gap: 8 }}>
+          {cur.level === 'Investment-ready' && <div><Link className="btn" href={`/cases/${caseId}/pack`}>Open the investment readiness pack</Link></div>}
+          {d.canShare && <Share cert={cur} done={st.reload} />}
+        </div>}
         {el && <div>
           <h3 className="small">Criteria</h3>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 6 }}>{el.criteria.map((c: any) => <li key={c.id} className="row" style={{ gap: 8 }}><Badge tone={c.met ? 'ok' : 'warn'}>{c.met ? 'Met' : 'Not met'}</Badge><span>{c.label} <span className="small muted">({c.detail})</span></span></li>)}</ul>

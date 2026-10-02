@@ -1,0 +1,1 @@
+ALTER TABLE "certificates" ADD COLUMN "verify_public" boolean DEFAULT false NOT NULL;

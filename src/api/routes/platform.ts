@@ -137,6 +137,8 @@ defineRoute({ method: 'POST', path: '/public/inquiries', tag: W, summary: 'Send 
     }
   }),
   handler: ({ ctx, body }) => inq.submitInquiry(ctx, body as any) });
+defineRoute({ method: 'GET', path: '/public/certificates/:id', tag: W, summary: 'Confirm a certificate the owner has agreed to share', auth: 'public', rateLimit: { key: 'verify:ip:{ip}', limit: 30, windowSec: 900 },
+  handler: async ({ params }) => { const v = await (await import('@/services/certificates')).publicVerification(params.id); if (!v) throw notFound('No shared certificate with this reference'); return v; } });
 defineRoute({ method: 'GET', path: '/public/assistant', tag: W, summary: 'Whether the website assistant is switched on', auth: 'public', handler: async () => ({ on: await asst.assistantOn() }) });
 defineRoute({ method: 'POST', path: '/public/assistant', tag: W, summary: 'Ask the website assistant a question. Answers come from published content only', auth: 'public',
   rateLimit: { key: 'assistant:ip:{ip}', limit: 20, windowSec: 900 },

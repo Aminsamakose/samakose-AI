@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { db, schema } from '@/db/client';
 import { eq, sql } from 'drizzle-orm';
 import { evaluateCertification, effectiveStatus, validUntil, type CertFacts } from '@/domain/certification';
-import { answerSheet, api, drain, ensureReference, makeOrg, makeUser, type Session } from './helpers';
+import { answerSheet, api, call, drain, ensureReference, makeOrg, makeUser, type Session } from './helpers';
 
 const base: CertFacts = { hasScore: true, overall: 80, confidence: 'High', frameworkPublished: true, dimensions: [{ dimension: 'Finance', value: 70 }], evidenceShare: { Verified: 0.7 }, readiness: null, diagnosisReviewed: true, prescriptionApproved: true };
 
@@ -89,10 +89,26 @@ describe('certification through the API', () => {
     const own = (await api(owner).get(`/cases/${caseId}/certification`)).data;
     expect(own.current.level).toBe('Established'); expect(own.history).toEqual([]);
   });
+  it('shares nothing until the owner agrees, then shows only name, level and dates', async () => {
+    expect((await call('GET', `/public/certificates/${certId}`)).status).toBe(404);
+    expect((await api(reviewer).post(`/certificates/${certId}/verification`, { on: true })).status).toBe(403);
+    expect((await api(owner).post(`/certificates/${certId}/verification`, { on: true })).status).toBe(200);
+    const v = await call('GET', `/public/certificates/${certId}`);
+    expect(v.status).toBe(200); expect(v.data).toMatchObject({ level: 'Established', status: 'Valid' });
+    expect(Object.keys(v.data).sort()).toEqual(['expiresAt', 'issuedAt', 'level', 'organisation', 'revokedAt', 'status']);
+    expect((await call('GET', '/public/certificates/not-an-id')).status).toBe(404);
+    expect((await api(owner).post(`/certificates/${certId}/verification`, { on: false })).status).toBe(200);
+    expect((await call('GET', `/public/certificates/${certId}`)).status).toBe(404);
+    await api(owner).post(`/certificates/${certId}/verification`, { on: true });
+  });
+  it('gives the investment pack only for a valid Investment-ready certificate', async () => {
+    expect((await api(owner).get(`/cases/${caseId}/investment-pack`)).status).toBe(422);
+  });
   it('can be revoked with a reason and then stays final', async () => {
     expect((await api(consultant).post(`/certificates/${certId}/revoke`, { reason: 'Evidence was withdrawn' })).status).toBe(403);
     expect((await api(reviewer).post(`/certificates/${certId}/revoke`, { reason: 'x' })).status).toBe(400);
     expect((await api(reviewer).post(`/certificates/${certId}/revoke`, { reason: 'Evidence was withdrawn' })).data.status).toBe('Revoked');
+    expect((await call('GET', `/public/certificates/${certId}`)).data.status).toBe('Revoked');
     await expect(db().update(schema.certificates).set({ status: 'Certified' }).where(eq(schema.certificates.id, certId))).rejects.toThrow();
     await expect(db().delete(schema.certificates).where(eq(schema.certificates.id, certId))).rejects.toThrow();
     const trail = (await db().select().from(schema.auditLog).where(eq(schema.auditLog.entityId, certId))).map((a) => a.action);

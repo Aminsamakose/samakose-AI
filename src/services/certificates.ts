@@ -40,8 +40,8 @@ export async function certification(ctx: Ctx, caseId: string) {
   const all = (await ctx.db.select().from(schema.certificates).where(eq(schema.certificates.caseId, caseId)).orderBy(desc(schema.certificates.proposedAt))).map(present);
   const internal = isInternal(need(ctx).user);
   const current = all.find((c) => c.status === 'Certified') ?? null;
-  const pub = (c: (typeof all)[number]) => ({ id: c.id, level: c.level, status: c.status, overall: c.overall, decidedAt: c.decidedAt, expiresAt: c.expiresAt, unlocks: c.unlocks });
-  if (!internal) return { current: current ? pub(current) : null, history: [], eligibility: null, canPropose: false, canDecide: false, canRevoke: false };
+  const pub = (c: (typeof all)[number]) => ({ id: c.id, level: c.level, status: c.status, overall: c.overall, decidedAt: c.decidedAt, expiresAt: c.expiresAt, unlocks: c.unlocks, verifyPublic: c.verifyPublic });
+  if (!internal) return { current: current ? pub(current) : null, history: [], eligibility: null, canPropose: false, canDecide: false, canRevoke: false, canShare: need(ctx).user.role === 'OWNER' };
   const el = await eligibility(ctx, caseId);
   const u = need(ctx).user;
   const open = all.find((c) => c.status === 'Proposed');
@@ -49,6 +49,7 @@ export async function certification(ctx: Ctx, caseId: string) {
   return {
     current, history: all, eligibility: el,
     canPropose: ['ADMIN', 'EXPERT'].includes(u.role) && (u.role === 'ADMIN' || u.id === cs.consultantId) && !open,
+    canShare: u.role === 'ADMIN',
     canRevoke: ['ADMIN', 'REVIEWER'].includes(u.role) && !involved,
     canDecide: !!open && ['ADMIN', 'REVIEWER'].includes(u.role) && u.id !== open.proposedBy && !involved
   };
@@ -113,4 +114,49 @@ export async function revoke(ctx: Ctx, certId: string, reason: string) {
 async function getOne(ctx: Ctx, id: string) {
   const [c] = await ctx.db.select().from(schema.certificates).where(eq(schema.certificates.id, id));
   return present(c);
+}
+
+/** The owner decides whether a certificate can be confirmed by someone who holds its link. Off until they say so. */
+export async function setVerification(ctx: Ctx, certId: string, on: boolean) {
+  allow(ctx, 'cases', 'read');
+  const u = need(ctx).user;
+  if (!['OWNER', 'ADMIN'].includes(u.role)) throw forbidden('Only the business owner can decide this');
+  const [c] = await ctx.db.select().from(schema.certificates).where(eq(schema.certificates.id, certId)).limit(1);
+  if (!c) throw (await import('@/lib/errors')).notFound('Certificate not found');
+  await assertCase(ctx, c.caseId);
+  if (c.status !== 'Certified') throw unprocessable('Only an issued certificate can be shared');
+  await ctx.db.update(schema.certificates).set({ verifyPublic: on }).where(eq(schema.certificates.id, certId));
+  await audit(ctx, on ? 'certificate.verification_on' : 'certificate.verification_off', 'certificate', certId, { verifyPublic: c.verifyPublic }, { verifyPublic: on }, c.caseId);
+  return getOne(ctx, certId);
+}
+
+/** What a lender or partner sees. Only the business name, level, dates and whether it is still valid. No scores, evidence or people. Nothing at all unless the owner agreed. */
+export async function publicVerification(id: string) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+  const { db } = await import('@/db/client');
+  const [r] = await db().select({ c: schema.certificates, org: schema.organisations.name }).from(schema.certificates).innerJoin(schema.organisations, eq(schema.organisations.id, schema.certificates.orgId))
+    .where(and(eq(schema.certificates.id, id), eq(schema.certificates.verifyPublic, true))).limit(1);
+  if (!r || !['Certified', 'Revoked'].includes(r.c.status)) return null;
+  const st = effectiveStatus(r.c.status, r.c.expiresAt);
+  return { organisation: r.org, level: r.c.level, status: st === 'Certified' ? 'Valid' : st, issuedAt: r.c.decidedAt, expiresAt: r.c.expiresAt, revokedAt: r.c.revokedAt };
+}
+
+/** A summary for lenders and investors, for the owner to save or share. Only for a valid Investment-ready certificate. Risks and AI drafts stay internal. */
+export async function investmentPack(ctx: Ctx, caseId: string) {
+  allow(ctx, 'cases', 'read');
+  const cs = await assertCase(ctx, caseId);
+  const [c] = (await ctx.db.select().from(schema.certificates).where(and(eq(schema.certificates.caseId, caseId), eq(schema.certificates.status, 'Certified'))).orderBy(desc(schema.certificates.decidedAt)).limit(1));
+  if (!c || c.level !== 'Investment-ready' || effectiveStatus(c.status, c.expiresAt) !== 'Certified') throw unprocessable('The investment readiness pack is available only with a valid Investment-ready certificate');
+  const [s] = await ctx.db.select().from(schema.healthScores).where(eq(schema.healthScores.id, c.scoreId));
+  const [org] = await ctx.db.select({ name: schema.organisations.name, sector: schema.organisations.sector, region: schema.organisations.region }).from(schema.organisations).where(eq(schema.organisations.id, cs.orgId));
+  const [rx] = await ctx.db.select().from(schema.prescriptions).where(and(eq(schema.prescriptions.caseId, caseId), eq(schema.prescriptions.status, 'APPROVED'))).orderBy(desc(schema.prescriptions.version)).limit(1);
+  const lib = new Map((await ctx.db.select({ code: schema.libraryItems.code, title: schema.libraryItems.title }).from(schema.libraryItems)).map((l) => [l.code, l.title]));
+  const extras = (s?.extras ?? null) as { readiness?: { code: string; name: string; level: string; index: number | null; unlocks: string | null }[] } | null;
+  return {
+    organisation: org, certificate: { level: c.level, issuedAt: c.decidedAt, expiresAt: c.expiresAt },
+    score: s ? { overall: Number(s.overall), maturity: s.maturity, confidence: s.confidenceClass, scoredAt: s.createdAt, dimensions: s.dimensions, evidenceShare: s.evidenceShare } : null,
+    readiness: (extras?.readiness ?? []).map((r) => ({ code: r.code, name: r.name, level: r.level, unlocks: r.unlocks ? r.unlocks.replace(/^\s*unlocks:\s*/i, '') : null })),
+    plan: (rx?.items ?? []).map((i) => ({ title: lib.get(i.library_id) ?? i.library_id, actions: i.actions.map((a) => ({ text: a.text, days: a.deadline_days })) })),
+    note: 'This summary is prepared from the business health record. It is not a credit decision or a guarantee. Lenders and investors should do their own checks.'
+  };
 }

@@ -740,5 +740,7 @@ export const certificates = pgTable('certificates', {
   expiresAt: timestamp('expires_at', { withTimezone: true }),
   revokedBy: uuid('revoked_by').references(() => users.id),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
-  revokeReason: text('revoke_reason')
+  revokeReason: text('revoke_reason'),
+  /** The owner has agreed that anyone with the certificate link may confirm its level and validity. Off by default. */
+  verifyPublic: boolean('verify_public').notNull().default(false)
 }, (t) => [index('cert_case_idx').on(t.caseId, t.proposedAt), index('cert_org_idx').on(t.orgId)]);
