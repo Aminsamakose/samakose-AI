@@ -1,0 +1,762 @@
+{
+ "framework": "AGRIFOOD360",
+ "status": "DRAFT, NOT AUTHORITATIVE. Nothing here is production-authoritative until Amin Yahaya signs off.",
+ "generated": "2026-10-02",
+ "method": "Two domain research agents searched and read public sources. A third check re-opened three key sources (TCDA permit regime, IBAT structure, SCOPE dimensions) and confirmed them. All other claims are as reported by the research agents and still need your review.",
+ "questions": [
+  {
+   "code": "AF-01",
+   "dimension": "Production and climate exposure",
+   "weight": 3,
+   "text": "We keep a written plan for each season: area, expected yield, and the inputs and labour we need.",
+   "evidenceBasis": "Design judgement, no direct source",
+   "sources": [
+    {
+     "id": "S3",
+     "title": "Using data and performance to solve the access to finance challenge for agri-SMEs",
+     "url": "https://agra.org/news/using-data-and-performance-to-solve-the-access-to-finance-challenge-for-agri-smes/",
+     "relevance": "High"
+    },
+    {
+     "id": "S1",
+     "title": "IWA 29 Professional Farmer Organization, guidelines overview",
+     "url": "https://amea-global.com/wp-content/uploads/2021/12/Professional-Farmer-Organization-Guidelines-overview.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-02",
+   "dimension": "Production and climate exposure",
+   "weight": 3,
+   "text": "We know our own average yield per acre for our main crops over the last 3 seasons.",
+   "evidenceBasis": "Design judgement, no direct source",
+   "sources": [
+    {
+     "id": "S3",
+     "title": "Using data and performance to solve the access to finance challenge for agri-SMEs",
+     "url": "https://agra.org/news/using-data-and-performance-to-solve-the-access-to-finance-challenge-for-agri-smes/",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-03",
+   "dimension": "Production and climate exposure",
+   "weight": 4,
+   "text": "We have a plan for a dry spell, flood or pest outbreak, such as early maturing seed, staggered planting or a second income.",
+   "evidenceBasis": "Partly sourced",
+   "sources": [
+    {
+     "id": "S20",
+     "title": "Managing Risks and Designing Products for Agricultural Microfinance",
+     "url": "https://www.cgap.org/sites/default/files/CGAP-Occasional-Paper-Managing-Risks-and-Designing-Products-for-Agricultural-Microfinance-Features-of-an-Emerging-Model-Apr-2005.pdf",
+     "relevance": "Medium (dated, lender-side)"
+    },
+    {
+     "id": "S23",
+     "title": "Assessing the impact of climate variability on maize yields in the different regions of Ghana",
+     "url": "https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0305762",
+     "relevance": "Low (search result only, not opened)"
+    },
+    {
+     "id": "S24",
+     "title": "Intra-seasonal rainfall variability and crop yield in the Upper East Region of Ghana",
+     "url": "https://link.springer.com/article/10.1007/s10668-023-03861-2",
+     "relevance": "Low (search result only, not opened)"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-04",
+   "dimension": "Production and climate exposure",
+   "weight": 3,
+   "text": "Our income does not depend on one crop or one buyer for most of our sales.",
+   "evidenceBasis": "Design judgement, no direct source",
+   "sources": [
+    {
+     "id": "S20",
+     "title": "Managing Risks and Designing Products for Agricultural Microfinance",
+     "url": "https://www.cgap.org/sites/default/files/CGAP-Occasional-Paper-Managing-Risks-and-Designing-Products-for-Agricultural-Microfinance-Features-of-an-Emerging-Model-Apr-2005.pdf",
+     "relevance": "Medium (dated, lender-side)"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-05",
+   "dimension": "Input access and suppliers",
+   "weight": 4,
+   "text": "We can get the seed, fertiliser and chemicals we need on time for planting, without delays.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S12",
+     "title": "Farm household access to agricultural services in northern Ghana",
+     "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7689165",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S13",
+     "title": "Does contract farming affect technical efficiency? Soybean farmers in Northern Ghana",
+     "url": "https://link.springer.com/article/10.1186/s40100-022-00240-9",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-06",
+   "dimension": "Input access and suppliers",
+   "weight": 3,
+   "text": "We buy inputs from known suppliers such as agro-dealers or input credit providers, and can compare at least two.",
+   "evidenceBasis": "Design judgement, no direct source",
+   "sources": [
+    {
+     "id": "S12",
+     "title": "Farm household access to agricultural services in northern Ghana",
+     "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7689165",
+     "relevance": "Medium"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-07",
+   "dimension": "Input access and suppliers",
+   "weight": 4,
+   "text": "We record who received which inputs, how much, and what they owe us.",
+   "evidenceBasis": "Partly sourced",
+   "sources": [
+    {
+     "id": "S13",
+     "title": "Does contract farming affect technical efficiency? Soybean farmers in Northern Ghana",
+     "url": "https://link.springer.com/article/10.1186/s40100-022-00240-9",
+     "relevance": "High"
+    },
+    {
+     "id": "S20",
+     "title": "Managing Risks and Designing Products for Agricultural Microfinance",
+     "url": "https://www.cgap.org/sites/default/files/CGAP-Occasional-Paper-Managing-Risks-and-Designing-Products-for-Agricultural-Microfinance-Features-of-an-Emerging-Model-Apr-2005.pdf",
+     "relevance": "Medium (dated, lender-side)"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-08",
+   "dimension": "Input access and suppliers",
+   "weight": 3,
+   "text": "Inputs we supply are checked for quality and expiry before use or resale.",
+   "evidenceBasis": "Design judgement, no direct source",
+   "sources": [],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-09",
+   "dimension": "Post-harvest, storage and quality",
+   "weight": 4,
+   "text": "We dry and clean our produce to a set moisture or quality standard before storing or selling.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S14",
+     "title": "Farmers' declaration of qualitative and quantitative maize postharvest losses, transition zone of Ghana",
+     "url": "https://www.sciencedirect.com/science/article/abs/pii/S0022474X23001248",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S16",
+     "title": "Aflatoxin infestation in groundnut as influenced by different storage methods in Northern Ghana",
+     "url": "https://zenodo.org/records/10190398",
+     "relevance": "Medium"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-10",
+   "dimension": "Post-harvest, storage and quality",
+   "weight": 4,
+   "text": "Our store is clean, dry and pest-controlled, and we follow a written pest control routine.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S17",
+     "title": "FDA Guidelines for the Establishment of Food Storage Facility",
+     "url": "https://fdaghana.gov.gh/wp-content/uploads/2024/09/GUIDELINES-FOR-THE-ESTABLISHMENT-OF-FOOD-STORAGE-FACILITY.pdf",
+     "relevance": "High"
+    },
+    {
+     "id": "S16",
+     "title": "Aflatoxin infestation in groundnut as influenced by different storage methods in Northern Ghana",
+     "url": "https://zenodo.org/records/10190398",
+     "relevance": "Medium"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-11",
+   "dimension": "Post-harvest, storage and quality",
+   "weight": 4,
+   "text": "We check quality at purchase or aggregation (moisture, foreign matter, damaged or germinated nuts) and reject or grade lots.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S11",
+     "title": "Analysis of Agroforestry-Based Value Chains and Food System in Northern Ghana",
+     "url": "https://documents1.worldbank.org/curated/en/099062023175060963/pdf/P175989024fe300ba087e40ba504135cf48.pdf",
+     "relevance": "High"
+    },
+    {
+     "id": "S8",
+     "title": "Global Shea Alliance Sustainability Program",
+     "url": "https://globalshea.com/gsamain/storage/img/marqueeupdater/2020.01.06.04.30sustainability-program-english.compressed_501_971-2.pdf",
+     "relevance": "Medium"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-12",
+   "dimension": "Post-harvest, storage and quality",
+   "weight": 3,
+   "text": "We know how much we lose after harvest and can name the main causes.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S14",
+     "title": "Farmers' declaration of qualitative and quantitative maize postharvest losses, transition zone of Ghana",
+     "url": "https://www.sciencedirect.com/science/article/abs/pii/S0022474X23001248",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S15",
+     "title": "Post-Harvest Losses: Global Scale, Solutions, and Relevance to Ghana",
+     "url": "https://cgspace.cgiar.org/server/api/core/bitstreams/72abb4ee-5b89-40c8-bb6f-99565ddb3068/content",
+     "relevance": "Medium (figure to be rechecked)"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-13",
+   "dimension": "Post-harvest, storage and quality",
+   "weight": 3,
+   "text": "We use first-in first-out stock rotation and keep batch and stock records.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S17",
+     "title": "FDA Guidelines for the Establishment of Food Storage Facility",
+     "url": "https://fdaghana.gov.gh/wp-content/uploads/2024/09/GUIDELINES-FOR-THE-ESTABLISHMENT-OF-FOOD-STORAGE-FACILITY.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-14",
+   "dimension": "Market access and traceability",
+   "weight": 5,
+   "text": "We have a written agreement (offtake, supply or purchase) with at least one buyer, covering volume, price basis and quality.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S1",
+     "title": "IWA 29 Professional Farmer Organization, guidelines overview",
+     "url": "https://amea-global.com/wp-content/uploads/2021/12/Professional-Farmer-Organization-Guidelines-overview.pdf",
+     "relevance": "High"
+    },
+    {
+     "id": "S13",
+     "title": "Does contract farming affect technical efficiency? Soybean farmers in Northern Ghana",
+     "url": "https://link.springer.com/article/10.1186/s40100-022-00240-9",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-15",
+   "dimension": "Market access and traceability",
+   "weight": 4,
+   "text": "We know where each lot came from (member, village, date) and can show it to a buyer.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S8",
+     "title": "Global Shea Alliance Sustainability Program",
+     "url": "https://globalshea.com/gsamain/storage/img/marqueeupdater/2020.01.06.04.30sustainability-program-english.compressed_501_971-2.pdf",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S7",
+     "title": "Fairtrade Standard for Small-scale Producer Organizations, interpretation notes v2.7",
+     "url": "https://www.fairtrade.net/content/dam/fairtrade/fairtrade-international/standards/small-scale-producer/SPO_Interpretation_EN.pdf",
+     "relevance": "Medium"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-16",
+   "dimension": "Market access and traceability",
+   "weight": 4,
+   "text": "We know our buyers' quality and certification requirements and meet them.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S8",
+     "title": "Global Shea Alliance Sustainability Program",
+     "url": "https://globalshea.com/gsamain/storage/img/marqueeupdater/2020.01.06.04.30sustainability-program-english.compressed_501_971-2.pdf",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S1",
+     "title": "IWA 29 Professional Farmer Organization, guidelines overview",
+     "url": "https://amea-global.com/wp-content/uploads/2021/12/Professional-Farmer-Organization-Guidelines-overview.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-17",
+   "dimension": "Market access and traceability",
+   "weight": 3,
+   "text": "We check current market prices from more than one source before we agree a price.",
+   "evidenceBasis": "Partly sourced",
+   "sources": [
+    {
+     "id": "S8",
+     "title": "Global Shea Alliance Sustainability Program",
+     "url": "https://globalshea.com/gsamain/storage/img/marqueeupdater/2020.01.06.04.30sustainability-program-english.compressed_501_971-2.pdf",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S11",
+     "title": "Analysis of Agroforestry-Based Value Chains and Food System in Northern Ghana",
+     "url": "https://documents1.worldbank.org/curated/en/099062023175060963/pdf/P175989024fe300ba087e40ba504135cf48.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-18",
+   "dimension": "Market access and traceability",
+   "weight": 4,
+   "text": "We delivered what our buyers ordered, on time, in the last 12 months.",
+   "evidenceBasis": "Partly sourced",
+   "sources": [
+    {
+     "id": "S1",
+     "title": "IWA 29 Professional Farmer Organization, guidelines overview",
+     "url": "https://amea-global.com/wp-content/uploads/2021/12/Professional-Farmer-Organization-Guidelines-overview.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-19",
+   "dimension": "Cooperative governance and members",
+   "weight": 4,
+   "text": "Members elect leaders at a general meeting, and every member has one vote.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S7",
+     "title": "Fairtrade Standard for Small-scale Producer Organizations, interpretation notes v2.7",
+     "url": "https://www.fairtrade.net/content/dam/fairtrade/fairtrade-international/standards/small-scale-producer/SPO_Interpretation_EN.pdf",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S1",
+     "title": "IWA 29 Professional Farmer Organization, guidelines overview",
+     "url": "https://amea-global.com/wp-content/uploads/2021/12/Professional-Farmer-Organization-Guidelines-overview.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-20",
+   "dimension": "Cooperative governance and members",
+   "weight": 4,
+   "text": "Members attend general meetings and receive a yearly report on money, sales and decisions.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S1",
+     "title": "IWA 29 Professional Farmer Organization, guidelines overview",
+     "url": "https://amea-global.com/wp-content/uploads/2021/12/Professional-Farmer-Organization-Guidelines-overview.pdf",
+     "relevance": "High"
+    },
+    {
+     "id": "S7",
+     "title": "Fairtrade Standard for Small-scale Producer Organizations, interpretation notes v2.7",
+     "url": "https://www.fairtrade.net/content/dam/fairtrade/fairtrade-international/standards/small-scale-producer/SPO_Interpretation_EN.pdf",
+     "relevance": "Medium"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-21",
+   "dimension": "Cooperative governance and members",
+   "weight": 5,
+   "text": "Most members sell most of their crop through the group, and we know how much they sold outside it.",
+   "evidenceBasis": "Design judgement, no direct source",
+   "sources": [],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-22",
+   "dimension": "Cooperative governance and members",
+   "weight": 4,
+   "text": "Members who use group inputs or credit repay on time, and we keep a record of who owes what.",
+   "evidenceBasis": "Partly sourced",
+   "sources": [
+    {
+     "id": "S6",
+     "title": "IFAD's Engagement with Cooperatives (evaluation synthesis)",
+     "url": "https://www.ifad.org/documents/38714182/39720593/cooperatives_esr.pdf/702eeee1-3422-49f7-bf5f-345b798b6691",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S13",
+     "title": "Does contract farming affect technical efficiency? Soybean farmers in Northern Ghana",
+     "url": "https://link.springer.com/article/10.1186/s40100-022-00240-9",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-23",
+   "dimension": "Cooperative governance and members",
+   "weight": 4,
+   "text": "Roles of leaders, managers and members are written down, and someone independent checks our books at least yearly.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S1",
+     "title": "IWA 29 Professional Farmer Organization, guidelines overview",
+     "url": "https://amea-global.com/wp-content/uploads/2021/12/Professional-Farmer-Organization-Guidelines-overview.pdf",
+     "relevance": "High"
+    },
+    {
+     "id": "S6",
+     "title": "IFAD's Engagement with Cooperatives (evaluation synthesis)",
+     "url": "https://www.ifad.org/documents/38714182/39720593/cooperatives_esr.pdf/702eeee1-3422-49f7-bf5f-345b798b6691",
+     "relevance": "Medium"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-24",
+   "dimension": "Cooperative governance and members",
+   "weight": 2,
+   "text": "Our savings group or cooperative savings is linked to the group's activities, with clear rules for loans.",
+   "evidenceBasis": "Design judgement, no direct source",
+   "sources": [
+    {
+     "id": "S21",
+     "title": "VSLAs: the key to access to finance for rural smallholder farmers in northern Ghana",
+     "url": "https://www.2scale.org/en/updates/vslas-the-key-to-access-to-finance-for-rural-smallholder-farmers-in-northern-ghana-en",
+     "relevance": "Low (search result only, not opened)"
+    }
+   ],
+   "proposedCut": true
+  },
+  {
+   "code": "AF-25",
+   "dimension": "Seasonal cash flow and finance readiness",
+   "weight": 5,
+   "text": "We prepare a month-by-month cash plan across the season, showing when money comes in and goes out.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S20",
+     "title": "Managing Risks and Designing Products for Agricultural Microfinance",
+     "url": "https://www.cgap.org/sites/default/files/CGAP-Occasional-Paper-Managing-Risks-and-Designing-Products-for-Agricultural-Microfinance-Features-of-an-Emerging-Model-Apr-2005.pdf",
+     "relevance": "Medium (dated, lender-side)"
+    },
+    {
+     "id": "S3",
+     "title": "Using data and performance to solve the access to finance challenge for agri-SMEs",
+     "url": "https://agra.org/news/using-data-and-performance-to-solve-the-access-to-finance-challenge-for-agri-smes/",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-26",
+   "dimension": "Seasonal cash flow and finance readiness",
+   "weight": 3,
+   "text": "We keep a business bank or mobile money account separate from personal money.",
+   "evidenceBasis": "Partly sourced",
+   "sources": [
+    {
+     "id": "S1",
+     "title": "IWA 29 Professional Farmer Organization, guidelines overview",
+     "url": "https://amea-global.com/wp-content/uploads/2021/12/Professional-Farmer-Organization-Guidelines-overview.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-27",
+   "dimension": "Seasonal cash flow and finance readiness",
+   "weight": 5,
+   "text": "We can show records of sales, costs and loan repayments for the past 2 to 3 seasons.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S19",
+     "title": "The state of the agri-SME sector: bridging the finance gap",
+     "url": "https://www.casaprogramme.com/wp-content/uploads/2022/03/the-state-of-the-agri-sme-sector-bridging-the-finance-gap.pdf",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S3",
+     "title": "Using data and performance to solve the access to finance challenge for agri-SMEs",
+     "url": "https://agra.org/news/using-data-and-performance-to-solve-the-access-to-finance-challenge-for-agri-smes/",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-28",
+   "dimension": "Seasonal cash flow and finance readiness",
+   "weight": 4,
+   "text": "Repayment dates on any loan match when we get paid, such as after harvest.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S20",
+     "title": "Managing Risks and Designing Products for Agricultural Microfinance",
+     "url": "https://www.cgap.org/sites/default/files/CGAP-Occasional-Paper-Managing-Risks-and-Designing-Products-for-Agricultural-Microfinance-Features-of-an-Emerging-Model-Apr-2005.pdf",
+     "relevance": "Medium (dated, lender-side)"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-29",
+   "dimension": "Seasonal cash flow and finance readiness",
+   "weight": 4,
+   "text": "We know how much money we need before harvest and where it will come from.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S20",
+     "title": "Managing Risks and Designing Products for Agricultural Microfinance",
+     "url": "https://www.cgap.org/sites/default/files/CGAP-Occasional-Paper-Managing-Risks-and-Designing-Products-for-Agricultural-Microfinance-Features-of-an-Emerging-Model-Apr-2005.pdf",
+     "relevance": "Medium (dated, lender-side)"
+    },
+    {
+     "id": "S19",
+     "title": "The state of the agri-SME sector: bridging the finance gap",
+     "url": "https://www.casaprogramme.com/wp-content/uploads/2022/03/the-state-of-the-agri-sme-sector-bridging-the-finance-gap.pdf",
+     "relevance": "Medium"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-30",
+   "dimension": "Regulation and certification",
+   "weight": 5,
+   "text": "We know which regulators apply to us (FDA, TCDA, MOFA, Department of Cooperatives) and hold the registrations we need.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S9",
+     "title": "TCDA enforces new permit regime for exporters of unprocessed rubber, cashew and shea",
+     "url": "https://gna.org.gh/2025/04/tcda-enforces-new-permit-regime-for-exporters-of-unprocessed-rubber-cashew-and-shea/",
+     "relevance": "High"
+    },
+    {
+     "id": "S10",
+     "title": "Cashew, five other tree crops now regulated by TCDA",
+     "url": "https://www.africancashewalliance.com/en/news-and-info/blog/cashew-five-other-tree-crops-now-regulated-tree-crop-development-authority",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S17",
+     "title": "FDA Guidelines for the Establishment of Food Storage Facility",
+     "url": "https://fdaghana.gov.gh/wp-content/uploads/2024/09/GUIDELINES-FOR-THE-ESTABLISHMENT-OF-FOOD-STORAGE-FACILITY.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-31",
+   "dimension": "Regulation and certification",
+   "weight": 4,
+   "text": "If we sell raw shea or cashew for export, we know about the TCDA permit and the development levy proof.",
+   "evidenceBasis": "Sourced",
+   "sources": [
+    {
+     "id": "S9",
+     "title": "TCDA enforces new permit regime for exporters of unprocessed rubber, cashew and shea",
+     "url": "https://gna.org.gh/2025/04/tcda-enforces-new-permit-regime-for-exporters-of-unprocessed-rubber-cashew-and-shea/",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-32",
+   "dimension": "Regulation and certification",
+   "weight": 4,
+   "text": "Our premises and products meet FDA requirements for what we do (storage, processing, labelling).",
+   "evidenceBasis": "Partly sourced",
+   "sources": [
+    {
+     "id": "S17",
+     "title": "FDA Guidelines for the Establishment of Food Storage Facility",
+     "url": "https://fdaghana.gov.gh/wp-content/uploads/2024/09/GUIDELINES-FOR-THE-ESTABLISHMENT-OF-FOOD-STORAGE-FACILITY.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-33",
+   "dimension": "Regulation and certification",
+   "weight": 2,
+   "text": "We are certified, or working towards certification, for the markets we want, for example organic, Fairtrade or the Global Shea Alliance programme.",
+   "evidenceBasis": "Partly sourced",
+   "sources": [
+    {
+     "id": "S7",
+     "title": "Fairtrade Standard for Small-scale Producer Organizations, interpretation notes v2.7",
+     "url": "https://www.fairtrade.net/content/dam/fairtrade/fairtrade-international/standards/small-scale-producer/SPO_Interpretation_EN.pdf",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S8",
+     "title": "Global Shea Alliance Sustainability Program",
+     "url": "https://globalshea.com/gsamain/storage/img/marqueeupdater/2020.01.06.04.30sustainability-program-english.compressed_501_971-2.pdf",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S11",
+     "title": "Analysis of Agroforestry-Based Value Chains and Food System in Northern Ghana",
+     "url": "https://documents1.worldbank.org/curated/en/099062023175060963/pdf/P175989024fe300ba087e40ba504135cf48.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": true
+  },
+  {
+   "code": "AF-34",
+   "dimension": "Inclusion and resilience",
+   "weight": 3,
+   "text": "Women in our group take part in decisions and have a say in how money from sales is used.",
+   "evidenceBasis": "Partly sourced",
+   "sources": [
+    {
+     "id": "S18",
+     "title": "User Guide, project-level Women's Empowerment in Agriculture Index (pro-WEAI)",
+     "url": "https://weai.ifpri.info/files/2023/07/Pro-WEAI-Guide-2.pdf",
+     "relevance": "High"
+    },
+    {
+     "id": "S8",
+     "title": "Global Shea Alliance Sustainability Program",
+     "url": "https://globalshea.com/gsamain/storage/img/marqueeupdater/2020.01.06.04.30sustainability-program-english.compressed_501_971-2.pdf",
+     "relevance": "Medium"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-35",
+   "dimension": "Inclusion and resilience",
+   "weight": 3,
+   "text": "Women and young people can own or access the assets they need (land, trees, equipment) through our group.",
+   "evidenceBasis": "Partly sourced",
+   "sources": [
+    {
+     "id": "S11",
+     "title": "Analysis of Agroforestry-Based Value Chains and Food System in Northern Ghana",
+     "url": "https://documents1.worldbank.org/curated/en/099062023175060963/pdf/P175989024fe300ba087e40ba504135cf48.pdf",
+     "relevance": "High"
+    },
+    {
+     "id": "S18",
+     "title": "User Guide, project-level Women's Empowerment in Agriculture Index (pro-WEAI)",
+     "url": "https://weai.ifpri.info/files/2023/07/Pro-WEAI-Guide-2.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-36",
+   "dimension": "Inclusion and resilience",
+   "weight": 3,
+   "text": "Women and young people hold leadership roles or sit on committees.",
+   "evidenceBasis": "Design judgement, no direct source",
+   "sources": [
+    {
+     "id": "S7",
+     "title": "Fairtrade Standard for Small-scale Producer Organizations, interpretation notes v2.7",
+     "url": "https://www.fairtrade.net/content/dam/fairtrade/fairtrade-international/standards/small-scale-producer/SPO_Interpretation_EN.pdf",
+     "relevance": "Medium"
+    },
+    {
+     "id": "S18",
+     "title": "User Guide, project-level Women's Empowerment in Agriculture Index (pro-WEAI)",
+     "url": "https://weai.ifpri.info/files/2023/07/Pro-WEAI-Guide-2.pdf",
+     "relevance": "High"
+    }
+   ],
+   "proposedCut": false
+  },
+  {
+   "code": "AF-37",
+   "dimension": "Inclusion and resilience",
+   "weight": 2,
+   "text": "We have a plan to look after our land, trees and water, for example tree planting, soil care and no bush burning.",
+   "evidenceBasis": "Design judgement, no direct source",
+   "sources": [
+    {
+     "id": "S8",
+     "title": "Global Shea Alliance Sustainability Program",
+     "url": "https://globalshea.com/gsamain/storage/img/marqueeupdater/2020.01.06.04.30sustainability-program-english.compressed_501_971-2.pdf",
+     "relevance": "Medium"
+    }
+   ],
+   "proposedCut": true
+  }
+ ],
+ "sourcesNotRelied": [
+  {
+   "id": "S2",
+   "title": "SCOPEinsight",
+   "url": "https://scopeinsight.com/",
+   "relevance": "Medium"
+  },
+  {
+   "id": "S5",
+   "title": "Organization analysis and development, Learning Module 4",
+   "url": "https://www.fao.org/fileadmin/user_upload/capacity_building/LM4_v2_WEB_Light.pdf",
+   "relevance": "High"
+  }
+ ]
+}

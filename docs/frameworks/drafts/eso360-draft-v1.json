@@ -1,0 +1,370 @@
+{
+ "questions": [
+  {
+   "code": "ES-01",
+   "dimension": "Strategy and programme design",
+   "text": "We can state in one sentence which entrepreneurs we serve, which problem we solve for them, and what changes for them.",
+   "weight": 5
+  },
+  {
+   "code": "ES-02",
+   "dimension": "Strategy and programme design",
+   "text": "We have a written theory of change linking activities to outcomes, and we have revised it based on what we learned.",
+   "weight": 4
+  },
+  {
+   "code": "ES-03",
+   "dimension": "Strategy and programme design",
+   "text": "Our curriculum and support are adapted to the local sector and context rather than imported.",
+   "weight": 4
+  },
+  {
+   "code": "ES-04",
+   "dimension": "Strategy and programme design",
+   "text": "We design programme length, cohort size and support intensity deliberately for our entrepreneurs, and we know why.",
+   "weight": 3
+  },
+  {
+   "code": "ES-05",
+   "dimension": "Strategy and programme design",
+   "text": "We design programmes around entrepreneur demand, not only around what donors will fund.",
+   "weight": 4
+  },
+  {
+   "code": "ES-06",
+   "dimension": "Selection and cohort management",
+   "text": "We use written, published selection criteria and a scoring process that more than one reviewer applies.",
+   "weight": 4
+  },
+  {
+   "code": "ES-07",
+   "dimension": "Selection and cohort management",
+   "text": "We can show that we reach entrepreneurs who would not otherwise be supported, not only those already funded or well connected.",
+   "weight": 4
+  },
+  {
+   "code": "ES-08",
+   "dimension": "Selection and cohort management",
+   "text": "We record, for each applicant and each stage, who applied, who was selected and why, including rejected applicants.",
+   "weight": 4
+  },
+  {
+   "code": "ES-09",
+   "dimension": "Selection and cohort management",
+   "text": "Our cohort design lets entrepreneurs learn from vetted peers, and we track whether they do.",
+   "weight": 3
+  },
+  {
+   "code": "ES-10",
+   "dimension": "Selection and cohort management",
+   "text": "We have clear criteria and a process for graduating, exiting or pausing participants.",
+   "weight": 2
+  },
+  {
+   "code": "ES-11",
+   "dimension": "Service quality and mentors",
+   "text": "Our mentors and coaches are vetted, briefed and matched to each entrepreneur's needs, with local expertise where it matters.",
+   "weight": 5
+  },
+  {
+   "code": "ES-12",
+   "dimension": "Service quality and mentors",
+   "text": "We collect entrepreneur feedback on mentors and sessions and act on it.",
+   "weight": 4
+  },
+  {
+   "code": "ES-13",
+   "dimension": "Service quality and mentors",
+   "text": "Our services cover what entrepreneurs say they need most, including marketing, finance access and market linkages.",
+   "weight": 4
+  },
+  {
+   "code": "ES-14",
+   "dimension": "Service quality and mentors",
+   "text": "Core staff stay long enough to keep institutional knowledge, and we have a plan when someone leaves.",
+   "weight": 3
+  },
+  {
+   "code": "ES-15",
+   "dimension": "Service quality and mentors",
+   "text": "We use external consultants or partners for gaps in our own expertise instead of overpromising.",
+   "weight": 2
+  },
+  {
+   "code": "ES-16",
+   "dimension": "Results measurement",
+   "text": "We have defined indicators with baselines for our entrepreneurs, such as revenue, jobs and finance accessed.",
+   "weight": 5
+  },
+  {
+   "code": "ES-17",
+   "dimension": "Results measurement",
+   "text": "We track outcomes after the programme ends, not only during it.",
+   "weight": 5
+  },
+  {
+   "code": "ES-18",
+   "dimension": "Results measurement",
+   "text": "We compare participants with a reasonable counterfactual, such as rejected or waitlisted applicants, or we are honest about the limits of attribution.",
+   "weight": 3
+  },
+  {
+   "code": "ES-19",
+   "dimension": "Results measurement",
+   "text": "We track our programme costs and can state the cost per entrepreneur supported.",
+   "weight": 3
+  },
+  {
+   "code": "ES-20",
+   "dimension": "Results measurement",
+   "text": "We use results findings in leadership decisions and report them, including negative results.",
+   "weight": 4
+  },
+  {
+   "code": "ES-21",
+   "dimension": "Financial sustainability",
+   "text": "No single funder provides more than half of our income.",
+   "weight": 5
+  },
+  {
+   "code": "ES-22",
+   "dimension": "Financial sustainability",
+   "text": "We hold at least some multi-year or core funding that is not tied to one project.",
+   "weight": 4
+  },
+  {
+   "code": "ES-23",
+   "dimension": "Financial sustainability",
+   "text": "We earn some revenue from fees, services or success fees, and we know its share of our budget.",
+   "weight": 4
+  },
+  {
+   "code": "ES-24",
+   "dimension": "Financial sustainability",
+   "text": "Our core mission is funded, and we are not mainly surviving on unrelated consulting work.",
+   "weight": 3
+  },
+  {
+   "code": "ES-25",
+   "dimension": "Financial sustainability",
+   "text": "We hold a written financial plan and enough reserves to cover a funding gap.",
+   "weight": 4
+  },
+  {
+   "code": "ES-26",
+   "dimension": "Governance, safeguarding and compliance",
+   "text": "We have a functioning board or advisory body that meets, with conflict-of-interest rules.",
+   "weight": 4
+  },
+  {
+   "code": "ES-27",
+   "dimension": "Governance, safeguarding and compliance",
+   "text": "We are registered with Ghana's Data Protection Commission and handle entrepreneur data responsibly.",
+   "weight": 5
+  },
+  {
+   "code": "ES-28",
+   "dimension": "Governance, safeguarding and compliance",
+   "text": "We have a written safeguarding policy, a complaints channel that entrepreneurs know about, and trained staff and mentors.",
+   "weight": 5
+  },
+  {
+   "code": "ES-29",
+   "dimension": "Governance, safeguarding and compliance",
+   "text": "We hold up-to-date legal registration, tax filings and audited or reviewed accounts.",
+   "weight": 4
+  },
+  {
+   "code": "ES-30",
+   "dimension": "Governance, safeguarding and compliance",
+   "text": "Donor reporting and contract obligations are tracked and met on time.",
+   "weight": 3
+  },
+  {
+   "code": "ES-31",
+   "dimension": "Investor and partner linkages",
+   "text": "We make introductions to investors, buyers and partners, and track which ones led to deals.",
+   "weight": 5
+  },
+  {
+   "code": "ES-32",
+   "dimension": "Investor and partner linkages",
+   "text": "Our investor and finance partners are active and suited to our entrepreneurs' stage, not only guests at pitch events.",
+   "weight": 4
+  },
+  {
+   "code": "ES-33",
+   "dimension": "Investor and partner linkages",
+   "text": "We maintain an alumni network and contact alumni regularly.",
+   "weight": 3
+  },
+  {
+   "code": "ES-34",
+   "dimension": "Investor and partner linkages",
+   "text": "We have working partnerships with other support organisations, government, banks or buyers, and we know what each partner does.",
+   "weight": 3
+  },
+  {
+   "code": "ES-35",
+   "dimension": "Investor and partner linkages",
+   "text": "Market access support, the biggest reported barrier, is a deliberate part of our offer.",
+   "weight": 4
+  },
+  {
+   "code": "ES-36",
+   "dimension": "Inclusion and climate",
+   "text": "Women hold a meaningful share of selection decision roles and mentor panels.",
+   "weight": 4
+  },
+  {
+   "code": "ES-37",
+   "dimension": "Inclusion and climate",
+   "text": "We review our selection, curriculum and mentoring for bias against women, young people and local founders.",
+   "weight": 4
+  },
+  {
+   "code": "ES-38",
+   "dimension": "Inclusion and climate",
+   "text": "We reach rural entrepreneurs through design choices such as location, language and delivery, not only through open calls.",
+   "weight": 4
+  },
+  {
+   "code": "ES-39",
+   "dimension": "Inclusion and climate",
+   "text": "We set and report inclusion targets and break down results by gender, age and location.",
+   "weight": 4
+  },
+  {
+   "code": "ES-40",
+   "dimension": "Inclusion and climate",
+   "text": "We help entrepreneurs assess and respond to climate and environmental risks and opportunities.",
+   "weight": 2
+  }
+ ],
+ "dimensions": [
+  "Strategy and programme design",
+  "Selection and cohort management",
+  "Service quality and mentors",
+  "Results measurement",
+  "Financial sustainability",
+  "Governance, safeguarding and compliance",
+  "Investor and partner linkages",
+  "Inclusion and climate"
+ ],
+ "rules": null,
+ "sources": [
+  {
+   "component": "Evidence ES-S1: Does Acceleration Work? Five years of evidence",
+   "source": "Does Acceleration Work? Five years of evidence. GALI (ANDE and Emory), c.2021. https://www.galidata.org/assets/report/pdf/Does%20Acceleration%20Work_EN.pdf",
+   "rationale": "Relevance confidence: High. Used for questions ES-01, ES-03, ES-04, ES-06, ES-08, ES-09, ES-11, ES-37.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S2: A Rocket or a Runway?",
+   "source": "A Rocket or a Runway?. GALI, May 2021. https://www.galidata.org/assets/report/pdf/Rocket%20or%20Runway_EN.pdf",
+   "rationale": "Relevance confidence: High. Used for questions ES-03, ES-08, ES-09, ES-13, ES-17, ES-18, ES-31, ES-32, ES-33.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S3: Accelerating Women-led Startups (knowledge brief)",
+   "source": "Accelerating Women-led Startups (knowledge brief). GALI, Mar 2020. https://www.galidata.org/assets/report/pdf/accelarating_women_led_startups_final.pdf",
+   "rationale": "Relevance confidence: High. Used for questions ES-36, ES-37, ES-39.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S4: Landscape Study of Accelerators and Incubators in East Africa",
+   "source": "Landscape Study of Accelerators and Incubators in East Africa. GALI, Sep 2020. https://www.galidata.org/assets/report/pdf/Landscape-of-Accelerators-and-Incubators-in-East-Africa.pdf",
+   "rationale": "Relevance confidence: High (regional proxy). Used for questions ES-15, ES-21, ES-23.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S5: Bridging the Gap: Support Ecosystem for Rural Impacting Enterprises in Sub-Saharan Africa",
+   "source": "Bridging the Gap: Support Ecosystem for Rural Impacting Enterprises in Sub-Saharan Africa. Village Capital and Small Foundation, Jul 2024. https://newsandviews.vilcap.com/press-releases/village-capital-and-small-foundation-release-report-on-the-support-ecosystem-for-rural-impacting-enterprises-in-sub-saharan-africa",
+   "rationale": "Relevance confidence: Medium (press release read, full report not read). Used for questions ES-13, ES-31, ES-35, ES-38, ES-40.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S6: Implementation Completion Report, Ghana Climate Innovation Center Project",
+   "source": "Implementation Completion Report, Ghana Climate Innovation Center Project. World Bank, c.2021. https://documents1.worldbank.org/curated/en/418871622208005867/pdf/Ghana-Climate-Innovation-Center-Project.pdf",
+   "rationale": "Relevance confidence: High (Ghana-specific). Used for questions ES-02, ES-03, ES-16, ES-20, ES-25, ES-39, ES-40.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S7: Incubator Benchmark Assessment Tool (IBAT) questionnaire",
+   "source": "Incubator Benchmark Assessment Tool (IBAT) questionnaire. World Bank / infoDev, n/a. https://documents1.worldbank.org/curated/en/463691563913227383/pdf/Incubator-Assessment-Questionnaire.pdf",
+   "rationale": "Relevance confidence: High. Used for questions ES-06, ES-10, ES-11, ES-12, ES-14, ES-26, ES-29.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S8: Reimagining the Future of Enterprise Support in East Africa",
+   "source": "Reimagining the Future of Enterprise Support in East Africa. World Bank Development Impact / University of Michigan WDI, Oct 2025. https://wdi.umich.edu/wp-content/uploads/WDI-Reimagining-the-Future-of-ESOs-in-East-Africa_Final-Report_HRes.pdf",
+   "rationale": "Relevance confidence: Medium-High. Used for questions ES-01, ES-05, ES-14, ES-17, ES-20, ES-22.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S9: Who funds the intermediaries?",
+   "source": "Who funds the intermediaries?. Disrupt Africa (journalism), Jun 2025. https://disruptafrica.com/2025/06/13/who-funds-the-intermediaries-rethinking-capital-for-africas-ecosystem-support-organisations/",
+   "rationale": "Relevance confidence: Low-Medium (secondary, underlying studies not opened). Used for questions ES-21, ES-22, ES-23, ES-24.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S10: West Africa Entrepreneurial Ecosystem Snapshot: Accra",
+   "source": "West Africa Entrepreneurial Ecosystem Snapshot: Accra. ANDE, c.2021. https://andeglobal.org/wp-content/uploads/2021/02/Ecosystem-Snapshot_Accra.pdf",
+   "rationale": "Relevance confidence: High (Ghana-specific). Used for questions ES-33, ES-34, ES-38.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S12: DCED Standard for Measuring Results in Private Sector Development (v VII)",
+   "source": "DCED Standard for Measuring Results in Private Sector Development (v VII). DCED, Apr 2015. https://www.enterprise-development.org/wp-content/uploads/DCED_Standard_versionVII_Apr15_bluecover.pdf",
+   "rationale": "Relevance confidence: High. Used for questions ES-02, ES-16, ES-18, ES-19, ES-20, ES-30.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S13: Registration, Data Protection Act 2012 (Act 843)",
+   "source": "Registration, Data Protection Act 2012 (Act 843). Ghana Data Protection Commission, current. https://dataprotection.org.gh/registration/",
+   "rationale": "Relevance confidence: High. Used for questions ES-27.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S14: Sustainable Employment through Agribusiness (AgriBiz), Ghana",
+   "source": "Sustainable Employment through Agribusiness (AgriBiz), Ghana. GIZ, 2025. https://www.giz.de/sites/default/files/media/pkb-document/2025-11/giz2025-en-ghana-sustainable-employment-agribiz.pdf",
+   "rationale": "Relevance confidence: Medium. Used for questions ES-34.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S16: A meta-analysis of the effectiveness of startup accelerators",
+   "source": "A meta-analysis of the effectiveness of startup accelerators. Journal of Technology Transfer 51(1), Aug 2025. https://link.springer.com/article/10.1007/s10961-025-10218-6",
+   "rationale": "Relevance confidence: Medium-High (abstract read). Used for questions ES-04, ES-07.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S17: ESO Uplift Programme overview",
+   "source": "ESO Uplift Programme overview. GrowthAfrica with SDC, DRK, Amahoro Coalition, c.2025. https://growthafrica.com/wp-content/uploads/2025/05/About-The-ESO-Upift-Programme.pdf",
+   "rationale": "Relevance confidence: Medium. Used for questions ES-01, ES-02, ES-25.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence ES-S19: PSEAH page",
+   "source": "PSEAH page. CHS Alliance, current. https://www.chsalliance.org/protection-from-sexual-exploitation-abuse-and-sexual-harassment/",
+   "rationale": "Relevance confidence: Low-Medium (navigation page, requirement text not read). Used for questions ES-28.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  }
+ ],
+ "note": "DRAFT for sign-off. Questions drafted from published sources. No scoring thresholds proposed. Weights are proposals only. See audit trail."
+}

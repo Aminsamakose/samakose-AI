@@ -1,0 +1,380 @@
+{
+ "questions": [
+  {
+   "code": "AF-01",
+   "dimension": "Production and climate exposure",
+   "text": "We keep a written plan for each season: area, expected yield, and the inputs and labour we need.",
+   "weight": 3
+  },
+  {
+   "code": "AF-02",
+   "dimension": "Production and climate exposure",
+   "text": "We know our own average yield per acre for our main crops over the last 3 seasons.",
+   "weight": 3
+  },
+  {
+   "code": "AF-03",
+   "dimension": "Production and climate exposure",
+   "text": "We have a plan for a dry spell, flood or pest outbreak, such as early maturing seed, staggered planting or a second income.",
+   "weight": 4
+  },
+  {
+   "code": "AF-04",
+   "dimension": "Production and climate exposure",
+   "text": "Our income does not depend on one crop or one buyer for most of our sales.",
+   "weight": 3
+  },
+  {
+   "code": "AF-05",
+   "dimension": "Input access and suppliers",
+   "text": "We can get the seed, fertiliser and chemicals we need on time for planting, without delays.",
+   "weight": 4
+  },
+  {
+   "code": "AF-06",
+   "dimension": "Input access and suppliers",
+   "text": "We buy inputs from known suppliers such as agro-dealers or input credit providers, and can compare at least two.",
+   "weight": 3
+  },
+  {
+   "code": "AF-07",
+   "dimension": "Input access and suppliers",
+   "text": "We record who received which inputs, how much, and what they owe us.",
+   "weight": 4
+  },
+  {
+   "code": "AF-08",
+   "dimension": "Input access and suppliers",
+   "text": "Inputs we supply are checked for quality and expiry before use or resale.",
+   "weight": 3
+  },
+  {
+   "code": "AF-09",
+   "dimension": "Post-harvest, storage and quality",
+   "text": "We dry and clean our produce to a set moisture or quality standard before storing or selling.",
+   "weight": 4
+  },
+  {
+   "code": "AF-10",
+   "dimension": "Post-harvest, storage and quality",
+   "text": "Our store is clean, dry and pest-controlled, and we follow a written pest control routine.",
+   "weight": 4
+  },
+  {
+   "code": "AF-11",
+   "dimension": "Post-harvest, storage and quality",
+   "text": "We check quality at purchase or aggregation (moisture, foreign matter, damaged or germinated nuts) and reject or grade lots.",
+   "weight": 4
+  },
+  {
+   "code": "AF-12",
+   "dimension": "Post-harvest, storage and quality",
+   "text": "We know how much we lose after harvest and can name the main causes.",
+   "weight": 3
+  },
+  {
+   "code": "AF-13",
+   "dimension": "Post-harvest, storage and quality",
+   "text": "We use first-in first-out stock rotation and keep batch and stock records.",
+   "weight": 3
+  },
+  {
+   "code": "AF-14",
+   "dimension": "Market access and traceability",
+   "text": "We have a written agreement (offtake, supply or purchase) with at least one buyer, covering volume, price basis and quality.",
+   "weight": 5
+  },
+  {
+   "code": "AF-15",
+   "dimension": "Market access and traceability",
+   "text": "We know where each lot came from (member, village, date) and can show it to a buyer.",
+   "weight": 4
+  },
+  {
+   "code": "AF-16",
+   "dimension": "Market access and traceability",
+   "text": "We know our buyers' quality and certification requirements and meet them.",
+   "weight": 4
+  },
+  {
+   "code": "AF-17",
+   "dimension": "Market access and traceability",
+   "text": "We check current market prices from more than one source before we agree a price.",
+   "weight": 3
+  },
+  {
+   "code": "AF-18",
+   "dimension": "Market access and traceability",
+   "text": "We delivered what our buyers ordered, on time, in the last 12 months.",
+   "weight": 4
+  },
+  {
+   "code": "AF-19",
+   "dimension": "Cooperative governance and members",
+   "text": "Members elect leaders at a general meeting, and every member has one vote.",
+   "weight": 4
+  },
+  {
+   "code": "AF-20",
+   "dimension": "Cooperative governance and members",
+   "text": "Members attend general meetings and receive a yearly report on money, sales and decisions.",
+   "weight": 4
+  },
+  {
+   "code": "AF-21",
+   "dimension": "Cooperative governance and members",
+   "text": "Most members sell most of their crop through the group, and we know how much they sold outside it.",
+   "weight": 5
+  },
+  {
+   "code": "AF-22",
+   "dimension": "Cooperative governance and members",
+   "text": "Members who use group inputs or credit repay on time, and we keep a record of who owes what.",
+   "weight": 4
+  },
+  {
+   "code": "AF-23",
+   "dimension": "Cooperative governance and members",
+   "text": "Roles of leaders, managers and members are written down, and someone independent checks our books at least yearly.",
+   "weight": 4
+  },
+  {
+   "code": "AF-24",
+   "dimension": "Cooperative governance and members",
+   "text": "Our savings group or cooperative savings is linked to the group's activities, with clear rules for loans.",
+   "weight": 2
+  },
+  {
+   "code": "AF-25",
+   "dimension": "Seasonal cash flow and finance readiness",
+   "text": "We prepare a month-by-month cash plan across the season, showing when money comes in and goes out.",
+   "weight": 5
+  },
+  {
+   "code": "AF-26",
+   "dimension": "Seasonal cash flow and finance readiness",
+   "text": "We keep a business bank or mobile money account separate from personal money.",
+   "weight": 3
+  },
+  {
+   "code": "AF-27",
+   "dimension": "Seasonal cash flow and finance readiness",
+   "text": "We can show records of sales, costs and loan repayments for the past 2 to 3 seasons.",
+   "weight": 5
+  },
+  {
+   "code": "AF-28",
+   "dimension": "Seasonal cash flow and finance readiness",
+   "text": "Repayment dates on any loan match when we get paid, such as after harvest.",
+   "weight": 4
+  },
+  {
+   "code": "AF-29",
+   "dimension": "Seasonal cash flow and finance readiness",
+   "text": "We know how much money we need before harvest and where it will come from.",
+   "weight": 4
+  },
+  {
+   "code": "AF-30",
+   "dimension": "Regulation and certification",
+   "text": "We know which regulators apply to us (FDA, TCDA, MOFA, Department of Cooperatives) and hold the registrations we need.",
+   "weight": 5
+  },
+  {
+   "code": "AF-31",
+   "dimension": "Regulation and certification",
+   "text": "If we sell raw shea or cashew for export, we know about the TCDA permit and the development levy proof.",
+   "weight": 4
+  },
+  {
+   "code": "AF-32",
+   "dimension": "Regulation and certification",
+   "text": "Our premises and products meet FDA requirements for what we do (storage, processing, labelling).",
+   "weight": 4
+  },
+  {
+   "code": "AF-33",
+   "dimension": "Regulation and certification",
+   "text": "We are certified, or working towards certification, for the markets we want, for example organic, Fairtrade or the Global Shea Alliance programme.",
+   "weight": 2
+  },
+  {
+   "code": "AF-34",
+   "dimension": "Inclusion and resilience",
+   "text": "Women in our group take part in decisions and have a say in how money from sales is used.",
+   "weight": 3
+  },
+  {
+   "code": "AF-35",
+   "dimension": "Inclusion and resilience",
+   "text": "Women and young people can own or access the assets they need (land, trees, equipment) through our group.",
+   "weight": 3
+  },
+  {
+   "code": "AF-36",
+   "dimension": "Inclusion and resilience",
+   "text": "Women and young people hold leadership roles or sit on committees.",
+   "weight": 3
+  },
+  {
+   "code": "AF-37",
+   "dimension": "Inclusion and resilience",
+   "text": "We have a plan to look after our land, trees and water, for example tree planting, soil care and no bush burning.",
+   "weight": 2
+  }
+ ],
+ "dimensions": [
+  "Production and climate exposure",
+  "Input access and suppliers",
+  "Post-harvest, storage and quality",
+  "Market access and traceability",
+  "Cooperative governance and members",
+  "Seasonal cash flow and finance readiness",
+  "Regulation and certification",
+  "Inclusion and resilience"
+ ],
+ "rules": null,
+ "sources": [
+  {
+   "component": "Evidence AF-S1: IWA 29 Professional Farmer Organization, guidelines overview",
+   "source": "IWA 29 Professional Farmer Organization, guidelines overview. AMEA (summarising ISO IWA 29), 2019 standard; overview 2021. https://amea-global.com/wp-content/uploads/2021/12/Professional-Farmer-Organization-Guidelines-overview.pdf",
+   "rationale": "Relevance confidence: High. Used for questions AF-01, AF-14, AF-16, AF-18, AF-19, AF-20, AF-23, AF-26.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S3: Using data and performance to solve the access to finance challenge for agri-SMEs",
+   "source": "Using data and performance to solve the access to finance challenge for agri-SMEs. AGRA, 15 Apr 2021. https://agra.org/news/using-data-and-performance-to-solve-the-access-to-finance-challenge-for-agri-smes/",
+   "rationale": "Relevance confidence: High. Used for questions AF-01, AF-02, AF-25, AF-27.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S6: IFAD's Engagement with Cooperatives (evaluation synthesis)",
+   "source": "IFAD's Engagement with Cooperatives (evaluation synthesis). IFAD, 2013. https://www.ifad.org/documents/38714182/39720593/cooperatives_esr.pdf/702eeee1-3422-49f7-bf5f-345b798b6691",
+   "rationale": "Relevance confidence: Medium. Used for questions AF-22, AF-23.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S7: Fairtrade Standard for Small-scale Producer Organizations, interpretation notes v2.7",
+   "source": "Fairtrade Standard for Small-scale Producer Organizations, interpretation notes v2.7. Fairtrade International, v2.7. https://www.fairtrade.net/content/dam/fairtrade/fairtrade-international/standards/small-scale-producer/SPO_Interpretation_EN.pdf",
+   "rationale": "Relevance confidence: Medium. Used for questions AF-15, AF-19, AF-20, AF-33, AF-36.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S8: Global Shea Alliance Sustainability Program",
+   "source": "Global Shea Alliance Sustainability Program. Global Shea Alliance, c.2020. https://globalshea.com/gsamain/storage/img/marqueeupdater/2020.01.06.04.30sustainability-program-english.compressed_501_971-2.pdf",
+   "rationale": "Relevance confidence: Medium. Used for questions AF-11, AF-15, AF-16, AF-17, AF-33, AF-34, AF-37.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S9: TCDA enforces new permit regime for exporters of unprocessed rubber, cashew and shea",
+   "source": "TCDA enforces new permit regime for exporters of unprocessed rubber, cashew and shea. Ghana News Agency, Apr 2025. https://gna.org.gh/2025/04/tcda-enforces-new-permit-regime-for-exporters-of-unprocessed-rubber-cashew-and-shea/",
+   "rationale": "Relevance confidence: High. Used for questions AF-30, AF-31.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S10: Cashew, five other tree crops now regulated by TCDA",
+   "source": "Cashew, five other tree crops now regulated by TCDA. African Cashew Alliance, 2020. https://www.africancashewalliance.com/en/news-and-info/blog/cashew-five-other-tree-crops-now-regulated-tree-crop-development-authority",
+   "rationale": "Relevance confidence: Medium. Used for questions AF-30.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S11: Analysis of Agroforestry-Based Value Chains and Food System in Northern Ghana",
+   "source": "Analysis of Agroforestry-Based Value Chains and Food System in Northern Ghana. World Bank, May 2023. https://documents1.worldbank.org/curated/en/099062023175060963/pdf/P175989024fe300ba087e40ba504135cf48.pdf",
+   "rationale": "Relevance confidence: High. Used for questions AF-11, AF-17, AF-33, AF-35.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S12: Farm household access to agricultural services in northern Ghana",
+   "source": "Farm household access to agricultural services in northern Ghana. PMC (journal not captured), c.2020, not confirmed. https://pmc.ncbi.nlm.nih.gov/articles/PMC7689165",
+   "rationale": "Relevance confidence: Medium. Used for questions AF-05, AF-06.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S13: Does contract farming affect technical efficiency? Soybean farmers in Northern Ghana",
+   "source": "Does contract farming affect technical efficiency? Soybean farmers in Northern Ghana. Agricultural and Food Economics (Springer), 2022. https://link.springer.com/article/10.1186/s40100-022-00240-9",
+   "rationale": "Relevance confidence: High. Used for questions AF-05, AF-07, AF-14, AF-22.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S14: Farmers' declaration of qualitative and quantitative maize postharvest losses, transition zone of Ghana",
+   "source": "Farmers' declaration of qualitative and quantitative maize postharvest losses, transition zone of Ghana. Journal of Stored Products Research, c.2023. https://www.sciencedirect.com/science/article/abs/pii/S0022474X23001248",
+   "rationale": "Relevance confidence: Medium. Used for questions AF-09, AF-12.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S15: Post-Harvest Losses: Global Scale, Solutions, and Relevance to Ghana",
+   "source": "Post-Harvest Losses: Global Scale, Solutions, and Relevance to Ghana. IFPRI, Mar 2018. https://cgspace.cgiar.org/server/api/core/bitstreams/72abb4ee-5b89-40c8-bb6f-99565ddb3068/content",
+   "rationale": "Relevance confidence: Medium (figure to be rechecked). Used for questions AF-12.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S16: Aflatoxin infestation in groundnut as influenced by different storage methods in Northern Ghana",
+   "source": "Aflatoxin infestation in groundnut as influenced by different storage methods in Northern Ghana. Kundok Development Consult (EWA-BELT, EU), 22 Nov 2023. https://zenodo.org/records/10190398",
+   "rationale": "Relevance confidence: Medium. Used for questions AF-09, AF-10.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S17: FDA Guidelines for the Establishment of Food Storage Facility",
+   "source": "FDA Guidelines for the Establishment of Food Storage Facility. Food and Drugs Authority, Ghana, c.2024. https://fdaghana.gov.gh/wp-content/uploads/2024/09/GUIDELINES-FOR-THE-ESTABLISHMENT-OF-FOOD-STORAGE-FACILITY.pdf",
+   "rationale": "Relevance confidence: High. Used for questions AF-10, AF-13, AF-30, AF-32.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S18: User Guide, project-level Women's Empowerment in Agriculture Index (pro-WEAI)",
+   "source": "User Guide, project-level Women's Empowerment in Agriculture Index (pro-WEAI). IFPRI, 2023. https://weai.ifpri.info/files/2023/07/Pro-WEAI-Guide-2.pdf",
+   "rationale": "Relevance confidence: High. Used for questions AF-34, AF-35, AF-36.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S19: The state of the agri-SME sector: bridging the finance gap",
+   "source": "The state of the agri-SME sector: bridging the finance gap. CASA programme, c.2022. https://www.casaprogramme.com/wp-content/uploads/2022/03/the-state-of-the-agri-sme-sector-bridging-the-finance-gap.pdf",
+   "rationale": "Relevance confidence: Medium. Used for questions AF-27, AF-29.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S20: Managing Risks and Designing Products for Agricultural Microfinance",
+   "source": "Managing Risks and Designing Products for Agricultural Microfinance. CGAP, Apr 2005. https://www.cgap.org/sites/default/files/CGAP-Occasional-Paper-Managing-Risks-and-Designing-Products-for-Agricultural-Microfinance-Features-of-an-Emerging-Model-Apr-2005.pdf",
+   "rationale": "Relevance confidence: Medium (dated, lender-side). Used for questions AF-03, AF-04, AF-07, AF-25, AF-28, AF-29.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S21: VSLAs: the key to access to finance for rural smallholder farmers in northern Ghana",
+   "source": "VSLAs: the key to access to finance for rural smallholder farmers in northern Ghana. 2SCALE, n/a. https://www.2scale.org/en/updates/vslas-the-key-to-access-to-finance-for-rural-smallholder-farmers-in-northern-ghana-en",
+   "rationale": "Relevance confidence: Low (search result only, not opened). Used for questions AF-24.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S23: Assessing the impact of climate variability on maize yields in the different regions of Ghana",
+   "source": "Assessing the impact of climate variability on maize yields in the different regions of Ghana. PLOS ONE, c.2024. https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0305762",
+   "rationale": "Relevance confidence: Low (search result only, not opened). Used for questions AF-03.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence AF-S24: Intra-seasonal rainfall variability and crop yield in the Upper East Region of Ghana",
+   "source": "Intra-seasonal rainfall variability and crop yield in the Upper East Region of Ghana. Environment, Development and Sustainability (Springer), c.2023. https://link.springer.com/article/10.1007/s10668-023-03861-2",
+   "rationale": "Relevance confidence: Low (search result only, not opened). Used for questions AF-03.",
+   "adaptation": "Agent-assembled evidence, not yet reviewed. Questions are drafted from this source and rewritten as owner-rated statements.",
+   "approval": "Proposed"
+  }
+ ],
+ "note": "DRAFT for sign-off. Questions drafted from published sources and Ghana studies. No scoring thresholds proposed. Weights are proposals only. See audit trail."
+}
