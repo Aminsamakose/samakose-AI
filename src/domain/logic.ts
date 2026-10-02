@@ -166,6 +166,10 @@ export function extractJson(text: string | null | undefined): any | null {
   try { return JSON.parse(t.slice(a, b + 1)); } catch { return null; }
 }
 
+/** Claims an AI draft may never make. Certification and consequential decisions need a human governance gate. */
+export const FORBIDDEN_AI_CLAIMS = [/\bcertif(y|ied|ies|ication)\b/i, /investment[- ]ready/i, /official score/i, /guarantee/i, /approved for funding/i];
+export const hasForbiddenClaim = (t: string) => FORBIDDEN_AI_CLAIMS.some((re) => re.test(t));
+
 export function validateDiagnosis(o: any, evidenceIds: string[]): string[] {
   const p: string[] = [];
   if (!o || typeof o !== 'object') return ['Not an object'];
@@ -180,6 +184,8 @@ export function validateDiagnosis(o: any, evidenceIds: string[]): string[] {
   if (!Array.isArray(o.risks)) p.push('risks must be a list');
   else o.risks.forEach((r: any, i: number) => { if (!r?.text || !['High', 'Medium', 'Low'].includes(r.severity)) p.push(`risks[${i}] invalid`); });
   if (o.model_confidence !== undefined && (typeof o.model_confidence !== 'number' || o.model_confidence < 0 || o.model_confidence > 1)) p.push('model_confidence must be 0 to 1');
+  const all = [o.summary, ...(Array.isArray(o.root_causes) ? o.root_causes.map((r: any) => r?.cause) : []), ...(Array.isArray(o.risks) ? o.risks.map((r: any) => r?.text) : [])].filter((x) => typeof x === 'string').join(' ');
+  if (hasForbiddenClaim(all)) p.push('The draft makes a certification, guarantee or readiness claim. Drafts may analyse and recommend only');
   return p;
 }
 

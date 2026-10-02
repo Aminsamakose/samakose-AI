@@ -1,5 +1,6 @@
 /** Deterministic drafts used when AI_MODE=mock. They follow the same schemas the real model must follow. */
 import type { PrescriptionItem } from '@/db/schema';
+import { hasForbiddenClaim } from './logic';
 
 export type DiagnosisContext = {
   business: { type: string; sector: string | null; region: string | null; size: string | null };
@@ -13,7 +14,7 @@ export function mockDiagnosis(c: DiagnosisContext) {
   const root_causes = weakest.map((d) => {
     const ans = c.weakest_answers.filter((a) => a.dimension === d.dimension).slice(0, 2);
     const ids = ans.length ? ans.map((a) => a.evidence_id) : c.allowed_evidence_ids.slice(0, 1);
-    return { cause: `${d.dimension}: ${ans.length ? ans.map((a) => a.question.toLowerCase()).join('; ') + ' is not yet in place' : 'practices are weak'} (dimension score ${d.value})`, evidence_ids: ids };
+    return { cause: `${d.dimension}: ${ans.length ? ans.map((a) => (hasForbiddenClaim(a.question) ? `question ${a.question_code}` : a.question.toLowerCase())).join('; ') + ' is not yet in place' : 'practices are weak'} (dimension score ${d.value})`, evidence_ids: ids };
   });
   const lowest = weakest[0]?.value ?? 100;
   const priority = c.overall < 40 || lowest < 30 ? 'High' : c.overall < 60 ? 'Medium' : 'Low';

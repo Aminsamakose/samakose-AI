@@ -16,6 +16,9 @@
     "db:seed": "tsx src/db/seed.ts",
     "worker": "tsx src/worker.ts",
     "openapi": "tsx scripts/openapi.ts",
+    "db:rehearse": "tsx scripts/migration-rehearsal.ts rehearse",
+    "db:history": "tsx scripts/migration-rehearsal.ts status",
+    "ai:eval": "tsx scripts/ai-eval.ts",
     "test": "vitest run",
     "test:e2e": "tsx e2e/run.ts"
   },
