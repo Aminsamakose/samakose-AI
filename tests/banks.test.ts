@@ -143,3 +143,17 @@ describe('loading banks through the API', () => {
     await expect(db().update(schema.frameworkVersions).set({ meta: { architecture: 'tampered' } }).where(eq(schema.frameworkVersions.id, pub.id))).rejects.toThrow();
   });
 });
+
+import { mapKobo } from '@/services/kobo';
+describe('Kobo field names for bank codes', () => {
+  it('reads SM-001 or SM_001, with evidence, document and not applicable flags', () => {
+    const m = mapKobo({ _uuid: 'u', case_code: 'CASE-1', SM_001: '3', SM_001_evidence: 'Document-supported', SM_001_ref: 'DOC-1', 'g/AF-020': '2', SM_050: '', SM_051: '0', SM_052: '', SM_052_na: '1', ES_007: 'NA', Q01: '4' });
+    expect(m.answers['SM-001']).toEqual({ value: 3, evidence: 'Document-supported', ref: 'DOC-1' });
+    expect(m.answers['AF-020']).toMatchObject({ value: 2, evidence: 'Self-reported' });
+    expect(m.answers['SM-050']).toBeUndefined();                  // blank is unanswered, not zero
+    expect(m.answers['SM-051']).toMatchObject({ value: 0 });      // a real zero stays a zero
+    expect(m.answers['SM-052']).toEqual({ notApplicable: true });
+    expect(m.answers['ES-007']).toEqual({ notApplicable: true });
+    expect(m.answers.Q01).toMatchObject({ value: 4 });
+  });
+});

@@ -16,13 +16,17 @@ export function mapKobo(sub: Record<string, any>) {
   const flat: Record<string, any> = {};
   for (const [k, v] of Object.entries(sub)) flat[leaf(k)] = v;
   const answers: Record<string, AnswerInput> = {};
-  // Two field naming styles are accepted: Q01 with Q01_evidence and Q01_ref, or the earlier form's q_Q01 with e_Q01 and ref_Q01.
+  // Field names: Q01 with Q01_evidence and Q01_ref, the earlier q_Q01 with e_Q01 and ref_Q01, and bank codes such as SM-001.
+  // Form field names may use an underscore instead of the hyphen (SM_001). A question that does not apply is sent as <field>_na.
+  const naFlag = (v: unknown) => ['1', 'true', 'yes', 'y', 'na', 'n/a'].includes(String(v ?? '').trim().toLowerCase());
   for (const [k, v] of Object.entries(flat)) {
-    const m = /^(?:q_)?(Q\d{2,3})$/.exec(k);
+    const m = /^(?:q_)?(Q\d{2,3}|[A-Z]{2}[-_]\d{3})$/.exec(k);
     if (!m) continue;
-    const q = m[1];
-    const evidence = flat[`${q}_evidence`] ?? flat[`e_${q}`];
-    answers[q] = { value: Number(v), evidence: EVIDENCE_CLASSES.includes(evidence) ? (evidence as EvidenceClass) : 'Self-reported', ref: flat[`${q}_ref`] ?? flat[`ref_${q}`] ?? null };
+    const raw = m[1], q = raw.replace('_', '-');
+    if (naFlag(flat[`${raw}_na`]) || (typeof v === 'string' && ['na', 'n/a'].includes(v.trim().toLowerCase()))) { answers[q] = { notApplicable: true }; continue; }
+    if (v === '' || v === null || v === undefined) continue;
+    const evidence = flat[`${raw}_evidence`] ?? flat[`e_${raw}`];
+    answers[q] = { value: Number(v), evidence: EVIDENCE_CLASSES.includes(evidence) ? (evidence as EvidenceClass) : 'Self-reported', ref: flat[`${raw}_ref`] ?? flat[`ref_${raw}`] ?? null };
   }
   return { uuid: String(sub._uuid ?? flat._uuid ?? ''), caseCode: String(flat.case_code ?? flat.case_id ?? '').trim(), answers };
 }
