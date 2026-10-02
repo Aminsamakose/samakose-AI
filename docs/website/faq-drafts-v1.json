@@ -1,0 +1,170 @@
+{
+  "format": "samakose-config",
+  "version": 1,
+  "exportedAt": "2026-10-02T21:00:00.000Z",
+  "content": [
+    {
+      "kind": "faq",
+      "title": "What is The Business Doctor?",
+      "status": "Draft",
+      "sortOrder": 0,
+      "data": {
+        "question": "What is The Business Doctor?",
+        "answer": "The Business Doctor is Samakose's way of checking the health of a business, finding what is holding it back, and working with the owner on a practical plan to fix it. A trained adviser guides every step, and the results are kept in a record that shows how the business improves over time."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "Who is it for?",
+      "status": "Draft",
+      "sortOrder": 10,
+      "data": {
+        "question": "Who is it for?",
+        "answer": "Small and medium businesses, agribusinesses, and organisations that support enterprises, such as programmes and incubators. If you run a business and want a clear, honest picture of where it stands, it is for you."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "How does the business health check work?",
+      "status": "Draft",
+      "sortOrder": 20,
+      "data": {
+        "question": "How does the business health check work?",
+        "answer": "You answer a set of questions about how the business runs, with your adviser's help. The questions cover areas such as finance, market and sales, operations, people and governance, records and systems, and compliance. Each answer is rated, and where you can show a document or other proof, the answer counts for more. The result is a score for each area and an overall picture."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "How long does it take?",
+      "status": "Draft",
+      "sortOrder": 30,
+      "data": {
+        "question": "How long does it take?",
+        "answer": "It depends on how complete your records are and how much time you can give. Your adviser will explain what to expect at the start and will help you break the work into short sessions."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "Do I need records and documents before I start?",
+      "status": "Draft",
+      "sortOrder": 40,
+      "data": {
+        "question": "Do I need records and documents before I start?",
+        "answer": "No. You can start with what you have. Answers backed by documents such as receipts, registration papers or sales records count for more, and answers without proof still count, just with less weight. Your adviser will show you which records matter most and help you build the habit of keeping them."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "What do I get at the end?",
+      "status": "Draft",
+      "sortOrder": 50,
+      "data": {
+        "question": "What do I get at the end?",
+        "answer": "You get a score for each area of the business, a plain-language explanation of what is behind it, and a plan of practical actions with owners and dates. An adviser then coaches you through the plan, and you receive progress reports so you can see what has changed."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "Is the score decided by artificial intelligence?",
+      "status": "Draft",
+      "sortOrder": 60,
+      "data": {
+        "question": "Is the score decided by artificial intelligence?",
+        "answer": "No. Scores are worked out by fixed, published rules from your answers and evidence, so the same answers always give the same score. Artificial intelligence may help draft an explanation or a plan, but an expert reviews every draft and a different person approves the plan before it reaches you."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "Who can see my business information?",
+      "status": "Draft",
+      "sortOrder": 70,
+      "data": {
+        "question": "Who can see my business information?",
+        "answer": "Your business, and the advisers and reviewers assigned to your case. Funders and programme partners see only combined results for a group of businesses, never a single business's answers or documents. Your consent is recorded when your organisation is registered, and every change by an administrator is kept in an audit trail."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "What is a business health certificate?",
+      "status": "Draft",
+      "sortOrder": 80,
+      "data": {
+        "question": "What is a business health certificate?",
+        "answer": "A certificate is issued only when the evidence supports it. Your adviser proposes it, and a different reviewer decides, so no one approves their own work. It lasts for a fixed period, shows its level and dates, and can be withdrawn if the evidence changes. You choose whether to share a link that lets a lender or partner confirm it."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "Does a certificate promise that I will get funding?",
+      "status": "Draft",
+      "sortOrder": 90,
+      "data": {
+        "question": "Does a certificate promise that I will get funding?",
+        "answer": "No. A certificate shows where your business stands on the evidence at that time. Lenders, investors and programmes make their own decisions, and it helps you prepare for those conversations."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "What happens after the first check?",
+      "status": "Draft",
+      "sortOrder": 100,
+      "data": {
+        "question": "What happens after the first check?",
+        "answer": "The check is the start. You work through your action plan with coaching sessions, track results against indicators agreed with your adviser, and check again later. Each check is added to your business health record, so you can see real progress rather than a single snapshot."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "What if I disagree with the results?",
+      "status": "Draft",
+      "sortOrder": 110,
+      "data": {
+        "question": "What if I disagree with the results?",
+        "answer": "Talk to your adviser. Every result can be traced to the answers and evidence behind it, so you can look at it together. If you add evidence or correct an answer, the score is worked out again by the same rules."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "How much does it cost?",
+      "status": "Draft",
+      "sortOrder": 120,
+      "data": {
+        "question": "How much does it cost?",
+        "answer": "The cost depends on the service and the programme you join. Please contact us and we will tell you what applies to your business."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "How do I get started?",
+      "status": "Draft",
+      "sortOrder": 130,
+      "data": {
+        "question": "How do I get started?",
+        "answer": "Register your business on the platform or send us a message through the contact page. We will verify your organisation, assign an adviser and agree the first steps with you."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "Where do you work?",
+      "status": "Draft",
+      "sortOrder": 140,
+      "data": {
+        "question": "Where do you work?",
+        "answer": "Samakose is based in Tamale, Northern Ghana, and focuses on businesses in Northern Ghana. If you are elsewhere, contact us and we will tell you what we can do."
+      }
+    },
+    {
+      "kind": "faq",
+      "title": "How is my account kept secure?",
+      "status": "Draft",
+      "sortOrder": 150,
+      "data": {
+        "question": "How is my account kept secure?",
+        "answer": "Passwords are stored in a form no one can read, two-step sign-in is available for every account, accounts lock after repeated failed attempts, and every administrator change is recorded. Access depends on your role, so people see only what they need."
+      }
+    }
+  ],
+  "switches": {},
+  "emailTemplates": [],
+  "reportText": {}
+}

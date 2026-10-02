@@ -15,8 +15,14 @@ export const tokens = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, ' '
 export function rank(question: string, passages: Passage[], top = 3): Passage[] {
   const q = new Set(tokens(question));
   if (!q.size) return [];
-  return passages.map((p) => { const t = new Set(tokens(`${p.title} ${p.text}`)); let hit = 0; for (const w of q) if (t.has(w)) hit++; return { p, hit }; })
-    .filter((x) => x.hit > 0).sort((a, b) => b.hit - a.hit).slice(0, top).map((x) => x.p);
+  const score = (p: Passage) => {
+    const all = new Set(tokens(`${p.title} ${p.text}`)); const title = new Set(tokens(p.title));
+    let hit = 0, titleHit = 0;
+    for (const w of q) { if (all.has(w)) hit++; if (title.has(w)) titleHit++; }
+    // Words found in the question count once; a passage whose title is mostly covered by the question counts for more.
+    return { hit, s: hit + (title.size ? 2 * (titleHit / title.size) : 0) };
+  };
+  return passages.map((p) => ({ p, ...score(p) })).filter((x) => x.hit > 0).sort((a, b) => b.s - a.s).slice(0, top).map((x) => x.p);
 }
 
 export const HANDOFF = 'I can only answer from what is published on this website, and I could not find that here. Please send your question to our team and a person will reply.';
