@@ -68,10 +68,10 @@ function RowActions({ ev, role, onDone }: { ev: Ev; role: string; onDone: () => 
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const set = async (cls: string, msg: string) => { await api.patch(`/evidence/${ev.id}`, { class: cls }); toast(msg); onDone(); };
-  const allowed = CLASSES.filter((c) => c !== ev.class && (c !== 'Verified' || role === 'CONSULTANT'));
+  const allowed = CLASSES.filter((c) => c !== ev.class && (c !== 'Verified' || role === 'EXPERT'));
   const f = useForm({ cls: allowed[0] ?? '' }, (v) => api.patch(`/evidence/${ev.id}`, { class: v.cls }), { success: 'Evidence type changed and the case rescored', onDone: () => { setOpen(false); onDone(); } });
   return <div className="row">
-    {role === 'CONSULTANT' && ev.class !== 'Verified' && <ConfirmButton size="sm" label="Verify" variant="primary" message={`Mark ${ev.code} as verified? You are confirming you have checked it. The score is recalculated.`} onConfirm={() => set('Verified', `${ev.code} verified`)} />}
+    {role === 'EXPERT' && ev.class !== 'Verified' && <ConfirmButton size="sm" label="Verify" variant="primary" message={`Mark ${ev.code} as verified? You are confirming you have checked it. The score is recalculated.`} onConfirm={() => set('Verified', `${ev.code} verified`)} />}
     {ev.class !== 'Missing' && <ConfirmButton size="sm" label="Reject" variant="danger" message={`Reject ${ev.code}? It will be recorded as Missing, which carries the lowest weight, and the score is recalculated.`} onConfirm={() => set('Missing', `${ev.code} rejected`)} />}
     <Button size="sm" onClick={() => setOpen(true)}>Change type</Button>
     <Modal open={open} onClose={() => setOpen(false)} title={`Change type of ${ev.code}`}>
@@ -86,7 +86,7 @@ function RowActions({ ev, role, onDone }: { ev: Ev; role: string; onDone: () => 
 }
 
 function AddEvidence({ caseId, role, docs, canDocs, onDone }: { caseId: string; role: string; docs: Doc[]; canDocs: boolean; onDone: () => void }) {
-  const classes = role === 'OWNER' ? ['Unverified', 'Self-reported'] : CLASSES.filter((c) => c !== 'Verified' || role === 'CONSULTANT');
+  const classes = role === 'OWNER' ? ['Unverified', 'Self-reported'] : CLASSES.filter((c) => c !== 'Verified' || role === 'EXPERT');
   const f = useForm({ description: '', cls: role === 'OWNER' ? 'Unverified' : 'Unverified', documentId: '', link: '' }, async (v) => {
     const e: Record<string, string> = {};
     if (v.description.trim().length < 3) e.description = 'Describe the evidence in at least 3 characters';

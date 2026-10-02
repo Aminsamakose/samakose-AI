@@ -6,7 +6,7 @@ import type { TabProps } from './types';
 import { today, useMe } from './clinical/common';
 
 type Row = { id: string; code: string; text: string; ownerRole: string; assignee: string | null; dueDate: string; status: string; evidenceNote: string | null; overdue: boolean; horizon?: number };
-const OWNER: Record<string, string> = { OWNER: 'Business owner', COACH: 'Coach', CONSULTANT: 'Consultant' };
+const OWNER: Record<string, string> = { OWNER: 'Business owner', COACH: 'Coaching expert', CONSULTANT: 'Lead expert' };
 const NEXT: Record<string, string[]> = { Open: ['Open', 'In progress', 'Done'], 'In progress': ['In progress', 'Open', 'Done'], Done: ['Done'] };
 
 export default function TabActions({ caseId, role, reload }: TabProps) {

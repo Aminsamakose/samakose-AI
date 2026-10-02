@@ -6,7 +6,8 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { ApiError, fieldError, forbidden, notFound } from '@/lib/errors';
-import { assertCase, assertOrg, caseScope, isInternal } from '@/domain/scope';
+import { can } from '@/lib/rbac';
+import { assertCase, assertOrg, caseScope, isInternal, assertLeadCase } from '@/domain/scope';
 import { emitEvent } from '@/domain/events';
 import { env } from '@/lib/env';
 import { sha256 } from '@/lib/crypto';
@@ -26,7 +27,7 @@ export async function listEvidence(ctx: Ctx, caseId: string) {
 export async function addEvidence(ctx: Ctx, caseId: string, b: { description: string; class?: EvidenceClass; documentId?: string | null; link?: string | null }) {
   allow(ctx, 'evidence', 'create');
   const u = need(ctx).user;
-  const cs = await assertCase(ctx, caseId);
+  const cs = await assertLeadCase(ctx, caseId);
   let cls: EvidenceClass = b.class ?? 'Unverified';
   // Only staff can declare more than "offered, not yet checked". Owners cannot verify their own claims.
   if (u.role === 'OWNER' && cls !== 'Unverified' && cls !== 'Self-reported') cls = 'Unverified';
@@ -46,8 +47,8 @@ export async function updateEvidence(ctx: Ctx, id: string, b: { class?: Evidence
   allow(ctx, 'evidence', 'edit');
   const [before] = await ctx.db.select().from(ev).where(eq(ev.id, id)).limit(1);
   if (!before) throw notFound('Evidence not found');
-  await assertCase(ctx, before.caseId);
-  if (b.class === 'Verified' && need(ctx).user.role !== 'CONSULTANT') throw forbidden('Only the consultant on the case can verify evidence');
+  await assertLeadCase(ctx, before.caseId);
+  if (b.class === 'Verified' && !can(need(ctx).user.role, 'evidence', 'verify')) throw forbidden('Only the lead expert on the case can verify evidence');
   const patch: Partial<typeof ev.$inferInsert> = { updatedAt: new Date() };
   if (b.description) patch.description = b.description.trim();
   if (b.class) { patch.class = b.class; if (b.class === 'Verified') { patch.verifiedBy = ctx.user!.id; patch.verifiedAt = new Date(); } }

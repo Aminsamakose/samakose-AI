@@ -155,7 +155,7 @@ describe('commercial workflow', () => {
 /* ------------------------- AI failure handling -------------------------- */
 async function scoredCase() {
   const org = await makeOrg(admin);
-  const consultant = await makeUser('CONSULTANT'), reviewer = await makeUser('REVIEWER');
+  const consultant = await makeUser('EXPERT'), reviewer = await makeUser('REVIEWER');
   const ow = await makeUser('OWNER', { orgId: org.id });
   const c = (await api(admin).post('/cases', { orgId: org.id })).data;
   await api(admin).post(`/cases/${c.id}/assign`, { consultantId: consultant.userId, reviewerId: reviewer.userId });
@@ -345,7 +345,7 @@ describe('database integrity rules', () => {
   });
   it('the database refuses a reviewer who is also the consultant, values out of range and owners without an organisation', async () => {
     const org = await makeOrg(admin);
-    const u = await makeUser('CONSULTANT');
+    const u = await makeUser('EXPERT');
     const [cs] = await db().insert(schema.cases).values({ orgId: org.id }).returning();
     await expect(db().update(schema.cases).set({ consultantId: u.userId, reviewerId: u.userId }).where(eq(schema.cases.id, cs.id))).rejects.toThrow();
     await expect(db().insert(schema.actions).values({ caseId: cs.id, text: 't', ownerRole: 'ROBOT', dueDate: '2030-01-01' })).rejects.toThrow();
@@ -400,6 +400,6 @@ describe('settings', () => {
     expect((await call('GET', '/health')).data.ok).toBe(true);
     const spec = (await call('GET', '/openapi.json')).data;
     expect(spec.openapi).toBe('3.1.0'); expect(Object.keys(spec.paths).length).toBeGreaterThan(90);
-    expect(spec.paths['/cases/{id}/assign'].post['x-permission']).toBe('cases:edit');
+    expect(spec.paths['/cases/{id}/assign'].post['x-permission']).toBe('cases:assign');
   });
 });

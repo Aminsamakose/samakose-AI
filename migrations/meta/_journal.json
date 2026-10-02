@@ -85,6 +85,13 @@
       "when": 1790903221626,
       "tag": "0011_framework_versions",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790944975356,
+      "tag": "0012_expert_role",
+      "breakpoints": true
     }
   ]
 }

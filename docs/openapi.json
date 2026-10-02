@@ -940,9 +940,8 @@
                       "ADMIN",
                       "EXECUTIVE",
                       "PROGRAMME_MANAGER",
-                      "CONSULTANT",
+                      "EXPERT",
                       "REVIEWER",
-                      "COACH",
                       "FINANCE",
                       "OWNER",
                       "FUNDER",
@@ -1123,9 +1122,8 @@
                       "ADMIN",
                       "EXECUTIVE",
                       "PROGRAMME_MANAGER",
-                      "CONSULTANT",
+                      "EXPERT",
                       "REVIEWER",
-                      "COACH",
                       "FINANCE",
                       "OWNER",
                       "FUNDER",
@@ -1452,8 +1450,7 @@
                     "type": "string",
                     "enum": [
                       "OWNER",
-                      "CONSULTANT",
-                      "COACH",
+                      "EXPERT",
                       "PROGRAMME_MANAGER",
                       "FUNDER"
                     ]
@@ -1652,9 +1649,8 @@
                       "ADMIN",
                       "EXECUTIVE",
                       "PROGRAMME_MANAGER",
-                      "CONSULTANT",
+                      "EXPERT",
                       "REVIEWER",
-                      "COACH",
                       "FINANCE",
                       "OWNER",
                       "FUNDER",
@@ -2562,7 +2558,7 @@
             "cookieAuth": []
           }
         ],
-        "x-permission": "organisations:read",
+        "x-permission": "scores:read",
         "parameters": [
           {
             "name": "id",
@@ -3425,14 +3421,14 @@
         "tags": [
           "Cases"
         ],
-        "summary": "Assign consultant, coach and reviewer",
+        "summary": "Assign lead expert, coaching expert and reviewer",
         "operationId": "post__cases_id_assign",
         "security": [
           {
             "cookieAuth": []
           }
         ],
-        "x-permission": "cases:edit",
+        "x-permission": "cases:assign",
         "parameters": [
           {
             "name": "id",
