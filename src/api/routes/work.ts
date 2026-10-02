@@ -7,6 +7,7 @@ import * as orgs from '@/services/orgs';
 import * as progs from '@/services/programmes';
 import * as cases from '@/services/cases';
 import * as diag from '@/services/diagnostics';
+import * as record from '@/services/record';
 import * as ev from '@/services/evidence';
 import * as clin from '@/services/clinical';
 import * as del from '@/services/delivery';
@@ -18,6 +19,7 @@ const orgBody = z.object({ name, type: orgType.optional(), sector: optText(), re
 defineRoute({ method: 'GET', path: '/organisations', tag: O, summary: 'List organisations in your scope', permission: ['organisations', 'read'], query: listQuery.extend({ region: z.string().optional(), type: z.string().optional(), status: z.string().optional() }), handler: ({ ctx, query }) => orgs.listOrgs(ctx, query) });
 defineRoute({ method: 'POST', path: '/organisations', tag: O, summary: 'Register an organisation with recorded consent', permission: ['organisations', 'create'], body: orgBody.extend({ consent: z.boolean(), consentBy: name }), handler: async ({ ctx, body }) => status(201, await orgs.createOrg(ctx, body as any)) });
 defineRoute({ method: 'GET', path: '/organisations/:id', tag: O, summary: 'One organisation with its cases', permission: ['organisations', 'read'], handler: ({ ctx, params }) => orgs.getOrg(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/organisations/:id/record', tag: O, summary: 'Business Health Record: the organisation history across cases, scores with reasons for change, and framework versions', permission: ['scores', 'read'], handler: ({ ctx, params }) => record.healthRecord(ctx, params.id) });
 defineRoute({ method: 'PATCH', path: '/organisations/:id', tag: O, summary: 'Update an organisation', permission: ['organisations', 'edit'], body: orgBody.partial().extend({ status: z.enum(['Active', 'Inactive']).optional() }), handler: ({ ctx, params, body }) => orgs.updateOrg(ctx, params.id, body as any) });
 defineRoute({ method: 'DELETE', path: '/organisations/:id', tag: O, summary: 'Archive an organisation (kept for the audit trail)', permission: ['organisations', 'delete'], handler: ({ ctx, params }) => orgs.archiveOrg(ctx, params.id) });
 
@@ -43,7 +45,7 @@ defineRoute({ method: 'GET', path: '/cases/:id/activity', tag: C, summary: 'Acti
 /* ------------------------- diagnostic, evidence ------------------------ */
 const D = 'Diagnostic and evidence';
 const answers = z.record(z.string().regex(/^Q\d{2,3}$/), z.union([z.number(), z.object({ value: z.number(), evidence: evidenceClass.optional(), ref: z.string().max(40).nullish(), note: z.string().max(500).nullish() })]));
-defineRoute({ method: 'GET', path: '/questions', tag: D, summary: 'Active diagnostic questions', permission: ['diagnostics', 'read'], handler: ({ ctx }) => diag.activeQuestions(ctx) });
+defineRoute({ method: 'GET', path: '/questions', tag: D, summary: 'Questions of the current published framework version (for the given case when caseId is sent)', permission: ['diagnostics', 'read'], query: z.object({ caseId: z.string().uuid().optional() }), handler: ({ ctx, query }) => diag.activeQuestions(ctx, query.caseId) });
 defineRoute({ method: 'POST', path: '/cases/:id/diagnostics/validate', tag: D, summary: 'Check answers against the data quality gate without saving', permission: ['diagnostics', 'create'], body: z.object({ answers }), handler: ({ ctx, params, body }) => diag.preflight(ctx, params.id, body.answers as any) });
 defineRoute({ method: 'POST', path: '/cases/:id/diagnostics', tag: D, summary: 'Submit a diagnostic. It is validated and scored at once.', permission: ['diagnostics', 'create'], body: z.object({ answers, uuid: z.string().max(80).optional() }), handler: async ({ ctx, params, body }) => status(201, await diag.submitDiagnostic(ctx, params.id, body as any)) });
 defineRoute({ method: 'GET', path: '/cases/:id/diagnostics', tag: D, summary: 'Diagnostic submissions for a case', permission: ['diagnostics', 'read'], handler: ({ ctx, params }) => diag.listDiagnostics(ctx, params.id) });

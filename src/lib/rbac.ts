@@ -9,7 +9,7 @@ export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
   'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments',
-  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media'
+  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks'
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -22,29 +22,31 @@ const ADMIN: Grants = {
   prescriptions: [R, C], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E], reports: [R, C, X],
   plans: [R, C, E, D], contracts: [R, C, E, X], invoices: [R, C, E, D, X], payments: [R, C, X],
   audit: [R, X], settings: [R, C, E, D], dashboard: [R, X], integrations: [R, C, E], inquiries: [R, E, X],
-  content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D]
+  content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D],
+  // Only the administrator can approve a framework version, which is the product sign-off.
+  frameworks: [R, C, E, A]
 };
 export const PERMISSIONS: Record<Role, Grants> = {
   ADMIN,
   EXECUTIVE: {
-    organisations: [R, X], programmes: [R, X], cohorts: [R], cases: [R, X], scores: [R], diagnoses: [R], prescriptions: [R], actions: [R],
+    frameworks: [R], organisations: [R, X], programmes: [R, X], cohorts: [R], cases: [R, X], scores: [R], diagnoses: [R], prescriptions: [R], actions: [R],
     kpis: [R], reports: [R, X], contracts: [R], invoices: [R, X], payments: [R], dashboard: [R, X]
   },
   PROGRAMME_MANAGER: {
-    users: [R], organisations: [R, C, E, X], programmes: [R, E, X], cohorts: [R, C, E, X], cases: [R, C, E, X], diagnostics: [R], scores: [R],
+    frameworks: [R], users: [R], organisations: [R, C, E, X], programmes: [R, E, X], cohorts: [R, C, E, X], cases: [R, C, E, X], diagnostics: [R], scores: [R],
     diagnoses: [R], prescriptions: [R], actions: [R, X], kpis: [R], sessions: [R], reports: [R, X], contracts: [R], dashboard: [R, X]
   },
   CONSULTANT: {
-    users: [R], organisations: [R, C, E], cases: [R, C, E], diagnostics: [R, C], evidence: [R, C, E], documents: [R, C], scores: [R],
+    frameworks: [R], users: [R], organisations: [R, C, E], cases: [R, C, E], diagnostics: [R, C], evidence: [R, C, E], documents: [R, C], scores: [R],
     diagnoses: [R, C, E, O], prescriptions: [R, C, E, O], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E],
     reports: [R, C], dashboard: [R]
   },
   REVIEWER: {
-    cases: [R], evidence: [R], documents: [R], scores: [R], diagnoses: [R], prescriptions: [R, A], actions: [R], kpis: [R], risks: [R],
+    frameworks: [R], cases: [R], evidence: [R], documents: [R], scores: [R], diagnoses: [R], prescriptions: [R, A], actions: [R], kpis: [R], risks: [R],
     reports: [R, A], dashboard: [R]
   },
   COACH: {
-    cases: [R], evidence: [R], scores: [R], diagnoses: [R], prescriptions: [R], actions: [R, E], kpis: [R, C], sessions: [R, C, E],
+    frameworks: [R], cases: [R], evidence: [R], scores: [R], diagnoses: [R], prescriptions: [R], actions: [R, E], kpis: [R, C], sessions: [R, C, E],
     risks: [R], reports: [R], dashboard: [R]
   },
   FINANCE: {

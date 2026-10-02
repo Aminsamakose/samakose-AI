@@ -187,6 +187,8 @@ export const diagnostics = pgTable('diagnostics', {
   submittedBy: uuid('submitted_by'),
   version: integer('version').notNull().default(1),
   supersedesId: uuid('supersedes_id'),
+  /** The framework version the questions and rules came from. History keeps the version it was taken under. */
+  frameworkVersionId: uuid('framework_version_id').references((): any => frameworkVersions.id),
   createdAt: created()
 }, (t) => [index('diag_case_idx').on(t.caseId)]);
 
@@ -238,6 +240,7 @@ export const healthScores = pgTable('health_scores', {
   dimensions: jsonb('dimensions').notNull().$type<{ dimension: string; value: number }[]>(),
   evidenceShare: jsonb('evidence_share').notNull().$type<Record<string, number>>(),
   rulesSnapshot: jsonb('rules_snapshot').$type<Record<string, unknown>>(),
+  frameworkVersionId: uuid('framework_version_id').references((): any => frameworkVersions.id),
   createdAt: created()
 }, (t) => [index('score_case_idx').on(t.caseId)]);
 
@@ -612,3 +615,39 @@ export const emailTemplates = pgTable('email_templates', {
   updatedBy: uuid('updated_by'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+
+/* ------------------- Business Health frameworks and versions ------------------- */
+export type FrameworkQuestion = { code: string; dimension: string; text: string; weight: number };
+/** Evidence-to-framework audit trail: where a framework component came from and who approved it. */
+export type FrameworkSource = {
+  component: string; source: string; rationale: string; adaptation: string;
+  approval: 'Proposed' | 'Approved' | 'Rejected'; approvedBy?: string | null; approvedAt?: string | null;
+};
+/** One framework per kind of organisation. The default one is used until a specialised framework has an approved version. */
+export const frameworks = pgTable('frameworks', {
+  id: id(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  orgType: orgTypeEnum('org_type'),
+  description: text('description'),
+  isDefault: boolean('is_default').notNull().default(false),
+  createdAt: created(), updatedAt: updated()
+});
+/** A published version never changes; scores and diagnostics point at the version they were produced under. */
+export const frameworkVersions = pgTable('framework_versions', {
+  id: id(),
+  frameworkId: uuid('framework_id').notNull().references(() => frameworks.id),
+  version: integer('version').notNull(),
+  status: text('status').notNull().default('Draft'), // Draft | Published | Retired
+  questions: jsonb('questions').notNull().$type<FrameworkQuestion[]>(),
+  dimensions: jsonb('dimensions').notNull().$type<string[]>(),
+  rules: jsonb('rules').$type<Record<string, string | number>>(),
+  sources: jsonb('sources').notNull().$type<FrameworkSource[]>().default(sql`'[]'::jsonb`),
+  note: text('note'),
+  createdBy: uuid('created_by'),
+  approvedBy: uuid('approved_by'),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  createdAt: created()
+}, (t) => [uniqueIndex('framework_version_uq').on(t.frameworkId, t.version)]);

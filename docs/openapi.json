@@ -52,6 +52,12 @@
     },
     {
       "name": "Platform"
+    },
+    {
+      "name": "Website"
+    },
+    {
+      "name": "Website content"
     }
   ],
   "components": {
@@ -863,6 +869,17 @@
                 "false"
               ]
             }
+          },
+          {
+            "name": "approval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending"
+              ]
+            }
           }
         ],
         "responses": {
@@ -928,7 +945,9 @@
                       "COACH",
                       "FINANCE",
                       "OWNER",
-                      "FUNDER"
+                      "FUNDER",
+                      "CONTENT_EDITOR",
+                      "SITE_MANAGER"
                     ]
                   },
                   "orgId": {
@@ -1109,7 +1128,9 @@
                       "COACH",
                       "FINANCE",
                       "OWNER",
-                      "FUNDER"
+                      "FUNDER",
+                      "CONTENT_EDITOR",
+                      "SITE_MANAGER"
                     ]
                   },
                   "active": {
@@ -1372,6 +1393,605 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Self-register. Starts pending until the email is confirmed and, for non-owners, an administrator approves",
+        "operationId": "post__auth_register",
+        "security": [],
+        "x-permission": "public",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 160
+                  },
+                  "email": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "OWNER",
+                      "CONSULTANT",
+                      "COACH",
+                      "PROGRAMME_MANAGER",
+                      "FUNDER"
+                    ]
+                  },
+                  "orgName": {
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "orgType": {
+                    "type": "string",
+                    "enum": [
+                      "SME",
+                      "AGRIFOOD",
+                      "ESO"
+                    ]
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "consent": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "role",
+                  "consent"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Confirm an email address from the link we sent",
+        "operationId": "post__auth_verify_email",
+        "security": [],
+        "x-permission": "public",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/auth/resend-verification": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Send the confirmation email again",
+        "operationId": "post__auth_resend_verification",
+        "security": [],
+        "x-permission": "public",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/users/{id}/approve": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Approve a self-registered user",
+        "operationId": "post__users_id_approve",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "users:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "ADMIN",
+                      "EXECUTIVE",
+                      "PROGRAMME_MANAGER",
+                      "CONSULTANT",
+                      "REVIEWER",
+                      "COACH",
+                      "FINANCE",
+                      "OWNER",
+                      "FUNDER",
+                      "CONTENT_EDITOR",
+                      "SITE_MANAGER"
+                    ]
+                  },
+                  "orgId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/users/{id}/reject": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Reject a self-registered user",
+        "operationId": "post__users_id_reject",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "users:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 300
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Own business profile (business owners)",
+        "operationId": "get__auth_profile",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "any signed-in user",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Complete or update the business profile. Required before a new owner can use the platform",
+        "operationId": "put__auth_profile",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "any signed-in user",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "SME",
+                      "AGRIFOOD",
+                      "ESO"
+                    ]
+                  },
+                  "sector": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "region": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "district": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "size": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "contactPhone": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "registrationNumber": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "consent": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "name",
+                  "type",
+                  "sector",
+                  "region",
+                  "district",
+                  "size",
+                  "contactPhone",
+                  "consent"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/auth/providers": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Which sign-in options are switched on",
+        "operationId": "get__auth_providers",
+        "security": [],
+        "x-permission": "public",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/auth/google/start": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Begin Google sign-in (business owners)",
+        "operationId": "get__auth_google_start",
+        "security": [],
+        "x-permission": "public",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/auth/google/callback": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Google returns here after sign-in",
+        "operationId": "get__auth_google_callback",
+        "security": [],
+        "x-permission": "public",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Body is { data }"
@@ -1898,6 +2518,51 @@
           }
         ],
         "x-permission": "organisations:delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/organisations/{id}/record": {
+      "get": {
+        "tags": [
+          "Organisations"
+        ],
+        "summary": "Business Health Record: the organisation history across cases, scores with reasons for change, and framework versions",
+        "operationId": "get__organisations_id_record",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "organisations:read",
         "parameters": [
           {
             "name": "id",
@@ -2989,7 +3654,7 @@
         "tags": [
           "Diagnostic and evidence"
         ],
-        "summary": "Active diagnostic questions",
+        "summary": "Questions of the current published framework version (for the given case when caseId is sent)",
         "operationId": "get__questions",
         "security": [
           {
@@ -2997,7 +3662,18 @@
           }
         ],
         "x-permission": "diagnostics:read",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "caseId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Body is { data }"
@@ -4824,6 +5500,14 @@
           },
           {
             "name": "mine",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "horizon",
             "in": "query",
             "required": false,
             "schema": {
@@ -8135,6 +8819,365 @@
         }
       }
     },
+    "/settings/switches": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Workflow and registration switches",
+        "operationId": "get__settings_switches",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/switches/{key}": {
+      "put": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Turn a switch on or off. Turning a protected one off needs a reason",
+        "operationId": "put__settings_switches_key_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:edit",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "on": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "on"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/email-templates": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "System email wording",
+        "operationId": "get__settings_email_templates",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/email-templates/{key}": {
+      "put": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Save the wording of a system email",
+        "operationId": "put__settings_email_templates_key_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:edit",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "body": {
+                    "type": "string",
+                    "maxLength": 8000
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/email-templates/{key}/reset": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Restore the built-in wording",
+        "operationId": "post__settings_email_templates_key_reset",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:edit",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/report-text": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Report wording",
+        "operationId": "get__settings_report_text",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Save report wording",
+        "operationId": "put__settings_report_text",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:edit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 2000
+                    }
+                  }
+                },
+                "required": [
+                  "values"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
     "/settings/questions": {
       "get": {
         "tags": [
@@ -8220,6 +9263,562 @@
                   "dimension",
                   "text",
                   "weight"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/frameworks": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Frameworks and their versions",
+        "operationId": "get__settings_frameworks",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "frameworks:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/frameworks/versions/{id}": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "One framework version with its evidence trail",
+        "operationId": "get__settings_frameworks_versions_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "frameworks:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Edit a draft version or its evidence trail",
+        "operationId": "patch__settings_frameworks_versions_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "frameworks:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "questions": {
+                    "minItems": 1,
+                    "maxItems": 120,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "pattern": "^[A-Z0-9_-]{2,12}$"
+                        },
+                        "dimension": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 60
+                        },
+                        "text": {
+                          "type": "string",
+                          "minLength": 5,
+                          "maxLength": 300
+                        },
+                        "weight": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 5
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "dimension",
+                        "text",
+                        "weight"
+                      ]
+                    }
+                  },
+                  "dimensions": {
+                    "minItems": 1,
+                    "maxItems": 12,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 60
+                    }
+                  },
+                  "rules": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "sources": {
+                    "maxItems": 80,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "component": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 120
+                        },
+                        "source": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 400
+                        },
+                        "rationale": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 600
+                        },
+                        "adaptation": {
+                          "type": "string",
+                          "minLength": 2,
+                          "maxLength": 600
+                        },
+                        "approval": {
+                          "default": "Proposed",
+                          "type": "string",
+                          "enum": [
+                            "Proposed",
+                            "Approved",
+                            "Rejected"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "component",
+                        "source",
+                        "rationale",
+                        "adaptation"
+                      ]
+                    }
+                  },
+                  "note": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 600
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Discard a draft version",
+        "operationId": "delete__settings_frameworks_versions_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "frameworks:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/frameworks/{code}/versions": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Start a draft version",
+        "operationId": "post__settings_frameworks_code_versions",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "frameworks:create",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "questions": {
+                    "minItems": 1,
+                    "maxItems": 120,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "pattern": "^[A-Z0-9_-]{2,12}$"
+                        },
+                        "dimension": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 60
+                        },
+                        "text": {
+                          "type": "string",
+                          "minLength": 5,
+                          "maxLength": 300
+                        },
+                        "weight": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 5
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "dimension",
+                        "text",
+                        "weight"
+                      ]
+                    }
+                  },
+                  "dimensions": {
+                    "minItems": 1,
+                    "maxItems": 12,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 60
+                    }
+                  },
+                  "rules": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "sources": {
+                    "maxItems": 80,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "component": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 120
+                        },
+                        "source": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 400
+                        },
+                        "rationale": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 600
+                        },
+                        "adaptation": {
+                          "type": "string",
+                          "minLength": 2,
+                          "maxLength": 600
+                        },
+                        "approval": {
+                          "default": "Proposed",
+                          "type": "string",
+                          "enum": [
+                            "Proposed",
+                            "Approved",
+                            "Rejected"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "component",
+                        "source",
+                        "rationale",
+                        "adaptation"
+                      ]
+                    }
+                  },
+                  "note": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 600
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fromBank": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/frameworks/versions/{id}/publish": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Approve and publish a draft version",
+        "operationId": "post__settings_frameworks_versions_id_publish",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "frameworks:approve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 600
+                  }
+                },
+                "required": [
+                  "note"
                 ]
               }
             }
@@ -8578,6 +10177,552 @@
         }
       }
     },
+    "/admin/system/test/{what}": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Test email, storage or database",
+        "operationId": "post__admin_system_test_what_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "integrations:edit",
+        "parameters": [
+          {
+            "name": "what",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/system/emails": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Recent outgoing email and its delivery status",
+        "operationId": "get__admin_system_emails",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "integrations:read",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/system/emails/{id}/retry": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Send a failed email again",
+        "operationId": "post__admin_system_emails_id_retry",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "integrations:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/billing": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Billing configuration (currency, tax, invoice terms). Separate from public pricing",
+        "operationId": "get__settings_billing",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Change billing configuration. Tax cannot be switched on without a rate, a registration number and a Finance confirmation reference",
+        "operationId": "put__settings_billing",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:edit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "GHS",
+                      "USD"
+                    ]
+                  },
+                  "usdReferenceEnabled": {
+                    "type": "boolean"
+                  },
+                  "taxEnabled": {
+                    "type": "boolean"
+                  },
+                  "taxLabel": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "taxRatePercent": {
+                    "type": "number"
+                  },
+                  "taxInclusive": {
+                    "type": "boolean"
+                  },
+                  "taxRegistrationNumber": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "taxConfirmationRef": {
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "invoicePrefix": {
+                    "type": "string",
+                    "maxLength": 10
+                  },
+                  "paymentTermsDays": {
+                    "type": "number"
+                  },
+                  "paymentInstructions": {
+                    "type": "string",
+                    "maxLength": 1200
+                  },
+                  "invoiceFooter": {
+                    "type": "string",
+                    "maxLength": 600
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/system/payments": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Is Paystack ready for real money",
+        "operationId": "get__admin_system_payments",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "integrations:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/security": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Security overview",
+        "operationId": "get__settings_security",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/maintenance": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Maintenance mode",
+        "operationId": "get__settings_maintenance",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Turn maintenance mode on or off",
+        "operationId": "put__settings_maintenance",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:edit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "on": {
+                    "type": "boolean"
+                  },
+                  "blockSignin": {
+                    "type": "boolean"
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 600
+                  }
+                },
+                "required": [
+                  "on",
+                  "blockSignin",
+                  "message"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/config/export": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Download the website and workflow configuration as a file",
+        "operationId": "get__settings_config_export",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:edit",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/config/import": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Check or apply a configuration file. Content arrives as drafts",
+        "operationId": "post__settings_config_import",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:edit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bundle": {},
+                  "dryRun": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "bundle",
+                  "dryRun"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
     "/admin/jobs/{id}/retry": {
       "post": {
         "tags": [
@@ -8676,6 +10821,1387 @@
         "operationId": "get__openapi_json",
         "security": [],
         "x-permission": "public",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/public/inquiries": {
+      "post": {
+        "tags": [
+          "Website"
+        ],
+        "summary": "Send a contact, demo or newsletter enquiry from the public site",
+        "operationId": "post__public_inquiries",
+        "security": [],
+        "x-permission": "public",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "contact",
+                      "demo",
+                      "newsletter"
+                    ]
+                  },
+                  "name": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 160
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "email": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "organisation": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 160
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "phone": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 40
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "interest": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "message": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 3000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "consent": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "source": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "website": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "email",
+                  "consent"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/inquiries": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Website enquiries",
+        "operationId": "get__inquiries",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "inquiries:read",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 40
+            }
+          },
+          {
+            "name": "dir",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "type": "string",
+              "enum": [
+                "json",
+                "csv"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/inquiries/{id}": {
+      "patch": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Mark an enquiry handled, spam or new",
+        "operationId": "patch__inquiries_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "inquiries:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "New",
+                      "Handled",
+                      "Spam"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content": {
+      "get": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Everything that can be edited on the website, with counts",
+        "operationId": "get__admin_content",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content/kind/{kind}": {
+      "get": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Items of one content type",
+        "operationId": "get__admin_content_kind_kind_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:read",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Create a draft item",
+        "operationId": "post__admin_content_kind_kind_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:create",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
+                  "sortOrder": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10000
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content/{id}": {
+      "get": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "One item",
+        "operationId": "get__admin_content_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Save the working copy",
+        "operationId": "put__admin_content_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
+                  "sortOrder": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10000
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Delete an archived item",
+        "operationId": "delete__admin_content_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content/{id}/submit": {
+      "post": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Send a draft for review",
+        "operationId": "post__admin_content_id_submit",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content/{id}/publish": {
+      "post": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Publish the working copy",
+        "operationId": "post__admin_content_id_publish",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:approve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content/{id}/schedule": {
+      "post": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Publish at a set time",
+        "operationId": "post__admin_content_id_schedule",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:approve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "at": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 40
+                  }
+                },
+                "required": [
+                  "at"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content/{id}/unschedule": {
+      "post": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Cancel a scheduled publication",
+        "operationId": "post__admin_content_id_unschedule",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:approve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content/{id}/archive": {
+      "post": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Take an item off the website",
+        "operationId": "post__admin_content_id_archive",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:approve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content/{id}/unarchive": {
+      "post": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Bring an archived item back as a draft",
+        "operationId": "post__admin_content_id_unarchive",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:approve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content/{id}/versions": {
+      "get": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Published versions of an item",
+        "operationId": "get__admin_content_id_versions",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/content/{id}/restore": {
+      "post": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Put an earlier version back in the working copy",
+        "operationId": "post__admin_content_id_restore",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "content:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "version"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/media": {
+      "get": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Media library",
+        "operationId": "get__admin_media",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "media:read",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 40
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Upload an image or PDF (multipart: file, name, altText, category)",
+        "operationId": "post__admin_media",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "media:create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "caseId": {
+                    "type": "string"
+                  },
+                  "orgId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/media/{id}": {
+      "patch": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Rename or re-describe a file",
+        "operationId": "patch__admin_media_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "media:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "altText": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "category": {
+                    "type": "string",
+                    "maxLength": 40
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Website content"
+        ],
+        "summary": "Delete a file that no page uses",
+        "operationId": "delete__admin_media_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "media:delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/admin/command-centre": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Administrator Command Centre figures",
+        "operationId": "get__admin_command_centre",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "users:create",
         "parameters": [],
         "responses": {
           "200": {

@@ -7,9 +7,12 @@ The Business Doctor as a production web application. Next.js (App Router) and Ty
 | Area | State |
 |---|---|
 | Auth: sign in, lockout, MFA (TOTP), reset, invite, sessions | Built and tested |
-| RBAC: 9 roles, 24 resources, 7 actions, row scoping | Built and tested (113 security tests) |
+| RBAC: 11 roles, 29 resources, 7 actions, row scoping | Built and tested (every guarded route is checked for every role) |
 | Organisations, programmes, cohorts, cases, lifecycle state machine | Built and tested |
 | Diagnostic with evidence classes, quality gate, scoring, rescoring | Built and tested |
+| Framework versions: SME360 baseline, AgriFood360 and ESO360 shells. Diagnostics and scores point at the version they were produced under; published versions are immutable (database trigger); specialised frameworks need an approved evidence trail before publishing | Built and tested. AgriFood360 and ESO360 have no content and are not production-authoritative until approved by Amin Yahaya |
+| Business Health Record: read-only history per organisation with the framework version and a reason for each score change | Built and tested |
+| Score regression set: synthetic golden cases, failure names the case and dimension that moved | Built (`tests/regression`) |
 | AI drafts: diagnosis, prescription, coaching brief, report (async jobs) | Built; tested against a mock model and an injectable transport. Not run against the live Claude API |
 | Four-eyes review of prescriptions and reports | Built and tested |
 | Actions, risks, KPIs, coaching sessions, reports and release | Built and tested |
@@ -18,7 +21,7 @@ The Business Doctor as a production web application. Next.js (App Router) and Ty
 | Dashboards per role, funder views with small-cell suppression | Built and tested |
 | Audit trail, events, notifications, email outbox, global search, CSV export | Built and tested |
 | Admin: users, audit, rules, question bank, intervention library, system status | Built |
-| Web UI for all of the above (41 routes) | Built. Exercised by four browser journeys (section 8) |
+| Web UI for all of the above (58 pages) | Built. Exercised by four browser journeys (section 8) |
 | Screens in the design set | 46 built, 37 partly built, 67 deferred, 67 reference boards. See `docs/SCREEN-MAP.csv` |
 
 Not done, on purpose or for lack of time:
@@ -45,7 +48,7 @@ flowchart LR
   PS -->|webhook| D
 ```
 
-- **One route registry.** `defineRoute` declares method, path, permission, zod schemas and handler once. The catch-all `/api/v1/[...path]` dispatches it and the OpenAPI 3.1 file is generated from the same list (`npm run openapi`, output in `docs/openapi.json`, 122 operations).
+- **One route registry.** `defineRoute` declares method, path, permission, zod schemas and handler once. The catch-all `/api/v1/[...path]` dispatches it and the OpenAPI 3.1 file is generated from the same list (`npm run openapi`, output in `docs/openapi.json`, 179 operations).
 - **The dispatcher does the cross-cutting work** so no handler can forget it: origin check on writes (CSRF), session lookup, MFA and forced-password gates, permission check, per-user and per-route rate limits, input validation, one transaction per write (data, audit and events commit together), error envelope `{error:{code,message,details,requestId}}`.
 - **Pages are client components** that call the same API. There is no second data path, so what the UI shows is exactly what the API allows. The `(app)` layout enforces session, MFA and password gates on the server before any page renders.
 - **Jobs run in Postgres** (`jobs` table, `FOR UPDATE SKIP LOCKED`, retries with backoff, terminal failures do not retry). The worker is a separate process; in-process draining also runs for small deployments. `POST /api/internal/cron` (Bearer `CRON_SECRET`) can drive scheduled work from an external scheduler.
@@ -126,8 +129,8 @@ Known limits: permissions at the service level are narrower than the matrix in `
 
 ## 8. Test evidence
 
-- `npm test`: 5 suites, 223 tests against a real PostgreSQL 16 (logic, auth, full journey, security and RBAC matrix, integrations and database rules). The database is dropped and rebuilt from the real migrations for each run.
-- `npm run test:e2e`: four Chromium journeys against a running production build with demo data: a role-by-role sweep (every page each of the nine roles can reach, at 1280px and 375px, no errors, no horizontal overflow), the case lifecycle through the UI to reviewer approval and generated actions, finance to owner payment with the test checkout, and KPI reading, coaching session and report release.
+- `npm test`: 17 test files, 360+ tests against a real PostgreSQL 16 (logic, auth, full journey, security and RBAC matrix, integrations, database rules, framework versions, score regression). The database is dropped and rebuilt from the real migrations for each run.
+- `npm run test:e2e`: four Chromium journeys against a running production build with demo data: a role-by-role sweep (every page each of the roles can reach, at 1280px and 375px, no errors, no horizontal overflow), the case lifecycle through the UI to reviewer approval and generated actions, finance to owner payment with the test checkout, and KPI reading, coaching session and report release.
 - Not covered: screen-reader testing, load, live Claude, live Paystack, live Kobo, real SMTP delivery.
 
 ## 9. Moving from the Google Workspace MVP

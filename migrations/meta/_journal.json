@@ -78,6 +78,13 @@
       "when": 1790886881934,
       "tag": "0010_email_templates",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790903221626,
+      "tag": "0011_framework_versions",
+      "breakpoints": true
     }
   ]
 }

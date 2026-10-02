@@ -51,6 +51,7 @@ export function QuestionsEditor({ canCreate, canEdit }: { canCreate: boolean; ca
   const rows = useMemo(() => (st.data ?? []).filter((r) => (!dim || r.dimension === dim) && (!state || String(r.active) === state) && (!term || `${r.code} ${r.text}`.toLowerCase().includes(term.toLowerCase()))), [st.data, dim, state, term]);
   const done = () => { setEdit(null); st.reload(); };
   return <div className="stack">
+    <p className="muted small">This is the working question bank. Changes reach new diagnostics only after a framework version is approved and published in the Frameworks tab.</p>
     <div className="toolbar">
       <div className="search-box"><label className="sr" htmlFor="qs">Search questions</label><input id="qs" type="search" placeholder="Search code or text" value={term} onChange={(e) => setTerm(e.target.value)} /></div>
       <div className="field"><label htmlFor="qd">Dimension</label><select id="qd" value={dim} onChange={(e) => setDim(e.target.value)}><option value="">All dimensions</option>{DIMENSIONS.map((d) => <option key={d}>{d}</option>)}</select></div>

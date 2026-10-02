@@ -1,0 +1,90 @@
+{
+  "all-top-verified": {
+    "overall": 100,
+    "dimensions": {
+      "Finance": 100,
+      "Market and sales": 100,
+      "Operations": 100,
+      "People and governance": 100,
+      "Records and systems": 100,
+      "Compliance and finance access": 100
+    }
+  },
+  "all-zero": {
+    "overall": 0,
+    "dimensions": {
+      "Finance": 0,
+      "Market and sales": 0,
+      "Operations": 0,
+      "People and governance": 0,
+      "Records and systems": 0,
+      "Compliance and finance access": 0
+    }
+  },
+  "mid-self-reported": {
+    "overall": 40,
+    "dimensions": {
+      "Finance": 40,
+      "Market and sales": 40,
+      "Operations": 40,
+      "People and governance": 40,
+      "Records and systems": 40,
+      "Compliance and finance access": 40
+    }
+  },
+  "mid-verified": {
+    "overall": 50,
+    "dimensions": {
+      "Finance": 50,
+      "Market and sales": 50,
+      "Operations": 50,
+      "People and governance": 50,
+      "Records and systems": 50,
+      "Compliance and finance access": 50
+    }
+  },
+  "strong-finance-weak-records": {
+    "overall": 47.5,
+    "dimensions": {
+      "Finance": 95,
+      "Market and sales": 47.5,
+      "Operations": 47.5,
+      "People and governance": 47.5,
+      "Records and systems": 0,
+      "Compliance and finance access": 47.5
+    }
+  },
+  "alternating": {
+    "overall": 41.9,
+    "dimensions": {
+      "Finance": 41.7,
+      "Market and sales": 39.3,
+      "Operations": 42,
+      "People and governance": 45,
+      "Records and systems": 41.7,
+      "Compliance and finance access": 41.5
+    }
+  },
+  "compliance-gap": {
+    "overall": 65.6,
+    "dimensions": {
+      "Finance": 71.2,
+      "Market and sales": 71.2,
+      "Operations": 71.2,
+      "People and governance": 71.2,
+      "Records and systems": 71.2,
+      "Compliance and finance access": 23.8
+    }
+  },
+  "one-weak-question": {
+    "overall": 92.9,
+    "dimensions": {
+      "Finance": 62.5,
+      "Market and sales": 100,
+      "Operations": 100,
+      "People and governance": 100,
+      "Records and systems": 100,
+      "Compliance and finance access": 100
+    }
+  }
+}

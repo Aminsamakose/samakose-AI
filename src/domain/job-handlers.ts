@@ -12,6 +12,7 @@ import { latestDiagnosis, latestScore, loadRules, systemCtx } from '@/services/c
 import { validateDiagnosis, validatePrescription } from './logic';
 import { mockBrief, mockDiagnosis, mockPrescription, mockReport, type BriefContext, type DiagnosisContext, type PrescriptionContext, type ReportContext } from './mockai';
 import { koboPull } from '@/services/kobo';
+import { questionsOf, versionForRow } from '@/services/frameworks';
 
 async function fail(caseId: string | null, requestedBy: string | null, what: string, e: unknown) {
   await tx(async (t) => {
@@ -27,7 +28,8 @@ async function diagnosisContext(caseId: string): Promise<DiagnosisContext> {
   const [cs] = await db().select().from(schema.cases).where(eq(schema.cases.id, caseId));
   const [org] = await db().select().from(schema.organisations).where(eq(schema.organisations.id, cs.orgId));
   const score = (await latestScore(ctx, caseId))!;
-  const qs = await db().select().from(schema.questions);
+  // The questions the diagnostic was scored under, not the live bank, so later edits cannot change what the analysis sees.
+  const qs = questionsOf(await versionForRow(db(), score.frameworkVersionId, org.type));
   const rs = await db().select().from(schema.responses).where(eq(schema.responses.diagnosticId, score.diagnosticId));
   const ev = await db().select().from(schema.evidence).where(and(eq(schema.evidence.caseId, caseId), inArray(schema.evidence.responseId, rs.map((r) => r.id))));
   const evBy = new Map(ev.map((e) => [e.responseId, e]));

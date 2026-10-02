@@ -7,6 +7,7 @@ import { eq, sql } from 'drizzle-orm';
 import { db, closeDb, schema } from './client';
 import { SEED_LIBRARY, SEED_QUESTIONS } from '@/domain/logic';
 import { hashPassword, randomToken } from '@/lib/crypto';
+import { ensureBaseline } from '@/services/frameworks';
 
 export async function seedReference() {
   const d = db();
@@ -14,6 +15,7 @@ export async function seedReference() {
     await d.insert(schema.questions).values({ code, dimension, text, weight, sort: i + 1 }).onConflictDoNothing();
   for (const [code, title, dimension, description, typicalDays, kpiHint] of SEED_LIBRARY)
     await d.insert(schema.libraryItems).values({ code, title, dimension, description, typicalDays, kpiHint }).onConflictDoNothing();
+  await ensureBaseline(d);
   const plans = await d.select({ n: sql<number>`count(*)::int` }).from(schema.plans);
   if (!Number(plans[0].n)) await d.insert(schema.plans).values([
     { name: 'SME Diagnostic', description: 'Diagnostic, health score and a written prescription', priceGhs: '1500.00', intervalMonths: 12 },

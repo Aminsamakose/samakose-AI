@@ -7,15 +7,22 @@ import { assertCase, isInternal } from '@/domain/scope';
 import { confidenceClass, scoreDiagnostic, validateSubmission, type ResponseLite } from '@/domain/logic';
 import { emitEvent } from '@/domain/events';
 import { advanceCase, allow, latestDiagnostic, loadRules, need } from './common';
+import { questionsOf, resolveVersion, rulesFor, versionForRow, type VersionRow } from './frameworks';
 import { CASE_STATES, EVIDENCE_CLASSES, type EvidenceClass } from '@/db/schema';
 
 export type AnswerInput = number | { value: number; evidence?: EvidenceClass; ref?: string | null; note?: string | null };
 const OWNER_CLASSES: EvidenceClass[] = ['Self-reported', 'Unverified', 'Missing', 'Document-supported'];
 const stateIndex = (s: string) => CASE_STATES.indexOf(s as any);
 
-export async function activeQuestions(ctx: Ctx) {
-  return ctx.db.select({ code: schema.questions.code, dimension: schema.questions.dimension, text: schema.questions.text, weight: schema.questions.weight })
-    .from(schema.questions).where(eq(schema.questions.active, true)).orderBy(asc(schema.questions.sort), asc(schema.questions.code));
+/** The questions a form shows: the current published version for this kind of organisation (the default framework when none is given). */
+export async function activeQuestions(ctx: Ctx, caseId?: string) {
+  const v = await versionForCase(ctx, caseId);
+  return questionsOf(v);
+}
+async function versionForCase(ctx: Ctx, caseId?: string): Promise<VersionRow> {
+  if (!caseId) return resolveVersion(ctx.db);
+  const [row] = await ctx.db.select({ type: schema.organisations.type }).from(schema.cases).innerJoin(schema.organisations, eq(schema.organisations.id, schema.cases.orgId)).where(eq(schema.cases.id, caseId)).limit(1);
+  return resolveVersion(ctx.db, row?.type);
 }
 
 function normalise(answers: Record<string, AnswerInput>) {
@@ -28,14 +35,16 @@ function normalise(answers: Record<string, AnswerInput>) {
 export async function preflight(ctx: Ctx, caseId: string, answers: Record<string, AnswerInput>) {
   allow(ctx, 'diagnostics', 'create');
   await assertCase(ctx, caseId);
-  const qs = await activeQuestions(ctx);
-  return validateSubmission(normalise(answers), qs, await loadRules(ctx.db));
+  const v = await versionForCase(ctx, caseId);
+  return validateSubmission(normalise(answers), questionsOf(v), rulesFor(v, await loadRules(ctx.db)));
 }
 
 /** Score the responses of one diagnostic using the current evidence classes. Appends a health_scores row. */
 export async function computeScore(ctx: Ctx, caseId: string, diagnosticId: string) {
-  const rules = await loadRules(ctx.db);
-  const qs = await activeQuestions(ctx);
+  const [dg] = await ctx.db.select({ versionId: schema.diagnostics.frameworkVersionId }).from(schema.diagnostics).where(eq(schema.diagnostics.id, diagnosticId));
+  const fv = dg?.versionId ? await versionForRow(ctx.db, dg.versionId) : await versionForCase(ctx, caseId);
+  const rules = rulesFor(fv, await loadRules(ctx.db));
+  const qs = questionsOf(fv);
   const rs = await ctx.db.select({ id: schema.responses.id, questionCode: schema.responses.questionCode, value: schema.responses.value, cls: schema.responses.evidenceClass }).from(schema.responses).where(eq(schema.responses.diagnosticId, diagnosticId));
   const ev = rs.length ? await ctx.db.select({ responseId: schema.evidence.responseId, cls: schema.evidence.class }).from(schema.evidence).where(and(eq(schema.evidence.caseId, caseId), inArray(schema.evidence.responseId, rs.map((r) => r.id)))) : [];
   const override = new Map(ev.map((e) => [e.responseId, e.cls]));
@@ -48,7 +57,7 @@ export async function computeScore(ctx: Ctx, caseId: string, diagnosticId: strin
   const [runRow] = await ctx.db.select({ n: sql<number>`coalesce(max(run),0)::int` }).from(schema.healthScores).where(eq(schema.healthScores.diagnosticId, diagnosticId));
   const [row] = await ctx.db.insert(schema.healthScores).values({
     diagnosticId, caseId, run: Number(runRow.n) + 1, overall: s.overall.toFixed(1), maturity: s.maturity, confidenceClass: conf,
-    dimensions: s.dimensions, evidenceShare: s.evidenceShare, rulesSnapshot: rules as any
+    dimensions: s.dimensions, evidenceShare: s.evidenceShare, rulesSnapshot: rules as any, frameworkVersionId: fv.id
   }).returning();
   await audit(ctx, 'score.computed', 'health_score', row.id, undefined, { overall: s.overall, maturity: s.maturity, confidence: conf, run: row.run }, caseId);
   await emitEvent(ctx, 'HealthScoreChanged', { caseId, payload: { overall: s.overall, maturity: s.maturity, confidence_class: conf } });
@@ -63,8 +72,9 @@ export async function computeScore(ctx: Ctx, caseId: string, diagnosticId: strin
 type SubmitOpts = { uuid?: string; source: 'web' | 'kobo'; persistRejection: boolean };
 export async function submitDiagnosticCore(ctx: Ctx, caseRow: typeof schema.cases.$inferSelect, answers: Record<string, AnswerInput>, o: SubmitOpts) {
   if (stateIndex(caseRow.status) < stateIndex('PROFILED')) throw unprocessable('The business profile must be complete before a diagnostic can be taken');
-  const rules = await loadRules(ctx.db);
-  const qs = await activeQuestions(ctx);
+  const fv = await versionForCase(ctx, caseRow.id);
+  const rules = rulesFor(fv, await loadRules(ctx.db));
+  const qs = questionsOf(fv);
   const seen = o.uuid ? (await ctx.db.select({ u: schema.diagnostics.submissionUuid }).from(schema.diagnostics).where(eq(schema.diagnostics.submissionUuid, o.uuid))).map((r) => r.u!) : [];
   const v = validateSubmission(normalise(answers), qs, rules, seen, o.uuid);
   const isOwner = ctx.user?.role === 'OWNER';
@@ -93,13 +103,13 @@ export async function submitDiagnosticCore(ctx: Ctx, caseRow: typeof schema.case
   const prev = await latestDiagnostic(ctx, caseRow.id);
   if (!v.ok) {
     if (!o.persistRejection) throw new ApiError(422, 'data_quality', 'The diagnostic did not pass the data quality gate', { problems: v.problems, completion: v.completion });
-    const [d] = await ctx.db.insert(schema.diagnostics).values({ caseId: caseRow.id, status: 'Rejected', source: o.source, submissionUuid: o.uuid ?? null, completion: v.completion.toFixed(3), validationNotes: v.problems.join('; '), submittedBy: ctx.user?.id ?? null }).returning();
+    const [d] = await ctx.db.insert(schema.diagnostics).values({ caseId: caseRow.id, status: 'Rejected', source: o.source, frameworkVersionId: fv.id, submissionUuid: o.uuid ?? null, completion: v.completion.toFixed(3), validationNotes: v.problems.join('; '), submittedBy: ctx.user?.id ?? null }).returning();
     await audit(ctx, 'diagnostic.rejected', 'diagnostic', d.id, undefined, { problems: v.problems, source: o.source }, caseRow.id);
     await emitEvent(ctx, 'SystemError', { caseId: caseRow.id, payload: { kind: 'data_quality', problems: v.problems } });
     return { accepted: false as const, id: d.id, code: d.code, problems: v.problems, completion: v.completion };
   }
   const [d] = await ctx.db.insert(schema.diagnostics).values({
-    caseId: caseRow.id, status: 'Validated', source: o.source, submissionUuid: o.uuid ?? null, completion: v.completion.toFixed(3),
+    caseId: caseRow.id, status: 'Validated', source: o.source, frameworkVersionId: fv.id, submissionUuid: o.uuid ?? null, completion: v.completion.toFixed(3),
     submittedBy: ctx.user?.id ?? null, version: (prev?.version ?? 0) + 1, supersedesId: prev?.id ?? null
   }).returning();
   const resp = await ctx.db.insert(schema.responses).values(rows.map((r) => ({ diagnosticId: d.id, questionCode: r.q.code, value: r.value, evidenceClass: r.cls, evidenceRef: r.ref }))).returning();
@@ -110,7 +120,7 @@ export async function submitDiagnosticCore(ctx: Ctx, caseRow: typeof schema.case
     caseId: caseRow.id, responseId: byCode.get(r.q.code)!.id, class: r.cls, documentId: r.ref ? docId.get(r.ref) ?? null : null,
     description: r.note ? `${r.q.code}: ${r.note}` : `${r.q.code} answered ${r.value} of 4 (${r.cls.toLowerCase()})`
   })));
-  await audit(ctx, 'diagnostic.submitted', 'diagnostic', d.id, undefined, { version: d.version, source: o.source, completion: v.completion, answered: rows.length }, caseRow.id);
+  await audit(ctx, 'diagnostic.submitted', 'diagnostic', d.id, undefined, { version: d.version, source: o.source, completion: v.completion, answered: rows.length, framework: `${fv.id}` }, caseRow.id);
   if (caseRow.status === 'PROFILED') {
     await ctx.db.update(schema.cases).set({ status: 'DIAGNOSTIC', updatedAt: new Date() }).where(eq(schema.cases.id, caseRow.id));
     await audit(ctx, 'case.state', 'case', caseRow.id, { status: 'PROFILED' }, { status: 'DIAGNOSTIC', trigger: 'Diagnostic opened', automatic: true }, caseRow.id);
@@ -152,14 +162,14 @@ export async function caseScores(ctx: Ctx, caseId: string) {
   const u = need(ctx).user;
   let answers: unknown[] = [];
   if (last && isInternal(u)) {
-    const qs = await activeQuestions(ctx);
+    const qs = questionsOf(await versionForRow(ctx.db, last.frameworkVersionId));
     const rs = await ctx.db.select().from(schema.responses).where(eq(schema.responses.diagnosticId, last.diagnosticId));
     const ev = await ctx.db.select().from(schema.evidence).where(eq(schema.evidence.caseId, caseId));
     const evBy = new Map(ev.map((e) => [e.responseId, e]));
     answers = rs.map((r) => { const q = qs.find((x) => x.code === r.questionCode); const e = evBy.get(r.id); return { questionCode: r.questionCode, dimension: q?.dimension, text: q?.text, value: r.value, evidenceClass: e?.class ?? r.evidenceClass, evidenceId: e?.code ?? null }; });
   }
   return {
-    history: history.map((h) => ({ id: h.id, run: h.run, overall: Number(h.overall), maturity: h.maturity, confidenceClass: h.confidenceClass, at: h.createdAt })),
+    history: history.map((h) => ({ id: h.id, run: h.run, frameworkVersionId: h.frameworkVersionId, overall: Number(h.overall), maturity: h.maturity, confidenceClass: h.confidenceClass, at: h.createdAt })),
     latest: last ? { overall: Number(last.overall), maturity: last.maturity, confidenceClass: last.confidenceClass, dimensions: last.dimensions, evidenceShare: last.evidenceShare, at: last.createdAt } : null,
     answers
   };
