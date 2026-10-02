@@ -11,7 +11,7 @@ Opened from the Section 127 audit. Severity: High means wrong results or data ex
 | BR-05 | No migration history table on the production database; migrations applied by hand | High | Partly fixed: `npm run db:history` and `baseline` command written and tested locally. Production history not yet recorded; waiting for your go-ahead |
 | BR-06 | No separate staging database found | High | Open: needs approval to create (inside the GHS 4,000 staging allowance) |
 | BR-07 | AI drafts never run against the live model | Medium | Partly fixed: synthetic library and `npm run ai:eval` ready. Live run waits for a Claude API key from Amin |
-| BR-08 | COACH and CONSULTANT roles overlap | Medium | Fixed: one EXPERT role. Lead-only actions (diagnostics, diagnoses, prescriptions, evidence, verification) stay with the lead expert on each case. Actions assign, verify and certify added; certify is reserved for administrators and has no route yet |
+| BR-08 | COACH and CONSULTANT roles overlap | Medium | Fixed and live: one EXPERT role. Lead-only actions (diagnostics, diagnoses, prescriptions, evidence, verification) stay with the lead expert on each case. Actions assign, verify and certify added; certify is reserved for administrators and has no route yet |
 | BR-09 | No load testing | Medium | Open |
 | BR-10 | Screen-reader and text-alternative audit not done | Medium | Open |
 | BR-11 | An AI draft could repeat a certification or guarantee claim found in its input (found by the synthetic injection case) | High | Fixed: drafts containing certification, guarantee or readiness claims are rejected by the validator |
