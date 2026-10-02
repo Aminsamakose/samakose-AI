@@ -1,0 +1,744 @@
+{
+ "questions": [
+  {
+   "code": "SM-001",
+   "dimension": "Strategy, Market and Customers",
+   "text": "The business has a written plan for the next 12 months that sets sales and profit targets.",
+   "weight": 3
+  },
+  {
+   "code": "SM-002",
+   "dimension": "Strategy, Market and Customers",
+   "text": "Staff who run sales, production or service can state the current target for their own area.",
+   "weight": 2
+  },
+  {
+   "code": "SM-003",
+   "dimension": "Strategy, Market and Customers",
+   "text": "Before any large spend on equipment, stock or expansion, the owner writes down the cost, the expected extra income and the payback time.",
+   "weight": 2
+  },
+  {
+   "code": "SM-004",
+   "dimension": "Strategy, Market and Customers",
+   "text": "The business has customers who come back to buy again, and the records can show this.",
+   "weight": 5
+  },
+  {
+   "code": "SM-005",
+   "dimension": "Strategy, Market and Customers",
+   "text": "In the last 12 months the business changed a product, service or delivery method because customers told it what they wanted.",
+   "weight": 3
+  },
+  {
+   "code": "SM-006",
+   "dimension": "Strategy, Market and Customers",
+   "text": "The business can say clearly why customers choose it over a competitor, and customers give the same reason when asked.",
+   "weight": 3
+  },
+  {
+   "code": "SM-007",
+   "dimension": "Strategy, Market and Customers",
+   "text": "A written plan says how and where new customers will be found this year.",
+   "weight": 2
+  },
+  {
+   "code": "SM-008",
+   "dimension": "Strategy, Market and Customers",
+   "text": "The business keeps a list of customer names and phone numbers and uses it to reach customers directly.",
+   "weight": 2
+  },
+  {
+   "code": "SM-009",
+   "dimension": "Strategy, Market and Customers",
+   "text": "Share of sales in the last 12 months that came from the single largest customer.",
+   "weight": 4
+  },
+  {
+   "code": "SM-010",
+   "dimension": "Strategy, Market and Customers",
+   "text": "The business knows which way of reaching customers (referral, shop location, WhatsApp, social media, radio, agents) brings the most new customers.",
+   "weight": 2
+  },
+  {
+   "code": "SM-011",
+   "dimension": "Strategy, Market and Customers",
+   "text": "The price of each main product or service is set from its cost plus a target margin.",
+   "weight": 4
+  },
+  {
+   "code": "SM-012",
+   "dimension": "Strategy, Market and Customers",
+   "text": "How often does the owner check competitors' prices and offers?",
+   "weight": 2
+  },
+  {
+   "code": "SM-013",
+   "dimension": "Strategy, Market and Customers",
+   "text": "Discounts and price reductions are given under a rule, not case by case on request.",
+   "weight": 2
+  },
+  {
+   "code": "SM-014",
+   "dimension": "Operations and Value Delivery",
+   "text": "Orders are delivered on the agreed day and to the agreed specification.",
+   "weight": 4
+  },
+  {
+   "code": "SM-015",
+   "dimension": "Operations and Value Delivery",
+   "text": "Products or work are checked against a stated standard before they reach the customer.",
+   "weight": 3
+  },
+  {
+   "code": "SM-016",
+   "dimension": "Operations and Value Delivery",
+   "text": "Customer complaints, returns and refunds are written down and followed up.",
+   "weight": 3
+  },
+  {
+   "code": "SM-017",
+   "dimension": "Operations and Value Delivery",
+   "text": "The main products or services are made or delivered by following set steps, so different staff produce the same result.",
+   "weight": 2
+  },
+  {
+   "code": "SM-018",
+   "dimension": "Operations and Value Delivery",
+   "text": "Stock, materials or supplies on hand are physically counted and compared with the stock records.",
+   "weight": 3
+  },
+  {
+   "code": "SM-019",
+   "dimension": "Operations and Value Delivery",
+   "text": "Each key input or item for resale can be bought from at least two known suppliers.",
+   "weight": 3
+  },
+  {
+   "code": "SM-020",
+   "dimension": "Operations and Value Delivery",
+   "text": "Waste, spoilage, breakage or loss is measured as a share of what is bought or produced.",
+   "weight": 3
+  },
+  {
+   "code": "SM-021",
+   "dimension": "Operations and Value Delivery",
+   "text": "Each month the main cost lines (inputs, transport, power, rent, wages) are compared with the previous month and rises are explained.",
+   "weight": 3
+  },
+  {
+   "code": "SM-022",
+   "dimension": "Operations and Value Delivery",
+   "text": "Equipment and vehicles are serviced on a planned schedule rather than only after they break down.",
+   "weight": 3
+  },
+  {
+   "code": "SM-023",
+   "dimension": "Operations and Value Delivery",
+   "text": "The business keeps a list of its equipment and other assets with purchase cost, date and condition.",
+   "weight": 2
+  },
+  {
+   "code": "SM-024",
+   "dimension": "Operations and Value Delivery",
+   "text": "Output or work completed per worker or per day is measured for the main product or service.",
+   "weight": 2
+  },
+  {
+   "code": "SM-025",
+   "dimension": "Operations and Value Delivery",
+   "text": "The main work process has no regular bottleneck that delays orders.",
+   "weight": 2
+  },
+  {
+   "code": "SM-026",
+   "dimension": "Financial Management and Performance",
+   "text": "All cash and mobile money received and paid out is written in a cash book or other record every week.",
+   "weight": 5
+  },
+  {
+   "code": "SM-027",
+   "dimension": "Financial Management and Performance",
+   "text": "Business money is kept separate from the owner's household and personal money.",
+   "weight": 4
+  },
+  {
+   "code": "SM-028",
+   "dimension": "Financial Management and Performance",
+   "text": "Sales and purchases are recorded in a ledger or software with the date, amount and the customer or supplier.",
+   "weight": 4
+  },
+  {
+   "code": "SM-029",
+   "dimension": "Financial Management and Performance",
+   "text": "Receipts, invoices and waybills are filed so that any transaction in the last 12 months can be traced.",
+   "weight": 3
+  },
+  {
+   "code": "SM-030",
+   "dimension": "Financial Management and Performance",
+   "text": "Weeks of fixed costs (rent, wages, loan repayments, power, transport) that cash on hand and in accounts could pay today.",
+   "weight": 5
+  },
+  {
+   "code": "SM-031",
+   "dimension": "Financial Management and Performance",
+   "text": "A written cash forecast shows the money expected in and out over the coming weeks.",
+   "weight": 4
+  },
+  {
+   "code": "SM-032",
+   "dimension": "Financial Management and Performance",
+   "text": "Average number of days customers take to pay on credit sales.",
+   "weight": 4
+  },
+  {
+   "code": "SM-033",
+   "dimension": "Financial Management and Performance",
+   "text": "The gross margin (sales less direct cost) is known for each main product or service.",
+   "weight": 4
+  },
+  {
+   "code": "SM-034",
+   "dimension": "Financial Management and Performance",
+   "text": "The monthly sales needed to cover all costs (break-even) has been calculated.",
+   "weight": 3
+  },
+  {
+   "code": "SM-035",
+   "dimension": "Financial Management and Performance",
+   "text": "Net profit or loss after all costs, including the owner's own pay, has been worked out for the last 12 months.",
+   "weight": 4
+  },
+  {
+   "code": "SM-036",
+   "dimension": "Financial Management and Performance",
+   "text": "Financial statements (income statement and balance sheet) have been prepared for the last full year.",
+   "weight": 4
+  },
+  {
+   "code": "SM-037",
+   "dimension": "Financial Management and Performance",
+   "text": "Payments above a set limit need approval from someone other than the person asking for the money.",
+   "weight": 3
+  },
+  {
+   "code": "SM-038",
+   "dimension": "Financial Management and Performance",
+   "text": "Cash, bank and mobile money balances are reconciled to the business records at least monthly.",
+   "weight": 4
+  },
+  {
+   "code": "SM-039",
+   "dimension": "Funding and Capital Readiness",
+   "text": "All loans and supplier credit are repaid on or before the due date.",
+   "weight": 5
+  },
+  {
+   "code": "SM-040",
+   "dimension": "Funding and Capital Readiness",
+   "text": "Monthly cash available before loan repayments compared with the monthly loan repayments (debt cover).",
+   "weight": 5
+  },
+  {
+   "code": "SM-041",
+   "dimension": "Funding and Capital Readiness",
+   "text": "The business keeps an up to date list of everything it owes (loans, supplier balances, advances) with amounts and due dates.",
+   "weight": 4
+  },
+  {
+   "code": "SM-042",
+   "dimension": "Funding and Capital Readiness",
+   "text": "Borrowed money is used for stock, equipment or other items that earn income, not for routine shortfalls or personal spending.",
+   "weight": 3
+  },
+  {
+   "code": "SM-043",
+   "dimension": "Funding and Capital Readiness",
+   "text": "The business and its owner have no unresolved loan default, court judgement or blacklisting with a lender or credit bureau.",
+   "weight": 4
+  },
+  {
+   "code": "SM-044",
+   "dimension": "Funding and Capital Readiness",
+   "text": "The owner has obtained a copy of their own credit report from a licensed credit bureau and checked it for errors.",
+   "weight": 2
+  },
+  {
+   "code": "SM-045",
+   "dimension": "Funding and Capital Readiness",
+   "text": "The business or owner saves regularly in a bank, susu or VSLA for planned business needs.",
+   "weight": 2
+  },
+  {
+   "code": "SM-046",
+   "dimension": "Funding and Capital Readiness",
+   "text": "The business has prepared and submitted a complete loan, grant or investment application in the last three years.",
+   "weight": 2
+  },
+  {
+   "code": "SM-047",
+   "dimension": "Funding and Capital Readiness",
+   "text": "A written funding plan states how much money is needed, for what, from which source and by when.",
+   "weight": 4
+  },
+  {
+   "code": "SM-048",
+   "dimension": "Funding and Capital Readiness",
+   "text": "The business can show financial projections for the next 12 to 36 months with the assumptions written down.",
+   "weight": 3
+  },
+  {
+   "code": "SM-049",
+   "dimension": "Funding and Capital Readiness",
+   "text": "Who owns the business, and in what shares, is written down and can be shown.",
+   "weight": 4
+  },
+  {
+   "code": "SM-050",
+   "dimension": "Funding and Capital Readiness",
+   "text": "The owner can put together a funder information pack (records, statements and registration documents) within one working day.",
+   "weight": 4
+  },
+  {
+   "code": "SM-051",
+   "dimension": "People, Leadership and Governance",
+   "text": "The business can run for a week without the owner on site, with sales and daily decisions continuing.",
+   "weight": 4
+  },
+  {
+   "code": "SM-052",
+   "dimension": "People, Leadership and Governance",
+   "text": "A deputy or successor for the owner's role has been named in writing.",
+   "weight": 3
+  },
+  {
+   "code": "SM-053",
+   "dimension": "People, Leadership and Governance",
+   "text": "How often does the owner set aside time to work on the business (planning, review, improving), not only in it?",
+   "weight": 1
+  },
+  {
+   "code": "SM-054",
+   "dimension": "People, Leadership and Governance",
+   "text": "In the last 12 months the owner changed a business practice after training, coaching or advice.",
+   "weight": 2
+  },
+  {
+   "code": "SM-055",
+   "dimension": "People, Leadership and Governance",
+   "text": "Every person's role and who they report to is written down.",
+   "weight": 2
+  },
+  {
+   "code": "SM-056",
+   "dimension": "People, Leadership and Governance",
+   "text": "People working in the business (staff, apprentices, helpers) are trained for their jobs when they join and when their tasks change.",
+   "weight": 3
+  },
+  {
+   "code": "SM-057",
+   "dimension": "People, Leadership and Governance",
+   "text": "People who perform well are recognised or rewarded in a clear and fair way.",
+   "weight": 2
+  },
+  {
+   "code": "SM-058",
+   "dimension": "People, Leadership and Governance",
+   "text": "The business knows how many people left in the last 12 months and why.",
+   "weight": 2
+  },
+  {
+   "code": "SM-059",
+   "dimension": "People, Leadership and Governance",
+   "text": "How often does the owner meet staff or the management team to review sales, costs, cash and actions?",
+   "weight": 3
+  },
+  {
+   "code": "SM-060",
+   "dimension": "People, Leadership and Governance",
+   "text": "Someone outside the business and the owner's family (adviser, mentor, board member) regularly challenges major decisions.",
+   "weight": 3
+  },
+  {
+   "code": "SM-061",
+   "dimension": "People, Leadership and Governance",
+   "text": "Staff know in writing which decisions they can make without asking the owner (spending, pricing, hiring, discounts).",
+   "weight": 3
+  },
+  {
+   "code": "SM-062",
+   "dimension": "People, Leadership and Governance",
+   "text": "Employees have a written statement of their job, pay, hours and leave.",
+   "weight": 3
+  },
+  {
+   "code": "SM-063",
+   "dimension": "People, Leadership and Governance",
+   "text": "Basic safety measures are in place for the main hazards of the work.",
+   "weight": 3
+  },
+  {
+   "code": "SM-064",
+   "dimension": "Records, Data and Systems",
+   "text": "Registration certificates, licences, permits, leases, contracts and insurance papers are kept together in one safe place.",
+   "weight": 3
+  },
+  {
+   "code": "SM-065",
+   "dimension": "Records, Data and Systems",
+   "text": "Every sale of value is supported by an invoice, receipt or order note that the business keeps a copy of.",
+   "weight": 3
+  },
+  {
+   "code": "SM-066",
+   "dimension": "Records, Data and Systems",
+   "text": "The three most important routine tasks (for example cash handling, receiving goods, processing orders) each have written steps.",
+   "weight": 2
+  },
+  {
+   "code": "SM-067",
+   "dimension": "Records, Data and Systems",
+   "text": "Someone other than the owner can find and read the main business records.",
+   "weight": 2
+  },
+  {
+   "code": "SM-068",
+   "dimension": "Records, Data and Systems",
+   "text": "Share of sales receipts that go through mobile money or a bank account.",
+   "weight": 2
+  },
+  {
+   "code": "SM-069",
+   "dimension": "Records, Data and Systems",
+   "text": "The business has a bank account or mobile money business wallet in the business's name that is in regular use.",
+   "weight": 4
+  },
+  {
+   "code": "SM-070",
+   "dimension": "Records, Data and Systems",
+   "text": "Sales and accounts are kept in a spreadsheet or software, not only on paper or in the owner's head.",
+   "weight": 3
+  },
+  {
+   "code": "SM-071",
+   "dimension": "Records, Data and Systems",
+   "text": "Customers can reach the business through a dedicated business phone number, WhatsApp Business or email address.",
+   "weight": 1
+  },
+  {
+   "code": "SM-072",
+   "dimension": "Records, Data and Systems",
+   "text": "The business tracks a small set of numbers every month (sales, gross margin, cash balance, money owed by customers, stock).",
+   "weight": 4
+  },
+  {
+   "code": "SM-073",
+   "dimension": "Records, Data and Systems",
+   "text": "In the last six months the owner has made a decision that was clearly based on the recorded figures.",
+   "weight": 3
+  },
+  {
+   "code": "SM-074",
+   "dimension": "Records, Data and Systems",
+   "text": "The owner compares this year's results with last year's at least once a year.",
+   "weight": 2
+  },
+  {
+   "code": "SM-075",
+   "dimension": "Records, Data and Systems",
+   "text": "At least each quarter, actual results are compared with the plan or budget and the differences are explained in writing.",
+   "weight": 3
+  },
+  {
+   "code": "SM-076",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "The business is legally registered and its registration is current (certificate valid, annual renewal or annual return up to date).",
+   "weight": 5
+  },
+  {
+   "code": "SM-077",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "All tax returns that fell due in the last 12 months have been filed on time with the Ghana Revenue Authority.",
+   "weight": 4
+  },
+  {
+   "code": "SM-078",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "The owner can say which GRA taxes apply to the business (income tax, VAT, PAYE, withholding) and keeps a calendar of due dates.",
+   "weight": 3
+  },
+  {
+   "code": "SM-079",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "Employee SSNIT contributions and PAYE are paid by the due date every month.",
+   "weight": 4
+  },
+  {
+   "code": "SM-080",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "Important sales and supply arrangements (large customers, key suppliers, premises) are in written agreements.",
+   "weight": 3
+  },
+  {
+   "code": "SM-081",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "The business has a right to use its premises for at least the next 12 months, shown in a lease, tenancy agreement or title.",
+   "weight": 3
+  },
+  {
+   "code": "SM-082",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "The business has taken a step to stop its brand name, logo or product design being copied.",
+   "weight": 1
+  },
+  {
+   "code": "SM-083",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "The owner has written a list of the main risks to the business (fire, theft, price changes, loss of a key customer, illness) and what will be done about each.",
+   "weight": 3
+  },
+  {
+   "code": "SM-084",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "The business holds valid insurance for its biggest insurable risks (stock, premises, vehicles, workers).",
+   "weight": 3
+  },
+  {
+   "code": "SM-085",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "Valuable stock and cash are protected by physical controls (locks, safe, limited keyholders, cash banked regularly).",
+   "weight": 3
+  },
+  {
+   "code": "SM-086",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "Written steps exist for keeping key activities running after a disruption (fire, power cut, illness of a key person, loss of premises).",
+   "weight": 3
+  },
+  {
+   "code": "SM-087",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "Business records and customer data are backed up so they could be recovered after loss of a phone, computer or the premises.",
+   "weight": 3
+  },
+  {
+   "code": "SM-088",
+   "dimension": "Legal, Regulatory and Risk",
+   "text": "The business handles personal data about customers and staff in line with the Data Protection Act, including registration with the Data Protection Commission.",
+   "weight": 3
+  },
+  {
+   "code": "SM-089",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "Electricity, fuel and water use and cost are tracked every month.",
+   "weight": 2
+  },
+  {
+   "code": "SM-090",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "In the last 12 months the business has taken at least one action to cut energy or water use (LED lighting, solar, efficient equipment, repairing leaks).",
+   "weight": 2
+  },
+  {
+   "code": "SM-091",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "Waste (packaging, scrap, used oil, chemicals, electronic waste, organic waste) is sorted, reused or disposed of safely.",
+   "weight": 3
+  },
+  {
+   "code": "SM-092",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "The business has taken a practical step against a climate hazard that affects it (flood, heat, drought, storm, power outages).",
+   "weight": 2
+  },
+  {
+   "code": "SM-093",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "Women and men doing the same work in the business are paid equally and have the same chance of promotion.",
+   "weight": 2
+  },
+  {
+   "code": "SM-094",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "Both women and people under 35 hold jobs with real responsibility (supervisor, technician, manager), not only casual or lowest paid roles.",
+   "weight": 2
+  },
+  {
+   "code": "SM-095",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "Women who own, work in or help run the business take part in decisions about how its income is spent.",
+   "weight": 2
+  },
+  {
+   "code": "SM-096",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "The workplace has a rule against harassment and a safe way for staff to report it.",
+   "weight": 3
+  },
+  {
+   "code": "SM-097",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "The owner has written down what the business would do if monthly sales fell by a quarter for three months.",
+   "weight": 3
+  },
+  {
+   "code": "SM-098",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "Share of sales in the last 12 months that came from the largest single product or service line.",
+   "weight": 3
+  },
+  {
+   "code": "SM-099",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "The owner belongs to a business association, cooperative, trade group or peer network and has attended its meetings.",
+   "weight": 1
+  },
+  {
+   "code": "SM-100",
+   "dimension": "Resilience, Inclusion and Sustainability",
+   "text": "At least two people can perform each critical task (taking orders, bookkeeping, production, delivery).",
+   "weight": 3
+  }
+ ],
+ "dimensions": [
+  "Strategy, Market and Customers",
+  "Operations and Value Delivery",
+  "Financial Management and Performance",
+  "Funding and Capital Readiness",
+  "People, Leadership and Governance",
+  "Records, Data and Systems",
+  "Legal, Regulatory and Risk",
+  "Resilience, Inclusion and Sustainability"
+ ],
+ "rules": null,
+ "sources": [
+  {
+   "component": "Evidence SM-S1: Why Do Management Practices Differ across Firms and Countries?",
+   "source": "Why Do Management Practices Differ across Firms and Countries?. Journal of Economic Perspectives (Bloom and Van Reenen), hosted by World Management Survey, 2010. https://worldmanagementsurvey.org/wp-content/images/2010/07/Why-Do-Management-Practices-Differ-Across-Firms-and-Countries-Bloom-and-Van-Reenen.pdf",
+   "rationale": "Relevance confidence: High. Used for questions SM-001, SM-002, SM-024, SM-057, SM-058, SM-059, SM-072, SM-073, SM-074, SM-075.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S2: Sustaining Competitive and Responsible Enterprises (SCORE) programme overview",
+   "source": "Sustaining Competitive and Responsible Enterprises (SCORE) programme overview. International Labour Organization, n.d.. https://www.ilo.org/sites/default/files/wcmsp5/groups/public/@ed_emp/@emp_ent/documents/publication/wcms_613727.pdf",
+   "rationale": "Relevance confidence: High. Used for questions SM-014, SM-015, SM-016, SM-017, SM-020, SM-024, SM-025, SM-055, SM-056, SM-059, SM-063, SM-066, SM-089, SM-090, SM-091.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S3: Value Added Tax (VAT)",
+   "source": "Value Added Tax (VAT). Ghana Revenue Authority, 2026. https://gra.gov.gh/domestic-tax/tax-types/vat/",
+   "rationale": "Relevance confidence: High. Used for questions SM-065, SM-077, SM-078.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S4: Companies Act, 2019 (Act 992)",
+   "source": "Companies Act, 2019 (Act 992). Republic of Ghana (copy hosted by GIPC), 2019. https://gipc.gov.gh/wp-content/uploads/2023/04/COMPANIES-ACT-2019-ACT-992.pdf",
+   "rationale": "Relevance confidence: High. Used for questions SM-029, SM-036, SM-049, SM-076.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S5: Start and Improve Your Business Implementation Guide",
+   "source": "Start and Improve Your Business Implementation Guide. International Labour Organization, n.d.. https://www.ilo.org/media/447496/download",
+   "rationale": "Relevance confidence: High. Used for questions SM-001, SM-003, SM-005, SM-007, SM-008, SM-010, SM-011, SM-012, SM-018, SM-019, SM-021, SM-026, SM-028, SM-029, SM-033, SM-034, SM-064, SM-065, SM-067, SM-071, SM-072.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S6: Overview of the Village Capital VIRAL Pathway Levels",
+   "source": "Overview of the Village Capital VIRAL Pathway Levels. Village Capital (copy hosted by Maine Technology Institute), n.d.. https://www.mainetechnology.org/wp-content/uploads/MTI-VIRAL-Levels-Overview-1.pdf",
+   "rationale": "Relevance confidence: Medium. Used for questions SM-003, SM-004, SM-005, SM-006, SM-033, SM-034, SM-047, SM-048.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S7: Labour Act, 2003 (Act 651)",
+   "source": "Labour Act, 2003 (Act 651). Republic of Ghana (copy hosted by GIPC), 2003. https://www.gipc.gov.gh/wp-content/uploads/2023/05/LABOUR-ACT-2003-ACT-651.pdf",
+   "rationale": "Relevance confidence: High. Used for questions SM-062, SM-063, SM-093, SM-094, SM-096.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S8: Registration",
+   "source": "Registration. Data Protection Commission, Ghana, n.d.. https://dataprotection.org.gh/registration/",
+   "rationale": "Relevance confidence: High. Used for questions SM-088.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S9: Credit Reporting Act, 2007 (Act 726)",
+   "source": "Credit Reporting Act, 2007 (Act 726). Republic of Ghana (copy hosted by the Business Regulatory Reforms portal), 2007. https://www.brr.gov.gh/acc/registry/docs/Credit%20Reporting%20Act,%202007%20(Act%20726)%20.pdf",
+   "rationale": "Relevance confidence: High. Used for questions SM-039, SM-043, SM-044.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S10: Small and Medium Enterprises: Financial Information as a Catalyst for Lending",
+   "source": "Small and Medium Enterprises: Financial Information as a Catalyst for Lending. World Bank Centre for Financial Reporting Reform, n.d.. https://cfrr.worldbank.org/sites/default/files/2020-03/SMALL%20AND%20MEDIUM%20ENTERPRISES%20FINANCIAL%20INFORMATION%20AS%20A%20CATALYST%20FOR%20LENDING.pdf",
+   "rationale": "Relevance confidence: Medium. Used for questions SM-026, SM-032, SM-035, SM-036, SM-040, SM-041, SM-042, SM-047, SM-050, SM-070.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S11: Pro-WEAI (project level Women's Empowerment in Agriculture Index)",
+   "source": "Pro-WEAI (project level Women's Empowerment in Agriculture Index). International Food Policy Research Institute, n.d.. https://weai.ifpri.info/versions/pro-weai/",
+   "rationale": "Relevance confidence: High. Used for questions SM-095, SM-099.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S13: Performance Standard 3: Resource Efficiency and Pollution Prevention",
+   "source": "Performance Standard 3: Resource Efficiency and Pollution Prevention. International Finance Corporation, 2012. https://www.ifc.org/content/dam/ifc/doc/2010/2012-ifc-performance-standard-3-en.pdf",
+   "rationale": "Relevance confidence: High. Used for questions SM-020, SM-089, SM-090, SM-091.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S14: What is ISO 22301? Business continuity management",
+   "source": "What is ISO 22301? Business continuity management. Advisera (vendor summary of ISO 22301), n.d.. https://advisera.com/27001academy/what-is-iso-22301/",
+   "rationale": "Relevance confidence: Low. Used for questions SM-086, SM-087, SM-100.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S15: ISO 31000 Risk Management: principles and guidelines",
+   "source": "ISO 31000 Risk Management: principles and guidelines. PECB (vendor whitepaper summarising ISO 31000), n.d.. https://pecb.com/en/whitepaper/iso-31000-risk-management-principles-and-guidelines",
+   "rationale": "Relevance confidence: Low. Used for questions SM-083, SM-084, SM-085.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S16: IFC's Business Edge SME Training Courses",
+   "source": "IFC's Business Edge SME Training Courses. Wamda (news report on IFC Business Edge), 2010. https://www.wamda.com/en/2010/08/ifc-s-business-edge-sme-training-courses",
+   "rationale": "Relevance confidence: Low. Used for questions SM-008, SM-010, SM-053, SM-055, SM-056.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S17: SSNIT in Ghana: contributions, tiers and benefits",
+   "source": "SSNIT in Ghana: contributions, tiers and benefits. Employsome (commercial employer guide), n.d.. https://employsome.com/hire/ghana/ssnit-ghana/",
+   "rationale": "Relevance confidence: Low. Used for questions SM-079.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S18: Data Protection FAQs",
+   "source": "Data Protection FAQs. Data Protection Commission, Ghana, n.d.. https://dataprotection.org.gh/help-faqs/",
+   "rationale": "Relevance confidence: High. Used for questions SM-088.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  },
+  {
+   "component": "Evidence SM-S20: Registration of Business Names Act, 1962 (Act 151) as amended",
+   "source": "Registration of Business Names Act, 1962 (Act 151) as amended. Republic of Ghana (copy hosted by the Office of the Registrar of Companies), 1962. https://orc.gov.gh/wp-content/uploads/2025/08/REGISTRATION-OF-BUSINESS-NAMES-ACT-1962-Act-151.pdf",
+   "rationale": "Relevance confidence: High. Used for questions SM-076.",
+   "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
+   "approval": "Proposed"
+  }
+ ],
+ "note": "DRAFT 1.0.0-draft. DRAFT, NOT AUTHORITATIVE. Nothing here is production-authoritative until Amin Yahaya signs off."
+}

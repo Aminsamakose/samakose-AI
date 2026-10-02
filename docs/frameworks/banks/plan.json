@@ -1,0 +1,625 @@
+{
+ "architecture": "Business Health Architecture v2",
+ "totalPerBank": 100,
+ "domains": [
+  [
+   "D1",
+   "Strategy, Market and Customers"
+  ],
+  [
+   "D2",
+   "Operations and Value Delivery"
+  ],
+  [
+   "D3",
+   "Financial Management and Performance"
+  ],
+  [
+   "D4",
+   "Funding and Capital Readiness"
+  ],
+  [
+   "D5",
+   "People, Leadership and Governance"
+  ],
+  [
+   "D6",
+   "Records, Data and Systems"
+  ],
+  [
+   "D7",
+   "Legal, Regulatory and Risk"
+  ],
+  [
+   "D8",
+   "Resilience, Inclusion and Sustainability"
+  ]
+ ],
+ "platforms": {
+  "SME360": {
+   "prefix": "SM",
+   "name": "SME360",
+   "audience": "Small and medium enterprises in any sector (trading, manufacturing, services) in Ghana and West Africa",
+   "domainNames": {
+    "D1": "Strategy, Market and Customers",
+    "D2": "Operations and Value Delivery",
+    "D3": "Financial Management and Performance",
+    "D4": "Funding and Capital Readiness",
+    "D5": "People, Leadership and Governance",
+    "D6": "Records, Data and Systems",
+    "D7": "Legal, Regulatory and Risk",
+    "D8": "Resilience, Inclusion and Sustainability"
+   },
+   "sub": {
+    "D1": [
+     [
+      "1.1",
+      "Vision, strategy and planning",
+      3
+     ],
+     [
+      "1.2",
+      "Customers and value proposition",
+      3
+     ],
+     [
+      "1.3",
+      "Sales and marketing",
+      4
+     ],
+     [
+      "1.4",
+      "Pricing and competitive position",
+      3
+     ]
+    ],
+    "D2": [
+     [
+      "2.1",
+      "Delivery and quality",
+      4
+     ],
+     [
+      "2.2",
+      "Supply, inventory and cost control",
+      4
+     ],
+     [
+      "2.3",
+      "Productivity, assets and technology",
+      4
+     ]
+    ],
+    "D3": [
+     [
+      "3.1",
+      "Bookkeeping and financial records",
+      4
+     ],
+     [
+      "3.2",
+      "Cash flow management",
+      3
+     ],
+     [
+      "3.3",
+      "Costing, margins and profitability",
+      3
+     ],
+     [
+      "3.4",
+      "Financial reporting and controls",
+      3
+     ]
+    ],
+    "D4": [
+     [
+      "4.1",
+      "Capital structure and debt service",
+      4
+     ],
+     [
+      "4.2",
+      "Credit history and finance access",
+      4
+     ],
+     [
+      "4.3",
+      "Investor-grade information and funding plan",
+      4
+     ]
+    ],
+    "D5": [
+     [
+      "5.1",
+      "Owner leadership and succession",
+      4
+     ],
+     [
+      "5.2",
+      "Staff roles, capability and retention",
+      4
+     ],
+     [
+      "5.3",
+      "Governance and decision rights",
+      3
+     ],
+     [
+      "5.4",
+      "Workplace practices and decent work",
+      2
+     ]
+    ],
+    "D6": [
+     [
+      "6.1",
+      "Business records and documentation",
+      4
+     ],
+     [
+      "6.2",
+      "Digital tools and payments",
+      4
+     ],
+     [
+      "6.3",
+      "Data use and performance tracking",
+      4
+     ]
+    ],
+    "D7": [
+     [
+      "7.1",
+      "Registration, tax and statutory compliance",
+      4
+     ],
+     [
+      "7.2",
+      "Contracts and intellectual property",
+      3
+     ],
+     [
+      "7.3",
+      "Risk management and insurance",
+      3
+     ],
+     [
+      "7.4",
+      "Continuity and data protection",
+      3
+     ]
+    ],
+    "D8": [
+     [
+      "8.1",
+      "Environmental and climate practice",
+      4
+     ],
+     [
+      "8.2",
+      "Gender, youth and social inclusion",
+      4
+     ],
+     [
+      "8.3",
+      "Shock resilience and adaptability",
+      4
+     ]
+    ]
+   },
+   "readiness": [
+    [
+     "RDY-FIN",
+     "Bank finance readiness"
+    ],
+    [
+     "RDY-MKT",
+     "Market and buyer readiness"
+    ],
+    [
+     "RDY-INV",
+     "Investment readiness (equity, impact or blended capital)"
+    ],
+    [
+     "RDY-GRT",
+     "Grant and donor readiness"
+    ],
+    [
+     "RDY-CMP",
+     "Statutory compliance readiness"
+    ]
+   ]
+  },
+  "AGRIFOOD360": {
+   "prefix": "AF",
+   "name": "AgriFood360",
+   "audience": "Agribusiness enterprises in Ghana and West Africa: farms, farmer-based organisations and cooperatives, aggregators, agro-processors, input dealers and outgrower schemes",
+   "domainNames": {
+    "D1": "Market Access, Offtake and Traceability",
+    "D2": "Production, Inputs and Post-harvest",
+    "D3": "Financial Management and Performance",
+    "D4": "Seasonal Finance and Capital Readiness",
+    "D5": "People, Leadership and Member Governance",
+    "D6": "Records, Data and Systems",
+    "D7": "Regulation, Certification and Risk",
+    "D8": "Climate, Inclusion and Sustainability"
+   },
+   "sub": {
+    "D1": [
+     [
+      "1.1",
+      "Enterprise strategy and crop or product portfolio",
+      3
+     ],
+     [
+      "1.2",
+      "Buyers, contracts and offtake",
+      4
+     ],
+     [
+      "1.3",
+      "Pricing, market information and value capture",
+      3
+     ],
+     [
+      "1.4",
+      "Quality-linked markets and traceability",
+      3
+     ]
+    ],
+    "D2": [
+     [
+      "2.1",
+      "Production practice and productivity",
+      4
+     ],
+     [
+      "2.2",
+      "Input access and supplier relations",
+      4
+     ],
+     [
+      "2.3",
+      "Post-harvest handling, storage and processing",
+      4
+     ]
+    ],
+    "D3": [
+     [
+      "3.1",
+      "Farm and enterprise accounting",
+      4
+     ],
+     [
+      "3.2",
+      "Seasonal cash flow and working capital",
+      4
+     ],
+     [
+      "3.3",
+      "Cost of production and margins",
+      3
+     ],
+     [
+      "3.4",
+      "Financial controls and reporting",
+      2
+     ]
+    ],
+    "D4": [
+     [
+      "4.1",
+      "Credit use and repayment performance",
+      4
+     ],
+     [
+      "4.2",
+      "Alternative and group finance (VSLA, outgrower, asset finance)",
+      4
+     ],
+     [
+      "4.3",
+      "Investor-grade information, assets and collateral",
+      4
+     ]
+    ],
+    "D5": [
+     [
+      "5.1",
+      "Management capability and succession",
+      3
+     ],
+     [
+      "5.2",
+      "Cooperative and member governance",
+      4
+     ],
+     [
+      "5.3",
+      "Labour, skills and extension access",
+      3
+     ],
+     [
+      "5.4",
+      "Member, outgrower and service relationships",
+      3
+     ]
+    ],
+    "D6": [
+     [
+      "6.1",
+      "Production, stock and sales records",
+      4
+     ],
+     [
+      "6.2",
+      "Digital tools, payments and market information",
+      4
+     ],
+     [
+      "6.3",
+      "Data use and performance tracking",
+      4
+     ]
+    ],
+    "D7": [
+     [
+      "7.1",
+      "Registration, tax and land tenure",
+      4
+     ],
+     [
+      "7.2",
+      "Sector regulation and permits",
+      3
+     ],
+     [
+      "7.3",
+      "Standards, certification and buyer compliance",
+      3
+     ],
+     [
+      "7.4",
+      "Risk management and insurance",
+      3
+     ]
+    ],
+    "D8": [
+     [
+      "8.1",
+      "Climate exposure and adaptation",
+      4
+     ],
+     [
+      "8.2",
+      "Soil, water and environmental stewardship",
+      4
+     ],
+     [
+      "8.3",
+      "Gender, youth and social inclusion",
+      4
+     ]
+    ]
+   },
+   "readiness": [
+    [
+     "RDY-INP",
+     "Input and working capital credit readiness"
+    ],
+    [
+     "RDY-OFF",
+     "Offtake and institutional market readiness"
+    ],
+    [
+     "RDY-CRT",
+     "Certification and export readiness"
+    ],
+    [
+     "RDY-INV",
+     "Investment readiness"
+    ],
+    [
+     "RDY-GRT",
+     "Grant and climate-finance readiness"
+    ]
+   ]
+  },
+  "ESO360": {
+   "prefix": "ES",
+   "name": "ESO360",
+   "audience": "Ecosystem support organisations in Ghana and West Africa: accelerators, incubators, business development service providers, training and mentoring organisations, cooperatives support bodies",
+   "domainNames": {
+    "D1": "Strategy and Programme Design",
+    "D2": "Delivery Operations and Service Quality",
+    "D3": "Financial Management and Performance",
+    "D4": "Funding and Financial Sustainability",
+    "D5": "People, Leadership and Governance",
+    "D6": "Data, Results and Learning",
+    "D7": "Legal, Compliance and Risk",
+    "D8": "Inclusion, Climate and Ecosystem Contribution"
+   },
+   "sub": {
+    "D1": [
+     [
+      "1.1",
+      "Mission, theory of change and target segment",
+      4
+     ],
+     [
+      "1.2",
+      "Programme model and curriculum design",
+      3
+     ],
+     [
+      "1.3",
+      "Demand validation and market positioning",
+      3
+     ],
+     [
+      "1.4",
+      "Strategic planning and scalability",
+      3
+     ]
+    ],
+    "D2": [
+     [
+      "2.1",
+      "Selection and onboarding",
+      4
+     ],
+     [
+      "2.2",
+      "Service delivery and mentor quality",
+      4
+     ],
+     [
+      "2.3",
+      "Post-programme support and alumni",
+      4
+     ]
+    ],
+    "D3": [
+     [
+      "3.1",
+      "Budgeting and cost per enterprise served",
+      4
+     ],
+     [
+      "3.2",
+      "Accounting, controls and audit",
+      4
+     ],
+     [
+      "3.3",
+      "Financial reporting and donor compliance",
+      3
+     ],
+     [
+      "3.4",
+      "Cash flow and reserves",
+      2
+     ]
+    ],
+    "D4": [
+     [
+      "4.1",
+      "Revenue diversification and donor dependence",
+      4
+     ],
+     [
+      "4.2",
+      "Investor and capital linkages for client enterprises",
+      4
+     ],
+     [
+      "4.3",
+      "Funder and partner relationships",
+      4
+     ]
+    ],
+    "D5": [
+     [
+      "5.1",
+      "Board, leadership and succession",
+      4
+     ],
+     [
+      "5.2",
+      "Team structure and capability",
+      3
+     ],
+     [
+      "5.3",
+      "Mentor and coach network management",
+      3
+     ],
+     [
+      "5.4",
+      "Safeguarding and conduct",
+      3
+     ]
+    ],
+    "D6": [
+     [
+      "6.1",
+      "Client data systems",
+      4
+     ],
+     [
+      "6.2",
+      "Results measurement and attribution",
+      4
+     ],
+     [
+      "6.3",
+      "Learning and adaptation",
+      4
+     ]
+    ],
+    "D7": [
+     [
+      "7.1",
+      "Registration and legal compliance",
+      4
+     ],
+     [
+      "7.2",
+      "Data protection (Data Protection Act, 2012, Act 843)",
+      3
+     ],
+     [
+      "7.3",
+      "Risk management and due diligence",
+      3
+     ],
+     [
+      "7.4",
+      "Anti-fraud and fiduciary controls",
+      3
+     ]
+    ],
+    "D8": [
+     [
+      "8.1",
+      "Gender and youth inclusion",
+      4
+     ],
+     [
+      "8.2",
+      "Climate and environmental integration",
+      4
+     ],
+     [
+      "8.3",
+      "Ecosystem contribution and reach to rural and underserved enterprises",
+      4
+     ]
+    ]
+   },
+   "readiness": [
+    [
+     "RDY-FND",
+     "Institutional funder readiness"
+    ],
+    [
+     "RDY-LNK",
+     "Investor linkage credibility"
+    ],
+    [
+     "RDY-RES",
+     "Results credibility"
+    ],
+    [
+     "RDY-CMP",
+     "Safeguarding and compliance readiness"
+    ],
+    [
+     "RDY-SCL",
+     "Scale readiness"
+    ]
+   ]
+  }
+ }
+}

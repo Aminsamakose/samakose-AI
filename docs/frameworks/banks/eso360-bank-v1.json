@@ -1,0 +1,4700 @@
+{
+ "framework": "ESO360",
+ "version": "1.0.0-draft",
+ "status": "DRAFT, NOT AUTHORITATIVE. Nothing here is production-authoritative until Amin Yahaya signs off.",
+ "architecture": "Business Health Architecture v2",
+ "generated": "2026-10-02",
+ "domains": [
+  {
+   "code": "D1",
+   "name": "Strategy and Programme Design"
+  },
+  {
+   "code": "D2",
+   "name": "Delivery Operations and Service Quality"
+  },
+  {
+   "code": "D3",
+   "name": "Financial Management and Performance"
+  },
+  {
+   "code": "D4",
+   "name": "Funding and Financial Sustainability"
+  },
+  {
+   "code": "D5",
+   "name": "People, Leadership and Governance"
+  },
+  {
+   "code": "D6",
+   "name": "Data, Results and Learning"
+  },
+  {
+   "code": "D7",
+   "name": "Legal, Compliance and Risk"
+  },
+  {
+   "code": "D8",
+   "name": "Inclusion, Climate and Ecosystem Contribution"
+  }
+ ],
+ "subDimensions": [
+  {
+   "code": "1.1",
+   "domain": "D1",
+   "name": "Mission, theory of change and target segment",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Leaders describe the ESO as serving 'all SMEs', the theory of change lives only inside funder proposals, and the enterprises selected drift away from the intended segment.",
+    "diagnosis": "The organisation has not agreed whom it serves and what should change for them, so programmes, selection and reporting pull in different directions.",
+    "prescription": "Agree a one sentence target statement, draw a one page theory of change with assumptions, and write the target segment into selection criteria and reporting.",
+    "intervention": {
+     "type": "Technical assistance",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 15,
+     "resources": "Facilitated leadership workshop, theory of change template, segment definition sheet"
+    },
+    "measurement": {
+     "kpi": "Share of enterprises supported in the period that fit the written target segment",
+     "baselineMethod": "Client database extract compared with the written segment definition",
+     "provisionalTarget": "75 percent or more fit within six months",
+     "dataSource": "Client database and selection records",
+     "frequency": "Each cohort"
+    }
+   }
+  },
+  {
+   "code": "1.2",
+   "domain": "D1",
+   "name": "Programme model and curriculum design",
+   "expectedQuestions": 3,
+   "mapping": {
+    "gapPattern": "Curriculum is copied from foreign or funder templates, programme length and cohort size follow the grant budget, and entrepreneurs only meet staff or mentors one to one.",
+    "diagnosis": "Programme design was inherited rather than chosen, so content may not fit Ghanaian sectors, languages or the stage of the enterprises served.",
+    "prescription": "Review each module with local entrepreneurs and sector practitioners, write down why length, cohort size and intensity were chosen, and build scheduled peer sessions into every cohort.",
+    "intervention": {
+     "type": "Coaching",
+     "ownerRole": "COACH",
+     "typicalDays": 20,
+     "resources": "Curriculum review template, local case study bank, peer session facilitation guide"
+    },
+    "measurement": {
+     "kpi": "Share of curriculum modules revised with documented local input",
+     "baselineMethod": "Module list compared with consultation records",
+     "provisionalTarget": "80 percent of modules reviewed within six months",
+     "dataSource": "Curriculum files and consultation notes",
+     "frequency": "Each cohort"
+    }
+   }
+  },
+  {
+   "code": "1.3",
+   "domain": "D1",
+   "name": "Demand validation and market positioning",
+   "expectedQuestions": 3,
+   "mapping": {
+    "gapPattern": "New programmes are designed when a funder call appears, there is no needs assessment from entrepreneurs, and leaders cannot say who else serves the same enterprises.",
+    "diagnosis": "Demand is assumed from funder priorities rather than tested, which risks duplicating other providers and offering what entrepreneurs do not value.",
+    "prescription": "Run a short needs assessment with target entrepreneurs before each new design, map other providers in the region, and estimate the size of the target segment and the share reached.",
+    "intervention": {
+     "type": "Tool or template",
+     "ownerRole": "COACH",
+     "typicalDays": 12,
+     "resources": "Needs assessment questionnaire, provider mapping template, segment sizing sheet"
+    },
+    "measurement": {
+     "kpi": "Number of programmes designed with a written needs assessment in the last 12 months",
+     "baselineMethod": "Review of programme design files against needs assessments",
+     "provisionalTarget": "Every new programme designed with a needs assessment",
+     "dataSource": "Programme design files",
+     "frequency": "Annually"
+    }
+   }
+  },
+  {
+   "code": "1.4",
+   "domain": "D1",
+   "name": "Strategic planning and scalability",
+   "expectedQuestions": 3,
+   "mapping": {
+    "gapPattern": "The strategic plan is a funding concept note, the delivery model sits in founders' heads, and expansion follows funding offers without a capacity check.",
+    "diagnosis": "The ESO depends on a few people and cannot show it could grow, replicate or hand over without losing quality.",
+    "prescription": "Write a three year plan with measurable targets, document the delivery model as an operating manual, and add a capacity check before every expansion decision.",
+    "intervention": {
+     "type": "Technical assistance",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 30,
+     "resources": "Strategy planning workshop, operating manual template, capacity check form"
+    },
+    "measurement": {
+     "kpi": "Share of core delivery processes documented in an operating manual",
+     "baselineMethod": "Checklist of selection, delivery, mentoring, follow up and data processes",
+     "provisionalTarget": "Core processes documented within six months",
+     "dataSource": "Operating manual and strategy documents",
+     "frequency": "Each six months"
+    }
+   }
+  },
+  {
+   "code": "2.1",
+   "domain": "D2",
+   "name": "Selection and onboarding",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Selection relies on personal contact or one decision maker, rejected applicants are not recorded, and most participants were already supported elsewhere.",
+    "diagnosis": "Selection cannot be defended or analysed, and the programme may be serving the easiest enterprises rather than those who most need support.",
+    "prescription": "Publish criteria, use a two reviewer scoring sheet, keep a register of every applicant with reasons, and run a baseline diagnostic and support plan for each selected enterprise.",
+    "intervention": {
+     "type": "Tool or template",
+     "ownerRole": "COACH",
+     "typicalDays": 15,
+     "resources": "Selection scoring sheet, applicant register template, baseline diagnostic form"
+    },
+    "measurement": {
+     "kpi": "Share of selected enterprises scored by two or more reviewers",
+     "baselineMethod": "Review of scoring sheets for the last round",
+     "provisionalTarget": "100 percent of selections scored by two reviewers",
+     "dataSource": "Selection records and applicant register",
+     "frequency": "Each selection round"
+    }
+   }
+  },
+  {
+   "code": "2.2",
+   "domain": "D2",
+   "name": "Service delivery and mentor quality",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Support time goes mainly to pitch decks, mentors are matched by availability, feedback forms are not analysed, and market access is left to chance.",
+    "diagnosis": "Delivery is driven by the standard curriculum rather than by what entrepreneurs need most, so mentoring and market linkage add less value than they could.",
+    "prescription": "Collect and rank needs at entry, match mentors using written assessments, analyse feedback every cohort, and plan named market access activities with buyers.",
+    "intervention": {
+     "type": "Coaching",
+     "ownerRole": "COACH",
+     "typicalDays": 25,
+     "resources": "Needs ranking form, mentor matching sheet, feedback analysis template, buyer engagement plan"
+    },
+    "measurement": {
+     "kpi": "Share of support hours spent on the needs entrepreneurs ranked highest",
+     "baselineMethod": "Session log hours compared with needs rankings",
+     "provisionalTarget": "60 percent or more of hours on top three needs",
+     "dataSource": "Mentor and coach session log",
+     "frequency": "Each cohort"
+    }
+   }
+  },
+  {
+   "code": "2.3",
+   "domain": "D2",
+   "name": "Post-programme support and alumni",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "There are no graduation or exit rules, alumni lists are out of date, and contact stops when the programme ends.",
+    "diagnosis": "The ESO treats support as a one off event, so it loses track of enterprises and cannot show lasting results or use alumni as a resource.",
+    "prescription": "Write graduation and exit rules, define a follow up offer for alumni with eligibility, contact alumni on a fixed schedule, and invite alumni to mentor or speak.",
+    "intervention": {
+     "type": "Tool or template",
+     "ownerRole": "COACH",
+     "typicalDays": 12,
+     "resources": "Graduation policy template, alumni offer sheet, alumni contact log"
+    },
+    "measurement": {
+     "kpi": "Share of alumni of the last three cohorts contacted in the past 12 months",
+     "baselineMethod": "Alumni list compared with the contact log",
+     "provisionalTarget": "60 percent or more contacted",
+     "dataSource": "Alumni database",
+     "frequency": "Quarterly"
+    }
+   }
+  },
+  {
+   "code": "3.1",
+   "domain": "D3",
+   "name": "Budgeting and cost per enterprise served",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Cost per enterprise has never been calculated, budgets exist only inside proposals, shared costs are charged to whichever grant has money, and spending is not compared with budget.",
+    "diagnosis": "The ESO cannot show what it costs to serve an enterprise or whether it recovers its running costs, which weakens negotiation with funders and any plan to scale.",
+    "prescription": "Approve an annual budget by programme, adopt a written cost allocation method, compare spending with budget monthly, and calculate cost per enterprise from the accounts.",
+    "intervention": {
+     "type": "Technical assistance",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 20,
+     "resources": "Programme budget template, cost allocation policy template, cost per enterprise worksheet"
+    },
+    "measurement": {
+     "kpi": "Cost per enterprise supported calculated for each programme",
+     "baselineMethod": "Accounts and participant counts for the last year",
+     "provisionalTarget": "Calculated for every programme within six months",
+     "dataSource": "Accounting system and client database",
+     "frequency": "Annually"
+    }
+   }
+  },
+  {
+   "code": "3.2",
+   "domain": "D3",
+   "name": "Accounting, controls and audit",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Books are kept in one cashbook, one person approves and makes payments, bank accounts are not reconciled, and audits are late or missing.",
+    "diagnosis": "Weak accounting and payment controls expose the ESO to error and fraud and are likely to fail a funder's financial due diligence.",
+    "prescription": "Set up accounting software with fund and programme codes, introduce dual payment approval, reconcile every bank and mobile money account monthly, and commission a full audit.",
+    "intervention": {
+     "type": "Technical assistance",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 30,
+     "resources": "Accounting software set up, chart of accounts with project codes, financial controls manual, audit terms of reference"
+    },
+    "measurement": {
+     "kpi": "Number of months in the last 12 with signed bank reconciliations",
+     "baselineMethod": "Review of reconciliation files",
+     "provisionalTarget": "12 of 12 months",
+     "dataSource": "Monthly reconciliation statements",
+     "frequency": "Quarterly"
+    }
+   }
+  },
+  {
+   "code": "3.3",
+   "domain": "D3",
+   "name": "Financial reporting and donor compliance",
+   "expectedQuestions": 3,
+   "mapping": {
+    "gapPattern": "Donor reports are late, leaders see no management accounts, and spending is checked against donor rules only at report time.",
+    "diagnosis": "Reporting is reactive, so ineligible costs and late submissions threaten funder trust and future grants.",
+    "prescription": "Create a donor reporting calendar, produce management accounts within 15 days of month end, and track spending against each donor budget with an eligibility check before payment.",
+    "intervention": {
+     "type": "Tool or template",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 15,
+     "resources": "Reporting calendar, management accounts template, donor budget tracker"
+    },
+    "measurement": {
+     "kpi": "Share of donor and financial reports submitted on time in the last 12 months",
+     "baselineMethod": "Reporting calendar compared with submission receipts",
+     "provisionalTarget": "95 percent or more on time",
+     "dataSource": "Reporting calendar and email receipts",
+     "frequency": "Quarterly"
+    }
+   }
+  },
+  {
+   "code": "3.4",
+   "domain": "D3",
+   "name": "Cash flow and reserves",
+   "expectedQuestions": 2,
+   "mapping": {
+    "gapPattern": "There are no unrestricted reserves and no cash flow forecast, so a late grant payment forces the ESO to pause delivery or stop paying staff.",
+    "diagnosis": "The ESO is exposed to funding timing gaps and cannot plan around them.",
+    "prescription": "Build a monthly six month cash flow forecast, adopt a reserves policy, and set aside a share of every unrestricted income source until three months of core costs are covered.",
+    "intervention": {
+     "type": "Coaching",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 10,
+     "resources": "Cash flow forecast template, reserves policy template, unrestricted income plan"
+    },
+    "measurement": {
+     "kpi": "Months of core running costs covered by unrestricted reserves",
+     "baselineMethod": "Bank balances divided by monthly core costs",
+     "provisionalTarget": "3 months within 12 months",
+     "dataSource": "Bank statements and budget",
+     "frequency": "Monthly"
+    }
+   }
+  },
+  {
+   "code": "4.1",
+   "domain": "D4",
+   "name": "Revenue diversification and donor dependence",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "One funder provides most of the income, almost nothing is multi-year or unrestricted, no income is earned, and unrelated consulting keeps the doors open.",
+    "diagnosis": "Income is concentrated and short term, so the ESO follows funder priorities and cannot invest in its own mission or stay open when one grant ends.",
+    "prescription": "Set diversification targets, test fees or success fees with a pilot service, seek multi-year or core grants, and ring fence consulting income for the mission with board approval.",
+    "intervention": {
+     "type": "Technical assistance",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 40,
+     "resources": "Revenue model workshop, fee pilot design, funder mapping, income tracking sheet"
+    },
+    "measurement": {
+     "kpi": "Share of income from the largest single funder",
+     "baselineMethod": "Income by source schedule for the last financial year",
+     "provisionalTarget": "Largest funder at 50 percent or less within 12 months",
+     "dataSource": "Audited or management accounts",
+     "frequency": "Annually"
+    }
+   }
+  },
+  {
+   "code": "4.2",
+   "domain": "D4",
+   "name": "Investor and capital linkages for client enterprises",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Introductions to investors and lenders are not recorded, partners appear only at pitch events, enterprises are not prepared, and finance terms are not checked.",
+    "diagnosis": "Investor linkage cannot be shown to work, and unprepared or poorly screened introductions can damage the ESO's credibility and the enterprises themselves.",
+    "prescription": "Keep an introduction register with outcomes, prepare each enterprise with a readiness checklist, verify claims before endorsement, and screen finance terms of partners.",
+    "intervention": {
+     "type": "Linkage",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 30,
+     "resources": "Introduction register, investor readiness checklist, finance partner screening criteria, partner engagement plan"
+    },
+    "measurement": {
+     "kpi": "Share of introductions with a recorded outcome",
+     "baselineMethod": "Introduction register review",
+     "provisionalTarget": "100 percent of introductions with outcome recorded within six months",
+     "dataSource": "Introduction register",
+     "frequency": "Quarterly"
+    }
+   }
+  },
+  {
+   "code": "4.3",
+   "domain": "D4",
+   "name": "Funder and partner relationships",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Partnerships are named but not written, there is no funding pipeline, funders are contacted only for reports, and grants do not cover real running costs.",
+    "diagnosis": "Relationships are not managed deliberately, so funding is unpredictable and the ESO carries hidden costs.",
+    "prescription": "Sign agreements with main partners, keep a monthly funding pipeline, hold a yearly review with each major funder, and apply a written running cost rate when negotiating.",
+    "intervention": {
+     "type": "Coaching",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 20,
+     "resources": "Partnership agreement template, funding pipeline tracker, funder meeting guide, running cost rate sheet"
+    },
+    "measurement": {
+     "kpi": "Share of major funders and partners with a signed agreement and a yearly review",
+     "baselineMethod": "Review of agreements and meeting records",
+     "provisionalTarget": "All major funders and partners covered within 12 months",
+     "dataSource": "Agreements and meeting notes",
+     "frequency": "Each six months"
+    }
+   }
+  },
+  {
+   "code": "5.1",
+   "domain": "D5",
+   "name": "Board, leadership and succession",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "The board meets rarely or not at all, there are no conflict of interest declarations, the director is not reviewed, and nobody could lead if the director left.",
+    "diagnosis": "Governance is weak, so decisions lack oversight and the ESO is exposed to conflicts, key person risk and funder due diligence failure.",
+    "prescription": "Agree a board calendar with minutes, collect annual conflict of interest declarations, run a yearly director review against targets, and write a succession plan.",
+    "intervention": {
+     "type": "Coaching",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 15,
+     "resources": "Board calendar and minutes templates, declaration forms, director appraisal form, succession plan template"
+    },
+    "measurement": {
+     "kpi": "Number of board meetings with minutes in the last 12 months",
+     "baselineMethod": "Minute book review",
+     "provisionalTarget": "4 or more meetings within 12 months",
+     "dataSource": "Board minute book",
+     "frequency": "Annually"
+    }
+   }
+  },
+  {
+   "code": "5.2",
+   "domain": "D5",
+   "name": "Team structure and capability",
+   "expectedQuestions": 3,
+   "mapping": {
+    "gapPattern": "Core staff leave within two years, there are no staff reviews, and gaps in expertise are covered by promising services the team cannot deliver.",
+    "diagnosis": "The ESO loses institutional knowledge and overpromises, which hurts service quality and funder confidence.",
+    "prescription": "Set role descriptions and yearly reviews, plan staff development and handover notes, list skills gaps, and engage outside experts under written terms.",
+    "intervention": {
+     "type": "Coaching",
+     "ownerRole": "COACH",
+     "typicalDays": 15,
+     "resources": "Job description template, review form, skills gap analysis sheet, handover note template"
+    },
+    "measurement": {
+     "kpi": "Share of core programme staff who left in the last 12 months",
+     "baselineMethod": "Staff register with start and end dates",
+     "provisionalTarget": "15 percent or less",
+     "dataSource": "Staff register",
+     "frequency": "Annually"
+    }
+   }
+  },
+  {
+   "code": "5.3",
+   "domain": "D5",
+   "name": "Mentor and coach network management",
+   "expectedQuestions": 3,
+   "mapping": {
+    "gapPattern": "Mentors are recruited by recommendation, have no agreement, and nobody reviews who is active or whether they help.",
+    "diagnosis": "The mentor network is the main service but is not managed, so quality varies and misconduct risk is unmanaged.",
+    "prescription": "Adopt written mentor selection criteria with references, a signed mentor agreement, and a yearly review of session logs and ratings with renew, coach or release decisions.",
+    "intervention": {
+     "type": "Tool or template",
+     "ownerRole": "COACH",
+     "typicalDays": 12,
+     "resources": "Mentor selection criteria, mentor agreement template, mentor review form"
+    },
+    "measurement": {
+     "kpi": "Share of active mentors with a signed agreement and a reference on file",
+     "baselineMethod": "Mentor files review",
+     "provisionalTarget": "100 percent within six months",
+     "dataSource": "Mentor files",
+     "frequency": "Each six months"
+    }
+   }
+  },
+  {
+   "code": "5.4",
+   "domain": "D5",
+   "name": "Safeguarding and conduct",
+   "expectedQuestions": 3,
+   "mapping": {
+    "gapPattern": "There is no safeguarding policy or complaints channel, and staff and mentors have never been trained on conduct.",
+    "diagnosis": "The ESO cannot protect entrepreneurs, mentors or staff from exploitation, abuse or harassment, and will fail institutional funders' safeguarding due diligence.",
+    "prescription": "Adopt a board approved safeguarding policy and code of conduct, set up a confidential complaints channel explained at onboarding, and train all staff and mentors before they start.",
+    "intervention": {
+     "type": "Technical assistance",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 20,
+     "resources": "Safeguarding policy and code of conduct template, complaints procedure and case log, training pack"
+    },
+    "measurement": {
+     "kpi": "Share of active staff and mentors trained on safeguarding and the code of conduct",
+     "baselineMethod": "Training register compared with staff and mentor lists",
+     "provisionalTarget": "100 percent within six months",
+     "dataSource": "Training attendance records",
+     "frequency": "Each six months"
+    }
+   }
+  },
+  {
+   "code": "6.1",
+   "domain": "D6",
+   "name": "Client data systems",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Client records sit in personal files, several spreadsheets and phones, applicants and alumni are not linked, and key fields are blank.",
+    "diagnosis": "The ESO cannot trace an enterprise over time or produce reliable numbers, so results claims cannot be verified.",
+    "prescription": "Set up one client database with unique IDs covering applicant to alumni, write a data guide defining fields, and run a completeness check each cohort.",
+    "intervention": {
+     "type": "Tool or template",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 25,
+     "resources": "Client database template, data dictionary, completeness checklist, staff data entry training"
+    },
+    "measurement": {
+     "kpi": "Share of key database fields completed for participants",
+     "baselineMethod": "Database extract completeness check",
+     "provisionalTarget": "95 percent or more complete",
+     "dataSource": "Client database",
+     "frequency": "Each cohort"
+    }
+   }
+  },
+  {
+   "code": "6.2",
+   "domain": "D6",
+   "name": "Results measurement and attribution",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Indicators have no baselines, nobody follows up after the programme, results are self reported and unverified, and all change is claimed as impact.",
+    "diagnosis": "Reported results are not credible to funders or investors, and the ESO cannot show whether its support works.",
+    "prescription": "Define indicators with baselines, follow up alumni at 12 months, verify a sample of results against documents, and state clearly how much change can be attributed.",
+    "intervention": {
+     "type": "Technical assistance",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 35,
+     "resources": "Indicator framework, follow up survey, verification checklist, attribution note template"
+    },
+    "measurement": {
+     "kpi": "Share of alumni followed up at 12 months with outcome data",
+     "baselineMethod": "Alumni list compared with follow up records",
+     "provisionalTarget": "60 percent or more within 12 months",
+     "dataSource": "Follow up survey data",
+     "frequency": "Each cohort"
+    }
+   }
+  },
+  {
+   "code": "6.3",
+   "domain": "D6",
+   "name": "Learning and adaptation",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Results sit in reports that no one uses, weak results are hidden, there are no review sessions, and programmes are never formally evaluated.",
+    "diagnosis": "The ESO does not learn from its own data, so it repeats weak practices and loses credibility with funders.",
+    "prescription": "Hold a structured review after each cohort, record decisions that cite results, report missed targets to board and funders, and evaluate each major programme once per funding cycle.",
+    "intervention": {
+     "type": "Peer learning",
+     "ownerRole": "COACH",
+     "typicalDays": 15,
+     "resources": "After cohort review template, decision log, evaluation terms of reference, peer review with another ESO"
+    },
+    "measurement": {
+     "kpi": "Number of decisions recorded that cite results data in the last 12 months",
+     "baselineMethod": "Review of minutes and decision logs",
+     "provisionalTarget": "At least 2 decisions within 12 months",
+     "dataSource": "Board and leadership minutes",
+     "frequency": "Annually"
+    }
+   }
+  },
+  {
+   "code": "7.1",
+   "domain": "D7",
+   "name": "Registration and legal compliance",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Annual returns are missing, tax clearance and staff deductions are late, and the non-profit licence has lapsed.",
+    "diagnosis": "The ESO is exposed to penalties and cannot pass funder due diligence on legal standing.",
+    "prescription": "File missing returns with the Registrar, renew the NPO licence where applicable, regularise tax and staff deductions, and keep a compliance calendar.",
+    "intervention": {
+     "type": "Technical assistance",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 15,
+     "resources": "Compliance calendar, filing checklist with Registrar, GRA and SSNIT steps"
+    },
+    "measurement": {
+     "kpi": "Number of statutory filings overdue",
+     "baselineMethod": "Compliance calendar compared with receipts",
+     "provisionalTarget": "0 overdue within three months",
+     "dataSource": "Filing receipts",
+     "frequency": "Quarterly"
+    }
+   }
+  },
+  {
+   "code": "7.2",
+   "domain": "D7",
+   "name": "Data protection (Data Protection Act, 2012, Act 843)",
+   "expectedQuestions": 3,
+   "mapping": {
+    "gapPattern": "The ESO holds entrepreneurs' phone numbers, business data and photos without Data Protection Commission registration, a privacy notice or security rules.",
+    "diagnosis": "Entrepreneur data is exposed to misuse and the ESO breaches the Data Protection Act, 2012 (Act 843).",
+    "prescription": "Register with the Data Protection Commission, issue a plain language privacy notice with consent forms, adopt written security rules and a breach procedure, and train staff.",
+    "intervention": {
+     "type": "Technical assistance",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 15,
+     "resources": "Registration application, privacy notice and consent templates, data security policy, breach procedure"
+    },
+    "measurement": {
+     "kpi": "Data Protection Commission registration current (yes or no)",
+     "baselineMethod": "Registration certificate check",
+     "provisionalTarget": "Registered and current within three months",
+     "dataSource": "Registration certificate and renewal date",
+     "frequency": "Annually"
+    }
+   }
+  },
+  {
+   "code": "7.3",
+   "domain": "D7",
+   "name": "Risk management and due diligence",
+   "expectedQuestions": 3,
+   "mapping": {
+    "gapPattern": "There is no risk register, funders and partners are accepted without checks, and enterprises are introduced to investors without verification.",
+    "diagnosis": "The ESO takes on reputational and fiduciary risk without knowing it.",
+    "prescription": "Keep a risk register with owners, apply a due diligence checklist to funders and partners, and verify enterprise claims before endorsement.",
+    "intervention": {
+     "type": "Tool or template",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 12,
+     "resources": "Risk register template, funder due diligence checklist, enterprise verification checklist"
+    },
+    "measurement": {
+     "kpi": "Share of new funders, partners and endorsed enterprises with a completed due diligence check",
+     "baselineMethod": "Sample of checks against the list of new relationships",
+     "provisionalTarget": "100 percent within six months",
+     "dataSource": "Due diligence files",
+     "frequency": "Each six months"
+    }
+   }
+  },
+  {
+   "code": "7.4",
+   "domain": "D7",
+   "name": "Anti-fraud and fiduciary controls",
+   "expectedQuestions": 3,
+   "mapping": {
+    "gapPattern": "There is no anti-fraud policy, purchases are made without quotations, and incidents are handled privately.",
+    "diagnosis": "Fiduciary controls are weak, and a single incident could cost funder trust and funding.",
+    "prescription": "Adopt and sign an anti-fraud policy, apply written procurement rules, and set a procedure to log, investigate and report incidents to the board and funders.",
+    "intervention": {
+     "type": "Tool or template",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 12,
+     "resources": "Anti-fraud policy template, procurement policy template, incident log"
+    },
+    "measurement": {
+     "kpi": "Share of staff, board members and mentors who signed the anti-fraud policy",
+     "baselineMethod": "Signed acknowledgements against lists",
+     "provisionalTarget": "100 percent within six months",
+     "dataSource": "Signed acknowledgements",
+     "frequency": "Annually"
+    }
+   }
+  },
+  {
+   "code": "8.1",
+   "domain": "D8",
+   "name": "Gender and youth inclusion",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Few women sit on selection panels, there is no review for gender or youth barriers, and results are never split by gender or age.",
+    "diagnosis": "Inclusion claims cannot be shown, and women and young entrepreneurs may be selected less often or benefit less.",
+    "prescription": "Set written targets for women and young people, review barriers each year, widen panel membership, and analyse outcomes by gender and age.",
+    "intervention": {
+     "type": "Coaching",
+     "ownerRole": "COACH",
+     "typicalDays": 15,
+     "resources": "Inclusion target sheet, barrier review template, disaggregated results template"
+    },
+    "measurement": {
+     "kpi": "Share of participants who are women and who are under 35, compared with targets",
+     "baselineMethod": "Client database extract by gender and age",
+     "provisionalTarget": "Targets set and reported within six months",
+     "dataSource": "Client database",
+     "frequency": "Each cohort"
+    }
+   }
+  },
+  {
+   "code": "8.2",
+   "domain": "D8",
+   "name": "Climate and environmental integration",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Climate and environment are absent from the diagnostic, there is no screening of enterprises, and no expertise or results data exist.",
+    "diagnosis": "The ESO cannot respond to climate risk faced by farmers and small businesses or to funder expectations on environmental practice.",
+    "prescription": "Add a climate and environmental risk check to the diagnostic, screen enterprises before endorsement, agree access to expert partners, and track adoption of climate smart practices.",
+    "intervention": {
+     "type": "Linkage",
+     "ownerRole": "CONSULTANT",
+     "typicalDays": 20,
+     "resources": "Climate risk check form, exclusion list, partnership with a university or specialist agency, indicator sheet"
+    },
+    "measurement": {
+     "kpi": "Share of enterprises completing a climate and environmental risk check",
+     "baselineMethod": "Diagnostic records review",
+     "provisionalTarget": "80 percent or more within 12 months",
+     "dataSource": "Diagnostic forms",
+     "frequency": "Each cohort"
+    }
+   }
+  },
+  {
+   "code": "8.3",
+   "domain": "D8",
+   "name": "Ecosystem contribution and reach to rural and underserved enterprises",
+   "expectedQuestions": 4,
+   "mapping": {
+    "gapPattern": "Activity is concentrated in the city, rural share is unknown, participants carry transport and data costs, and learning is not shared with others.",
+    "diagnosis": "The ESO misses rural and underserved enterprises and does not contribute to ecosystem learning.",
+    "prescription": "Plan delivery in district or community locations in local languages, track participant location, budget for transport and data support, and share tools and findings with other ESOs.",
+    "intervention": {
+     "type": "Peer learning",
+     "ownerRole": "COACH",
+     "typicalDays": 20,
+     "resources": "Rural delivery plan, location tracking field, participant support budget, ecosystem sharing plan"
+    },
+    "measurement": {
+     "kpi": "Share of participants based outside the regional capital",
+     "baselineMethod": "Client database location data",
+     "provisionalTarget": "Share compared with written target and reviewed yearly within six months",
+     "dataSource": "Client database",
+     "frequency": "Each cohort"
+    }
+   }
+  }
+ ],
+ "questions": [
+  {
+   "code": "ES-001",
+   "domain": "D1",
+   "subDimension": "1.1",
+   "text": "We can state in one sentence which entrepreneurs we serve, what problem we help them solve and what should change for them.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No agreed statement; leaders give different answers when asked separately",
+    "Target is described broadly (for example 'all SMEs') with no problem or change named",
+    "A statement exists but misses one of: who, which problem, what changes",
+    "Written statement covers who, problem and change, and two leaders give consistent answers",
+    "Board approved statement names stage, sector and area and is reflected in selection criteria and reports"
+   ],
+   "evidence": {
+    "requirement": "Written mission or programme statement, plus separate interviews with two leaders compared with the selection criteria.",
+    "method": "Interview",
+    "examples": [
+     "Mission statement or strategy page",
+     "Selection criteria sheet",
+     "Two leader interviews"
+    ]
+   },
+   "weight": 5,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND",
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S1",
+    "S8",
+    "S17"
+   ],
+   "legacy": "ES-01",
+   "riskTag": "Unclear target entrepreneurs"
+  },
+  {
+   "code": "ES-002",
+   "domain": "D1",
+   "subDimension": "1.1",
+   "text": "We have a written theory of change that links our activities to the results we expect for entrepreneurs.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No written theory of change or results framework",
+    "Activities are listed in proposals but no link to expected results is shown",
+    "A theory of change exists but its links have no stated assumptions",
+    "Written theory of change shows activities, outputs, outcomes and key assumptions",
+    "Written theory of change shows activities, outputs, outcomes and key assumptions, has an indicator for each outcome and keeps a dated version history"
+   ],
+   "evidence": {
+    "requirement": "The current theory of change or results framework and its version history.",
+    "method": "Document",
+    "examples": [
+     "Theory of change diagram or narrative",
+     "Logframe or results framework",
+     "Dated earlier versions"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-RES",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S12",
+    "S6",
+    "S17"
+   ],
+   "legacy": "ES-02",
+   "riskTag": "No theory of change"
+  },
+  {
+   "code": "ES-003",
+   "domain": "D1",
+   "subDimension": "1.1",
+   "text": "We have tested at least one assumption in our theory of change against our own data and changed the programme as a result.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "The theory of change has not been reviewed since it was written",
+    "Reviewed informally in staff meetings with no record of changes",
+    "Reviewed once, findings noted but no programme change followed",
+    "Reviewed at least yearly using our own data, with at least one programme change recorded",
+    "Reviewed at least yearly using our own outcome data and entrepreneur views, with a programme change recorded and re-checked the following year"
+   ],
+   "evidence": {
+    "requirement": "Review notes on the theory of change linked to a documented programme change.",
+    "method": "Document",
+    "examples": [
+     "Review meeting minutes",
+     "Programme change log",
+     "Revised curriculum or selection rule"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S12",
+    "S6"
+   ],
+   "legacy": "ES-02",
+   "riskTag": "Theory of change never tested",
+   "consistencyGroup": "CC8"
+  },
+  {
+   "code": "ES-004",
+   "domain": "D1",
+   "subDimension": "1.1",
+   "text": "Most enterprises we supported in the last twelve months fit the target segment in our written mission or strategy.",
+   "responseType": "BANDED",
+   "anchors": [
+    "Under 40 percent fit, or no written segment to check against",
+    "40 to 59 percent fit",
+    "60 to 74 percent fit",
+    "75 to 89 percent fit",
+    "90 percent or more fit, checked against the client database"
+   ],
+   "evidence": {
+    "requirement": "Written target segment definition and a client database extract with stage, sector and location. The verifier counts the share that fits.",
+    "method": "Digital record",
+    "examples": [
+     "Client database extract for last 12 months",
+     "Strategy page defining the segment"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": null,
+   "riskTag": "Mission drift away from target segment"
+  },
+  {
+   "code": "ES-005",
+   "domain": "D1",
+   "subDimension": "1.2",
+   "text": "Our curriculum and support are adapted to the sectors, languages and business conditions of the enterprises we serve, not imported unchanged.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Materials are imported from other programmes with no local change",
+    "Some local examples added with no input from local entrepreneurs or practitioners",
+    "Some modules adapted using staff knowledge only",
+    "Curriculum adapted with documented input from local entrepreneurs, mentors or sector practitioners",
+    "Curriculum adapted with documented local input, with local cases, language and sector data in the modules and a revision after each cohort"
+   ],
+   "evidence": {
+    "requirement": "Curriculum files compared with the original source materials, and records of local input.",
+    "method": "Document",
+    "examples": [
+     "Modules with local case studies",
+     "Notes of consultation with entrepreneurs or sector experts",
+     "Translated or local language materials"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S1",
+    "S2",
+    "S6"
+   ],
+   "legacy": "ES-03",
+   "riskTag": "Imported generic curriculum"
+  },
+  {
+   "code": "ES-006",
+   "domain": "D1",
+   "subDimension": "1.2",
+   "text": "We chose our programme length, cohort size and support intensity deliberately for the enterprises we serve, and can explain why.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Format copied from a funder or another programme with no rationale",
+    "Format set by budget or convenience; rationale given only verbally",
+    "A written rationale exists but is not linked to enterprise needs or evidence",
+    "Written rationale links length, cohort size and intensity to enterprise needs and stage",
+    "Written rationale links length, cohort size and intensity to enterprise needs and stage, draws on our own results or outside evidence, and the format was adjusted after a review"
+   ],
+   "evidence": {
+    "requirement": "Programme design note explaining length, cohort size and intensity, and any later adjustment.",
+    "method": "Document",
+    "examples": [
+     "Programme design paper",
+     "Cohort size decision note",
+     "Minutes of a design review"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S16",
+    "S1"
+   ],
+   "legacy": "ES-04",
+   "riskTag": "Programme format not justified"
+  },
+  {
+   "code": "ES-007",
+   "domain": "D1",
+   "subDimension": "1.2",
+   "text": "Our programme design includes scheduled peer learning among entrepreneurs in the same cohort.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No peer learning; entrepreneurs meet only staff or mentors one to one",
+    "Entrepreneurs meet at events but no peer sessions are planned",
+    "Peer sessions are held occasionally, without structure or records",
+    "Peer sessions are scheduled in every cohort with a facilitation guide and attendance records",
+    "Peer sessions run in every cohort with a facilitation guide and attendance records, and entrepreneur feedback on them is collected and used to adjust later sessions"
+   ],
+   "evidence": {
+    "requirement": "Programme schedule showing peer sessions, with attendance records and feedback.",
+    "method": "Document",
+    "examples": [
+     "Cohort calendar",
+     "Peer session attendance sheets",
+     "Session feedback forms"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S1",
+    "S2"
+   ],
+   "legacy": "ES-09",
+   "riskTag": "No peer learning in programmes"
+  },
+  {
+   "code": "ES-008",
+   "domain": "D1",
+   "subDimension": "1.3",
+   "text": "We design new programmes around what target entrepreneurs tell us they need, not only around what funders offer to pay for.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Programmes are designed only to match funder calls",
+    "Entrepreneurs are consulted informally after the design is fixed",
+    "Needs were gathered for some programmes but not written up",
+    "A written needs assessment from target entrepreneurs informed each programme designed in the last two years",
+    "A written needs assessment from target entrepreneurs informed each programme designed in the last two years, and a funded activity was reshaped or declined because it did not fit their needs"
+   ],
+   "evidence": {
+    "requirement": "Needs assessments or survey results dated before programme design, and an example of a design change driven by them.",
+    "method": "Document",
+    "examples": [
+     "Needs assessment report",
+     "Survey or focus group notes",
+     "Design change record"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S8"
+   ],
+   "legacy": "ES-05",
+   "riskTag": "Programmes designed around donors"
+  },
+  {
+   "code": "ES-009",
+   "domain": "D1",
+   "subDimension": "1.3",
+   "text": "We know which other organisations serve the same enterprises in our area and how our offer differs from theirs.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We do not know what other providers do",
+    "Leaders can name a few providers but have not compared offers",
+    "A list of providers exists but is out of date or lacks offer details",
+    "Current list of providers with services and target groups, reviewed in the last 12 months",
+    "Current list of providers with services and target groups, reviewed in the last 12 months, and our positioning and referral choices use the gaps and overlaps it shows"
+   ],
+   "evidence": {
+    "requirement": "Provider mapping or ecosystem map with a review date, and examples of referrals or positioning decisions based on it.",
+    "method": "Document",
+    "examples": [
+     "Ecosystem map",
+     "Provider comparison table",
+     "Referral log"
+    ]
+   },
+   "weight": 2,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S10"
+   ],
+   "legacy": null,
+   "riskTag": "Duplicating other providers"
+  },
+  {
+   "code": "ES-010",
+   "domain": "D1",
+   "subDimension": "1.3",
+   "text": "We have an estimate of how many enterprises fit our target segment in our area and the share of them we reach each year.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No estimate of the target population",
+    "Rough figure quoted from memory with no source",
+    "Estimate taken from a published or partner source but no reach share worked out",
+    "Estimate with a named source and reach share calculated in the last 12 months",
+    "Estimate with a named source and reach share calculated in the last 12 months, with reach share tracked yearly by area or sector and used to set targets"
+   ],
+   "evidence": {
+    "requirement": "A document showing the population estimate, its source and the reach calculation.",
+    "method": "Document",
+    "examples": [
+     "Market or segment sizing note",
+     "Reach calculation in annual report",
+     "Target setting paper"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": null,
+   "riskTag": "Reach not measured against need"
+  },
+  {
+   "code": "ES-011",
+   "domain": "D1",
+   "subDimension": "1.4",
+   "text": "We have a written strategic plan with measurable targets that leaders review at least once a year.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No written plan",
+    "The plan is a funding proposal or concept note only",
+    "A written plan exists but has no measurable targets or is over three years old",
+    "A plan under three years old has measurable targets and was reviewed in the last 12 months",
+    "A board approved plan under three years old has measurable targets, a budget linked to them, a review in the last 12 months and an annual progress report"
+   ],
+   "evidence": {
+    "requirement": "Current strategic plan and the latest annual review.",
+    "method": "Document",
+    "examples": [
+     "Strategic plan",
+     "Annual review minutes",
+     "Board approval minute"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND",
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S17"
+   ],
+   "legacy": null,
+   "riskTag": "No strategic plan"
+  },
+  {
+   "code": "ES-012",
+   "domain": "D1",
+   "subDimension": "1.4",
+   "text": "Our programme delivery model is written down well enough that a trained new team or a new location could run it.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "The model exists only in the heads of founders or key staff",
+    "Slide decks or proposals describe the model but give no operating steps",
+    "Some processes are documented with major gaps in selection, delivery or follow up",
+    "A written manual covers selection, delivery, mentoring, follow up and data collection",
+    "A written manual covers selection, delivery, mentoring, follow up and data collection, and two teams or sites have used it with documented adjustments"
+   ],
+   "evidence": {
+    "requirement": "Operating manual or standard procedures, and evidence of use by someone other than its authors.",
+    "method": "Document",
+    "examples": [
+     "Programme operations manual",
+     "Templates and checklists",
+     "Notes from a second team or site using it"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": null,
+   "riskTag": "Delivery model not documented for scale"
+  },
+  {
+   "code": "ES-013",
+   "domain": "D1",
+   "subDimension": "1.4",
+   "text": "Before adding cohorts, locations or programmes, we check that we have enough staff, mentors and funding to keep quality.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Expansion is decided when funding is offered, without a capacity check",
+    "Leaders discuss capacity informally",
+    "Capacity is checked for finance only",
+    "A written capacity check covers staff, mentors, funding and quality for each expansion decision",
+    "A written capacity check covers staff, mentors, funding and quality for each expansion decision, quality indicators are tracked afterwards and growth is paused if they fall"
+   ],
+   "evidence": {
+    "requirement": "Expansion decision notes showing a capacity check, and quality data after the last expansion.",
+    "method": "Document",
+    "examples": [
+     "Expansion proposal with capacity check",
+     "Board paper on growth",
+     "Quality indicators before and after"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S4"
+   ],
+   "legacy": null,
+   "riskTag": "Growth without capacity"
+  },
+  {
+   "code": "ES-014",
+   "domain": "D2",
+   "subDimension": "2.1",
+   "text": "We select enterprises using written criteria that at least two reviewers score independently.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Selection is by one person or personal contact, with no written criteria",
+    "Criteria are understood informally and one person decides",
+    "Written criteria exist but are not shared with applicants or not scored consistently",
+    "Published criteria are scored by two or more reviewers on a scoring sheet",
+    "Published criteria are scored by two or more reviewers on a scoring sheet, score differences are discussed, decisions are minuted and criteria are reviewed after each round"
+   ],
+   "evidence": {
+    "requirement": "Selection criteria, completed scoring sheets from at least two reviewers, and selection minutes for the last round.",
+    "method": "Document",
+    "examples": [
+     "Published call or criteria",
+     "Reviewer scoring sheets",
+     "Selection panel minutes"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S1",
+    "S7"
+   ],
+   "legacy": "ES-06",
+   "riskTag": "Selection not criteria based"
+  },
+  {
+   "code": "ES-015",
+   "domain": "D2",
+   "subDimension": "2.1",
+   "text": "We keep a record of every applicant at every stage, with the reason for each selection or rejection.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No application records are kept beyond selected enterprises",
+    "Applications sit in email or paper files and are not collated",
+    "A list of applicants and outcomes exists without reasons",
+    "A database lists all applicants, the stage reached and the reason for each decision",
+    "A database lists all applicants, the stage reached and the reason for each decision, and the data is analysed, for example by comparing selected with rejected applicants"
+   ],
+   "evidence": {
+    "requirement": "Applicant database or register for the last round, including rejected applicants.",
+    "method": "Digital record",
+    "examples": [
+     "Applicant register with outcomes",
+     "Rejection reason codes",
+     "Analysis of selected versus rejected applicants"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-RES",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S1",
+    "S2"
+   ],
+   "legacy": "ES-08",
+   "riskTag": "No applicant records"
+  },
+  {
+   "code": "ES-016",
+   "domain": "D2",
+   "subDimension": "2.1",
+   "text": "We can show that we reach entrepreneurs who would not otherwise be supported, not only those already funded or well connected.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Most participants were already funded or supported elsewhere, or this is not recorded",
+    "Participants come mainly from leaders' own networks",
+    "Some outreach beyond networks, but no data on prior support",
+    "Application form records prior support, and at least half of participants had received none",
+    "Application form records prior support and at least half of participants had none, results are compared for those with and without prior support, and outreach is adjusted"
+   ],
+   "evidence": {
+    "requirement": "Application data on prior support and the outreach plan.",
+    "method": "Digital record",
+    "examples": [
+     "Application form with prior support question",
+     "Share of participants with no prior support",
+     "Outreach plan and channels used"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND",
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S16",
+    "S1"
+   ],
+   "legacy": "ES-07",
+   "riskTag": "Selection favours the already supported",
+   "consistencyGroup": "CC1"
+  },
+  {
+   "code": "ES-017",
+   "domain": "D2",
+   "subDimension": "2.1",
+   "text": "Each selected enterprise receives a baseline diagnostic that leads to a written support plan within 30 days of starting.",
+   "responseType": "BANDED",
+   "anchors": [
+    "Under 20 percent of the last cohort, or no baseline diagnostic is used",
+    "20 to 49 percent",
+    "50 to 74 percent",
+    "75 to 94 percent",
+    "95 percent or more, with support plans on file"
+   ],
+   "evidence": {
+    "requirement": "Diagnostic forms and support plans for the last cohort with dates. The verifier counts those done within 30 days.",
+    "method": "Document",
+    "examples": [
+     "Completed baseline diagnostics",
+     "Signed support plans",
+     "Cohort start date list"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-RES",
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S2",
+    "S32"
+   ],
+   "legacy": null,
+   "riskTag": "No baseline diagnostic or support plan"
+  },
+  {
+   "code": "ES-018",
+   "domain": "D2",
+   "subDimension": "2.2",
+   "text": "Most of our support time goes to the needs entrepreneurs rank highest, such as sales, finance access or hiring, not mainly to pitch preparation.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Support is mostly pitch decks and general workshops; needs are never asked",
+    "Needs are asked at entry but support follows a fixed curriculum",
+    "Some modules adapt to stated needs, and time use is not tracked",
+    "Session or time records show most hours go to the top three needs the entrepreneurs ranked",
+    "Session or time records show most hours go to the top three needs the entrepreneurs ranked, needs are re-ranked mid programme and support is re-planned where they changed"
+   ],
+   "evidence": {
+    "requirement": "Needs ranking from entrepreneurs and a session or time log showing where support hours went.",
+    "method": "Digital record",
+    "examples": [
+     "Needs ranking form",
+     "Mentor and coach session log",
+     "Hours by topic summary"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S5",
+    "S2",
+    "S8"
+   ],
+   "legacy": "ES-13",
+   "riskTag": "Support not matched to entrepreneur needs"
+  },
+  {
+   "code": "ES-019",
+   "domain": "D2",
+   "subDimension": "2.2",
+   "text": "Entrepreneur feedback on mentors and sessions leads to documented changes in how we deliver.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No feedback is collected",
+    "Informal comments are heard but nothing is recorded",
+    "Feedback forms are collected but not analysed",
+    "Feedback is analysed each cohort and at least one documented change was made",
+    "Feedback is analysed each cohort and at least one documented change was made, changes are reported back to entrepreneurs and ratings are tracked across cohorts"
+   ],
+   "evidence": {
+    "requirement": "Feedback forms or survey results and the change record that followed.",
+    "method": "Document",
+    "examples": [
+     "Feedback summary by cohort",
+     "Change log or minutes citing feedback",
+     "Message to entrepreneurs on changes"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S7"
+   ],
+   "legacy": "ES-12",
+   "riskTag": "Feedback not used",
+   "consistencyGroup": "CC9"
+  },
+  {
+   "code": "ES-020",
+   "domain": "D2",
+   "subDimension": "2.2",
+   "text": "Each entrepreneur is matched to a mentor or coach using a written view of the entrepreneur's needs and the mentor's expertise.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Mentors are assigned by availability or personal contact, with no assessment",
+    "Staff match by judgement and give no written reasons",
+    "Matches are recorded but based only on sector, not on need",
+    "Match records show the need and the mentor's expertise, and the entrepreneur may ask for a change",
+    "Match records show the need and the mentor's expertise, the entrepreneur may ask for a change, match quality is tracked and mismatches are corrected within 30 days"
+   ],
+   "evidence": {
+    "requirement": "Match records for the last cohort and mentor profiles.",
+    "method": "Document",
+    "examples": [
+     "Mentor match sheet",
+     "Mentor profile database",
+     "Record of mentor changes requested"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S1",
+    "S7",
+    "S33"
+   ],
+   "legacy": "ES-11",
+   "riskTag": "Mentors poorly matched to needs"
+  },
+  {
+   "code": "ES-021",
+   "domain": "D2",
+   "subDimension": "2.2",
+   "text": "Market access support, such as buyer introductions or market information, is a deliberate part of our offer with named activities.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No market access support is offered",
+    "Occasional introductions happen when staff happen to know a buyer",
+    "Market access sessions are included with no buyer or channel partner involved",
+    "Planned market access activities name buyers or channels and record who took part",
+    "Planned market access activities name buyers or channels and record who took part, and sales or contracts that result are tracked for participating enterprises"
+   ],
+   "evidence": {
+    "requirement": "Programme plan showing market access activities, buyer participation records and any sales tracking.",
+    "method": "Document",
+    "examples": [
+     "Buyer meeting attendance list",
+     "Market linkage activity plan",
+     "Contracts or orders recorded after linkage"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-LNK"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S5",
+    "S8",
+    "S10"
+   ],
+   "legacy": "ES-35",
+   "riskTag": "Market access not part of the offer"
+  },
+  {
+   "code": "ES-022",
+   "domain": "D2",
+   "subDimension": "2.3",
+   "text": "We have written criteria and a process for graduating, pausing or exiting enterprises from our programmes.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No graduation or exit rules; enterprises drift",
+    "Practice is informal and decided case by case",
+    "Criteria are written for graduation only",
+    "Written criteria and process for graduation, pausing and exit are applied to every enterprise",
+    "Written criteria and process for graduation, pausing and exit are applied to every enterprise, decisions are recorded and exited enterprises get a closing review and referral"
+   ],
+   "evidence": {
+    "requirement": "Graduation and exit policy plus decision records for the last cohort.",
+    "method": "Document",
+    "examples": [
+     "Graduation criteria",
+     "Exit decision records",
+     "Closing review forms"
+    ]
+   },
+   "weight": 2,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S7"
+   ],
+   "legacy": "ES-10",
+   "riskTag": "No graduation or exit rules"
+  },
+  {
+   "code": "ES-023",
+   "domain": "D2",
+   "subDimension": "2.3",
+   "text": "We were in contact with most alumni of our last three cohorts during the past twelve months.",
+   "responseType": "BANDED",
+   "anchors": [
+    "Under 20 percent contacted, or there is no alumni list",
+    "20 to 39 percent contacted",
+    "40 to 59 percent contacted",
+    "60 to 79 percent contacted",
+    "80 percent or more contacted, with contact dates recorded"
+   ],
+   "evidence": {
+    "requirement": "Alumni list with dated contact records. The verifier calculates the share contacted in the last 12 months.",
+    "method": "Digital record",
+    "examples": [
+     "Alumni database with last contact date",
+     "Call or message log",
+     "Alumni event attendance"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S2"
+   ],
+   "legacy": "ES-33",
+   "riskTag": "Lost contact with alumni"
+  },
+  {
+   "code": "ES-024",
+   "domain": "D2",
+   "subDimension": "2.3",
+   "text": "After the programme ends, alumni have a defined follow-up offer, such as clinics, mentor access or investor sessions, with clear eligibility.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No support is offered after the programme ends",
+    "Alumni can call staff for informal help",
+    "Follow-up events are held occasionally for all alumni",
+    "A written follow-up offer states eligibility, schedule and the responsible staff member",
+    "A written follow-up offer states eligibility, schedule and the responsible staff member, is adjusted by alumni stage, and its uptake and outcomes are recorded"
+   ],
+   "evidence": {
+    "requirement": "The written alumni offer and records of alumni who used it.",
+    "method": "Document",
+    "examples": [
+     "Alumni support offer",
+     "Attendance or uptake records",
+     "Alumni follow-up budget line"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S2",
+    "S8"
+   ],
+   "legacy": null,
+   "riskTag": "No support after the programme"
+  },
+  {
+   "code": "ES-025",
+   "domain": "D2",
+   "subDimension": "2.3",
+   "text": "Alumni contribute back to our programmes, for example as mentors, speakers or referrers of new applicants.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No alumni involvement",
+    "Alumni are invited to events only",
+    "A few alumni speak or mentor informally, with no record",
+    "Alumni roles are recorded and at least three alumni contributed in the last 12 months",
+    "Alumni roles are recorded and at least three alumni contributed in the last 12 months, each with a defined role and briefing, and participants rate their contribution"
+   ],
+   "evidence": {
+    "requirement": "Records of alumni contributions in the last 12 months.",
+    "method": "Document",
+    "examples": [
+     "Alumni speaker or mentor list",
+     "Referral source data on applications",
+     "Participant ratings of alumni sessions"
+    ]
+   },
+   "weight": 2,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": null,
+   "riskTag": "Alumni not engaged"
+  },
+  {
+   "code": "ES-026",
+   "domain": "D3",
+   "subDimension": "3.1",
+   "text": "We know our programme cost per enterprise supported and can show how it is calculated.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Cost per enterprise has never been calculated",
+    "A rough figure comes from total budget divided by participants, with no written method",
+    "Cost is calculated for some programmes using direct costs only",
+    "Cost per enterprise is calculated for each programme, including shared costs, from the accounts",
+    "Cost per enterprise is calculated for each programme from the accounts, including shared costs, tracked over cohorts and compared with results to judge value for money"
+   ],
+   "evidence": {
+    "requirement": "The calculation sheet and the accounts it draws on.",
+    "method": "Document",
+    "examples": [
+     "Cost per enterprise worksheet",
+     "Programme cost report from the accounting system",
+     "Value for money analysis"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-SCL",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S12",
+    "S21"
+   ],
+   "legacy": "ES-19",
+   "riskTag": "Cost per enterprise unknown",
+   "consistencyGroup": "CC7"
+  },
+  {
+   "code": "ES-027",
+   "domain": "D3",
+   "subDimension": "3.1",
+   "text": "Each year our board or senior leaders approve a budget that shows income and costs by programme.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "There is no annual budget",
+    "Budgets exist only inside funder proposals",
+    "An organisation wide budget exists but not by programme, or it is not formally approved",
+    "An approved annual budget shows income and costs by programme",
+    "An approved annual budget shows income and costs by programme, a mid year revision is approved and variances are explained"
+   ],
+   "evidence": {
+    "requirement": "Approved annual budget and the minute that approved it.",
+    "method": "Document",
+    "examples": [
+     "Annual budget by programme",
+     "Board or leadership approval minute",
+     "Mid year revision"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "No approved annual budget"
+  },
+  {
+   "code": "ES-028",
+   "domain": "D3",
+   "subDimension": "3.1",
+   "text": "We share costs such as rent, management and shared staff across programmes using a written method.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Shared costs are charged to whichever grant has money",
+    "The finance person allocates shared costs informally",
+    "An allocation rule exists for some costs and is applied inconsistently",
+    "A written method is applied to all shared costs and used consistently across programmes",
+    "A written method is applied consistently to all shared costs across programmes, is approved by the board or funders and is reviewed by auditors"
+   ],
+   "evidence": {
+    "requirement": "Written cost allocation policy and a sample of allocations in the accounts.",
+    "method": "Document",
+    "examples": [
+     "Cost allocation policy",
+     "Allocation journal entries",
+     "Auditor comment on allocation"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "Shared costs not allocated fairly",
+   "consistencyGroup": "CC7"
+  },
+  {
+   "code": "ES-029",
+   "domain": "D3",
+   "subDimension": "3.1",
+   "text": "We compare actual spending with budget at least monthly and act on large differences.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No comparison of spending with budget",
+    "Compared only when a funder asks",
+    "Compared quarterly by the finance person with no leadership discussion",
+    "Compared monthly by leaders, with differences above a set limit explained",
+    "Compared monthly by leaders, with differences above a set limit explained, corrective actions recorded and checked the following month"
+   ],
+   "evidence": {
+    "requirement": "Budget versus actual reports for the last six months and the minutes that discuss them.",
+    "method": "Document",
+    "examples": [
+     "Monthly budget versus actual report",
+     "Leadership meeting minutes",
+     "Corrective action list"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "No budget monitoring"
+  },
+  {
+   "code": "ES-030",
+   "domain": "D3",
+   "subDimension": "3.2",
+   "text": "Our accounts for the last completed financial year were audited by an independent auditor.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No audit or independent review in the last two years",
+    "The audit is older than two years, or accounts are prepared in house only",
+    "An independent review or examination was done, not a full audit",
+    "A full audit for the last completed year was signed by a qualified firm more than six months after year end",
+    "A full audit for the last completed year was signed within six months, with the management letter answered"
+   ],
+   "evidence": {
+    "requirement": "Signed audit report and management letter for the last completed year.",
+    "method": "Document",
+    "examples": [
+     "Signed audit report",
+     "Auditor management letter and response",
+     "Engagement letter"
+    ]
+   },
+   "weight": 5,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-FND",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S24",
+    "S26",
+    "S31"
+   ],
+   "legacy": "ES-29",
+   "riskTag": "No audited accounts"
+  },
+  {
+   "code": "ES-031",
+   "domain": "D3",
+   "subDimension": "3.2",
+   "text": "Our accounting system records income and spending by donor fund and programme code.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Records are kept on paper or in one undifferentiated cashbook",
+    "A spreadsheet cashbook is used without project coding",
+    "A spreadsheet or software uses project codes but not for every transaction",
+    "Accounting software with fund and programme codes is used for every transaction",
+    "Accounting software with fund and programme codes is used for every transaction, and donor specific reports are produced without manual rework"
+   ],
+   "evidence": {
+    "requirement": "A system extract or trial balance showing fund and programme codes, and a donor report produced from it.",
+    "method": "Digital record",
+    "examples": [
+     "Accounting software extract",
+     "Chart of accounts with project codes",
+     "Donor financial report"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "No fund level accounting",
+   "consistencyGroup": "CC3"
+  },
+  {
+   "code": "ES-032",
+   "domain": "D3",
+   "subDimension": "3.2",
+   "text": "No single person can approve a payment, make it and record it.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "One person approves, pays and records",
+    "A second person signs only large payments",
+    "Dual approval is in policy but not consistently evidenced",
+    "Dual approval is documented, and the person who records differs from the approver and payer for all payments",
+    "Dual approval is documented for all payments, recorder, approver and payer differ, approval limits are set by role, and auditors or the board tested them with no exceptions in a sample"
+   ],
+   "evidence": {
+    "requirement": "Payment approval policy and a sample of 10 payments with approval evidence.",
+    "method": "Document",
+    "examples": [
+     "Financial controls policy",
+     "Sample of payment vouchers",
+     "Bank mandate"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "Weak payment controls"
+  },
+  {
+   "code": "ES-033",
+   "domain": "D3",
+   "subDimension": "3.2",
+   "text": "We reconcile every bank and mobile money account to the cashbook each month.",
+   "responseType": "BANDED",
+   "anchors": [
+    "Fewer than 3 of the last 12 months, or no reconciliations",
+    "3 to 6 of the last 12 months",
+    "7 to 9 of the last 12 months",
+    "10 to 11 of the last 12 months",
+    "All 12 months, each signed by a reviewer"
+   ],
+   "evidence": {
+    "requirement": "Monthly bank and mobile money reconciliations for the last 12 months.",
+    "method": "Document",
+    "examples": [
+     "Signed bank reconciliation statements",
+     "Mobile money statements",
+     "Cashbook"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "Bank accounts not reconciled"
+  },
+  {
+   "code": "ES-034",
+   "domain": "D3",
+   "subDimension": "3.3",
+   "text": "We submit donor and financial reports by the due dates set in our agreements.",
+   "responseType": "BANDED",
+   "anchors": [
+    "Under 50 percent on time, or not tracked",
+    "50 to 74 percent on time",
+    "75 to 89 percent on time",
+    "90 to 99 percent on time",
+    "All reports on time in the last 12 months, managed with a reporting calendar"
+   ],
+   "evidence": {
+    "requirement": "Reporting calendar and submission dates for all reports due in the last 12 months.",
+    "method": "Document",
+    "examples": [
+     "Donor reporting calendar",
+     "Email submission receipts",
+     "Grant agreements with due dates"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S12"
+   ],
+   "legacy": "ES-30",
+   "riskTag": "Late donor reports",
+   "consistencyGroup": "CC3"
+  },
+  {
+   "code": "ES-035",
+   "domain": "D3",
+   "subDimension": "3.3",
+   "text": "Our leaders receive management accounts every month, within 15 days of month end.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No management accounts are produced",
+    "Accounts are produced only for funders or audit",
+    "Accounts are produced quarterly or later than 30 days after month end",
+    "Accounts are produced monthly within 30 days and reviewed by the director",
+    "Accounts are produced within 15 days of month end, include cash position, budget variance and funder balances, and are reviewed by the director and minuted"
+   ],
+   "evidence": {
+    "requirement": "Management accounts for the last three months with dates issued.",
+    "method": "Document",
+    "examples": [
+     "Monthly management accounts",
+     "Issue emails",
+     "Leadership minutes"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "No monthly management accounts"
+  },
+  {
+   "code": "ES-036",
+   "domain": "D3",
+   "subDimension": "3.3",
+   "text": "We track spending against each donor's budget and eligible cost rules, so ineligible costs are found before the funder finds them.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No tracking; funder queries often reveal errors",
+    "Tracking happens only when a report is written",
+    "A spreadsheet tracks spending by donor budget with no eligibility check",
+    "Monthly tracking by donor budget line includes a documented eligibility check before payment",
+    "Monthly tracking by donor budget line includes a documented eligibility check before payment, and the last two donor audits or reviews questioned no costs"
+   ],
+   "evidence": {
+    "requirement": "Donor budget tracking sheets and the latest funder or auditor findings.",
+    "method": "Document",
+    "examples": [
+     "Donor budget tracker",
+     "Eligibility checklist",
+     "Donor audit report"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "Donor funds not tracked against rules"
+  },
+  {
+   "code": "ES-037",
+   "domain": "D3",
+   "subDimension": "3.4",
+   "text": "Our unrestricted reserves can cover core running costs for at least three months.",
+   "responseType": "BANDED",
+   "anchors": [
+    "No reserves, or under 1 month of core costs",
+    "1 to under 2 months",
+    "2 to under 3 months",
+    "3 to under 6 months",
+    "6 months or more, with a written reserves policy"
+   ],
+   "evidence": {
+    "requirement": "Bank statements and the budget. The verifier divides unrestricted cash by monthly core costs.",
+    "method": "Document",
+    "examples": [
+     "Bank balances for unrestricted accounts",
+     "Core cost budget",
+     "Reserves policy"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND",
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S6",
+    "S17"
+   ],
+   "legacy": "ES-25",
+   "riskTag": "No financial reserves"
+  },
+  {
+   "code": "ES-038",
+   "domain": "D3",
+   "subDimension": "3.4",
+   "text": "We update a cash flow forecast for at least the next six months every month.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No cash flow forecast",
+    "A forecast is made once a year for the budget",
+    "A forecast exists but covers under 3 months or is updated only quarterly",
+    "A forecast covers 6 months and is updated monthly",
+    "A 6 month forecast is updated monthly, includes funder payment dates, and has triggered early action on a shortfall"
+   ],
+   "evidence": {
+    "requirement": "The latest forecast and its update history.",
+    "method": "Document",
+    "examples": [
+     "Cash flow forecast file",
+     "Version history",
+     "Minutes where it was discussed"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": "ES-25",
+   "riskTag": "No cash flow forecast"
+  },
+  {
+   "code": "ES-039",
+   "domain": "D4",
+   "subDimension": "4.1",
+   "text": "No single funder provided more than half of our income in the last financial year.",
+   "responseType": "BANDED",
+   "anchors": [
+    "One funder gave over 80 percent, or income shares are not known",
+    "Largest funder gave 61 to 80 percent",
+    "Largest funder gave 51 to 60 percent",
+    "Largest funder gave 36 to 50 percent",
+    "Largest funder gave 35 percent or less"
+   ],
+   "evidence": {
+    "requirement": "Audited or management accounts of income by source for the last financial year.",
+    "method": "Document",
+    "examples": [
+     "Income by funder schedule",
+     "Audited accounts note on income",
+     "Funder agreements"
+    ]
+   },
+   "weight": 5,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND",
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S9",
+    "S4",
+    "S8"
+   ],
+   "legacy": "ES-21",
+   "riskTag": "Dependence on one funder"
+  },
+  {
+   "code": "ES-040",
+   "domain": "D4",
+   "subDimension": "4.1",
+   "text": "Part of our income is multi-year or core funding that is not tied to a single project.",
+   "responseType": "BANDED",
+   "anchors": [
+    "No such funding, or the share is not known",
+    "Under 10 percent of last year's income",
+    "10 to 24 percent",
+    "25 to 49 percent",
+    "50 percent or more"
+   ],
+   "evidence": {
+    "requirement": "Funder agreements and income schedule showing multi-year or unrestricted income.",
+    "method": "Document",
+    "examples": [
+     "Multi-year grant agreement",
+     "Unrestricted income schedule",
+     "Core funding letter"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND",
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S8",
+    "S9"
+   ],
+   "legacy": "ES-22",
+   "riskTag": "No core or multi-year funding"
+  },
+  {
+   "code": "ES-041",
+   "domain": "D4",
+   "subDimension": "4.1",
+   "text": "We earn income from fees, services or success fees.",
+   "responseType": "BANDED",
+   "anchors": [
+    "No earned income, or the share is not known",
+    "Under 5 percent of last year's income",
+    "5 to 14 percent",
+    "15 to 29 percent",
+    "30 percent or more, with prices set from cost data"
+   ],
+   "evidence": {
+    "requirement": "Income schedule showing earned income and the price setting method.",
+    "method": "Document",
+    "examples": [
+     "Fee schedule or price list",
+     "Earned income line in accounts",
+     "Invoices to enterprises or partners"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S4",
+    "S9",
+    "S8"
+   ],
+   "legacy": "ES-23",
+   "riskTag": "No earned income"
+  },
+  {
+   "code": "ES-042",
+   "domain": "D4",
+   "subDimension": "4.1",
+   "text": "We do not depend mainly on unrelated consulting work to keep the organisation running.",
+   "responseType": "BANDED",
+   "anchors": [
+    "Over 60 percent of income comes from work unrelated to our mission",
+    "41 to 60 percent",
+    "26 to 40 percent",
+    "11 to 25 percent",
+    "10 percent or less of income comes from unrelated work"
+   ],
+   "evidence": {
+    "requirement": "Income schedule split between mission work and unrelated work, checked against contracts.",
+    "method": "Document",
+    "examples": [
+     "Income by activity schedule",
+     "Consulting contracts",
+     "Programme budgets"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S9",
+    "S34"
+   ],
+   "legacy": "ES-24",
+   "riskTag": "Mission funded by unrelated consulting"
+  },
+  {
+   "code": "ES-043",
+   "domain": "D4",
+   "subDimension": "4.2",
+   "text": "We record each introduction we make to investors, lenders or buyers and what came of it.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Introductions are not recorded",
+    "Staff remember introductions but there is no list",
+    "A list of introductions exists without outcomes",
+    "A register shows date, parties and outcome, updated at least every six months",
+    "A register shows date, parties and outcome, is updated at least every six months, and records the value of deals confirmed by the enterprise or financier"
+   ],
+   "evidence": {
+    "requirement": "The introduction register and, for a sample of five, confirmation from the enterprise or financier.",
+    "method": "Digital record",
+    "examples": [
+     "Introduction register",
+     "Confirmation emails from financiers",
+     "Deal value summary"
+    ]
+   },
+   "weight": 5,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-LNK",
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S2",
+    "S5"
+   ],
+   "legacy": "ES-31",
+   "riskTag": "Introductions not tracked to deals"
+  },
+  {
+   "code": "ES-044",
+   "domain": "D4",
+   "subDimension": "4.2",
+   "text": "Our investor and finance partners are active and suited to the stage and size of our enterprises.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We have no investor or finance partners",
+    "Partners appear mainly at pitch events",
+    "Partners exist but several do not fit enterprise size or stage",
+    "A partner list shows stage and ticket size fit, and at least half engaged in the last 12 months",
+    "A partner list shows stage and ticket size fit, at least half of partners engaged in the last 12 months and at least one made an offer to our enterprises in that period"
+   ],
+   "evidence": {
+    "requirement": "Partner list with stage, ticket size and last engagement date.",
+    "method": "Document",
+    "examples": [
+     "Investor and lender partner list",
+     "Engagement log",
+     "Offers or term sheets received by enterprises"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-LNK"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S2"
+   ],
+   "legacy": "ES-32",
+   "riskTag": "Investor partners inactive or mismatched"
+  },
+  {
+   "code": "ES-045",
+   "domain": "D4",
+   "subDimension": "4.2",
+   "text": "We check an enterprise's records, numbers and documents with a coach before we introduce it to an investor or lender.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Introductions are made with no preparation",
+    "Enterprises receive pitch coaching only",
+    "Some documents are checked with no standard list",
+    "A standard readiness checklist is completed with a coach before each introduction",
+    "A standard readiness checklist is completed with a coach before each introduction, its results feed into the support plan and investor feedback is collected"
+   ],
+   "evidence": {
+    "requirement": "Completed readiness checklists linked to introductions in the register.",
+    "method": "Document",
+    "examples": [
+     "Investor readiness checklist",
+     "Coach notes",
+     "Investor feedback forms"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-LNK"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S32",
+    "S2"
+   ],
+   "legacy": null,
+   "riskTag": "Unprepared enterprises introduced to investors"
+  },
+  {
+   "code": "ES-046",
+   "domain": "D4",
+   "subDimension": "4.2",
+   "text": "We check that the finance offered through our partners has clear, fair terms before we encourage enterprises to take it.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No review of terms; we promote any offer",
+    "Terms are checked informally when enterprises ask",
+    "Terms are reviewed for some partners with no written criteria",
+    "Written criteria on cost, repayment and collateral are applied to each partner before promotion",
+    "Written criteria on cost, repayment and collateral are applied to each partner before promotion, and enterprise complaints about partner terms are tracked and acted on"
+   ],
+   "evidence": {
+    "requirement": "Finance partner screening criteria and completed screens.",
+    "method": "Document",
+    "examples": [
+     "Partner screening checklist",
+     "Sample term sheets reviewed",
+     "Complaint log"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-LNK",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": null,
+   "riskTag": "Finance terms not checked"
+  },
+  {
+   "code": "ES-047",
+   "domain": "D4",
+   "subDimension": "4.3",
+   "text": "Our working partnerships with other support organisations, government bodies, banks or buyers are written down, with each partner's role.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No partnerships beyond informal contacts",
+    "Partnerships are mentioned in proposals only",
+    "Written MoUs exist for some partners but roles are unclear",
+    "Written agreements for main partners state roles, referral rules and a contact person",
+    "Written agreements for main partners state roles, referral rules and a contact person, are reviewed yearly, and at least one joint activity or referral per partner is recorded"
+   ],
+   "evidence": {
+    "requirement": "Partnership agreements and a record of joint work in the last 12 months.",
+    "method": "Document",
+    "examples": [
+     "MoUs",
+     "Referral records",
+     "Joint event reports"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-SCL",
+    "RDY-LNK"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S10",
+    "S14"
+   ],
+   "legacy": "ES-34",
+   "riskTag": "Partnerships not defined"
+  },
+  {
+   "code": "ES-048",
+   "domain": "D4",
+   "subDimension": "4.3",
+   "text": "We keep a list of expected funding opportunities for the next 12 months, with the chance of winning and a person responsible for each.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No funding pipeline",
+    "Opportunities are tracked informally in emails",
+    "A list exists without owners or chances",
+    "A pipeline shows owner, amount, deadline and chance, reviewed monthly",
+    "A pipeline shows owner, amount, deadline and chance, is reviewed monthly and compared with the budget gap, and the win rate is tracked"
+   ],
+   "evidence": {
+    "requirement": "The pipeline file and its latest review.",
+    "method": "Document",
+    "examples": [
+     "Funding pipeline tracker",
+     "Leadership meeting notes",
+     "Win rate calculation"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": null,
+   "riskTag": "No funding pipeline"
+  },
+  {
+   "code": "ES-049",
+   "domain": "D4",
+   "subDimension": "4.3",
+   "text": "We meet each major funder at least once a year to discuss results and future plans, beyond reporting requirements.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We contact funders only when reports are due",
+    "We contact funders only about problems",
+    "We meet some major funders",
+    "A yearly review meeting is held with every major funder and recorded",
+    "A yearly review meeting is held with every major funder and recorded, and funder feedback led to a change in plan or agreement terms"
+   ],
+   "evidence": {
+    "requirement": "Meeting records with major funders in the last 12 months.",
+    "method": "Interview",
+    "examples": [
+     "Funder meeting notes",
+     "Calendar invitations",
+     "Agreement amendments"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S8"
+   ],
+   "legacy": null,
+   "riskTag": "Weak funder relationships"
+  },
+  {
+   "code": "ES-050",
+   "domain": "D4",
+   "subDimension": "4.3",
+   "text": "When we agree funding, we ask for the real cost of delivery, including a fair share of running costs such as rent and management.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We accept any budget offered, including none for running costs",
+    "We accept low running cost shares because we fear losing funding",
+    "We ask for a share on some grants without a rate based on our costs",
+    "We apply a written rate based on our costs and report grants that fall short",
+    "We apply a written rate based on our costs and report grants that fall short, and agreed rates cover our actual shared costs in most grants"
+   ],
+   "evidence": {
+    "requirement": "Written running cost policy and the rates agreed in the last three grants.",
+    "method": "Document",
+    "examples": [
+     "Running cost recovery policy",
+     "Grant budgets",
+     "Board paper on shortfalls"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": null,
+   "riskTag": "Running costs not covered by funders"
+  },
+  {
+   "code": "ES-051",
+   "domain": "D5",
+   "subDimension": "5.1",
+   "text": "Our board or governing body meets regularly, with minutes and a quorum.",
+   "responseType": "BANDED",
+   "anchors": [
+    "No board, or no meeting in the last 12 months",
+    "One meeting in the last 12 months",
+    "Two or three meetings in the last 12 months",
+    "Four or more meetings with minutes and a quorum",
+    "Four or more meetings, minutes approved at the next meeting, over 75 percent attendance and actions tracked"
+   ],
+   "evidence": {
+    "requirement": "Board minutes and attendance records for the last 12 months.",
+    "method": "Document",
+    "examples": [
+     "Signed board minutes",
+     "Attendance register",
+     "Action tracker"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S7"
+   ],
+   "legacy": "ES-26",
+   "riskTag": "Board not functioning"
+  },
+  {
+   "code": "ES-052",
+   "domain": "D5",
+   "subDimension": "5.1",
+   "text": "Board members and senior staff sign a conflict of interest declaration each year, kept in a register.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No conflict of interest rule",
+    "A rule exists in the constitution but no declarations are signed",
+    "Declarations were signed once and not renewed",
+    "Annual signed declarations cover all board members and senior staff, with a register",
+    "Annual signed declarations with a register cover all board members and senior staff, and minutes show declared conflicts and the member leaving the decision"
+   ],
+   "evidence": {
+    "requirement": "Conflict of interest policy, signed declarations and register for the current year.",
+    "method": "Document",
+    "examples": [
+     "Signed declarations",
+     "Conflicts register",
+     "Minutes noting a declared conflict"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S7",
+    "S31"
+   ],
+   "legacy": "ES-26",
+   "riskTag": "No conflict of interest control"
+  },
+  {
+   "code": "ES-053",
+   "domain": "D5",
+   "subDimension": "5.1",
+   "text": "The board reviews the director's performance against agreed targets at least once a year.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No review",
+    "Informal feedback only",
+    "A review is done but without written targets",
+    "An annual written review against agreed targets is minuted",
+    "An annual written review against agreed targets is minuted, with development actions and next year targets agreed and followed up"
+   ],
+   "evidence": {
+    "requirement": "Latest director review and the targets it used.",
+    "method": "Document",
+    "examples": [
+     "Director appraisal form",
+     "Board minute",
+     "Agreed targets"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S6"
+   ],
+   "legacy": null,
+   "riskTag": "Director not held to targets"
+  },
+  {
+   "code": "ES-054",
+   "domain": "D5",
+   "subDimension": "5.1",
+   "text": "We have a written plan for who would lead the organisation if the director left unexpectedly.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No plan; the organisation would stall",
+    "Leaders assume someone will step in but nothing is written",
+    "An acting arrangement is named for the director only",
+    "A written plan names an acting lead and handover steps for the director and two key roles",
+    "A written plan names an acting lead and handover steps for the director and two key roles, deputies are trained, and the plan was tested or updated in the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "The succession or continuity plan and its last update.",
+    "method": "Document",
+    "examples": [
+     "Succession plan",
+     "Delegation of authority",
+     "Board minute approving it"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S6",
+    "S8"
+   ],
+   "legacy": null,
+   "riskTag": "No succession plan"
+  },
+  {
+   "code": "ES-055",
+   "domain": "D5",
+   "subDimension": "5.2",
+   "text": "Our core programme staff stay long enough for the organisation to keep what it has learned.",
+   "responseType": "BANDED",
+   "anchors": [
+    "Over 40 percent of core staff left in the last 12 months",
+    "26 to 40 percent left",
+    "16 to 25 percent left",
+    "6 to 15 percent left",
+    "5 percent or less left"
+   ],
+   "evidence": {
+    "requirement": "Staff list with start and end dates for the last 24 months. The verifier calculates leavers as a share of core staff.",
+    "method": "Document",
+    "examples": [
+     "Staff register",
+     "Exit records",
+     "Handover notes of leavers"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S8",
+    "S7"
+   ],
+   "legacy": "ES-14",
+   "riskTag": "High staff turnover"
+  },
+  {
+   "code": "ES-056",
+   "domain": "D5",
+   "subDimension": "5.2",
+   "text": "When our own expertise is not enough, we bring in outside consultants or partners rather than promise services we cannot deliver.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We promise services beyond our skills and deliver them poorly",
+    "Outside help is used only after problems occur",
+    "Outside experts are used sometimes with no rule for when",
+    "Skills gaps are listed and outside experts are engaged under written terms",
+    "Skills gaps are listed and outside experts are engaged under written terms, expert quality is reviewed and lessons are passed to staff"
+   ],
+   "evidence": {
+    "requirement": "Skills gap list and contracts or agreements with outside experts.",
+    "method": "Document",
+    "examples": [
+     "Skills gap analysis",
+     "Consultant contracts",
+     "Quality review of an expert's work"
+    ]
+   },
+   "weight": 2,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S4"
+   ],
+   "legacy": "ES-15",
+   "riskTag": "Overpromising beyond capacity"
+  },
+  {
+   "code": "ES-057",
+   "domain": "D5",
+   "subDimension": "5.2",
+   "text": "Every staff member received a documented performance review in the last 12 months.",
+   "responseType": "BANDED",
+   "anchors": [
+    "No reviews, or under 25 percent of staff reviewed",
+    "25 to 49 percent reviewed",
+    "50 to 74 percent reviewed",
+    "75 to 99 percent reviewed",
+    "All staff reviewed, with a development plan for each"
+   ],
+   "evidence": {
+    "requirement": "Performance review records for all current staff.",
+    "method": "Document",
+    "examples": [
+     "Signed review forms",
+     "Development plans",
+     "Staff list"
+    ]
+   },
+   "weight": 2,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S7"
+   ],
+   "legacy": null,
+   "riskTag": "No staff performance reviews"
+  },
+  {
+   "code": "ES-058",
+   "domain": "D5",
+   "subDimension": "5.3",
+   "text": "We vet mentors and coaches against written criteria, including references, before they work with entrepreneurs.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No vetting; anyone willing can mentor",
+    "Vetting is by personal recommendation only",
+    "Written criteria exist but references and experience are not checked",
+    "Written criteria are applied, and references and relevant experience are checked and filed for each mentor",
+    "Written criteria are applied, references and relevant experience are checked and filed for each mentor, and mentors have a trial session or probation and periodic re-vetting"
+   ],
+   "evidence": {
+    "requirement": "Mentor selection criteria and the files of five active mentors.",
+    "method": "Document",
+    "examples": [
+     "Mentor selection criteria",
+     "Mentor files with references",
+     "Probation records"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S1",
+    "S7",
+    "S33"
+   ],
+   "legacy": "ES-11",
+   "riskTag": "Mentors not vetted"
+  },
+  {
+   "code": "ES-059",
+   "domain": "D5",
+   "subDimension": "5.3",
+   "text": "Each mentor signs a written agreement on hours, confidentiality, conduct and conflicts of interest before starting.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No agreement or briefing",
+    "Mentors get a verbal briefing only",
+    "An agreement exists but few mentors signed it or it lacks conduct or conflict terms",
+    "All active mentors signed an agreement covering hours, confidentiality, conduct and conflicts",
+    "All active mentors signed an agreement covering hours, confidentiality, conduct and conflicts, renew it yearly and are briefed on the programme and safeguarding rules"
+   ],
+   "evidence": {
+    "requirement": "Signed agreements for all active mentors and the template.",
+    "method": "Document",
+    "examples": [
+     "Mentor agreement template",
+     "Signed agreements",
+     "Briefing attendance record"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S33",
+    "S28"
+   ],
+   "legacy": "ES-11",
+   "riskTag": "No mentor agreements"
+  },
+  {
+   "code": "ES-060",
+   "domain": "D5",
+   "subDimension": "5.3",
+   "text": "We review each mentor's activity and ratings from session logs at least once a year and decide whether to renew, coach or release them.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No mentor records",
+    "Staff recall who is active",
+    "Session logs are kept but no individual mentor is reviewed",
+    "A yearly review uses logs and ratings, and decisions are recorded",
+    "A yearly review uses logs and ratings and records decisions, with weak mentors coached or released and strong mentors recognised"
+   ],
+   "evidence": {
+    "requirement": "Mentor session logs and the latest mentor review record.",
+    "method": "Digital record",
+    "examples": [
+     "Mentor session log",
+     "Annual mentor review",
+     "Release or renewal decision record"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S33"
+   ],
+   "legacy": "ES-11",
+   "riskTag": "Mentor performance not managed",
+   "consistencyGroup": "CC9"
+  },
+  {
+   "code": "ES-061",
+   "domain": "D5",
+   "subDimension": "5.4",
+   "text": "We have a written safeguarding policy, approved by our board, that covers staff, mentors, volunteers and the entrepreneurs we serve.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No safeguarding policy",
+    "A policy copied from another organisation, not adapted or approved",
+    "An approved policy that does not cover mentors or sexual exploitation, abuse and harassment",
+    "A board approved policy covers staff, mentors and participants, including sexual exploitation, abuse and harassment",
+    "A board approved policy covers staff, mentors and participants, including sexual exploitation, abuse and harassment, adds child safeguarding for under 18s, and was reviewed within 24 months"
+   ],
+   "evidence": {
+    "requirement": "The safeguarding policy, its approval minute and review date.",
+    "method": "Document",
+    "examples": [
+     "Safeguarding policy",
+     "Board approval minute",
+     "Code of conduct"
+    ]
+   },
+   "weight": 5,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-FND",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S22",
+    "S28",
+    "S29",
+    "S30",
+    "S19"
+   ],
+   "legacy": "ES-28",
+   "riskTag": "No safeguarding policy"
+  },
+  {
+   "code": "ES-062",
+   "domain": "D5",
+   "subDimension": "5.4",
+   "text": "We run a complaints channel that entrepreneurs know about and that accepts confidential reports.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No complaints channel",
+    "Entrepreneurs may speak to staff but there is no defined channel",
+    "A channel exists, such as a phone number or box, but entrepreneurs were not told or no confidential option exists",
+    "A confidential channel is explained at onboarding, and cases are logged and handled by a named person",
+    "A confidential channel is explained at onboarding and cases are logged and handled by a named person, with timely resolution, protection from retaliation and a yearly summary to the board"
+   ],
+   "evidence": {
+    "requirement": "Description of the channel, onboarding material that explains it, and the case log.",
+    "method": "Document",
+    "examples": [
+     "Complaints procedure",
+     "Onboarding pack",
+     "Case log"
+    ]
+   },
+   "weight": 5,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S28",
+    "S29",
+    "S22"
+   ],
+   "legacy": "ES-28",
+   "riskTag": "No complaints channel for entrepreneurs"
+  },
+  {
+   "code": "ES-063",
+   "domain": "D5",
+   "subDimension": "5.4",
+   "text": "Staff and mentors complete safeguarding and code of conduct training before they work with entrepreneurs.",
+   "responseType": "BANDED",
+   "anchors": [
+    "No training, or under 25 percent trained",
+    "25 to 59 percent of active staff and mentors trained",
+    "60 to 84 percent trained",
+    "85 to 99 percent trained, with attendance records",
+    "All trained before starting, and refreshed in the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "Training attendance records for all active staff and mentors.",
+    "method": "Document",
+    "examples": [
+     "Training attendance register",
+     "Training materials",
+     "Induction checklist"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S28",
+    "S22",
+    "S29"
+   ],
+   "legacy": "ES-28",
+   "riskTag": "Staff and mentors not trained on safeguarding",
+   "consistencyGroup": "CC4"
+  },
+  {
+   "code": "ES-064",
+   "domain": "D6",
+   "subDimension": "6.1",
+   "text": "We keep all client enterprise records in one database, with a unique ID for each enterprise.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Records are scattered across personal files, phones and paper",
+    "Several spreadsheets hold duplicate or conflicting entries",
+    "One central spreadsheet or tool exists but has no unique ID, or duplicates are found",
+    "A central database has unique IDs and shows no duplicates in a sample of 20 records",
+    "A central database has unique IDs, shows no duplicates in a sample of 20 records, and has data entry rules and a change history"
+   ],
+   "evidence": {
+    "requirement": "A live demonstration of the database and a check of 20 records for duplicates.",
+    "method": "Observation",
+    "examples": [
+     "Client database",
+     "Unique ID field",
+     "Sample of 20 records"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S6"
+   ],
+   "legacy": null,
+   "riskTag": "Client records scattered"
+  },
+  {
+   "code": "ES-065",
+   "domain": "D6",
+   "subDimension": "6.1",
+   "text": "Applicant, participant and alumni records are linked in one system, so we can follow each enterprise from application to alumni.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Applicants, participants and alumni are kept apart or not kept",
+    "Participants are recorded but applicants and alumni are not",
+    "Applicants and participants are linked but alumni are not followed",
+    "All three stages are linked by unique ID, and a sample enterprise can be traced end to end in ten minutes",
+    "All three stages are linked by unique ID, a sample enterprise can be traced end to end in ten minutes, and status is updated at least yearly and used for outcome analysis"
+   ],
+   "evidence": {
+    "requirement": "A live trace of three enterprises from application to alumni status.",
+    "method": "Observation",
+    "examples": [
+     "Database showing all three stages",
+     "Trace of a sample enterprise",
+     "Yearly status update"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S1",
+    "S2"
+   ],
+   "legacy": null,
+   "riskTag": "Cannot follow enterprises over time",
+   "consistencyGroup": "CC2"
+  },
+  {
+   "code": "ES-066",
+   "domain": "D6",
+   "subDimension": "6.1",
+   "text": "Our client database has complete data on the fields we report on, such as gender, age, location, revenue and jobs.",
+   "responseType": "BANDED",
+   "anchors": [
+    "Under 40 percent complete, or completeness is not checked",
+    "40 to 59 percent complete",
+    "60 to 79 percent complete",
+    "80 to 94 percent complete",
+    "95 percent or more complete, with missing data followed up"
+   ],
+   "evidence": {
+    "requirement": "A database extract for the last cohort. The verifier calculates the share of key fields filled in.",
+    "method": "Digital record",
+    "examples": [
+     "Client database extract",
+     "Completeness check",
+     "Follow up log for missing data"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": null,
+   "riskTag": "Incomplete client data",
+   "consistencyGroup": "CC6"
+  },
+  {
+   "code": "ES-067",
+   "domain": "D6",
+   "subDimension": "6.1",
+   "text": "We have a written guide that defines each data field and indicator and how it is collected.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No definitions; each person records differently",
+    "Definitions are known verbally by one person",
+    "Definitions exist for some indicators",
+    "A written data guide defines all reported fields and collection methods, and staff are trained",
+    "A written data guide defines all reported fields and collection methods, staff are trained, a second person checks quality and the guide is updated yearly"
+   ],
+   "evidence": {
+    "requirement": "The data guide or dictionary and training records.",
+    "method": "Document",
+    "examples": [
+     "Data dictionary",
+     "Indicator reference sheets",
+     "Training attendance"
+    ]
+   },
+   "weight": 2,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S12"
+   ],
+   "legacy": null,
+   "riskTag": "No data definitions"
+  },
+  {
+   "code": "ES-068",
+   "domain": "D6",
+   "subDimension": "6.2",
+   "text": "We have defined indicators with baseline values for our entrepreneurs, such as revenue, jobs and finance accessed.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No indicators or baselines",
+    "Indicators are listed in proposals but no baselines are collected",
+    "Baselines are collected for some indicators or some cohorts",
+    "Indicators and baselines are recorded for every participant in the last cohort",
+    "Indicators and baselines are recorded for every participant in the last cohort, tied to the theory of change and reviewed yearly"
+   ],
+   "evidence": {
+    "requirement": "Indicator list and baseline data for the last cohort.",
+    "method": "Digital record",
+    "examples": [
+     "Indicator framework",
+     "Baseline data for the last cohort",
+     "Annual indicator review"
+    ]
+   },
+   "weight": 5,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-RES",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S12",
+    "S6"
+   ],
+   "legacy": "ES-16",
+   "riskTag": "No indicators or baselines",
+   "consistencyGroup": "CC6"
+  },
+  {
+   "code": "ES-069",
+   "domain": "D6",
+   "subDimension": "6.2",
+   "text": "We follow up enterprises after the programme ends and collect outcome data, not only during the programme.",
+   "responseType": "BANDED",
+   "anchors": [
+    "No follow up after the programme",
+    "Under 25 percent of alumni followed up at 12 months",
+    "25 to 49 percent followed up at 12 months",
+    "50 to 74 percent followed up at 12 months",
+    "75 percent or more followed up at 12 months or later"
+   ],
+   "evidence": {
+    "requirement": "Follow up survey or call records for the cohort that ended about 12 months ago.",
+    "method": "Digital record",
+    "examples": [
+     "Follow up survey responses",
+     "Outcome data for alumni",
+     "Response rate calculation"
+    ]
+   },
+   "weight": 5,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-RES",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S2",
+    "S8"
+   ],
+   "legacy": "ES-17",
+   "riskTag": "No outcome tracking after the programme",
+   "consistencyGroup": "CC2"
+  },
+  {
+   "code": "ES-070",
+   "domain": "D6",
+   "subDimension": "6.2",
+   "text": "When we report results, we use a comparison group or state how much of the change we can and cannot attribute to our programme.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "All change in participants is claimed as programme impact",
+    "Results are reported as before and after with no discussion of other causes",
+    "Limits are mentioned in reports but not estimated",
+    "A written attribution method, such as a comparison group or other estimate, is used and its limits stated",
+    "Participants were compared with waitlisted or rejected applicants for at least one cohort and findings reported"
+   ],
+   "evidence": {
+    "requirement": "Evaluation or results report showing the attribution method.",
+    "method": "Document",
+    "examples": [
+     "Results report with method section",
+     "Comparison group data",
+     "Attribution note"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S2",
+    "S12"
+   ],
+   "legacy": "ES-18",
+   "riskTag": "Overclaiming results"
+  },
+  {
+   "code": "ES-071",
+   "domain": "D6",
+   "subDimension": "6.2",
+   "text": "We check a sample of reported results against documents such as sales records, bank statements or payroll, not only entrepreneur statements.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "All results are self reported and unchecked",
+    "Staff use judgement but keep no checks",
+    "Large claims are occasionally checked, unrecorded",
+    "At least 10 percent of reported results are checked against documents each reporting period and recorded",
+    "At least 10 percent of reported results are checked against documents each period and recorded, errors are corrected and error rates reported, and a third party reviewed this within 24 months"
+   ],
+   "evidence": {
+    "requirement": "Verification records for the last reporting period.",
+    "method": "Document",
+    "examples": [
+     "Verification checklist",
+     "Copies of supporting documents",
+     "Error rate summary"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-RES",
+    "RDY-LNK"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S12"
+   ],
+   "legacy": null,
+   "riskTag": "Results not verified"
+  },
+  {
+   "code": "ES-072",
+   "domain": "D6",
+   "subDimension": "6.3",
+   "text": "Our leaders use results data to decide which programmes to continue, change or stop.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Decisions never refer to results data",
+    "Results are mentioned in discussion with no records",
+    "Results are presented to leaders but decisions are not linked to them",
+    "Decision records cite results data for at least one continue, change or stop decision in the last 12 months",
+    "Decision records cite results data for at least one continue, change or stop decision in the last 12 months, using rules agreed in advance, and a programme was redesigned or stopped as a result"
+   ],
+   "evidence": {
+    "requirement": "Leadership or board minutes that cite results in decisions.",
+    "method": "Document",
+    "examples": [
+     "Board or leadership minutes",
+     "Programme review papers",
+     "Decision record"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-RES",
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S12",
+    "S6",
+    "S8"
+   ],
+   "legacy": "ES-20",
+   "riskTag": "Results not used in decisions"
+  },
+  {
+   "code": "ES-073",
+   "domain": "D6",
+   "subDimension": "6.3",
+   "text": "We report disappointing or negative results to our board and funders, not only successes.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Reports show only successes",
+    "Weak results are mentioned only if a funder asks",
+    "Weak results are shown to the board but not to funders",
+    "Annual reports to board and funders include indicators that missed target, with reasons",
+    "Annual reports to board and funders include indicators that missed target with reasons, list lessons and corrective actions, and are shared publicly at least yearly"
+   ],
+   "evidence": {
+    "requirement": "Latest board and funder reports.",
+    "method": "Document",
+    "examples": [
+     "Annual results report",
+     "Funder report",
+     "Public learning note"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND",
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S8",
+    "S12"
+   ],
+   "legacy": "ES-20",
+   "riskTag": "Only good news reported"
+  },
+  {
+   "code": "ES-074",
+   "domain": "D6",
+   "subDimension": "6.3",
+   "text": "After each cohort we hold a structured review with staff and entrepreneurs and record the changes we will make.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No review",
+    "An informal staff chat with nothing recorded",
+    "A staff only review is recorded",
+    "A review with staff and entrepreneur input follows each cohort, with written actions",
+    "A review with staff and entrepreneur input follows each cohort with written actions, and the next review checks that earlier actions were completed"
+   ],
+   "evidence": {
+    "requirement": "Review reports for the last two cohorts.",
+    "method": "Document",
+    "examples": [
+     "After cohort review report",
+     "Action list",
+     "Entrepreneur input notes"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S6"
+   ],
+   "legacy": null,
+   "riskTag": "No learning review after cohorts",
+   "consistencyGroup": "CC8"
+  },
+  {
+   "code": "ES-075",
+   "domain": "D6",
+   "subDimension": "6.3",
+   "text": "Each major programme is reviewed against relevance, effectiveness, efficiency and sustainability at least once per funding cycle.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No review or evaluation of any programme",
+    "Only a funder required final report, with no assessment of effectiveness",
+    "An internal review covers outputs only",
+    "A written review covers the four criteria for each major programme in the last funding cycle",
+    "A written review covers the four criteria for each major programme in the last funding cycle, is carried out or checked by an external evaluator, and has a recorded management response"
+   ],
+   "evidence": {
+    "requirement": "Programme review or evaluation reports from the last funding cycle.",
+    "method": "Document",
+    "examples": [
+     "Evaluation report",
+     "Programme review using the four criteria",
+     "Management response"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S20",
+    "S21"
+   ],
+   "legacy": null,
+   "riskTag": "No programme evaluation"
+  },
+  {
+   "code": "ES-076",
+   "domain": "D7",
+   "subDimension": "7.1",
+   "text": "Our organisation's legal registration and annual filings with the Registrar of Companies are up to date.",
+   "responseType": "YNP",
+   "anchors": [
+    "Not registered, or annual returns missing for two or more years",
+    null,
+    "Registered, but annual returns are late or missing for one year",
+    null,
+    "Registered with a current certificate and all annual returns filed"
+   ],
+   "evidence": {
+    "requirement": "Certificate of incorporation and proof of filing of annual returns, including beneficial ownership information, for the years due.",
+    "method": "Document",
+    "examples": [
+     "Certificate of incorporation",
+     "Annual return filing receipts",
+     "Beneficial ownership filing"
+    ]
+   },
+   "weight": 5,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S24",
+    "S25",
+    "S27"
+   ],
+   "legacy": "ES-29",
+   "riskTag": "Registration or annual returns not current"
+  },
+  {
+   "code": "ES-077",
+   "domain": "D7",
+   "subDimension": "7.1",
+   "text": "We hold a current licence as a non-profit organisation from the NPO Secretariat and renew it on time.",
+   "responseType": "YNP",
+   "anchors": [
+    "No licence, or the licence expired more than three months ago",
+    null,
+    "A provisional licence, or a licence expired within the last three months",
+    null,
+    "A final licence is current and renewals are on schedule"
+   ],
+   "evidence": {
+    "requirement": "NPO licence and renewal filings.",
+    "method": "Document",
+    "examples": [
+     "NPO licence",
+     "Renewal application and receipt",
+     "Tax clearance certificate used for renewal"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-FND"
+   ],
+   "applies": "Non-profit organisations only",
+   "basis": "Sourced",
+   "sources": [
+    "S26"
+   ],
+   "legacy": null,
+   "riskTag": "Non-profit licence not current"
+  },
+  {
+   "code": "ES-078",
+   "domain": "D7",
+   "subDimension": "7.1",
+   "text": "Our tax registration and returns with the Ghana Revenue Authority are up to date.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Not registered for tax, or tax arrears are in dispute",
+    "Registered, with returns filed irregularly and arrears outstanding",
+    "Registered, with one or more returns late or missing in the last 12 months",
+    "All returns filed in the last 12 months with no arrears",
+    "All returns filed in the last 12 months with no arrears, a valid tax clearance certificate held and a filing calendar in use"
+   ],
+   "evidence": {
+    "requirement": "Tax registration and filing receipts for the last 12 months.",
+    "method": "Document",
+    "examples": [
+     "Tax identification registration",
+     "Filing receipts",
+     "Tax clearance certificate"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S26",
+    "S27"
+   ],
+   "legacy": "ES-29",
+   "riskTag": "Tax filings not current"
+  },
+  {
+   "code": "ES-079",
+   "domain": "D7",
+   "subDimension": "7.1",
+   "text": "We remit statutory staff deductions, such as SSNIT contributions and PAYE, on time.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Staff are employed without registration or deductions",
+    "Deductions are made but remitted irregularly",
+    "Deductions are remitted most months, with some late payments in the last 12 months",
+    "All deductions were remitted on time in the last 12 months, with receipts",
+    "All deductions were remitted on time in the last 12 months, with receipts, and payroll records are reconciled to remittances each quarter"
+   ],
+   "evidence": {
+    "requirement": "Payroll records and remittance receipts for the last 12 months.",
+    "method": "Document",
+    "examples": [
+     "Payroll register",
+     "SSNIT and tax remittance receipts",
+     "Quarterly reconciliation"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-CMP"
+   ],
+   "applies": "Organisations with employees only",
+   "basis": "Partly sourced",
+   "sources": [
+    "S27"
+   ],
+   "legacy": null,
+   "riskTag": "Statutory deductions not remitted"
+  },
+  {
+   "code": "ES-080",
+   "domain": "D7",
+   "subDimension": "7.2",
+   "text": "Our organisation is registered with the Data Protection Commission and the registration is current.",
+   "responseType": "YNP",
+   "anchors": [
+    "Not registered while we hold personal data of entrepreneurs",
+    null,
+    "Registered, but the registration lapsed or its details are out of date",
+    null,
+    "Registration is current and the renewal date is tracked"
+   ],
+   "evidence": {
+    "requirement": "Data Protection Commission registration certificate and renewal date.",
+    "method": "Document",
+    "examples": [
+     "Registration certificate",
+     "Renewal receipt",
+     "Compliance report submitted at renewal"
+    ]
+   },
+   "weight": 5,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S13",
+    "S23"
+   ],
+   "legacy": "ES-27",
+   "riskTag": "Not registered with the Data Protection Commission"
+  },
+  {
+   "code": "ES-081",
+   "domain": "D7",
+   "subDimension": "7.2",
+   "text": "We obtain informed consent from entrepreneurs, explained in plain language, on what personal data we collect, why, and who will see it.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No notice and no consent record",
+    "A verbal explanation only",
+    "A notice exists but consent is not recorded for all, or sharing with funders or investors is not mentioned",
+    "A written privacy notice and signed consent cover all participants and sharing with funders and investors",
+    "A written privacy notice and signed consent cover all participants and sharing with funders and investors, with separate consent for photos and testimonies and a way to withdraw consent"
+   ],
+   "evidence": {
+    "requirement": "Privacy notice and signed consent forms for a sample of 10 participants.",
+    "method": "Document",
+    "examples": [
+     "Privacy notice",
+     "Signed consent forms",
+     "Photo and testimony consent forms"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-LNK"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S23"
+   ],
+   "legacy": "ES-27",
+   "riskTag": "No privacy notice or consent"
+  },
+  {
+   "code": "ES-082",
+   "domain": "D7",
+   "subDimension": "7.2",
+   "text": "We protect personal data with technical and organisational security measures and have a procedure for data breaches.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No safeguards; data sits on personal phones or shared passwords",
+    "Passwords are used but there are no backups or rules",
+    "Basic safeguards such as passwords and backup exist but no written rules or breach procedure",
+    "Written security rules, role based access, regular backups and a breach procedure are in place",
+    "Written security rules, role based access, regular backups and a breach procedure are in place, staff are trained and the measures were tested or reviewed in the last 12 months"
+   ],
+   "evidence": {
+    "requirement": "Data security policy, a demonstration of access controls and the breach procedure.",
+    "method": "Observation",
+    "examples": [
+     "Data security policy",
+     "Access control settings",
+     "Breach response procedure"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-CMP",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S23",
+    "S31"
+   ],
+   "legacy": "ES-27",
+   "riskTag": "Weak personal data security",
+   "consistencyGroup": "CC5"
+  },
+  {
+   "code": "ES-083",
+   "domain": "D7",
+   "subDimension": "7.3",
+   "text": "We keep a risk register with owners and review it at least every quarter.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No risk register",
+    "Risks are discussed informally with no list",
+    "A risk list exists, has no owners and has not been reviewed in six months",
+    "A register with owners and actions is reviewed at least twice a year",
+    "A register of programme, financial, safeguarding and reputation risks has owners and actions, is reviewed at least twice a year and is reviewed quarterly by the board"
+   ],
+   "evidence": {
+    "requirement": "Current risk register and review minutes.",
+    "method": "Document",
+    "examples": [
+     "Risk register",
+     "Review minutes",
+     "Board paper on risks"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S29",
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "No risk register"
+  },
+  {
+   "code": "ES-084",
+   "domain": "D7",
+   "subDimension": "7.3",
+   "text": "We check funders, partners and major donors before accepting money or agreements, for example their source of funds and reputation.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "We accept any funding or partnership offered",
+    "Informal enquiries are made",
+    "Checks are made for some new funders",
+    "A written due diligence checklist is applied to every new funder and partner",
+    "A written due diligence checklist is applied to every new funder and partner, with periodic re-checks and recorded decisions to decline funding"
+   ],
+   "evidence": {
+    "requirement": "Due diligence checklist and completed checks for the last three new funders or partners.",
+    "method": "Document",
+    "examples": [
+     "Due diligence checklist",
+     "Completed checks",
+     "Decline decision record"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "No due diligence on funders"
+  },
+  {
+   "code": "ES-085",
+   "domain": "D7",
+   "subDimension": "7.3",
+   "text": "We verify basic facts about an enterprise, such as registration, ownership and key claims, before we endorse it or introduce it to an investor.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No verification",
+    "We rely on what the entrepreneur tells us",
+    "Registration only is checked",
+    "A checklist verifies registration, ownership and main claims with documents before every introduction",
+    "A checklist verifies registration, ownership and main claims with documents before every introduction, checks are recorded and investor feedback on accuracy is tracked"
+   ],
+   "evidence": {
+    "requirement": "Verification checklists linked to introductions in the register.",
+    "method": "Document",
+    "examples": [
+     "Verification checklist",
+     "Copies of registration documents",
+     "Investor feedback on accuracy"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-LNK",
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": null,
+   "riskTag": "Enterprise claims not verified before endorsement"
+  },
+  {
+   "code": "ES-086",
+   "domain": "D7",
+   "subDimension": "7.4",
+   "text": "We have a written anti-fraud and anti-corruption policy that staff, mentors and board members have read and signed.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No policy",
+    "A general statement appears in the code of conduct only",
+    "A policy exists but is unsigned or not shared",
+    "The policy is signed by all staff and board members and sets out reporting steps",
+    "The policy sets out reporting steps and is signed by all staff, board members, mentors and partners, with an annual refresher and a case log"
+   ],
+   "evidence": {
+    "requirement": "The anti-fraud policy and signed acknowledgements.",
+    "method": "Document",
+    "examples": [
+     "Anti-fraud policy",
+     "Signed acknowledgements",
+     "Training record"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Gate",
+   "readiness": [
+    "RDY-FND",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S31",
+    "S29"
+   ],
+   "legacy": null,
+   "riskTag": "No anti-fraud policy"
+  },
+  {
+   "code": "ES-087",
+   "domain": "D7",
+   "subDimension": "7.4",
+   "text": "We buy goods and services using written procurement rules that require quotations above a set amount.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No rules; staff choose suppliers",
+    "An informal rule only",
+    "Written rules exist but are applied inconsistently",
+    "Written rules set thresholds and minimum quotations, and purchase records show them applied in the last 12 months",
+    "Written rules set thresholds and minimum quotations, purchase records show them applied in the last 12 months, an independent person approves and auditors tested a sample"
+   ],
+   "evidence": {
+    "requirement": "Procurement policy and files for the last five purchases above the threshold.",
+    "method": "Document",
+    "examples": [
+     "Procurement policy",
+     "Quotation files",
+     "Purchase approval records"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "No procurement rules"
+  },
+  {
+   "code": "ES-088",
+   "domain": "D7",
+   "subDimension": "7.4",
+   "text": "Suspected fraud or misuse of funds is recorded, investigated and reported to the board and affected funders.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No procedure; incidents are hidden or handled privately",
+    "Incidents are handled case by case and not recorded",
+    "Incidents are reported to the board only",
+    "A written procedure applies; incidents are logged, investigated and reported to the board and funders as required",
+    "A written procedure applies, incidents are logged, investigated and reported to the board and funders as required, lessons change controls and the board gets an annual summary"
+   ],
+   "evidence": {
+    "requirement": "Incident procedure and the incident log, including nil returns.",
+    "method": "Document",
+    "examples": [
+     "Incident response procedure",
+     "Incident log",
+     "Board report on incidents"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S29",
+    "S31"
+   ],
+   "legacy": null,
+   "riskTag": "No fraud response procedure"
+  },
+  {
+   "code": "ES-089",
+   "domain": "D8",
+   "subDimension": "8.1",
+   "text": "Women make up a meaningful share of the people who decide which enterprises we select.",
+   "responseType": "BANDED",
+   "anchors": [
+    "No women on selection decisions, or there is no panel",
+    "Women are under 20 percent of the panel",
+    "Women are 20 to 29 percent of the panel",
+    "Women are 30 to 39 percent of the panel",
+    "Women are 40 percent or more of the panel"
+   ],
+   "evidence": {
+    "requirement": "Panel lists for the last two selection rounds.",
+    "method": "Document",
+    "examples": [
+     "Selection panel list",
+     "Panel minutes",
+     "Panel terms of reference"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S3",
+    "S35"
+   ],
+   "legacy": "ES-36",
+   "riskTag": "Few women in selection decisions"
+  },
+  {
+   "code": "ES-090",
+   "domain": "D8",
+   "subDimension": "8.1",
+   "text": "Each year we review our selection, curriculum and mentoring for barriers facing women and young people, such as timing, venue, childcare or biased scoring.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No review of barriers",
+    "Informal discussion only",
+    "A review was done once with no changes",
+    "An annual written review finds barriers and at least one change was made",
+    "An annual written review finds barriers with participant input, at least one change was made and its effect was checked in the next cohort"
+   ],
+   "evidence": {
+    "requirement": "Latest barrier review and the changes made.",
+    "method": "Document",
+    "examples": [
+     "Barrier review report",
+     "Programme change record",
+     "Participant input notes"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S1",
+    "S3",
+    "S35"
+   ],
+   "legacy": "ES-37",
+   "riskTag": "No review for gender or youth barriers"
+  },
+  {
+   "code": "ES-091",
+   "domain": "D8",
+   "subDimension": "8.1",
+   "text": "We set written targets for women and young people in each cohort and report against them.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No targets",
+    "A verbal aim only",
+    "Targets are set for some programmes and not reported",
+    "Written targets for every programme are reported to the board each year",
+    "Written targets for every programme are reported to the board each year, and corrective action was recorded after the last cohort that missed a target"
+   ],
+   "evidence": {
+    "requirement": "Targets and the latest report against them.",
+    "method": "Document",
+    "examples": [
+     "Inclusion targets",
+     "Board report",
+     "Corrective action note"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S3",
+    "S6",
+    "S35"
+   ],
+   "legacy": "ES-39",
+   "riskTag": "No inclusion targets"
+  },
+  {
+   "code": "ES-092",
+   "domain": "D8",
+   "subDimension": "8.1",
+   "text": "We compare outcomes such as revenue, jobs and finance raised for women and men and for different age groups each year.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Outcomes are never split by gender or age",
+    "Participation counts are split but outcomes are not",
+    "Outcomes are split for one indicator in the last year",
+    "Revenue, jobs and finance outcomes are split by gender and age each year in a written analysis",
+    "Revenue, jobs and finance outcomes are split by gender and age each year in a written analysis, and a documented change in support was made to close a gap found"
+   ],
+   "evidence": {
+    "requirement": "The latest outcome analysis by gender and age.",
+    "method": "Document",
+    "examples": [
+     "Disaggregated results report",
+     "Support change record",
+     "Database extract"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-RES",
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S3",
+    "S12",
+    "S1"
+   ],
+   "legacy": "ES-39",
+   "riskTag": "Results not split by gender or age",
+   "consistencyGroup": "CC10"
+  },
+  {
+   "code": "ES-093",
+   "domain": "D8",
+   "subDimension": "8.2",
+   "text": "We help entrepreneurs assess the climate and environmental risks and opportunities in their businesses.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Not covered in our programmes",
+    "Mentioned in a session only",
+    "A climate or environment module is offered to some participants",
+    "Every entrepreneur completes a climate and environmental risk check as part of the diagnostic or plan",
+    "Every entrepreneur completes a climate and environmental risk check as part of the diagnostic or plan, actions are tracked and the share adopting at least one measure is reported"
+   ],
+   "evidence": {
+    "requirement": "Programme materials and completed risk checks for the last cohort.",
+    "method": "Document",
+    "examples": [
+     "Climate risk check form",
+     "Module slides",
+     "Completed checks"
+    ]
+   },
+   "weight": 2,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [
+    "S5",
+    "S6"
+   ],
+   "legacy": "ES-40",
+   "riskTag": "Climate risk not addressed with enterprises"
+  },
+  {
+   "code": "ES-094",
+   "domain": "D8",
+   "subDimension": "8.2",
+   "text": "We screen enterprises we promote or link to finance for serious environmental or social harm, and decline or set conditions where we find it.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No screening",
+    "Informal judgement only",
+    "A screening question is on the application but not acted on",
+    "A written exclusion list and checklist are used before promotion or finance linkage",
+    "A written exclusion list and checklist are used before promotion or finance linkage, decisions are logged and conditions are followed up"
+   ],
+   "evidence": {
+    "requirement": "Screening policy and completed screens linked to introductions.",
+    "method": "Document",
+    "examples": [
+     "Exclusion list",
+     "Completed screening checklist",
+     "Decision log"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-LNK",
+    "RDY-CMP"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [],
+   "legacy": null,
+   "riskTag": "No environmental or social screening"
+  },
+  {
+   "code": "ES-095",
+   "domain": "D8",
+   "subDimension": "8.2",
+   "text": "We can call on climate and environment expertise through staff, mentors or partners, such as universities or specialist agencies, when entrepreneurs need it.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No access to such expertise",
+    "Occasional personal contacts only",
+    "Expert partners are named with no agreement",
+    "At least one written agreement or expert roster was used in the last 12 months",
+    "At least one written agreement or expert roster was used in the last 12 months, the expertise served several enterprises and feedback was recorded"
+   ],
+   "evidence": {
+    "requirement": "Expert roster or partnership agreements and records of use.",
+    "method": "Document",
+    "examples": [
+     "Expert roster",
+     "MoU with a university or agency",
+     "Session records"
+    ]
+   },
+   "weight": 2,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S35"
+   ],
+   "legacy": null,
+   "riskTag": "No climate expertise available"
+  },
+  {
+   "code": "ES-096",
+   "domain": "D8",
+   "subDimension": "8.2",
+   "text": "We track climate or environmental results, such as the number of enterprises adopting resource efficient or climate smart practices.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "No tracking",
+    "Anecdotes only",
+    "Tracked for a few enterprises in one cohort",
+    "An indicator is defined and tracked across all cohorts in the last 12 months",
+    "An indicator is defined and tracked across all cohorts in the last 12 months and reported to funders with baseline and follow up data"
+   ],
+   "evidence": {
+    "requirement": "Indicator definition and data for the last 12 months.",
+    "method": "Digital record",
+    "examples": [
+     "Climate indicator data",
+     "Follow up survey",
+     "Funder report section"
+    ]
+   },
+   "weight": 2,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Design judgement",
+   "sources": [
+    "S6"
+   ],
+   "legacy": null,
+   "riskTag": "Climate results not tracked"
+  },
+  {
+   "code": "ES-097",
+   "domain": "D8",
+   "subDimension": "8.3",
+   "text": "We reach rural entrepreneurs through design choices such as location, language and delivery method, not only through open calls.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Open calls only, with all activity in the capital or a regional city",
+    "Rural applicants are welcome but nothing in the design changed",
+    "Some rural outreach, but sessions still require travel to the city",
+    "Delivery in district or community locations, local languages and low data options is planned in the design",
+    "Delivery in district or community locations, local languages and low data options is planned in the design, rural entrepreneurs helped design it and results are reviewed by location"
+   ],
+   "evidence": {
+    "requirement": "Programme design showing rural delivery choices and the locations used.",
+    "method": "Document",
+    "examples": [
+     "Delivery plan with locations",
+     "Materials in local languages",
+     "Low data delivery options"
+    ]
+   },
+   "weight": 4,
+   "criticality": "Core",
+   "readiness": [
+    "RDY-FND"
+   ],
+   "applies": "All",
+   "basis": "Sourced",
+   "sources": [
+    "S5",
+    "S4"
+   ],
+   "legacy": "ES-38",
+   "riskTag": "Rural entrepreneurs not reached"
+  },
+  {
+   "code": "ES-098",
+   "domain": "D8",
+   "subDimension": "8.3",
+   "text": "We know what share of our participants are based outside the regional capital and compare it with a written target or the spread of enterprises in our area.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Participant location is not recorded",
+    "Location is recorded but the share is not calculated",
+    "The share is calculated with no target or comparison",
+    "The share is compared with a written target or local enterprise spread and reviewed yearly",
+    "The share is compared with a written target or local enterprise spread and reviewed yearly, and action was taken in the last 12 months where it fell below target"
+   ],
+   "evidence": {
+    "requirement": "Client database location data and the target or comparison document.",
+    "method": "Digital record",
+    "examples": [
+     "Participants by location report",
+     "Rural reach target",
+     "Review minutes"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-RES"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S4"
+   ],
+   "legacy": "ES-38",
+   "riskTag": "Rural share unknown",
+   "consistencyGroup": "CC1"
+  },
+  {
+   "code": "ES-099",
+   "domain": "D8",
+   "subDimension": "8.3",
+   "text": "We reduce cost and access barriers for participants, such as transport, data costs, fee waivers or accessible venues.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Participants bear all costs and venues are not accessible",
+    "Occasional help is given on request",
+    "Support covers some costs in some programmes",
+    "A written support budget covers transport or data costs and venues are accessible to people with disabilities",
+    "A written support budget covers transport or data costs and venues are accessible to people with disabilities, use is tracked and drop outs for cost reasons are reviewed"
+   ],
+   "evidence": {
+    "requirement": "Support budget lines, venue checks and drop out records.",
+    "method": "Document",
+    "examples": [
+     "Participant support budget",
+     "Venue accessibility checklist",
+     "Drop out reasons log"
+    ]
+   },
+   "weight": 3,
+   "criticality": "Standard",
+   "readiness": [],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S4",
+    "S5"
+   ],
+   "legacy": null,
+   "riskTag": "Cost barriers exclude participants"
+  },
+  {
+   "code": "ES-100",
+   "domain": "D8",
+   "subDimension": "8.3",
+   "text": "We share our curriculum, tools or findings with other support organisations or policy makers.",
+   "responseType": "ANCHORED",
+   "anchors": [
+    "Nothing is shared",
+    "We share informally on request only",
+    "Something was shared once in the last 12 months",
+    "At least two sharing activities in the last 12 months, such as open materials, ecosystem meetings or policy briefs",
+    "At least two sharing activities in the last 12 months, such as open materials, ecosystem meetings or policy briefs, with evidence that others adopted our tools or findings"
+   ],
+   "evidence": {
+    "requirement": "Records of sharing activities in the last 12 months.",
+    "method": "Document",
+    "examples": [
+     "Published materials",
+     "Ecosystem meeting records",
+     "Policy brief or letter"
+    ]
+   },
+   "weight": 2,
+   "criticality": "Standard",
+   "readiness": [
+    "RDY-SCL"
+   ],
+   "applies": "All",
+   "basis": "Partly sourced",
+   "sources": [
+    "S10",
+    "S8"
+   ],
+   "legacy": null,
+   "riskTag": "Learning not shared with the ecosystem"
+  }
+ ],
+ "readiness": [
+  {
+   "code": "RDY-FND",
+   "name": "Institutional funder readiness",
+   "purpose": "Whether the ESO could pass the due diligence of an institutional funder such as a bilateral donor, foundation or development bank partner.",
+   "gatesSummary": "Gate questions: ES-026 (Cost per enterprise unknown); ES-030 (No audited accounts); ES-061 (No safeguarding policy); ES-062 (No complaints channel for entrepreneurs); ES-068 (No indicators or baselines); ES-076 (Registration or annual returns not current); ES-080 (Not registered with the Data Protection Commission); ES-086 (No anti-fraud policy)",
+   "levelRules": "SPEC 4",
+   "unlocks": "Unlocks eligibility for direct grants from institutional funders and partner status with larger implementing organisations."
+  },
+  {
+   "code": "RDY-LNK",
+   "name": "Investor linkage credibility",
+   "purpose": "Whether investors, lenders and buyers can trust the ESO's introductions, vetting and track record of deals.",
+   "gatesSummary": "Gate questions: ES-043 (Introductions not tracked to deals); ES-071 (Results not verified); ES-085 (Enterprise claims not verified before endorsement)",
+   "levelRules": "SPEC 4",
+   "unlocks": "Unlocks investor and lender partnerships and referral arrangements."
+  },
+  {
+   "code": "RDY-RES",
+   "name": "Results credibility",
+   "purpose": "Whether the results the ESO reports are defined, measured, verified and honest about attribution.",
+   "gatesSummary": "Gate questions: ES-043 (Introductions not tracked to deals); ES-068 (No indicators or baselines); ES-071 (Results not verified); ES-085 (Enterprise claims not verified before endorsement)",
+   "levelRules": "SPEC 4",
+   "unlocks": "Unlocks results based funding and use of the ESO's results in funder and investor reports."
+  },
+  {
+   "code": "RDY-CMP",
+   "name": "Safeguarding and compliance readiness",
+   "purpose": "Whether safeguarding, data protection, registration and fiduciary controls are in place.",
+   "gatesSummary": "Gate questions: ES-030 (No audited accounts); ES-061 (No safeguarding policy); ES-062 (No complaints channel for entrepreneurs); ES-076 (Registration or annual returns not current); ES-080 (Not registered with the Data Protection Commission); ES-086 (No anti-fraud policy)",
+   "levelRules": "SPEC 4",
+   "unlocks": "Unlocks eligibility to receive and sub-grant funds and work with children and vulnerable people."
+  },
+  {
+   "code": "RDY-SCL",
+   "name": "Scale readiness",
+   "purpose": "Whether the delivery model, costs, leadership and finances can support growth without losing quality.",
+   "gatesSummary": "Gate questions: ES-012 (Delivery model not documented for scale); ES-026 (Cost per enterprise unknown)",
+   "levelRules": "SPEC 4",
+   "unlocks": "Unlocks expansion to new areas, cohorts or partners."
+  }
+ ],
+ "consistencyChecks": [
+  {
+   "id": "CC1",
+   "itemA": "ES-016",
+   "itemB": "ES-098",
+   "rule": "An ESO that says it reaches people who would not otherwise be supported should know where its participants are based.",
+   "condition": "A>=3 and B<=1"
+  },
+  {
+   "id": "CC2",
+   "itemA": "ES-069",
+   "itemB": "ES-065",
+   "rule": "Following up alumni for outcomes needs records that link applicants, participants and alumni.",
+   "condition": "A>=3 and B<=1"
+  },
+  {
+   "id": "CC3",
+   "itemA": "ES-034",
+   "itemB": "ES-031",
+   "rule": "On time donor reports usually need accounts coded by donor fund. Check the reporting is not built on manual rework.",
+   "condition": "A>=3 and B<=1"
+  },
+  {
+   "id": "CC4",
+   "itemA": "ES-061",
+   "itemB": "ES-063",
+   "rule": "A strong safeguarding policy with almost nobody trained suggests the policy is on paper only.",
+   "condition": "A>=3 and B<=1"
+  },
+  {
+   "id": "CC5",
+   "itemA": "ES-080",
+   "itemB": "ES-082",
+   "rule": "Data Protection Commission registration with no security rules or breach procedure suggests registration is a formality.",
+   "condition": "A>=3 and B<=1"
+  },
+  {
+   "id": "CC6",
+   "itemA": "ES-068",
+   "itemB": "ES-066",
+   "rule": "Baselines for every participant need complete data fields. If fields are mostly blank, the baseline claim needs checking.",
+   "condition": "A>=3 and B<=1"
+  },
+  {
+   "id": "CC7",
+   "itemA": "ES-026",
+   "itemB": "ES-028",
+   "rule": "A cost per enterprise that includes shared costs needs a written method for sharing them.",
+   "condition": "A>=3 and B<=1"
+  },
+  {
+   "id": "CC8",
+   "itemA": "ES-003",
+   "itemB": "ES-074",
+   "rule": "Claiming to test the theory of change against data while holding no review after cohorts is inconsistent.",
+   "condition": "A>=3 and B<=1"
+  },
+  {
+   "id": "CC9",
+   "itemA": "ES-019",
+   "itemB": "ES-060",
+   "rule": "Entrepreneur feedback that leads to changes should also reach mentor management. Check mentors are reviewed.",
+   "condition": "A>=3 and B<=1"
+  },
+  {
+   "id": "CC10",
+   "itemA": "ES-092",
+   "itemB": "ES-066",
+   "rule": "Analysis of outcomes by gender and age depends on complete gender and age fields in the database.",
+   "condition": "A>=3 and B<=1"
+  }
+ ],
+ "sources": {
+  "S1": {
+   "title": "Does Acceleration Work? Five years of evidence",
+   "publisher": "GALI (ANDE and Emory)",
+   "year": "c.2021",
+   "url": "https://www.galidata.org/assets/report/pdf/Does%20Acceleration%20Work_EN.pdf",
+   "confidence": "High",
+   "opened": true,
+   "note": "Re-opened in this pass. Selection effects, mentor quality, peer networking, local founders and women-led teams."
+  },
+  "S2": {
+   "title": "A Rocket or a Runway?",
+   "publisher": "GALI",
+   "year": "May 2021",
+   "url": "https://www.galidata.org/assets/report/pdf/Rocket%20or%20Runway_EN.pdf",
+   "confidence": "High",
+   "opened": true,
+   "note": "Re-opened in this pass. Selection bias toward better capitalised ventures, post-programme effects, alumni support, mismatch of offer and stage."
+  },
+  "S3": {
+   "title": "Accelerating Women-led Startups (knowledge brief)",
+   "publisher": "GALI",
+   "year": "Mar 2020",
+   "url": "https://www.galidata.org/assets/report/pdf/accelarating_women_led_startups_final.pdf",
+   "confidence": "High",
+   "opened": true,
+   "note": "Opened by the earlier research agents (evidence trail); not re-opened in this pass."
+  },
+  "S4": {
+   "title": "Landscape Study of Accelerators and Incubators in East Africa",
+   "publisher": "GALI",
+   "year": "Sep 2020",
+   "url": "https://www.galidata.org/assets/report/pdf/Landscape-of-Accelerators-and-Incubators-in-East-Africa.pdf",
+   "confidence": "High (regional proxy)",
+   "opened": true,
+   "note": "Re-opened in this pass. East Africa proxy for Ghana: funding mix, fees, lean teams, rural reach, outcome measurement gaps."
+  },
+  "S5": {
+   "title": "Bridging the Gap: Support Ecosystem for Rural Impacting Enterprises in Sub-Saharan Africa",
+   "publisher": "Village Capital and Small Foundation",
+   "year": "Jul 2024",
+   "url": "https://newsandviews.vilcap.com/press-releases/village-capital-and-small-foundation-release-report-on-the-support-ecosystem-for-rural-impacting-enterprises-in-sub-saharan-africa",
+   "confidence": "Medium (press release read, full report not read)",
+   "opened": true,
+   "note": "Press release re-opened in this pass; the full report was not read."
+  },
+  "S6": {
+   "title": "Implementation Completion Report, Ghana Climate Innovation Center Project",
+   "publisher": "World Bank",
+   "year": "c.2021",
+   "url": "https://documents1.worldbank.org/curated/en/418871622208005867/pdf/Ghana-Climate-Innovation-Center-Project.pdf",
+   "confidence": "High (Ghana-specific)",
+   "opened": true,
+   "note": "Re-opened in this pass. Ghana ESO case: M&E tool used in decisions, gender targets, customised support, sustainability risk, leadership delays."
+  },
+  "S7": {
+   "title": "Incubator Benchmark Assessment Tool (IBAT) questionnaire",
+   "publisher": "World Bank / infoDev",
+   "year": "n/a",
+   "url": "https://documents1.worldbank.org/curated/en/463691563913227383/pdf/Incubator-Assessment-Questionnaire.pdf",
+   "confidence": "High",
+   "opened": true,
+   "note": "Re-opened in this pass. Service provision and internal capacity dimensions including mentorship, selection, graduation, finances and HR."
+  },
+  "S8": {
+   "title": "Reimagining the Future of Enterprise Support in East Africa",
+   "publisher": "World Bank Development Impact / University of Michigan WDI",
+   "year": "Oct 2025",
+   "url": "https://wdi.umich.edu/wp-content/uploads/WDI-Reimagining-the-Future-of-ESOs-in-East-Africa_Final-Report_HRes.pdf",
+   "confidence": "Medium-High",
+   "opened": true,
+   "note": "Re-opened in this pass. Donor dependence, staff turnover, generic programmes, measurement gaps."
+  },
+  "S9": {
+   "title": "Who funds the intermediaries?",
+   "publisher": "Disrupt Africa (journalism)",
+   "year": "Jun 2025",
+   "url": "https://disruptafrica.com/2025/06/13/who-funds-the-intermediaries-rethinking-capital-for-africas-ecosystem-support-organisations/",
+   "confidence": "Low-Medium (secondary journalism, underlying studies not opened)",
+   "opened": true,
+   "note": "Article re-opened in this pass; the studies it cites were not opened. Supports Partly sourced items only."
+  },
+  "S10": {
+   "title": "West Africa Entrepreneurial Ecosystem Snapshot: Accra",
+   "publisher": "ANDE",
+   "year": "c.2021",
+   "url": "https://andeglobal.org/wp-content/uploads/2021/02/Ecosystem-Snapshot_Accra.pdf",
+   "confidence": "High (Ghana-specific)",
+   "opened": true,
+   "note": "Re-opened in this pass. Supports lack of collaboration among actors and poor market access. It does not address alumni networks or Northern Ghana, so it is not used for those."
+  },
+  "S12": {
+   "title": "DCED Standard for Measuring Results in Private Sector Development (v VII)",
+   "publisher": "DCED",
+   "year": "Apr 2015",
+   "url": "https://www.enterprise-development.org/wp-content/uploads/DCED_Standard_versionVII_Apr15_bluecover.pdf",
+   "confidence": "High",
+   "opened": true,
+   "note": "Re-opened in this pass. Eight elements: results chain, indicators, measuring change, attribution, wider change, costs, reporting, managing the system."
+  },
+  "S13": {
+   "title": "Registration, Data Protection Act 2012 (Act 843)",
+   "publisher": "Ghana Data Protection Commission",
+   "year": "current",
+   "url": "https://dataprotection.org.gh/registration/",
+   "confidence": "High",
+   "opened": true,
+   "note": "Re-opened in this pass. Registration is required before processing personal data and is renewed with a compliance report."
+  },
+  "S14": {
+   "title": "Sustainable Employment through Agribusiness (AgriBiz), Ghana",
+   "publisher": "GIZ",
+   "year": "2025",
+   "url": "https://www.giz.de/sites/default/files/media/pkb-document/2025-11/giz2025-en-ghana-sustainable-employment-agribiz.pdf",
+   "confidence": "Medium",
+   "opened": true,
+   "note": "Opened by the earlier research agents (evidence trail); not re-opened in this pass."
+  },
+  "S16": {
+   "title": "A meta-analysis of the effectiveness of startup accelerators",
+   "publisher": "Journal of Technology Transfer 51(1)",
+   "year": "Aug 2025",
+   "url": "https://link.springer.com/article/10.1007/s10961-025-10218-6",
+   "confidence": "Medium-High (abstract read)",
+   "opened": true,
+   "note": "Abstract only, read by the earlier research agents."
+  },
+  "S17": {
+   "title": "ESO Uplift Programme overview",
+   "publisher": "GrowthAfrica with SDC, DRK, Amahoro Coalition",
+   "year": "c.2025",
+   "url": "https://growthafrica.com/wp-content/uploads/2025/05/About-The-ESO-Upift-Programme.pdf",
+   "confidence": "Medium",
+   "opened": true,
+   "note": "Opened by the earlier research agents (evidence trail); not re-opened in this pass."
+  },
+  "S19": {
+   "title": "PSEAH page",
+   "publisher": "CHS Alliance",
+   "year": "current",
+   "url": "https://www.chsalliance.org/protection-from-sexual-exploitation-abuse-and-sexual-harassment/",
+   "confidence": "Low-Medium (navigation page, requirement text not read)",
+   "opened": false,
+   "note": "Navigation page only. Requirement text is taken from S28."
+  },
+  "S20": {
+   "title": "Evaluation Criteria",
+   "publisher": "OECD",
+   "year": "current",
+   "url": "https://www.oecd.org/en/topics/sub-issues/development-co-operation-evaluation-and-effectiveness/evaluation-criteria.html",
+   "confidence": "High (names only)",
+   "opened": true,
+   "note": "Names the six DAC criteria. Definitions are not on this page; see S21."
+  },
+  "S21": {
+   "title": "Evaluation criteria for German bilateral development cooperation",
+   "publisher": "BMZ (Germany), restating the OECD DAC criteria revised in 2019",
+   "year": "n/a",
+   "url": "https://www.bmz.de/resource/blob/240112/evaluierungskriterien-en.pdf",
+   "confidence": "High",
+   "opened": true,
+   "note": "Used for the DAC definitions of relevance, coherence, effectiveness, efficiency, impact and sustainability, as restated by BMZ."
+  },
+  "S22": {
+   "title": "The International Child Safeguarding Standards",
+   "publisher": "Keeping Children Safe",
+   "year": "current",
+   "url": "https://www.keepingchildrensafe.global/international-child-safeguarding-standards/",
+   "confidence": "High",
+   "opened": true,
+   "note": "Four standards: policy, people, procedures, accountability."
+  },
+  "S23": {
+   "title": "Data Protection Act, 2012 (Act 843)",
+   "publisher": "Republic of Ghana (text on GhaLII)",
+   "year": "2012",
+   "url": "https://ghalii.org/akn/gh/act/2012/843/eng@2012-05-18",
+   "confidence": "High",
+   "opened": true,
+   "note": "Read through a summary of the Act text on GhaLII. The Commission's own PDF could not be fetched. Check section numbers against the official text before quoting."
+  },
+  "S24": {
+   "title": "Companies Act, 2019 (Act 992)",
+   "publisher": "Republic of Ghana (copy hosted by GIPC)",
+   "year": "2019",
+   "url": "https://gipc.gov.gh/wp-content/uploads/2023/04/COMPANIES-ACT-2019-ACT-992.pdf",
+   "confidence": "High",
+   "opened": true,
+   "note": "Companies limited by guarantee, accounting records and audit provisions, annual returns and beneficial ownership registers. Section numbers not quoted in the bank."
+  },
+  "S25": {
+   "title": "The beneficial ownership regime in Ghana",
+   "publisher": "Open Ownership",
+   "year": "n/a",
+   "url": "https://www.openownership.org/en/publications/beneficial-ownership-transparency-in-ghana/the-beneficial-ownership-regime-in-ghana/",
+   "confidence": "Medium",
+   "opened": true,
+   "note": "Beneficial ownership filing applies to all company types including companies limited by guarantee."
+  },
+  "S26": {
+   "title": "Registration and Licensing Requirement, Non-Profit",
+   "publisher": "Ministry of Gender, Children and Social Protection (NPO Secretariat)",
+   "year": "current",
+   "url": "https://npos.mogcsp.gov.gh/registration-and-licensing/",
+   "confidence": "High",
+   "opened": true,
+   "note": "Two step process: register as a company limited by guarantee, then obtain an NPO licence, renewed yearly with audited statements for national and international NPOs, tax clearance and beneficial ownership profile."
+  },
+  "S27": {
+   "title": "How To Register An NGO Or Non-Profit Company In Ghana",
+   "publisher": "Mondaq (Firmus Advisory)",
+   "year": "Oct 2025",
+   "url": "https://www.mondaq.com/corporate-governance/1695406/how-to-register-an-ngo-or-non-profit-company-in-ghana",
+   "confidence": "Medium (secondary law firm article)",
+   "opened": true,
+   "note": "Used for annual returns, tax and SSNIT registration steps. Confirm with the Registrar-General, GRA and SSNIT before relying on fees or deadlines."
+  },
+  "S28": {
+   "title": "PSEAH Implementation Quick Reference Handbook (revised 2020)",
+   "publisher": "CHS Alliance",
+   "year": "2020",
+   "url": "https://d1h79zlghft2zs.cloudfront.net/uploads/2020/10/CHS_Alliance-PSEAH_Handbook_2021.pdf",
+   "confidence": "High",
+   "opened": true,
+   "note": "Policy, code of conduct, community complaints mechanism, investigation, recruitment screening, training and partner management."
+  },
+  "S29": {
+   "title": "Safeguarding against SEAH: Due Diligence Guidance for FCDO implementing partners",
+   "publisher": "FCDO (UK Government)",
+   "year": "current",
+   "url": "https://www.gov.uk/government/publications/dfid-enhanced-due-diligence-safeguarding-for-external-partners/safeguarding-against-sexual-exploitation-and-abuse-and-sexual-harassment-seah-due-diligence-guidance-for-fcdo-implementing-partners",
+   "confidence": "High",
+   "opened": true,
+   "note": "Six assessment areas: safeguarding approach, complaints and whistleblowing, recruitment and training, risk management, code of conduct, governance and accountability."
+  },
+  "S30": {
+   "title": "Child Safeguarding Due Diligence: for external partners",
+   "publisher": "FCDO (UK Government)",
+   "year": "Updated 30 Jun 2026 (per page)",
+   "url": "https://www.gov.uk/government/publications/dfid-enhanced-due-diligence-safeguarding-for-external-partners/child-safeguarding-due-diligence-for-external-partners",
+   "confidence": "High",
+   "opened": true,
+   "note": "Same six areas applied to children."
+  },
+  "S31": {
+   "title": "Assessment questionnaire and criteria for the pillar assessment (internal control, accounting, external audit, grants, procurement and others)",
+   "publisher": "European Commission (Official Journal, 6 June 2019; copy hosted by PRIMA)",
+   "year": "2019",
+   "url": "https://prima-med.org/wp-content/uploads/2024/02/Annex-2-Assessment-questionare.pdf",
+   "confidence": "Medium-High",
+   "opened": true,
+   "note": "Used as a public example of what a major donor tests. It is not a Ghana legal requirement and no ESO needs to pass a pillar assessment to use this bank."
+  },
+  "S32": {
+   "title": "Overview of the Village Capital VIRAL Pathway Levels",
+   "publisher": "Village Capital (copy hosted by Maine Technology Institute)",
+   "year": "n/a",
+   "url": "https://www.mainetechnology.org/wp-content/uploads/MTI-VIRAL-Levels-Overview-1.pdf",
+   "confidence": "Medium",
+   "opened": true,
+   "note": "Staged readiness levels across team, product, market, business model and impact."
+  },
+  "S33": {
+   "title": "Mentoring Patterns in Business Incubators: A Typology and Organizational Maturity Model from Spain",
+   "publisher": "Asensio-Ciria, De-Pablos-Heredero, Montes Botella and Garcia Martinez (MDPI)",
+   "year": "2026",
+   "url": "https://www.mdpi.com/2071-1050/18/11/5407",
+   "confidence": "Medium (Spanish incubators, as reported on the journal page)",
+   "opened": true,
+   "note": "More mature incubators use rigorous mentor selection, continuous training, strategic matching and systematic evaluation."
+  },
+  "S34": {
+   "title": "What Effective Startup Support Infrastructure Looks Like in Africa",
+   "publisher": "African Scalecraft (research by Systemic Innovation)",
+   "year": "2026",
+   "url": "https://www.africanscalecraft.com/working-ecosystem-support-infrastructure",
+   "confidence": "Low-Medium (commentary, authorship not stated)",
+   "opened": true,
+   "note": "Argues free support is unsustainable and commercial work can cross-subsidise mission work. Supports Partly sourced items only."
+  },
+  "S35": {
+   "title": "Strategies for Incubators and Accelerators: Strengthening Ecosystems for Women (women climate entrepreneurs)",
+   "publisher": "World University Service of Canada (WUSC)",
+   "year": "2021",
+   "url": "https://wusc.ca/wp-content/uploads/2025/08/Final-AWCE-report.pdf",
+   "confidence": "Medium-High (covers Ghana and six other African countries)",
+   "opened": true,
+   "note": "Diverse selection committees, gender disaggregated data, childcare, partnerships with universities for climate expertise, multiple revenue sources."
+  }
+ },
+ "notes": [
+  "DRAFT. Nothing here is production-authoritative until Amin Yahaya signs off. Weights, thresholds, gates and bands are provisional proposals until calibrated on pilot data.",
+  "Evolved from the 40 question draft eso360-draft-v1.json (ES-01 to ES-40). Each evolved question carries its old code in legacy. ES-11 (vetted, briefed and matched mentors) was split into three items (ES-058 vetting, ES-059 agreement, ES-020 matching) and carries legacy ES-11 on all three. ES-26, ES-27, ES-28, ES-29, ES-39 and ES-20 were also split to remove double-barrelled wording. About 50 questions are new.",
+  "Pending owner decisions are not resolved here. ES-10 (now ES-022), ES-15 (now ES-056) and ES-40 (now ES-093) were proposed cut candidates and are retained at weight 2. The scope of selection and cohort management is undecided: plan.json has no separate domain for it, so selection and onboarding sit in 2.1, peer learning in 1.2 and graduation in 2.3. If scope narrows, 2.1 and 2.3 are the sub-dimensions to revisit.",
+  "Gates (12): ES-012, ES-026, ES-030, ES-043, ES-061, ES-062, ES-068, ES-071, ES-076, ES-080, ES-085, ES-086. Gates for scale readiness block it when cost per enterprise is unknown or the delivery model is undocumented. Gates for investor linkage cover recording introductions to outcomes and verifying enterprise claims. Gates for results credibility cover indicators with baselines and verification of reported results. Gates for compliance and funder readiness cover safeguarding policy, complaints channel, registration, Data Protection Commission registration, audited accounts and an anti-fraud policy.",
+  "Conditional items: ES-077 applies to non-profit organisations only and ES-079 to organisations with employees only. The bank must work for ESOs registered as companies limited by guarantee and for those that are not registered as non-profit. Samakose itself is not registered as a non-profit, so ES-077 would not apply to it.",
+  "Bands (BANDED items) are provisional cutpoints written for small and medium ESOs. For small teams, percentages such as staff turnover (ES-055) swing sharply with one departure, so the verifier should use headcount over 24 months.",
+  "Basis honesty: Design judgement items are ES-004, ES-010, ES-012, ES-025, ES-038, ES-046, ES-048, ES-050, ES-066, ES-085, ES-093, ES-094, ES-096 (13 of 100, within the 25 percent limit). Items that rest on S9 or S34 are Partly sourced only, because those are secondary commentary. ES-40's successor (ES-093) is Design judgement with S5 and S6 listed as context only.",
+  "Legal items rest on S13, S23, S24, S25, S26 and S27. S23 and S24 were read through page summaries and S27 is a secondary law firm article, so the bank quotes no section numbers, fees or deadlines. A Ghanaian lawyer or the Registrar-General should confirm 7.1 and 7.2 before launch, in particular whether every ESO legal form must hold the NPO licence in ES-077 and how filings apply to companies limited by shares.",
+  "Not found or not opened: no public GIZ partner requirements and no USAID pre-award standards were located in this pass. S31 (EU pillar assessment questionnaire) and S29 and S30 (FCDO safeguarding due diligence) stand in as public examples of donor due diligence. The ANDE and Sasakawa gender lens (GLIA) toolkit page was opened but its content was not readable, so it is not cited. S10 does not address alumni or Northern Ghana and is not used for those items.",
+  "Reliability and validity: the bank is evidence informed and pre-validation. Expert panel review (item level content validity), cognitive interviews with five to eight ESO leaders and a pilot of at least 100 cases are still required (SPEC section 7).",
+  "Hyphens are used only inside compound words. The bank contains no em dashes or en dashes."
+ ]
+}
