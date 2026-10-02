@@ -12,7 +12,7 @@ import {
   type AgentConfig, type AgentLimits, type AgentStatus
 } from '@/domain/agents';
 import { allow, need } from './common';
-import { ensureBuiltIns, usageOf } from './agent-gate';
+import { ensureBuiltIns, monthlyCost, usageOf } from './agent-gate';
 import { aiIsLive, aiIsMock } from './ai';
 
 const OWNER_ROLES = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'EXPERT', 'REVIEWER'];
@@ -60,7 +60,7 @@ export async function listAgents(ctx: Ctx) {
       queuedTasks: await queued(ctx, a.code), next: nextStatuses(a.status as AgentStatus)
     });
   }
-  return { agents: out, model: { mock: aiIsMock(), live: aiIsLive() }, statuses: AGENT_STATUSES };
+  return { agents: out, model: { mock: aiIsMock(), live: aiIsLive() }, statuses: AGENT_STATUSES, cost: await monthlyCost(ctx.db) };
 }
 
 export async function getAgent(ctx: Ctx, id: string) {

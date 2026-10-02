@@ -2,11 +2,18 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db, schema } from '@/db/client';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
-import { AUTONOMY_MAX, canMove, DEFAULT_LIMITS, limitState, mayRun, normaliseLimits, validateConfig } from '@/domain/agents';
+import { costState, AUTONOMY_MAX, canMove, DEFAULT_LIMITS, limitState, mayRun, normaliseLimits, validateConfig } from '@/domain/agents';
 import { recordEvaluation } from '@/services/agent-gate';
 import { answerSheet, api, drain, ensureReference, makeOrg, makeUser, type Session } from './helpers';
 
 describe('agent rules', () => {
+  it('estimates spend and applies the platform cap', () => {
+    const r = { cap: 10, inPerM: 3, outPerM: 15 };
+    expect(costState(1e6, 0, r)).toMatchObject({ spend: 3, state: 'ok' });
+    expect(costState(1e6, 4e5, r).state).toBe("warn");
+    expect(costState(2e6, 3e5, r).state).toBe('over');
+    expect(costState(9e9, 9e9, { ...r, cap: 0 }).state).toBe('ok');
+  });
   it('caps autonomy and rejects forbidden permissions', () => {
     expect(AUTONOMY_MAX).toBe(2);
     expect(validateConfig({ autonomy: 3 }).join()).toMatch(/Level 2/);
@@ -122,5 +129,6 @@ describe('agent registry through the API', () => {
   it('shows the agent summary on the command centre', async () => {
     const cc = (await api(admin).get('/admin/command-centre')).data;
     expect(cc.agents.total).toBe(4);
+    expect((await api(admin).get('/admin/agents')).data.cost.state).toBe('ok');
   });
 });

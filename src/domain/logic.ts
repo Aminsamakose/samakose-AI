@@ -35,7 +35,10 @@ export const DEFAULT_RULES: Rules = {
   'priority.readiness_bonus': 0.25,
   'priority.gate_factor': 1.25,
   'priority.top_n': 5,
-  'compare.min_unchanged_weight': 0.7
+  'compare.min_unchanged_weight': 0.7,
+  'ai.monthly_cost_cap_usd': 25,
+  'ai.usd_per_million_input_tokens': 3,
+  'ai.usd_per_million_output_tokens': 15
 };
 export const RULE_NOTES: Record<string, string> = {
   'evidence.multiplier.Verified': 'Share of a stated answer that counts when the evidence is verified',
@@ -65,7 +68,10 @@ export const RULE_NOTES: Record<string, string> = {
   'priority.readiness_bonus': 'Extra priority per readiness index a question feeds',
   'priority.gate_factor': 'Priority multiplier for a gate question',
   'priority.top_n': 'Number of priority sub-dimensions reported',
-  'compare.min_unchanged_weight': 'Scores from two framework versions are compared only if at least this share of weight sits in questions that did not change'
+  'compare.min_unchanged_weight': 'Scores from two framework versions are compared only if at least this share of weight sits in questions that did not change',
+  'ai.monthly_cost_cap_usd': 'Most the live AI may cost in a calendar month, in US dollars, across all agents. New live tasks are refused once it is reached. 0 means no cap. The starting figure is a placeholder',
+  'ai.usd_per_million_input_tokens': 'Estimated price per million input tokens, used only to estimate spend. Check it against your Anthropic invoice',
+  'ai.usd_per_million_output_tokens': 'Estimated price per million output tokens, used only to estimate spend. Check it against your Anthropic invoice'
 };
 const rv = (rules: Rules, k: string) => (rules[k] !== undefined ? rules[k] : DEFAULT_RULES[k]);
 const num = (rules: Rules, k: string) => Number(rv(rules, k));

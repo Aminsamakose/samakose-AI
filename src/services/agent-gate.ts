@@ -4,9 +4,10 @@
  */
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { schema, type DbOrTx } from '@/db/client';
+import { DEFAULT_RULES } from '@/domain/logic';
 import { SYSTEM } from '@/domain/prompts';
 import {
-  ALWAYS_FORBIDDEN, limitState, mayRun, normaliseLimits, DEFAULT_LIMITS,
+  ALWAYS_FORBIDDEN, costState, limitState, mayRun, normaliseLimits, DEFAULT_LIMITS,
   type AgentConfig, type AgentLimits, type AgentStatus, type Usage
 } from '@/domain/agents';
 
@@ -80,6 +81,10 @@ export async function gate(db: DbOrTx, code: string, o: { live: boolean; evaluat
   // A live run on the current version also needs that version to have passed its evaluation, unless this is the evaluation itself.
   if (o.live && !o.evaluation && ver.evaluation !== 'Passed') return { ok: false, reason: 'The current version of this agent has not passed its evaluation', agentId: agent.id, versionId: ver.id };
 
+  if (o.live) {
+    const cost = await monthlyCost(db);
+    if (cost.state === 'over') return { ok: false, reason: `The monthly live AI cost cap (USD ${cost.cap}) has been reached. Live tasks wait until next month or an administrator raises the cap in Settings.`, agentId: agent.id, versionId: ver.id };
+  }
   const limits: AgentLimits = normaliseLimits(agent.limits as Partial<AgentLimits>);
   const state = limitState(await usageOf(db, agent.id), limits);
   if (state.state === 'over') {
@@ -97,6 +102,15 @@ export async function gate(db: DbOrTx, code: string, o: { live: boolean; evaluat
     if (!seen.length) await systemAudit(db, 'agent.usage_warning', agent.id, { limit: state.hit, usedShare: Math.round(state.worst * 100) / 100 });
   }
   return { ok: true, agentId: agent.id, versionId: ver.id, prompt: ver.prompt, model: ver.model };
+}
+
+/** Estimated live AI spend this calendar month, all agents together, against the cap set in Settings. */
+export async function monthlyCost(db: DbOrTx) {
+  const rows = await db.select().from(schema.rules);
+  const rule = (k: keyof typeof DEFAULT_RULES) => { const r = rows.find((x) => x.key === k); const n = r ? Number(r.value) : NaN; return Number.isFinite(n) ? n : Number(DEFAULT_RULES[k]); };
+  const t = (await db.execute(sql`select coalesce(sum(a.input_tokens),0)::bigint i, coalesce(sum(a.output_tokens),0)::bigint o
+    from ai_attempts a join ai_requests q on q.id = a.request_id where q.blocked_reason is null and q.model is not null and q.model <> 'mock' and q.created_at >= ${startOfMonth().toISOString()}`)).rows[0] as { i: string; o: string };
+  return costState(Number(t.i), Number(t.o), { cap: rule('ai.monthly_cost_cap_usd'), inPerM: rule('ai.usd_per_million_input_tokens'), outPerM: rule('ai.usd_per_million_output_tokens') });
 }
 
 /** Set an evaluation result on a version. Used by the evaluation run, never by a screen. */

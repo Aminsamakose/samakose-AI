@@ -57,6 +57,7 @@ export async function updateRules(ctx: Ctx, values: Record<string, number>) {
     if (k === 'validation.min_completion' && (v < 0.5 || v > 1)) errors[k] = 'Use a value from 0.5 to 1';
     if (k.startsWith('maturity.') && (v <= 0 || v >= 100)) errors[k] = 'Use a value between 0 and 100';
     if (k.startsWith('confidence.') && (v <= 0 || v > 1)) errors[k] = 'Use a value above 0 and up to 1';
+    if (k.startsWith('ai.') && (v < 0 || v > 100000)) errors[k] = 'Use a value from 0 to 100000';
     if (k === 'privacy.min_cell_size' && (v < 3 || v > 50)) errors[k] = 'Use a value from 3 to 50';
     if (k.startsWith('prescription.') && (!Number.isInteger(v) || v < 1 || v > 730)) errors[k] = 'Use whole days from 1 to 730';
     if (k === 'session.min_for_monitoring' && (!Number.isInteger(v) || v < 1 || v > 12)) errors[k] = 'Use a whole number from 1 to 12';

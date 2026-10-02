@@ -97,3 +97,11 @@ export function validateConfig(c: Partial<AgentConfig>): string[] {
   for (const f of ['certify', 'approve its own', 'delete evidence', 'change score', 'override score', 'alter audit', 'bypass']) if (permitted.some((a) => a.includes(f))) p.push(`An agent may not be permitted to "${f}"`);
   return p;
 }
+
+/** Estimated live AI spend this month against the platform cap. A cap of 0 means no cap. */
+export function costState(inputTokens: number, outputTokens: number, r: { cap: number; inPerM: number; outPerM: number; alertPct?: number }) {
+  const spend = (inputTokens / 1e6) * r.inPerM + (outputTokens / 1e6) * r.outPerM;
+  const share = r.cap > 0 ? spend / r.cap : 0;
+  const state: 'ok' | 'warn' | 'over' = r.cap > 0 && share >= 1 ? 'over' : r.cap > 0 && share >= (r.alertPct ?? 80) / 100 ? 'warn' : 'ok';
+  return { spend: Math.round(spend * 100) / 100, cap: r.cap, share, state };
+}

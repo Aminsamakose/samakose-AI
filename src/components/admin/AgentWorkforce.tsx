@@ -88,6 +88,7 @@ export function AgentWorkforce({ canEdit }: { canEdit: boolean; canApprove: bool
   const st = useApi<any>('/admin/agents'); const [sel, setSel] = useState<string | null>(null);
   return <Async state={st}>{(d) => <div className="stack">
     <div className={`alert ${d.model.live ? 'info' : 'warn'}`}>{d.model.live ? 'The live model is on. Only Active agents with a passed evaluation may use it.' : 'The platform is using the built-in mock model. No live AI is being called, so agents in Testing can be exercised safely.'}</div>
+    <div className={`alert ${d.cost.state === 'ok' ? 'info' : 'warn'}`}>Estimated live AI spend this month: USD {d.cost.spend.toFixed(2)}{d.cost.cap > 0 ? ` of a USD ${d.cost.cap} cap (${Math.round(d.cost.share * 100)}%). ` : '. No cap is set. '}{d.cost.state === 'over' && 'New live tasks are refused until next month or the cap is raised. '}The cap and the token prices are set under Settings, in the rules list.</div>
     <Card title="Agents">
       <div className="table-wrap"><table><caption className="sr">AI agents</caption>
         <thead><tr><th>Agent</th><th>Status</th><th>Version</th><th>Evaluation</th><th>Owner</th><th>Usage today</th><th className="r">Errors (30 days)</th><th>Action</th></tr></thead>
