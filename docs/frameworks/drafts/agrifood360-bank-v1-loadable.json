@@ -3306,7 +3306,7 @@
   {
    "component": "Evidence AF-S15: Post-Harvest Losses: Global Scale, Solutions, and Relevance to Ghana",
    "source": "Post-Harvest Losses: Global Scale, Solutions, and Relevance to Ghana. IFPRI, Mar 2018. https://cgspace.cgiar.org/server/api/core/bitstreams/72abb4ee-5b89-40c8-bb6f-99565ddb3068/content",
-   "rationale": "Relevance confidence: Medium. Used for questions AF-024.",
+   "rationale": "Relevance confidence: Medium. Checked 2 Oct 2026: the IFPRI paper reports a 14% maize loss in Ghana from one earlier study (Mutungi and Affognon 2015); no question in this bank states that figure. Used for questions AF-024.",
    "adaptation": "Bank v1 draft. Questions are rewritten as rated statements with five behavioural anchors. Not yet reviewed by the owner.",
    "approval": "Proposed"
   },
