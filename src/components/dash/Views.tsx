@@ -224,3 +224,12 @@ export function Website({ d }: { d: any }) {
     </Card>
   </div>;
 }
+
+/** A team respondent sees only the areas assigned to them. */
+export function Respondent({ d }: { d: any }) {
+  if (!d.business || d.areas.length === 0) return <Card><Empty title="Nothing assigned to you yet" hint="The business owner will assign you the areas that fit your role. You will see them here." /></Card>;
+  return <Card title={`Your areas for ${d.business}`}>
+    <p className="muted small">These are the parts of the assessment you have been asked to answer. You see only these. Answering opens soon.</p>
+    <ul className="stack" style={{ margin: 0, paddingLeft: 20 }}>{d.areas.map((a: any) => <li key={a.code}>{a.name}</li>)}</ul>
+  </Card>;
+}

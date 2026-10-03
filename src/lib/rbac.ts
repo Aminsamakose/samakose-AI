@@ -10,7 +10,7 @@ export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
   'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments',
-  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping'
+  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping', 'team'
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -56,8 +56,12 @@ export const PERMISSIONS: Record<Role, Grants> = {
   },
   OWNER: {
     organisations: [R, E], cases: [R], diagnostics: [R, C], evidence: [R, C], documents: [R, C], scores: [R], prescriptions: [R],
-    actions: [R, E], kpis: [R, C], sessions: [R], reports: [R], invoices: [R], payments: [C], dashboard: [R]
+    actions: [R, E], kpis: [R, C], sessions: [R], reports: [R], invoices: [R], payments: [C], dashboard: [R],
+    // The owner invites colleagues and decides who answers which area.
+    team: [R, C, E, D]
   },
+  // A colleague invited to answer part of an assessment. No default permissions: what they can see comes only from their assignments.
+  RESPONDENT: { dashboard: [R] },
   FUNDER: { programmes: [R], cohorts: [R], reports: [R], dashboard: [R, X] },
   // Website roles never reach client, case or finance data. The editor drafts; only the site manager and administrator publish.
   CONTENT_EDITOR: { content: [R, C, E], site_settings: [R], media: [R, C], dashboard: [R] },
@@ -74,5 +78,5 @@ export const isStaff = (r: Role) => STAFF_ROLES.includes(r);
 export const ROLE_LABEL: Record<Role, string> = {
   ADMIN: 'Administrator', EXECUTIVE: 'Executive', PROGRAMME_MANAGER: 'Programme manager', EXPERT: 'Expert',
   REVIEWER: 'Reviewer', FINANCE: 'Finance', OWNER: 'Business owner', FUNDER: 'Funder',
-  CONTENT_EDITOR: 'Content editor', SITE_MANAGER: 'Site manager'
+  CONTENT_EDITOR: 'Content editor', SITE_MANAGER: 'Site manager', RESPONDENT: 'Team respondent'
 };

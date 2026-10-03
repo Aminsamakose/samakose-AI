@@ -16,6 +16,7 @@ const GROUPS: Group[] = [
     { icon: 'dashboard', href: '/dashboard', label: 'Dashboard', need: ['dashboard', 'read'] },
     { icon: 'cases', href: '/cases', label: 'Cases', need: ['cases', 'read'] },
     { icon: 'business', href: '/my-case', label: 'My business', roles: ['OWNER'] },
+    { icon: 'users', href: '/team', label: 'My team', need: ['team', 'read'] },
     { icon: 'reviews', href: '/reviews', label: 'Review queue', need: ['prescriptions', 'approve'] },
     { icon: 'actions', href: '/actions', label: 'Actions', need: ['actions', 'read'] },
     { icon: 'sessions', href: '/sessions', label: 'Coaching sessions', need: ['sessions', 'read'] },

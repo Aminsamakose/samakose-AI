@@ -4,6 +4,7 @@ import { defineRoute, parseCookies, status } from '../framework';
 import { COOKIE } from '@/lib/session';
 import * as auth from '@/services/auth';
 import * as demo from '@/services/demographics';
+import * as team from '@/services/team';
 import * as users from '@/services/users';
 import { googleCallback, googleEnabled, startGoogle } from '@/services/google';
 import { env } from '@/lib/env';
@@ -26,7 +27,8 @@ defineRoute({ method: 'POST', path: '/auth/change-password', tag: T, summary: 'C
 defineRoute({ method: 'POST', path: '/auth/logout-others', tag: T, summary: 'Sign out every other session', body: empty, handler: ({ ctx }) => auth.logoutOthers(ctx) });
 defineRoute({ method: 'POST', path: '/auth/forgot', tag: T, summary: 'Ask for a password reset link', auth: 'public', rateLimit: { key: 'forgot:ip:{ip}', limit: 10, windowSec: 3600 }, body: z.object({ email }), handler: async ({ ctx, body }) => status(202, await auth.forgotPassword(ctx, body.email)) });
 defineRoute({ method: 'POST', path: '/auth/reset', tag: T, summary: 'Set a new password with a reset link token', auth: 'public', rateLimit: { key: 'reset:ip:{ip}', limit: 20, windowSec: 3600 }, body: z.object({ token: z.string().min(10).max(200), password }), handler: ({ ctx, body }) => auth.resetPassword(ctx, body.token, body.password) });
-defineRoute({ method: 'POST', path: '/auth/accept-invite', tag: T, summary: 'Accept an invitation and set a password', auth: 'public', rateLimit: { key: 'invite:ip:{ip}', limit: 20, windowSec: 3600 }, body: z.object({ token: z.string().min(10).max(200), password, name: name.optional() }), handler: ({ ctx, body }) => auth.acceptInvite(ctx, body.token, body.password, body.name) });
+defineRoute({ method: 'POST', path: '/auth/accept-invite', tag: T, summary: 'Accept an invitation and set a password', auth: 'public', rateLimit: { key: 'invite:ip:{ip}', limit: 20, windowSec: 3600 }, body: z.object({ token: z.string().min(10).max(200), password, name: name.optional(), consent: z.boolean().optional() }), handler: ({ ctx, body }) => auth.acceptInvite(ctx, body.token, body.password, body.name, body.consent) });
+defineRoute({ method: 'GET', path: '/auth/invite-info', tag: T, summary: 'What an invitation link is for, before the person sets a password', auth: 'public', rateLimit: { key: 'inviteinfo:ip:{ip}', limit: 60, windowSec: 3600 }, query: z.object({ token: z.string().min(10).max(200) }), handler: ({ ctx, query }) => auth.inviteInfo(ctx, query.token) });
 
 const U = 'Users';
 const userList = listQuery.extend({ role: z.string().optional(), active: z.enum(['true', 'false']).optional(), approval: z.enum(['pending']).optional() });
@@ -52,6 +54,13 @@ defineRoute({ method: 'GET', path: '/auth/profile', tag: T, summary: 'Own busine
 defineRoute({ method: 'PUT', path: '/auth/profile', tag: T, summary: 'Complete or update the business profile. Required before a new owner can use the platform', gateExempt: true,
   body: z.object({ name: z.string().trim().max(160), type: z.enum(['SME', 'AGRIFOOD', 'ESO']), sector: z.string().trim().max(120), region: z.string().trim().max(80), district: z.string().trim().max(120), size: z.string().trim().max(40), contactPhone: z.string().trim().max(40), registrationNumber: z.string().trim().max(60).optional(), consent: z.boolean() }), handler: ({ ctx, body }) => auth.saveProfile(ctx, body) });
 const CAT = z.enum(['demographics', 'disability']);
+defineRoute({ method: 'GET', path: '/team', tag: T, summary: 'My team: colleagues invited to answer parts of the assessment', permission: ['team', 'read'], handler: ({ ctx }) => team.listTeam(ctx) });
+defineRoute({ method: 'POST', path: '/team/members', tag: T, summary: 'Invite a colleague. Needs the owner\'s confirmation that they have told them', permission: ['team', 'create'], body: z.object({ name, email, jobRole: z.string().trim().min(2).max(40), agree: z.boolean() }), handler: async ({ ctx, body }) => status(201, await team.inviteMember(ctx, body)) });
+defineRoute({ method: 'POST', path: '/team/members/:id/resend', tag: T, summary: 'Send a colleague their invitation again', permission: ['team', 'edit'], body: empty, handler: ({ ctx, params }) => team.resendInvite(ctx, params.id) });
+defineRoute({ method: 'DELETE', path: '/team/members/:id', tag: T, summary: 'Remove a colleague and close their account', permission: ['team', 'delete'], handler: ({ ctx, params }) => team.removeMember(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/team/assignments', tag: T, summary: 'Suggested and confirmed split of assessment areas', permission: ['team', 'read'], handler: ({ ctx }) => team.listAssignments(ctx) });
+defineRoute({ method: 'PUT', path: '/team/assignments/:code', tag: T, summary: 'Confirm who answers an area (a colleague, or null for me)', permission: ['team', 'edit'], body: z.object({ memberId: z.string().uuid().nullable() }), handler: ({ ctx, params, body }) => team.assignArea(ctx, params.code, body.memberId) });
+defineRoute({ method: 'GET', path: '/me/areas', tag: T, summary: 'The assessment areas assigned to me (team respondents)', handler: ({ ctx }) => team.myAreas(ctx) });
 defineRoute({ method: 'GET', path: '/me/demographics', tag: T, summary: 'My optional demographic and disability answers, with the consent wording for each', handler: ({ ctx }) => demo.getMine(ctx) });
 defineRoute({ method: 'PUT', path: '/me/demographics/:category', tag: T, summary: 'Save an optional answer. Agreeing is recorded against the wording shown', body: z.object({ gender: z.string().max(40).optional(), ageBand: z.string().max(40).optional(), status: z.string().max(40).optional() }), handler: ({ ctx, params, body }) => demo.save(ctx, CAT.parse(params.category), body) });
 defineRoute({ method: 'DELETE', path: '/me/demographics/:category', tag: T, summary: 'Withdraw consent and remove my answers', handler: ({ ctx, params }) => demo.withdraw(ctx, CAT.parse(params.category)) });

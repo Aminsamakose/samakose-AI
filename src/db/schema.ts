@@ -48,7 +48,7 @@ const created = () => timestamp('created_at', { withTimezone: true }).notNull().
 const updated = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow();
 
 /* ------------------------------ enums ------------------------------ */
-export const ROLES = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'EXPERT', 'REVIEWER', 'FINANCE', 'OWNER', 'FUNDER', 'CONTENT_EDITOR', 'SITE_MANAGER'] as const;
+export const ROLES = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'EXPERT', 'REVIEWER', 'FINANCE', 'OWNER', 'FUNDER', 'CONTENT_EDITOR', 'SITE_MANAGER', 'RESPONDENT'] as const;
 export type Role = (typeof ROLES)[number];
 export const roleEnum = pgEnum('role', ROLES);
 
@@ -851,3 +851,27 @@ export const demographicProfiles = pgTable('demographic_profiles', {
   consentId: uuid('consent_id').notNull().references(() => consents.id),
   updatedAt: updated()
 }, (t) => [uniqueIndex('demographic_subject_uq').on(t.subjectType, t.subjectId, t.category)]);
+
+/** A colleague the business owner has invited to answer part of the assessment. Access comes only from assignments, never from the job role. */
+export const orgMembers = pgTable('org_members', {
+  id: id(),
+  orgId: uuid('org_id').notNull().references(() => organisations.id),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  jobRole: text('job_role').notNull(),
+  status: text('status').notNull().default('invited'),
+  invitedBy: uuid('invited_by').references(() => users.id),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [uniqueIndex('org_member_uq').on(t.orgId, t.userId), index('org_member_user_idx').on(t.userId)]);
+
+/** Who answers which assessment area for a business. Suggested by the rule, confirmed by the owner. Rounds attach to this later. */
+export const areaAssignments = pgTable('area_assignments', {
+  id: id(),
+  orgId: uuid('org_id').notNull().references(() => organisations.id),
+  platform: text('platform').notNull(),
+  subDimension: text('sub_dimension').notNull(),
+  memberId: uuid('member_id').references(() => orgMembers.id),
+  suggestedBy: text('suggested_by').notNull().default('rule'),
+  confirmedBy: uuid('confirmed_by').references(() => users.id),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+  updatedAt: updated()
+}, (t) => [uniqueIndex('area_assignment_uq').on(t.orgId, t.platform, t.subDimension)]);

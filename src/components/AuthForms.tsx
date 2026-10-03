@@ -79,16 +79,26 @@ export function ForgotForm() {
   </form>;
 }
 
+type InviteInfo = { respondent: false } | { respondent: true; name: string; business: string; notice: { text: string; version: number } | null };
 export function TokenPasswordForm({ mode }: { mode: 'reset' | 'accept' }) {
   const sp = useSearchParams(); const token = sp.get('token') ?? '';
-  const f = useForm({ password: '', confirm: '' }, (v) => api.post(mode === 'reset' ? '/auth/reset' : '/auth/accept-invite', { token, password: v.password }), { onDone: () => { window.location.href = '/login?done=1'; } });
+  const [info, setInfo] = useState<InviteInfo | null>(null); const [agree, setAgree] = useState(false); const [bad, setBad] = useState<string | null>(null);
+  useEffect(() => { if (mode === 'accept' && token) api.get<InviteInfo>('/auth/invite-info?token=' + encodeURIComponent(token)).then(setInfo).catch((e: any) => setBad(e.message)); }, [mode, token]);
+  const f = useForm({ password: '', confirm: '' }, async (v) => {
+    if (mode === 'accept' && info?.respondent && info.notice && !agree) throw new ApiFail(422, 'validation', 'Check the highlighted fields', { consent: 'Please agree to create your account' });
+    return api.post(mode === 'reset' ? '/auth/reset' : '/auth/accept-invite', { token, password: v.password, ...(mode === 'accept' && info?.respondent ? { consent: agree } : {}) });
+  }, { onDone: () => { window.location.href = '/login?done=1'; } });
   if (!token) return <div className="stack"><h1>Link incomplete</h1><p className="muted">Open the link from your email again, or request a new one.</p><Link className="btn" href="/forgot-password">Request a new link</Link></div>;
+  if (bad) return <div className="stack"><h1>This link has expired</h1><p className="muted">{bad}</p></div>;
+  if (mode === 'accept' && !info) return <div className="stack"><span className="spin" role="status" aria-label="Loading" /></div>;
+  const resp = info && info.respondent ? info : null;
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
     <h1>{mode === 'reset' ? 'Choose a new password' : 'Welcome to Samakose'}</h1>
-    {mode === 'accept' && <p className="muted">Set a password to activate your account.</p>}
+    {mode === 'accept' && <p className="muted">{resp ? `You have been invited to answer part of the business health check for ${resp.business}. You will see only the questions assigned to you. Set a password to activate your account.` : 'Set a password to activate your account.'}</p>}
     <FormError message={f.formError} />
     <Field label="Password" name="password" error={f.errors.password} hint="At least 12 characters. Avoid your name or email." required>{(p) => <input {...p} type="password" autoComplete="new-password" {...f.input('password')} />}</Field>
     <Field label="Confirm password" name="confirm" error={f.values.confirm && f.values.confirm !== f.values.password ? 'Passwords do not match' : undefined} required>{(p) => <input {...p} type="password" autoComplete="new-password" {...f.input('confirm')} />}</Field>
+    {resp?.notice && <Field label="" name="consent" error={f.errors.consent}>{(q) => <label className="row" style={{ gap: 8, alignItems: 'flex-start' }}><input {...q} type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /><NoticeLabel text={resp.notice!.text} /></label>}</Field>}
     <Button variant="primary" loading={f.busy} type="submit" disabled={f.values.password !== f.values.confirm || !f.values.confirm}>Save and continue</Button>
   </form>;
 }
