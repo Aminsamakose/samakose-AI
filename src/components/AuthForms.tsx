@@ -92,7 +92,7 @@ export function TokenPasswordForm({ mode }: { mode: 'reset' | 'accept' }) {
   if (mode === 'accept' && !info) return <div className="stack"><span className="spin" role="status" aria-label="Loading" /></div>;
   const resp = info && info.respondent ? info : null;
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
-    <h1>{mode === 'reset' ? 'Choose a new password' : 'Welcome to Samakose'}</h1>
+    <h1>{mode === 'reset' ? 'Choose a new password' : 'Welcome to Business Doctor'}</h1>
     {mode === 'accept' && <p className="muted">{resp ? `You have been invited to answer part of the business health check for ${resp.business}. You will see only the questions assigned to you. Set a password to activate your account.` : 'Set a password to activate your account.'}</p>}
     <FormError message={f.formError} />
     <Field label="Password" name="password" error={f.errors.password} hint="At least 12 characters. Avoid your name or email." required>{(p) => <input {...p} type="password" autoComplete="new-password" {...f.input('password')} />}</Field>
@@ -108,7 +108,7 @@ export function RegisterForm() {
   const [prov, setProv] = useState<{ selfRegistration: boolean; roles: string[] } | null>(null);
   useEffect(() => { api.get<{ selfRegistration: boolean; roles: string[] }>('/auth/providers').then(setProv).catch(() => setProv({ selfRegistration: true, roles: SELF.map((s) => s[0]) })); }, []);
   if (!prov) return <div className="stack"><span className="spin" role="status" aria-label="Loading" /></div>;
-  if (!prov.selfRegistration) return <div className="stack"><h2>Registration is closed</h2><p className="muted">New accounts are by invitation at the moment. If you expect to be invited, ask your Samakose contact to send the invitation again.</p><Link href="/login">Back to sign in</Link></div>;
+  if (!prov.selfRegistration) return <div className="stack"><h2>Registration is closed</h2><p className="muted">New accounts are by invitation at the moment. If you expect to be invited, ask your Samakose Accelerator Lab contact to send the invitation again.</p><Link href="/login">Back to sign in</Link></div>;
   return <RegisterFormInner roles={prov.roles} />;
 }
 
@@ -188,7 +188,7 @@ function ResendVerification() {
 
 export function PendingNotice() {
   return <div className="stack"><h1>Waiting for approval</h1>
-    <p className="muted">Your registration is with the Samakose team. You will get an email when it is approved. Until then you cannot see any organisation, programme or report data.</p>
+    <p className="muted">Your registration is with the Samakose Accelerator Lab team. You will get an email when it is approved. Until then you cannot see any organisation, programme or report data.</p>
     <button type="button" className="btn ghost" onClick={async () => { await api.post('/auth/logout').catch(() => {}); window.location.href = '/login'; }}>Sign out</button></div>;
 }
 
@@ -258,7 +258,7 @@ export function CompleteProfile() {
     <Field label="Number of people working in the business" name="size" error={f.errors.size} required>{(q) => <select {...q} {...f.input('size')}><option value="">Choose</option>{SIZES.map((x) => <option key={x}>{x}</option>)}</select>}</Field>
     <Field label="Phone number" name="contactPhone" error={f.errors.contactPhone} hint="A number we can call or message on WhatsApp." required>{(q) => <input {...q} type="tel" autoComplete="tel" {...f.input('contactPhone')} />}</Field>
     <Field label="Business registration number" name="registrationNumber" hint="Optional. Adding it helps us verify your business sooner.">{(q) => <input {...q} {...f.input('registrationNumber')} />}</Field>
-    {!p.consentGiven && <Field label="" name="consent" error={f.errors.consent}>{(q) => <label className="row" style={{ gap: 8 }}><input {...q} type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /><span className="small">I agree that Samakose may use my business information to run my health check, as set out in the <a href="/privacy" target="_blank">privacy notice</a>.</span></label>}</Field>}
+    {!p.consentGiven && <Field label="" name="consent" error={f.errors.consent}>{(q) => <label className="row" style={{ gap: 8 }}><input {...q} type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /><span className="small">I agree that Samakose Accelerator Lab may use my business information to run my health check, as set out in the <a href="/privacy" target="_blank">privacy notice</a>.</span></label>}</Field>}
     <Button variant="primary" loading={f.busy} type="submit">Save and continue</Button>
     <button type="button" className="btn ghost" onClick={async () => { await api.post('/auth/logout').catch(() => {}); window.location.href = '/login'; }}>Sign out</button>
   </form>;

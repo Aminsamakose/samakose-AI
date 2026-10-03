@@ -12,7 +12,7 @@ export const DIMENSIONS = ['Finance', 'Market and sales', 'Operations', 'People 
 export const userStatus = (u: { active: boolean; invited: boolean; lockedUntil: string | null }) => !u.active ? 'Inactive' : u.invited ? 'Invited' : u.lockedUntil && new Date(u.lockedUntil) > new Date() ? 'Locked' : 'Active';
 export const statusTone = (s: string) => s === 'Invited' ? 'info' : s === 'Locked' ? 'warn' : undefined;
 
-export function useDocTitle(t: string) { useEffect(() => { document.title = `${t} | Samakose`; }, [t]); }
+export function useDocTitle(t: string) { useEffect(() => { document.title = `${t} | Business Doctor`; }, [t]); }
 
 /** Current user with a `can` helper. The API remains the authority. */
 export function useMe() {

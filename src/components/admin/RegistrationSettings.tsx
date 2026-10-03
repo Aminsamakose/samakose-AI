@@ -40,7 +40,7 @@ function Purpose({ purpose, items, canEdit, canApprove, reload }: { purpose: str
         </div>
         {text !== null && text !== draft.text && <p className="small muted">Save the draft before publishing.</p>}
       </div>}
-      {!draft && canEdit && <div><Button loading={busy === 'new'} onClick={() => run('new', () => api.post('/admin/consent-notices', { purpose, countryCode: 'GH', text: live?.text ?? 'I agree that Samakose may use my information for this purpose. Write the full wording here before publishing.' }), 'New draft created')}>{live ? 'Start a new version' : 'Write the first version'}</Button></div>}
+      {!draft && canEdit && <div><Button loading={busy === 'new'} onClick={() => run('new', () => api.post('/admin/consent-notices', { purpose, countryCode: 'GH', text: live?.text ?? 'I agree that Samakose Accelerator Lab may use my information for this purpose. Write the full wording here before publishing.' }), 'New draft created')}>{live ? 'Start a new version' : 'Write the first version'}</Button></div>}
       {history.length > 0 && <details><summary className="small">Earlier versions ({history.length})</summary><ul className="small">{history.map((n) => <li key={n.id}>v{n.version}, {n.status}, agreed by {n.grants}</li>)}</ul></details>}
     </div>
   </Card>;

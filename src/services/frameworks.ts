@@ -242,7 +242,7 @@ export async function ensureBaseline(db: Db) {
   const now = new Date();
   await db.insert(schema.frameworkVersions).values({
     frameworkId: f.id, version: 1, status: 'Published', questions: bank.questions, dimensions: bank.dimensions,
-    sources: [{ component: 'Question bank and weights', source: 'Samakose working question bank', rationale: 'Baseline for a new installation', adaptation: 'None', approval: 'Approved' }],
+    sources: [{ component: 'Question bank and weights', source: 'Samakose Accelerator Lab working question bank', rationale: 'Baseline for a new installation', adaptation: 'None', approval: 'Approved' }],
     note: 'Baseline created from the question bank', approvedAt: now, publishedAt: now
   }).onConflictDoNothing();
 }

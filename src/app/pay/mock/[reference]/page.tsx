@@ -11,7 +11,7 @@ function Mock() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  useEffect(() => { document.title = 'Test payment | Samakose'; }, []);
+  useEffect(() => { document.title = 'Test payment | Business Doctor'; }, []);
   const complete = async () => {
     setBusy(true); setErr(null);
     try { await api.post(`/payments/${encodeURIComponent(reference)}/mock-complete`); router.push(`/pay/return?reference=${encodeURIComponent(reference)}`); }

@@ -12,11 +12,11 @@ export function LogoMark({ className, onDark }: { className?: string; onDark?: b
 
 export function Logo({ onDark }: { onDark?: boolean }) {
   return (
-    <Link href="/" className="inline-flex items-center gap-3 no-underline" aria-label="Samakose, The Business Doctor, home">
+    <Link href="/" className="inline-flex items-center gap-3 no-underline" aria-label="Business Doctor, by Samakose Accelerator Lab, home">
       <LogoMark onDark={onDark} />
       <span className="flex flex-col whitespace-nowrap leading-tight">
-        <span className={clsx('font-display text-lg font-bold tracking-tight', onDark ? 'text-white' : 'text-fg')}>Samakose</span>
-        <span className={clsx('text-xs', onDark ? 'text-white/70' : 'text-muted')}>The Business Doctor</span>
+        <span className={clsx('font-display text-lg font-bold tracking-tight', onDark ? 'text-white' : 'text-fg')}>Business Doctor</span>
+        <span className={clsx('text-xs', onDark ? 'text-white/70' : 'text-muted')}>by Samakose Accelerator Lab</span>
       </span>
     </Link>
   );

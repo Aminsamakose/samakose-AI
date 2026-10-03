@@ -12,7 +12,7 @@ export function TeamRound() {
   const cases = useApi<{ items: { id: string; code: string; orgName: string; status: string }[] }>('/cases?pageSize=5&sort=created&dir=desc');
   return <Card title="Team assessment">
     <Async state={cases}>{(c) => {
-      if (c.items.length === 0) return <Empty title="Your business has no case yet" hint="Your adviser at Samakose opens one after your registration is confirmed. A team assessment can start then." />;
+      if (c.items.length === 0) return <Empty title="Your business has no case yet" hint="Your adviser at Samakose Accelerator Lab opens one after your registration is confirmed. A team assessment can start then." />;
       return <Round caseId={c.items[0].id} />;
     }}</Async>
   </Card>;

@@ -26,7 +26,7 @@ export function buildOpenApi(routes: RouteDef[]) {
   }
   return {
     openapi: '3.1.0',
-    info: { title: 'Samakose AI Business Health OS API', version: '1.0.0', description: 'Session cookie authentication. Every write is audited. Lists accept q, page, pageSize, sort, dir and format=csv where export is permitted.' },
+    info: { title: 'Business Doctor API', version: '1.0.0', description: 'Session cookie authentication. Every write is audited. Lists accept q, page, pageSize, sort, dir and format=csv where export is permitted.' },
     servers: [{ url: '/api/v1' }],
     tags: [...new Set(routes.map((r) => r.tag))].map((name) => ({ name })),
     components: { securitySchemes: { cookieAuth: { type: 'apiKey', in: 'cookie', name: 'sk_session' } } },
