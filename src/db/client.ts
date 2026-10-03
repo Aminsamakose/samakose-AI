@@ -18,10 +18,31 @@ export function databaseUrl(): string {
   return clean;
 }
 
+/** Connection-level failures only (never a failed statement): auth timeout, dropped connection, connect timeout. */
+export function isConnectFailure(e: unknown): boolean {
+  const x = e as { code?: string; message?: string } | null;
+  const msg = String(x?.message ?? '');
+  return x?.code === '08006' || x?.code === '57P01' || x?.code === 'ECONNRESET' || /EAUTHTIMEOUT|timeout exceeded when trying to connect|Connection terminated|ECONNRESET/i.test(msg);
+}
+
 export function pool(): Pool {
   const url = databaseUrl();
   if (!g.__pool || g.__poolUrl !== url) {
-    g.__pool = new Pool({ connectionString: url, max: Number(process.env.DB_POOL_MAX ?? 10), idleTimeoutMillis: 30_000, statement_timeout: 30_000 });
+    /* Hosted poolers occasionally time out while authenticating a fresh connection (seen in production as EAUTHTIMEOUT).
+       So: give up on a stuck connection after 10 s instead of waiting forever, keep fewer connections per serverless
+       instance, drop idle ones before the pooler does, and retry the connection once. A retry here is safe because no
+       statement has run yet when a connection fails. */
+    const p = new Pool({ connectionString: url, max: Number(process.env.DB_POOL_MAX ?? 5), idleTimeoutMillis: 20_000, connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS ?? 10_000), statement_timeout: 30_000 });
+    p.on('error', () => { /* an idle connection dropped by the pooler; the pool replaces it on next use */ });
+    const connect = p.connect.bind(p) as (...a: any[]) => any;
+    (p as any).connect = (...args: any[]) => {
+      if (typeof args[0] === 'function') { /* pool.query() takes this route */
+        const cb = args[0] as (err: unknown, client?: unknown, done?: unknown) => void;
+        return connect((err: unknown, client: unknown, done: unknown) => err && isConnectFailure(err) ? connect(cb) : cb(err, client, done));
+      }
+      return connect().catch((e: unknown) => isConnectFailure(e) ? connect() : Promise.reject(e));
+    };
+    g.__pool = p;
     g.__poolUrl = url;
     g.__db = drizzle(g.__pool, { schema });
   }
