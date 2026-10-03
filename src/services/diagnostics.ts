@@ -73,6 +73,13 @@ export async function computeScore(ctx: Ctx, caseId: string, diagnosticId: strin
   return row;
 }
 
+/** How the answers were actually given. Derived from who answered, never typed in. */
+export function modeOf(source: string, role: string | undefined, submitter: string | undefined, answerers: (string | null)[]): 'self' | 'hybrid' | 'team' | 'consultant' | 'imported' {
+  if (source === 'kobo') return 'imported';
+  if (role === 'EXPERT') return 'consultant';
+  const others = answerers.some((a) => a && a !== submitter); const mine = answerers.some((a) => !a || a === submitter);
+  return !others ? 'self' : mine ? 'hybrid' : 'team';
+}
 type SubmitOpts = { uuid?: string; source: 'web' | 'kobo'; persistRejection: boolean; /** Team round: who gave each answer, and the round it came from. Scoring does not read either. */ answeredBy?: Record<string, string>; roundId?: string; /** The framework version a round was opened under. Later publications do not change what that round is checked against. */ versionId?: string | null };
 export async function submitDiagnosticCore(ctx: Ctx, caseRow: typeof schema.cases.$inferSelect, answers: Record<string, AnswerInput>, o: SubmitOpts) {
   if (stateIndex(caseRow.status) < stateIndex('PROFILED')) throw unprocessable('The business profile must be complete before a diagnostic can be taken');
@@ -115,7 +122,7 @@ export async function submitDiagnosticCore(ctx: Ctx, caseRow: typeof schema.case
   }
   const [d] = await ctx.db.insert(schema.diagnostics).values({
     caseId: caseRow.id, status: 'Validated', source: o.source, frameworkVersionId: fv.id, submissionUuid: o.uuid ?? null, completion: v.completion.toFixed(3),
-    submittedBy: ctx.user?.id ?? null, version: (prev?.version ?? 0) + 1, supersedesId: prev?.id ?? null, assessmentRoundId: o.roundId ?? null
+    submittedBy: ctx.user?.id ?? null, version: (prev?.version ?? 0) + 1, supersedesId: prev?.id ?? null, assessmentRoundId: o.roundId ?? null, assessmentMode: modeOf(o.source, ctx.user?.role, ctx.user?.id, rows.map((r) => o.answeredBy?.[r.q.code] ?? ctx.user?.id ?? null))
   }).returning();
   const resp = await ctx.db.insert(schema.responses).values(rows.map((r) => ({ diagnosticId: d.id, questionCode: r.q.code, value: r.value, notApplicable: r.na, evidenceClass: r.cls, evidenceRef: r.ref, answeredBy: o.answeredBy?.[r.q.code] ?? ctx.user?.id ?? null }))).returning();
   const byCode = new Map(resp.map((r) => [r.questionCode, r]));

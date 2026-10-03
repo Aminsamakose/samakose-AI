@@ -99,6 +99,8 @@ describe('team assessment rounds', () => {
     view = (await api(w.owner).get(`/cases/${w.caseId}/round`)).data.round;
     expect(view.blockers).toEqual([]); expect(view.canSubmit).toBe(true); expect(view.answered).toBe(4);
     const done = await api(w.owner).post(`/rounds/${id}/submit`, {}); expect(done.status, JSON.stringify(done.error)).toBe(201); expect(done.data.accepted).toBe(true);
+    // The mode is derived from who answered: the owner and a colleague both did.
+    expect((await q(`select assessment_mode m from diagnostics where id=$1`, [done.data.id])).rows[0].m).toBe('hybrid');
     // Who answered each question is kept, and the diagnostic carries its round.
     const rows = (await q(`select r.question_code c, r.answered_by u from responses r where r.diagnostic_id=$1 order by 1`, [done.data.id])).rows;
     expect(rows.map((r) => r.c)).toEqual(['A1', 'A2', 'B1', 'B2']);
