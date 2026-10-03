@@ -1,0 +1,655 @@
+{
+  "version": 1,
+  "status": "Draft for Administrator approval",
+  "note": "Per sub-dimension: 'primary' is an ordered list. The first role present in the assessment team is the default respondent. If none is present, the Assessment Owner answers. 'contributor' roles may be invited to help but are not assigned by default. Job role is not permission: this mapping only suggests who answers, it never grants access.",
+  "fallback": {
+    "SME360": "OWNER",
+    "AGRIFOOD360": "OWNER",
+    "ESO360": "EXEC"
+  },
+  "roles": {
+    "SME360": {
+      "OWNER": "Owner, Founder, CEO or Managing Director",
+      "FINANCE": "Finance Manager or Finance Officer",
+      "OPERATIONS": "Operations Manager or Officer",
+      "MARKETING_SALES": "Marketing or Sales Manager or Officer",
+      "HR": "HR or People Manager",
+      "TECH": "Technology or IT Lead",
+      "COMPLIANCE": "Compliance or Legal"
+    },
+    "AGRIFOOD360": {
+      "OWNER": "Owner, Founder, Manager or Cooperative Leader",
+      "FINANCE": "Finance or Accounts Lead",
+      "PRODUCTION": "Production or Farm Manager",
+      "PROCESSING": "Aggregation, Processing or Quality Lead",
+      "SUPPLY_SALES": "Supply Chain, Procurement, Logistics or Sales Lead",
+      "AGRONOMY": "Agribusiness or Technical (Agronomy) Lead",
+      "CLIMATE": "Climate or Sustainability Lead",
+      "COMPLIANCE": "Compliance or Legal",
+      "HR": "HR or People Lead",
+      "TECH": "Technology or Data Lead"
+    },
+    "ESO360": {
+      "EXEC": "Executive Director or CEO",
+      "PROGRAMME": "Programme Manager",
+      "OPERATIONS": "Operations Manager",
+      "FINANCE": "Finance Manager",
+      "MEL": "M&E Lead",
+      "BD_PARTNERSHIPS": "Business Development or Partnerships Lead",
+      "HR": "HR or People Lead",
+      "TECH_DATA": "Technology or Data Lead",
+      "COMMS": "Communications or Marketing Lead",
+      "BOARD": "Board or Leadership representative",
+      "COMPLIANCE": "Compliance or Legal"
+    }
+  },
+  "map": {
+    "SME360": {
+      "1.1": {
+        "primary": [
+          "OWNER"
+        ],
+        "contributor": [
+          "MARKETING_SALES",
+          "FINANCE"
+        ]
+      },
+      "1.2": {
+        "primary": [
+          "MARKETING_SALES",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "1.3": {
+        "primary": [
+          "MARKETING_SALES"
+        ],
+        "contributor": [
+          "OWNER"
+        ]
+      },
+      "1.4": {
+        "primary": [
+          "MARKETING_SALES",
+          "OWNER"
+        ],
+        "contributor": [
+          "FINANCE"
+        ]
+      },
+      "2.1": {
+        "primary": [
+          "OPERATIONS"
+        ],
+        "contributor": [
+          "OWNER"
+        ]
+      },
+      "2.2": {
+        "primary": [
+          "OPERATIONS"
+        ],
+        "contributor": [
+          "FINANCE"
+        ]
+      },
+      "2.3": {
+        "primary": [
+          "OPERATIONS"
+        ],
+        "contributor": [
+          "TECH"
+        ]
+      },
+      "3.1": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "3.2": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": [
+          "OWNER"
+        ]
+      },
+      "3.3": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": [
+          "OPERATIONS"
+        ]
+      },
+      "3.4": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "4.1": {
+        "primary": [
+          "FINANCE",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "4.2": {
+        "primary": [
+          "FINANCE",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "4.3": {
+        "primary": [
+          "OWNER",
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "5.1": {
+        "primary": [
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "5.2": {
+        "primary": [
+          "HR",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "5.3": {
+        "primary": [
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "5.4": {
+        "primary": [
+          "HR",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "6.1": {
+        "primary": [
+          "OPERATIONS",
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "6.2": {
+        "primary": [
+          "TECH",
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "6.3": {
+        "primary": [
+          "TECH",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "7.1": {
+        "primary": [
+          "COMPLIANCE",
+          "OWNER"
+        ],
+        "contributor": [
+          "FINANCE"
+        ]
+      },
+      "7.2": {
+        "primary": [
+          "COMPLIANCE",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "7.3": {
+        "primary": [
+          "COMPLIANCE",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "7.4": {
+        "primary": [
+          "TECH",
+          "COMPLIANCE",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "8.1": {
+        "primary": [
+          "OPERATIONS",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "8.2": {
+        "primary": [
+          "HR",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "8.3": {
+        "primary": [
+          "OWNER"
+        ],
+        "contributor": [
+          "OPERATIONS"
+        ]
+      }
+    },
+    "AGRIFOOD360": {
+      "1.1": {
+        "primary": [
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "1.2": {
+        "primary": [
+          "SUPPLY_SALES",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "1.3": {
+        "primary": [
+          "SUPPLY_SALES"
+        ],
+        "contributor": [
+          "OWNER"
+        ]
+      },
+      "1.4": {
+        "primary": [
+          "PROCESSING",
+          "SUPPLY_SALES"
+        ],
+        "contributor": []
+      },
+      "2.1": {
+        "primary": [
+          "AGRONOMY",
+          "PRODUCTION"
+        ],
+        "contributor": []
+      },
+      "2.2": {
+        "primary": [
+          "SUPPLY_SALES",
+          "PRODUCTION"
+        ],
+        "contributor": []
+      },
+      "2.3": {
+        "primary": [
+          "PROCESSING",
+          "PRODUCTION"
+        ],
+        "contributor": []
+      },
+      "3.1": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "3.2": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": [
+          "OWNER"
+        ]
+      },
+      "3.3": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": [
+          "PRODUCTION"
+        ]
+      },
+      "3.4": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "4.1": {
+        "primary": [
+          "FINANCE",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "4.2": {
+        "primary": [
+          "FINANCE",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "4.3": {
+        "primary": [
+          "OWNER",
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "5.1": {
+        "primary": [
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "5.2": {
+        "primary": [
+          "OWNER",
+          "HR"
+        ],
+        "contributor": []
+      },
+      "5.3": {
+        "primary": [
+          "HR",
+          "PRODUCTION"
+        ],
+        "contributor": [
+          "AGRONOMY"
+        ]
+      },
+      "5.4": {
+        "primary": [
+          "OWNER",
+          "HR"
+        ],
+        "contributor": []
+      },
+      "6.1": {
+        "primary": [
+          "PRODUCTION",
+          "PROCESSING"
+        ],
+        "contributor": []
+      },
+      "6.2": {
+        "primary": [
+          "TECH",
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "6.3": {
+        "primary": [
+          "TECH",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "7.1": {
+        "primary": [
+          "COMPLIANCE",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "7.2": {
+        "primary": [
+          "COMPLIANCE",
+          "PROCESSING"
+        ],
+        "contributor": []
+      },
+      "7.3": {
+        "primary": [
+          "PROCESSING",
+          "COMPLIANCE"
+        ],
+        "contributor": []
+      },
+      "7.4": {
+        "primary": [
+          "COMPLIANCE",
+          "OWNER"
+        ],
+        "contributor": []
+      },
+      "8.1": {
+        "primary": [
+          "CLIMATE",
+          "AGRONOMY"
+        ],
+        "contributor": []
+      },
+      "8.2": {
+        "primary": [
+          "CLIMATE",
+          "AGRONOMY"
+        ],
+        "contributor": []
+      },
+      "8.3": {
+        "primary": [
+          "OWNER",
+          "HR"
+        ],
+        "contributor": []
+      }
+    },
+    "ESO360": {
+      "1.1": {
+        "primary": [
+          "EXEC",
+          "PROGRAMME"
+        ],
+        "contributor": []
+      },
+      "1.2": {
+        "primary": [
+          "PROGRAMME"
+        ],
+        "contributor": []
+      },
+      "1.3": {
+        "primary": [
+          "BD_PARTNERSHIPS",
+          "PROGRAMME"
+        ],
+        "contributor": [
+          "COMMS"
+        ]
+      },
+      "1.4": {
+        "primary": [
+          "EXEC",
+          "BOARD"
+        ],
+        "contributor": []
+      },
+      "2.1": {
+        "primary": [
+          "OPERATIONS",
+          "PROGRAMME"
+        ],
+        "contributor": []
+      },
+      "2.2": {
+        "primary": [
+          "PROGRAMME"
+        ],
+        "contributor": []
+      },
+      "2.3": {
+        "primary": [
+          "PROGRAMME",
+          "BD_PARTNERSHIPS"
+        ],
+        "contributor": []
+      },
+      "3.1": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": [
+          "PROGRAMME"
+        ]
+      },
+      "3.2": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "3.3": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "3.4": {
+        "primary": [
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "4.1": {
+        "primary": [
+          "BD_PARTNERSHIPS",
+          "FINANCE"
+        ],
+        "contributor": []
+      },
+      "4.2": {
+        "primary": [
+          "BD_PARTNERSHIPS"
+        ],
+        "contributor": []
+      },
+      "4.3": {
+        "primary": [
+          "BD_PARTNERSHIPS",
+          "EXEC"
+        ],
+        "contributor": [
+          "COMMS"
+        ]
+      },
+      "5.1": {
+        "primary": [
+          "BOARD",
+          "EXEC"
+        ],
+        "contributor": []
+      },
+      "5.2": {
+        "primary": [
+          "HR",
+          "EXEC"
+        ],
+        "contributor": []
+      },
+      "5.3": {
+        "primary": [
+          "PROGRAMME",
+          "HR"
+        ],
+        "contributor": []
+      },
+      "5.4": {
+        "primary": [
+          "HR",
+          "COMPLIANCE",
+          "EXEC"
+        ],
+        "contributor": []
+      },
+      "6.1": {
+        "primary": [
+          "TECH_DATA",
+          "MEL"
+        ],
+        "contributor": []
+      },
+      "6.2": {
+        "primary": [
+          "MEL"
+        ],
+        "contributor": [
+          "PROGRAMME"
+        ]
+      },
+      "6.3": {
+        "primary": [
+          "MEL",
+          "PROGRAMME"
+        ],
+        "contributor": []
+      },
+      "7.1": {
+        "primary": [
+          "COMPLIANCE",
+          "FINANCE",
+          "EXEC"
+        ],
+        "contributor": []
+      },
+      "7.2": {
+        "primary": [
+          "TECH_DATA",
+          "COMPLIANCE"
+        ],
+        "contributor": []
+      },
+      "7.3": {
+        "primary": [
+          "COMPLIANCE",
+          "EXEC"
+        ],
+        "contributor": []
+      },
+      "7.4": {
+        "primary": [
+          "FINANCE",
+          "COMPLIANCE"
+        ],
+        "contributor": []
+      },
+      "8.1": {
+        "primary": [
+          "PROGRAMME",
+          "MEL"
+        ],
+        "contributor": []
+      },
+      "8.2": {
+        "primary": [
+          "OPERATIONS",
+          "PROGRAMME"
+        ],
+        "contributor": []
+      },
+      "8.3": {
+        "primary": [
+          "PROGRAMME",
+          "EXEC"
+        ],
+        "contributor": []
+      }
+    }
+  }
+}
