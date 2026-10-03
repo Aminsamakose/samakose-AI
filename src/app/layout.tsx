@@ -11,6 +11,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const { brand, seo } = await getSite();
   const image = /^https:\/\//.test(String(seo.shareImage ?? '')) ? [String(seo.shareImage)] : undefined;
   return {
+    metadataBase: new URL(process.env.APP_URL || 'https://samakose-ai.vercel.app'),
+    alternates: { canonical: './' },
     title: { default: String(brand.browserTitle), template: `%s | ${brand.siteName}` },
     description: String(seo.description),
     robots: seo.indexing === false ? { index: false, follow: false } : undefined,
