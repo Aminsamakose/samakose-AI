@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Async, Card, Empty, PageHead, useApi } from '@/components/ui';
 import { useMe, useTitle } from '@/components/dash/common';
+import { ResultFeedback } from '@/components/ResultFeedback';
 import { ActionsPanel, EvidencePanel, InvoicesPanel, KpiPanel, Lifecycle, ReportsPanel, ScorePanel, SessionsPanel } from '@/components/dash/MyCasePanels';
 
 export default function MyCasePage() {
@@ -28,6 +29,7 @@ function Detail({ id }: { id: string }) {
   return <Async state={st}>{(c) => <div className="stack">
     <Card title={`${c.orgName} (${c.code})`}><Lifecycle status={c.status} /></Card>
     <Card title="Your health score"><ScorePanel score={c.score} /></Card>
+    <Card title="Does your score match your business?"><ResultFeedback caseId={id} /></Card>
     <Card title="Your actions"><ActionsPanel caseId={id} /></Card>
     <div className="grid two">
       <Card title="Reports for you"><ReportsPanel caseId={id} /></Card>
