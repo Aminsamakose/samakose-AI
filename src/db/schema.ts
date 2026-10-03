@@ -906,3 +906,25 @@ export const responseDrafts = pgTable('response_drafts', {
   answeredBy: uuid('answered_by').notNull().references(() => users.id),
   updatedAt: updated()
 }, (t) => [uniqueIndex('draft_round_question_uq').on(t.roundId, t.questionCode)]);
+
+
+/** Feedback from signed-in people. `app` is UAT feedback about a screen; `result` is the owner's view of whether a score matched their business.
+ *  Only the administrator reads it. It never reaches scoring, diagnosis or any report. */
+export const feedback = pgTable('feedback', {
+  id: id(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  role: text('role').notNull(),
+  orgId: uuid('org_id').references(() => organisations.id),
+  kind: text('kind').notNull(),
+  page: text('page'),
+  rating: integer('rating'),
+  accuracy: text('accuracy'),
+  message: text('message'),
+  caseId: uuid('case_id').references(() => cases.id),
+  healthScoreId: uuid('health_score_id').references(() => healthScores.id),
+  status: text('status').notNull().default('New'),
+  adminNote: text('admin_note'),
+  handledBy: uuid('handled_by').references(() => users.id),
+  handledAt: timestamp('handled_at', { withTimezone: true }),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [index('feedback_status_idx').on(t.status, t.createdAt), uniqueIndex('feedback_result_uq').on(t.userId, t.healthScoreId).where(sql`${t.kind} = 'result'`)]);

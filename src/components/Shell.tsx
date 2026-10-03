@@ -8,6 +8,7 @@ import type { Role } from '@/db/schema';
 import { api } from '@/lib/client/api';
 import { ToastProvider, useApi } from './ui';
 import { Icon, type IconName } from './Icon';
+import { FeedbackLauncher } from './FeedbackLauncher';
 
 type Item = { icon: IconName; href: string; label: string; need?: [Resource, any]; roles?: Role[]; badge?: 'notifications' };
 type Group = { title: string; items: Item[] };
@@ -40,6 +41,7 @@ const GROUPS: Group[] = [
     { icon: 'system', href: '/admin/agents', label: 'AI workforce', need: ['agents', 'read'] },
     { icon: 'settings', href: '/admin/registration', label: 'Registration settings', need: ['consent', 'read'] },
     { icon: 'inbox', href: '/admin/website', label: 'Website', need: ['content', 'read'] },
+    { icon: 'inbox', href: '/admin/feedback', label: 'Feedback', need: ['feedback', 'read'] },
     { icon: 'audit', href: '/admin/audit', label: 'Audit trail', need: ['audit', 'read'] },
     { icon: 'settings', href: '/admin/settings', label: 'Settings', need: ['settings', 'read'] },
     { icon: 'system', href: '/admin/system', label: 'System', need: ['integrations', 'read'] }
@@ -70,6 +72,7 @@ export function Shell({ user, children }: { user: { name: string; role: Role; em
             <label className="sr" htmlFor="gsearch">Search everything</label>
             <input ref={searchRef} id="gsearch" name="q" type="search" placeholder="Search cases, organisations, people  ( / )" style={{ maxWidth: 420 }} />
           </form>
+          <FeedbackLauncher />
           <Link className="btn" href="/notifications" aria-label={`Notifications${notes.data?.unread ? `, ${notes.data.unread} unread` : ''}`}><Icon name="bell" />Alerts{notes.data?.unread ? <span className="badge-n">{notes.data.unread}</span> : null}</Link>
           <Link className="btn ghost" href="/profile" title={user.email}>{user.name}<span className="muted small hide-sm"> · {ROLE_LABEL[user.role]}</span></Link>
           <ThemeToggle className="btn icon" />
