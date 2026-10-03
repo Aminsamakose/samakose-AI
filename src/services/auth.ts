@@ -10,6 +10,7 @@ import { env } from '@/lib/env';
 import { PERMISSIONS, ROLE_LABEL } from '@/lib/rbac';
 import { queueTemplate } from '@/domain/notify';
 import { switchOn } from './switches';
+import { DRAFT_MAPPING, MODES, OTHER_ROLE, isKnownRole, platformForOrgType, type AssessmentMode } from '@/domain/routing';
 import { need } from './common';
 
 const LOCK_AFTER = 5;
@@ -196,7 +197,7 @@ async function issueVerification(ctx: Ctx, userId: string, email: string, name: 
   await queueTemplate(ctx, email, 'verify_email', { user_name: name, hours: String(VERIFY_HOURS), link: `${env.appUrl}/verify-email?token=${token}` });
 }
 
-export async function register(ctx: Ctx, b: { name: string; email: string; password: string; role: (typeof SELF_ROLES)[number]; orgName?: string; orgType?: 'SME' | 'AGRIFOOD' | 'ESO'; note?: string; consent: boolean }) {
+export async function register(ctx: Ctx, b: { name: string; email: string; password: string; role: (typeof SELF_ROLES)[number]; orgName?: string; orgType?: 'SME' | 'AGRIFOOD' | 'ESO'; note?: string; consent: boolean; countryCode?: string; geoUnitId?: string | null; consentPurposes?: string[]; routing?: { jobRole: string; jobRoleOther?: string; responsibility?: string; assessmentMode: AssessmentMode } }) {
   if (!(await switchOn(ctx.db, 'switch.self_registration'))) throw forbidden('Registration is closed at the moment. Ask the team for an invitation.');
   if (b.role !== 'OWNER' && !(await switchOn(ctx.db, `switch.role.${b.role}`))) throw fieldError({ role: 'This kind of account is not open for self-registration. Ask the team for an invitation.' });
   const email = b.email.trim().toLowerCase();
@@ -206,6 +207,18 @@ export async function register(ctx: Ctx, b: { name: string; email: string; passw
   if (!b.consent) throw fieldError({ consent: 'Please accept the terms and privacy notice' });
   const orgName = b.orgName?.trim();
   if (!orgName || orgName.length < 2) throw fieldError({ orgName: b.role === 'OWNER' ? 'Enter your business name' : 'Enter your organisation or employer' });
+  const country = (b.countryCode ?? 'GH').toUpperCase();
+  const [cs] = await ctx.db.select({ c: schema.countrySettings.countryCode }).from(schema.countrySettings).where(and(eq(schema.countrySettings.countryCode, country), eq(schema.countrySettings.active, true))).limit(1);
+  if (!cs) throw fieldError({ countryCode: 'This country is not open yet' });
+  if (b.geoUnitId) {
+    const [g] = await ctx.db.select({ id: schema.geoUnits.id }).from(schema.geoUnits).where(and(eq(schema.geoUnits.id, b.geoUnitId), eq(schema.geoUnits.countryCode, country))).limit(1);
+    if (!g) throw fieldError({ geoUnitId: 'Choose a location from the list for this country' });
+  }
+  if (b.routing) {
+    if (!MODES.includes(b.routing.assessmentMode)) throw fieldError({ assessmentMode: 'Choose how the assessment will be answered' });
+    if (!isKnownRole(DRAFT_MAPPING, platformForOrgType(b.orgType), b.routing.jobRole)) throw fieldError({ jobRole: 'Choose your role from the list, or Other' });
+    if (b.routing.jobRole === OTHER_ROLE && !b.routing.jobRoleOther?.trim()) throw fieldError({ jobRoleOther: 'Tell us your role' });
+  }
   const [dupe] = await ctx.db.select({ id: schema.users.id }).from(schema.users).where(sql`lower(${schema.users.email}) = ${email}`).limit(1);
   // Same answer whether or not the address is already registered, so the form cannot be used to find who has an account.
   if (dupe) return { ok: true };
@@ -218,9 +231,35 @@ export async function register(ctx: Ctx, b: { name: string; email: string; passw
     email, name, role: b.role, orgId, passwordHash: await hashPassword(b.password), mustChangePassword: false,
     emailVerified: false, approvalStatus: 'pending', profileRequired: b.role === 'OWNER', signupOrgName: orgName, signupNote: b.note?.trim().slice(0, 1000) || null
   }).returning({ id: schema.users.id });
+  if (orgId) await ctx.db.update(schema.organisations).set({ countryCode: country, geoUnitId: b.geoUnitId ?? null }).where(eq(schema.organisations.id, orgId));
+  await recordRegistrationConsents(ctx, row.id, orgId, country, new Set(['account', ...(b.consentPurposes ?? [])]), b.routing && b.role === 'OWNER' ? { platform: platformForOrgType(b.orgType), ...b.routing } : undefined);
   await issueVerification(ctx, row.id, email, name);
   await audit({ ...ctx, user: { id: row.id, email } as any }, 'auth.registered', 'user', row.id, undefined, { role: b.role, orgId });
   return { ok: true };
+}
+
+/** Consent comes before data. A consent row is written only against a Published notice for that purpose and country, so the
+ *  person's grant points at the exact wording they saw. Routing answers are stored only under a granted 'assessment' consent. */
+async function recordRegistrationConsents(ctx: Ctx, userId: string, orgId: string | null, country: string, purposes: Set<string>, routing?: { platform: string; jobRole: string; jobRoleOther?: string; responsibility?: string; assessmentMode: string }) {
+  const notices = await ctx.db.select().from(schema.consentNotices).where(and(eq(schema.consentNotices.countryCode, country), eq(schema.consentNotices.status, 'Published'), inArray(schema.consentNotices.purpose, ['account', 'assessment'])));
+  const granted = new Set<string>();
+  for (const n of notices) {
+    if (!purposes.has(n.purpose)) continue;
+    await ctx.db.insert(schema.consents).values({ userId, orgId, noticeId: n.id, action: 'granted', source: 'registration' });
+    granted.add(n.purpose);
+  }
+  if (routing && granted.has('assessment')) {
+    await ctx.db.insert(schema.registrationAnswers).values({ userId, orgId, platform: routing.platform, jobRole: routing.jobRole, jobRoleOther: routing.jobRole === OTHER_ROLE ? routing.jobRoleOther?.trim().slice(0, 120) ?? null : null, responsibility: routing.responsibility?.trim().slice(0, 300) || null, assessmentMode: routing.assessmentMode, suggestionSource: 'user' });
+  }
+}
+
+export async function registrationOptions(ctx: Ctx, countryCode = 'GH') {
+  const country = countryCode.toUpperCase();
+  const [c] = await ctx.db.select().from(schema.countrySettings).where(and(eq(schema.countrySettings.countryCode, country), eq(schema.countrySettings.active, true))).limit(1);
+  if (!c) throw fieldError({ countryCode: 'This country is not open yet' });
+  const regions = await ctx.db.select({ id: schema.geoUnits.id, name: schema.geoUnits.name }).from(schema.geoUnits).where(and(eq(schema.geoUnits.countryCode, country), eq(schema.geoUnits.level, 1), eq(schema.geoUnits.active, true))).orderBy(schema.geoUnits.name);
+  const notices = await ctx.db.select({ id: schema.consentNotices.id, purpose: schema.consentNotices.purpose, version: schema.consentNotices.version, text: schema.consentNotices.text }).from(schema.consentNotices).where(and(eq(schema.consentNotices.countryCode, country), eq(schema.consentNotices.status, 'Published')));
+  return { country: { code: c.countryCode, name: c.name, levelLabels: c.levelLabels }, regions, notices, modes: MODES, roles: Object.fromEntries(Object.entries(DRAFT_MAPPING.roles)), other: OTHER_ROLE };
 }
 
 export async function resendVerification(ctx: Ctx, email: string) {
