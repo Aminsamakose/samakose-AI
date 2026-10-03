@@ -8,7 +8,7 @@ const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const PUBLIC = ['/', '/platform', '/solutions', '/impact', '/resources', '/pricing', '/login', '/register', '/contact', '/about', '/privacy', '/terms', '/resources/why-evidence-matters-for-your-score'];
 const USERS: [string, string][] = [['ADMIN', 'admin'], ['EXECUTIVE', 'exec'], ['PROGRAMME_MANAGER', 'pm'], ['EXPERT', 'consultant'], ['REVIEWER', 'reviewer'], ['FINANCE', 'finance'], ['OWNER', 'owner'], ['FUNDER', 'funder']];
 const PAGES: { path: string; need?: [Resource, any]; roles?: string[] }[] = [
-  { path: '/dashboard', need: ['dashboard', 'read'] }, { path: '/cases', need: ['cases', 'read'] }, { path: '/my-case', roles: ['OWNER'] }, { path: '/reviews', need: ['prescriptions', 'approve'] },
+  { path: '/dashboard', need: ['dashboard', 'read'] }, { path: '/cases', need: ['cases', 'read'] }, { path: '/my-case', roles: ['OWNER'] }, { path: '/team', need: ['team', 'read'] }, { path: '/answer', roles: ['OWNER'] }, { path: '/reviews', need: ['prescriptions', 'approve'] },
   { path: '/actions', need: ['actions', 'read'] }, { path: '/organisations', need: ['organisations', 'read'] }, { path: '/finance/invoices', need: ['invoices', 'read'] },
   { path: '/admin/users', need: ['users', 'create'] }, { path: '/admin/settings', need: ['settings', 'read'] }, { path: '/admin/agents', need: ['agents', 'read'] },
   { path: '/notifications' }, { path: '/profile' }, { path: '/cases/new', need: ['cases', 'create'] }

@@ -196,6 +196,8 @@ export const diagnostics = pgTable('diagnostics', {
   supersedesId: uuid('supersedes_id'),
   /** The framework version the questions and rules came from. History keeps the version it was taken under. */
   frameworkVersionId: uuid('framework_version_id').references((): any => frameworkVersions.id),
+  /** The team round this diagnostic was built from, when it came from one. */
+  assessmentRoundId: uuid('assessment_round_id'),
   createdAt: created()
 }, (t) => [index('diag_case_idx').on(t.caseId)]);
 
@@ -208,6 +210,8 @@ export const responses = pgTable('responses', {
   notApplicable: boolean('not_applicable').notNull().default(false),
   evidenceClass: evidenceClassEnum('evidence_class').notNull().default('Self-reported'),
   evidenceRef: text('evidence_ref'),
+  /** Who gave this answer (the owner or a team respondent). Null for answers given before rounds existed. */
+  answeredBy: uuid('answered_by'),
   createdAt: created()
 }, (t) => [index('resp_diag_idx').on(t.diagnosticId)]);
 
@@ -875,3 +879,30 @@ export const areaAssignments = pgTable('area_assignments', {
   confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
   updatedAt: updated()
 }, (t) => [uniqueIndex('area_assignment_uq').on(t.orgId, t.platform, t.subDimension)]);
+
+
+/** One team assessment in progress for a case. The owner collects answers from colleagues as drafts, then submits once. Scoring only ever sees the full answer set at submission. */
+export const assessmentRounds = pgTable('assessment_rounds', {
+  id: id(),
+  caseId: uuid('case_id').notNull().references(() => cases.id),
+  orgId: uuid('org_id').notNull().references(() => organisations.id),
+  frameworkVersionId: uuid('framework_version_id').references((): any => frameworkVersions.id),
+  status: text('status').notNull().default('Collecting'),
+  ownerId: uuid('owner_id').notNull().references(() => users.id),
+  diagnosticId: uuid('diagnostic_id').references((): any => diagnostics.id),
+  createdAt: created(), submittedAt: timestamp('submitted_at', { withTimezone: true })
+}, (t) => [index('round_case_idx').on(t.caseId), uniqueIndex('round_one_open_uq').on(t.caseId).where(sql`${t.status} = 'Collecting'`)]);
+
+/** Answers saved before submission. They are not evidence and are never scored until the owner submits the round. */
+export const responseDrafts = pgTable('response_drafts', {
+  id: id(),
+  roundId: uuid('round_id').notNull().references(() => assessmentRounds.id),
+  questionCode: text('question_code').notNull(),
+  value: integer('value'),
+  notApplicable: boolean('not_applicable').notNull().default(false),
+  evidenceClass: text('evidence_class').notNull().default('Self-reported'),
+  evidenceRef: text('evidence_ref'),
+  note: text('note'),
+  answeredBy: uuid('answered_by').notNull().references(() => users.id),
+  updatedAt: updated()
+}, (t) => [uniqueIndex('draft_round_question_uq').on(t.roundId, t.questionCode)]);

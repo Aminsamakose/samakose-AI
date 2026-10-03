@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { api, errText } from '@/lib/client/api';
+import { TeamRound } from '@/components/TeamRound';
 import { Async, Badge, Button, Card, ConfirmButton, Empty, Field, FormError, useApi, useForm, useToast } from '@/components/ui';
 
 /** A notice reads "Heading. Body..." The first sentence is shown in bold. */
@@ -16,6 +17,7 @@ export function TeamPanel() {
         <div className="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Status</th><th><span className="sr">Actions</span></th></tr></thead><tbody>{t.members.map((m: any) => <tr key={m.id}>
           <td>{m.name}<div className="small muted">{m.email}</div></td><td>{t.roles[m.jobRole] ?? m.jobRole}</td><td><Badge tone={m.status === 'active' ? 'ok' : 'info'}>{m.status === 'active' ? 'Active' : 'Invited'}</Badge></td>
           <td><Row m={m} onDone={reload} /></td></tr>)}</tbody></table></div>}</Card></>}</Async>
+    <TeamRound />
     <Card title="Who answers what">
       <p className="muted small">These are suggestions based on each person's role. Nothing is final until you confirm it. Areas without a colleague stay with you.</p>
       <Async state={areas}>{(a) => <div className="table-wrap"><table><thead><tr><th>Area</th><th>Suggested</th><th>Answered by</th></tr></thead><tbody>{a.areas.map((x: any) => <Area key={x.code} a={x} members={a.members} onDone={reload} />)}</tbody></table></div>}</Async>
