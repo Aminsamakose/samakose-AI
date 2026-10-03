@@ -133,7 +133,7 @@ function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, can
   };
 
   return <div className="stack">
-    <Card title={`Diagnostic questionnaire (next version: v${nextVersion})`} actions={canPrefill ? <Button size="sm" onClick={prefill}>Start from latest answers</Button> : undefined}>
+    <Card title={`Diagnostic questionnaire (this will be version ${nextVersion})`} actions={canPrefill ? <Button size="sm" onClick={prefill}>Start from latest answers</Button> : undefined}>
       <p className="muted">Rate each statement from 0 (not in place) to 4 (fully in place). For every answer, say how well it is evidenced. Answers backed by verified or document evidence count for more in the score.</p>
       {!stateOk && <div className="alert warn" role="status">The business profile must be complete before a diagnostic can be taken. The case is currently {status}.</div>}
       <div className="row small" role="status" aria-live="polite"><strong>{answered} of {questions.length} answered</strong><span className="muted">({Math.round(completion * 100)}% complete)</span></div>
