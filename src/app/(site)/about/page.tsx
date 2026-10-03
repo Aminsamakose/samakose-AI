@@ -41,7 +41,7 @@ export default async function AboutPage() {
             <ul className="mt-4 grid list-none gap-4 p-0 md:grid-cols-2">
               {site.team.map((m) => (
                 <li key={m.name + m.role} className="flex overflow-hidden rounded-card border border-line bg-surface">
-                  {m.photo && <img src={m.photo} alt={`${m.name}, ${m.role}`} width={160} height={160} loading="lazy" decoding="async" className="aspect-square w-28 shrink-0 bg-white object-cover object-top sm:w-36" />}
+                  {m.photo && <img src={m.photo} alt={`${m.name}, ${m.role}`} width={160} height={160} loading="lazy" decoding="async" className="h-auto w-28 shrink-0 self-start bg-white object-contain sm:w-36" />}
                   <div className="p-5">
                     <p className="font-display text-lg font-semibold">{m.name}</p>
                     <p className="text-sm text-muted">{m.role}</p>
