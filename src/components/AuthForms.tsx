@@ -103,18 +103,31 @@ export function RegisterForm() {
   return <RegisterFormInner roles={prov.roles} />;
 }
 
+type RegOptions = { country: { code: string; name: string; levelLabels: string[] }; regions: { id: string; name: string }[]; notices: { id: string; purpose: string; version: number; text: string }[]; modes: string[]; roles: Record<string, Record<string, string>>; other: string };
+const PLATFORM_OF: Record<string, string> = { SME: 'SME360', AGRIFOOD: 'AGRIFOOD360', ESO: 'ESO360' };
+const MODE_LABEL: Record<string, string> = { self: 'I will answer everything myself', team: 'My team will answer parts of it', hybrid: 'I would like an expert to help me' };
+/** A notice reads "Heading. Body..." The first sentence is shown in bold, the rest as the wording. */
+function NoticeLabel({ text }: { text: string }) { const i = text.indexOf('. '); return <span className="small" style={{ fontWeight: 400 }}><b style={{ fontWeight: 600 }}>{text.slice(0, i + 1)}</b>{text.slice(i + 1)}</span>; }
+
 function RegisterFormInner({ roles }: { roles: string[] }) {
   const [done, setDone] = useState(false); const [consent, setConsent] = useState(false);
+  const [opts, setOpts] = useState<RegOptions | null>(null); const [geoUnitId, setGeo] = useState(''); const [jobRole, setJobRole] = useState(''); const [jobRoleOther, setJobRoleOther] = useState(''); const [mode, setMode] = useState('self'); const [assessConsent, setAssessConsent] = useState(false);
+  useEffect(() => { api.get<RegOptions>('/auth/registration-options').then(setOpts).catch(() => setOpts(null)); }, []);
+  const notice = (purpose: string) => opts?.notices.find((n) => n.purpose === purpose);
   const f = useForm({ name: '', email: '', password: '', role: roles[0] ?? 'OWNER', orgName: '', orgType: 'SME', note: '' }, async (v) => {
     const e: Record<string, string> = {};
     if (v.name.trim().length < 2) e.name = 'Enter your name';
     if (!/^\S+@\S+\.\S+$/.test(v.email)) e.email = 'Enter a valid email address';
     if (v.password.length < 10) e.password = 'Use at least 10 characters';
     if (v.orgName.trim().length < 2) e.orgName = v.role === 'OWNER' ? 'Enter your business name' : 'Enter your organisation';
-    if (!consent) e.consent = 'Please accept the terms and privacy notice';
+    if (!consent) e.consent = notice('account') ? 'Please agree to create your account' : 'Please accept the terms and privacy notice';
+    if (v.role === 'OWNER' && jobRole === opts?.other && jobRoleOther.trim().length < 2) e.jobRole = 'Tell us your role';
     if (Object.keys(e).length) throw new ApiFail(422, 'validation', 'Check the highlighted fields', e);
-    return api.post('/auth/register', { ...v, consent, orgType: v.role === 'OWNER' ? v.orgType : undefined });
+    const owner = v.role === 'OWNER';
+    const routing = owner && jobRole && notice('assessment') && assessConsent ? { jobRole, jobRoleOther: jobRole === opts?.other ? jobRoleOther.trim() : undefined, assessmentMode: mode } : undefined;
+    return api.post('/auth/register', { ...v, consent, orgType: owner ? v.orgType : undefined, geoUnitId: owner && geoUnitId ? geoUnitId : undefined, consentPurposes: routing ? ['account', 'assessment'] : ['account'], routing });
   }, { onDone: () => setDone(true) });
+  useEffect(() => { setJobRole(''); setJobRoleOther(''); }, [f.values.orgType]); // the role list depends on the type of business
   if (done) return <div className="stack"><h1>Check your email</h1><p className="muted">We sent a link to <b>{f.values.email}</b>. Open it to confirm your address.</p>
     <p className="small muted">{f.values.role === 'OWNER' ? 'After you confirm, you can sign in and start your health check. Our team checks business details before any report leaves your organisation.' : 'After you confirm, an administrator reviews your request. You will not see any organisation or programme data until you are approved and linked to your work.'}</p>
     <Link href="/login">Back to sign in</Link></div>;
@@ -130,8 +143,17 @@ function RegisterFormInner({ roles }: { roles: string[] }) {
     <Field label="Password" name="password" error={f.errors.password} hint="At least 10 characters." required>{(p) => <input {...p} type="password" autoComplete="new-password" {...f.input('password')} />}</Field>
     <Field label={owner ? 'Business name' : 'Organisation or employer'} name="orgName" error={f.errors.orgName} required>{(p) => <input {...p} {...f.input('orgName')} />}</Field>
     {owner && <Field label="Type of business" name="orgType">{(p) => <select {...p} {...f.input('orgType')}><option value="SME">SME</option><option value="AGRIFOOD">Agribusiness or food</option><option value="ESO">Support organisation</option></select>}</Field>}
+    {owner && opts && opts.regions.length > 0 && <Field label={opts.country.levelLabels[0] ?? 'Region'} name="geoUnitId" hint="Optional. You can change it later.">{(p) => <select {...p} value={geoUnitId} onChange={(e) => setGeo(e.target.value)}><option value="">Choose</option>{opts.regions.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>}</Field>}
+    {owner && opts && notice('assessment') && <fieldset className="stack" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: 12 }}>
+      <legend className="small">Help us prepare your assessment (optional)</legend>
+      <Field label="Your role in the business" name="jobRole" error={f.errors.jobRole}>{(p) => <select {...p} value={jobRole} onChange={(e) => setJobRole(e.target.value)}><option value="">Choose</option>{Object.entries(opts.roles[PLATFORM_OF[f.values.orgType] ?? 'SME360'] ?? {}).map(([k, l]) => <option key={k} value={k}>{l}</option>)}<option value={opts.other}>Other</option></select>}</Field>
+      {jobRole === opts.other && <Field label="Tell us your role" name="jobRoleOther">{(p) => <input {...p} value={jobRoleOther} onChange={(e) => setJobRoleOther(e.target.value)} maxLength={120} />}</Field>}
+      <Field label="How will the assessment be answered?" name="mode">{(p) => <select {...p} value={mode} onChange={(e) => setMode(e.target.value)}>{opts.modes.map((m) => <option key={m} value={m}>{MODE_LABEL[m] ?? m}</option>)}</select>}</Field>
+      <label className="row" style={{ gap: 8 }}><input type="checkbox" checked={assessConsent} onChange={(e) => setAssessConsent(e.target.checked)} /><NoticeLabel text={notice('assessment')!.text} /></label>
+    </fieldset>}
     {!owner && <Field label="What do you want to do on the platform?" name="note" hint="Optional. This helps the administrator review your request.">{(p) => <textarea {...p} rows={3} {...f.input('note')} />}</Field>}
-    <Field label="" name="consent" error={f.errors.consent}>{(p) => <label className="row" style={{ gap: 8 }}><input {...p} type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /><span className="small">I accept the <a href="/terms" target="_blank">terms</a> and the <a href="/privacy" target="_blank">privacy notice</a>.</span></label>}</Field>
+    <Field label="" name="consent" error={f.errors.consent}>{(p) => <label className="row" style={{ gap: 8 }}><input {...p} type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />{notice('account') ? <NoticeLabel text={notice('account')!.text} /> : <span className="small">I accept the <a href="/terms" target="_blank">terms</a> and the <a href="/privacy" target="_blank">privacy notice</a>.</span>}</label>}</Field>
+    {notice('account') && <p className="small muted">Read the <a href="/terms" target="_blank">terms</a> and the <a href="/privacy" target="_blank">privacy notice</a>. Your rights, and how to withdraw consent at any time, are explained there.</p>}
     <Button variant="primary" loading={f.busy} type="submit">Create account</Button>
     <span className="small muted">Already registered? <Link href="/login">Sign in</Link></span>
   </form>;
