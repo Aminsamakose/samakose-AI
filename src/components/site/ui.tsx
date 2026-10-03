@@ -37,8 +37,9 @@ export function Card({ children, className }: { children: ReactNode; className?:
   return <div className={clsx('rounded-card border border-line bg-surface p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg', className)}>{children}</div>;
 }
 
-/** Marks content that is not yet verified. Replace the contents when real data is supplied. */
+/** Marks content that is not yet verified. Visitors never see it: it renders only when SHOW_PLACEHOLDERS=1 (for an editor's preview). Empty means empty on the public site. */
 export function Placeholder({ label, children }: { label: string; children?: ReactNode }) {
+  if (process.env.SHOW_PLACEHOLDERS !== '1') return null;
   return (
     <div role="note" className="rounded-card border border-dashed border-gold bg-[color:var(--warn-soft)] p-5 text-sm text-[color:var(--warn)]">
       <p className="font-mono text-xs font-medium uppercase tracking-[0.12em]">Placeholder, replace with verified data</p>

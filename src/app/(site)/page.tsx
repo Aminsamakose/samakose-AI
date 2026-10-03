@@ -29,15 +29,14 @@ export default async function Home() {
   const SECTIONS: Record<string, React.ReactNode> = {
     'partners': (
     <>
-      <Section tone="soft" className="!py-12 sm:!py-14">
+      {site.partners.length > 0 && <Section tone="soft" className="!py-12 sm:!py-14">
         <Reveal>
           <Eyebrow>Partners and clients</Eyebrow>
           {site.partners.length
             ? <ul className="mt-4 flex flex-wrap gap-3">{site.partners.map((p) => <li key={p.name} className="rounded-card border border-line bg-surface px-4 py-3 text-sm font-semibold">{/^https:\/\//.test(p.website) ? <a href={p.website} target="_blank" rel="noopener noreferrer" className="text-fg no-underline hover:text-leaf-ink">{p.name}<span className="sr-only"> (opens in a new tab)</span></a> : p.name}{p.note && <span className="block text-xs font-normal text-muted">{p.note}</span>}</li>)}</ul>
             : <div className="mt-4"><Placeholder label="Partner and client logos go here, only with each organisation's written permission." /></div>}
         </Reveal>
-      </Section>
-
+      </Section>}
     </>
   ),
     'platform': (

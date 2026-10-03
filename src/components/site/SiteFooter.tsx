@@ -7,7 +7,7 @@ import { contactOf, socialLinks, type SiteContent } from '@/lib/site-content';
 export function SiteFooter({ site }: { site: SiteContent }) {
   const SITE = contactOf(site);
   const social = socialLinks(site);
-  const a = 'text-white/80 no-underline transition-colors hover:text-lime';
+  const a = 'inline-flex min-h-11 items-center text-white/80 no-underline transition-colors hover:text-lime';
   return (
     <footer className="bg-ink pt-16 text-white">
       <Container>
@@ -37,7 +37,7 @@ export function SiteFooter({ site }: { site: SiteContent }) {
         </div>
         <div className="flex flex-col gap-2 border-t border-white/15 py-6 text-xs text-white/60 sm:flex-row sm:justify-between">
           <p>&copy; {new Date().getFullYear()} {site.brand.siteName}. All rights reserved.</p>
-          <p className="flex flex-wrap gap-x-4 gap-y-1"><Link href="/privacy" className="text-white/70 underline underline-offset-2">Privacy notice</Link><Link href="/terms" className="text-white/70 underline underline-offset-2">Terms of use</Link><span>Illustrations and sample figures are labelled as examples.</span></p>
+          <p className="flex flex-wrap gap-x-4 gap-y-1"><Link href="/privacy" className="inline-flex min-h-11 items-center text-white/70 underline underline-offset-2">Privacy notice</Link><Link href="/terms" className="inline-flex min-h-11 items-center text-white/70 underline underline-offset-2">Terms of use</Link><span>Illustrations and sample figures are labelled as examples.</span></p>
         </div>
       </Container>
       <div className="h-2 w-full" style={{ background: 'repeating-linear-gradient(90deg,#c6f26b 0 24px,#e2a93b 24px 36px,#c4553a 36px 48px,#0f4a3f 48px 72px)' }} aria-hidden="true" />

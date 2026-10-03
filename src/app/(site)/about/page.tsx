@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { PageHero, Section, Eyebrow, Placeholder, ButtonLink } from '@/components/site/ui';
+import { PageHero, Section, Eyebrow, ButtonLink } from '@/components/site/ui';
 import { Reveal } from '@/components/site/motion';
 import { getSite, contactOf } from '@/lib/site-content';
 
@@ -31,10 +31,11 @@ export default async function AboutPage() {
           <Eyebrow>Leadership and team</Eyebrow>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">The people behind Samakose.</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="rounded-card border border-line bg-surface p-6"><p className="font-display text-xl font-semibold">Amin Yahaya</p><p className="text-sm text-muted">Founder and Lead Advisor</p></div>
-            <Placeholder label="Short biography, photo and team profiles go here, once approved for publication." />
+            <div className="flex flex-col overflow-hidden rounded-card border border-line bg-surface sm:flex-row sm:items-start">
+              <img src="/team/amin-yahaya.webp" width={520} height={520} alt="Amin Yahaya, Founder and Lead Advisor of Samakose, seated in a navy suit" loading="lazy" decoding="async" className="aspect-square w-full bg-white object-cover object-top sm:h-52 sm:w-52 sm:shrink-0" />
+              <div className="p-6"><p className="font-display text-xl font-semibold">Amin Yahaya</p><p className="text-sm text-muted">Founder and Lead Advisor</p></div>
+            </div>
           </div>
-          <div className="mt-6"><Placeholder label="Partners, accreditations and affiliations go here, only after each is confirmed for public use." /></div>
           <div className="mt-8"><ButtonLink href="/contact">Get in touch</ButtonLink></div>
         </Reveal>
       </Section>
