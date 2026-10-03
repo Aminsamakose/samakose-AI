@@ -211,7 +211,9 @@ export function GoogleNotice() {
 }
 
 type Profile = { required: boolean; name: string; type: string; sector: string | null; region: string | null; suggestedRegion?: string | null; district: string | null; size: string | null; contactPhone: string | null; registrationNumber: string | null; consentGiven: boolean };
+const OTHER_DISTRICT = '__other__';
 export function CompleteProfile() {
+  const [districts, setDistricts] = useState<string[]>([]); const [typed, setTyped] = useState(false);
   const [p, setP] = useState<Profile | null>(null); const [err, setErr] = useState<string | null>(null); const [consent, setConsent] = useState(false);
   useEffect(() => { api.get<Profile>('/auth/profile').then(setP).catch((e: any) => setErr(e.message)); }, []);
   const f = useForm({ name: '', type: 'SME', sector: '', region: '', district: '', size: '', contactPhone: '', registrationNumber: '' }, async (v) => {
@@ -227,6 +229,13 @@ export function CompleteProfile() {
     return api.put('/auth/profile', { ...v, consent: consent || !!p?.consentGiven });
   }, { onDone: () => { window.location.href = '/dashboard'; } });
   useEffect(() => { if (p) f.setValues({ name: p.name.endsWith('to confirm)') ? '' : p.name, type: p.type, sector: p.sector ?? '', region: p.region ?? p.suggestedRegion ?? '', district: p.district ?? '', size: p.size ?? '', contactPhone: p.contactPhone ?? '', registrationNumber: p.registrationNumber ?? '' }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [p]);
+  useEffect(() => {
+    if (!f.values.region) { setDistricts([]); return; }
+    let live = true;
+    api.get<{ districts: string[] }>('/auth/districts?region=' + encodeURIComponent(f.values.region)).then((d) => { if (!live) return; setDistricts(d.districts); setTyped(!!f.values.district && !d.districts.includes(f.values.district)); }).catch(() => { if (live) setDistricts([]); });
+    return () => { live = false; };
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [f.values.region]);
   if (err) return <div className="stack"><h1>Complete your profile</h1><FormError message={err} /><Link href="/login">Sign in</Link></div>;
   if (!p) return <div className="stack"><h1>Complete your profile</h1><span className="spin" role="status" aria-label="Loading" /></div>;
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
@@ -236,8 +245,8 @@ export function CompleteProfile() {
     <Field label="Business name" name="name" error={f.errors.name} required>{(q) => <input {...q} {...f.input('name')} />}</Field>
     <Field label="Type of business" name="type">{(q) => <select {...q} {...f.input('type')}><option value="SME">SME</option><option value="AGRIFOOD">Agribusiness or food</option><option value="ESO">Support organisation</option></select>}</Field>
     <Field label="Sector" name="sector" error={f.errors.sector} required>{(q) => <><input {...q} list="sectors" {...f.input('sector')} /><datalist id="sectors">{SECTORS.map((x) => <option key={x} value={x} />)}</datalist></>}</Field>
-    <Field label="Region" name="region" error={f.errors.region} required hint={!p.region && p.suggestedRegion ? `Suggested from your sign-up: ${p.suggestedRegion}. Please confirm or change it.` : undefined}>{(q) => <select {...q} {...f.input('region')}><option value="">Choose a region</option>{REGIONS.map((x) => <option key={x}>{x}</option>)}</select>}</Field>
-    <Field label="District or town" name="district" error={f.errors.district} required>{(q) => <input {...q} {...f.input('district')} />}</Field>
+    <Field label="Region" name="region" error={f.errors.region} required hint={!p.region && p.suggestedRegion ? `Suggested from your sign-up: ${p.suggestedRegion}. Please confirm or change it.` : undefined}>{(q) => <select {...q} {...f.input('region')} onChange={(e) => { f.setValues({ ...f.values, region: e.target.value, district: '' }); setTyped(false); }}><option value="">Choose a region</option>{REGIONS.map((x) => <option key={x}>{x}</option>)}</select>}</Field>
+    <Field label="District" name="district" error={f.errors.district} required hint={districts.length ? 'Choose the district assembly your business is in. If it is not listed, choose the last option and type it.' : undefined}>{(q) => districts.length && !typed ? <select {...q} value={f.values.district} onChange={(e) => { if (e.target.value === OTHER_DISTRICT) { setTyped(true); f.setValues({ ...f.values, district: '' }); } else f.setValues({ ...f.values, district: e.target.value }); }}><option value="">Choose a district</option>{districts.map((x) => <option key={x}>{x}</option>)}<option value={OTHER_DISTRICT}>My district is not listed</option></select> : <input {...q} {...f.input('district')} placeholder="District or town" />}</Field>
     <Field label="Number of people working in the business" name="size" error={f.errors.size} required>{(q) => <select {...q} {...f.input('size')}><option value="">Choose</option>{SIZES.map((x) => <option key={x}>{x}</option>)}</select>}</Field>
     <Field label="Phone number" name="contactPhone" error={f.errors.contactPhone} hint="A number we can call or message on WhatsApp." required>{(q) => <input {...q} type="tel" autoComplete="tel" {...f.input('contactPhone')} />}</Field>
     <Field label="Business registration number" name="registrationNumber" hint="Optional. Adding it helps us verify your business sooner.">{(q) => <input {...q} {...f.input('registrationNumber')} />}</Field>

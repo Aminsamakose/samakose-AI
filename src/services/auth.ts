@@ -263,6 +263,14 @@ export async function registrationOptions(ctx: Ctx, countryCode = 'GH') {
   return { country: { code: c.countryCode, name: c.name, levelLabels: c.levelLabels }, regions, notices, modes: MODES, roles: (await loadMapping(ctx.db)).roles, other: OTHER_ROLE };
 }
 
+/** Districts under a region, from the official-style list loaded in geo_units (level 2). */
+export async function districtsFor(ctx: Ctx, countryCode: string, regionName: string) {
+  const [r] = await ctx.db.select({ id: schema.geoUnits.id }).from(schema.geoUnits).where(and(eq(schema.geoUnits.countryCode, countryCode.toUpperCase()), eq(schema.geoUnits.level, 1), eq(schema.geoUnits.name, regionName), eq(schema.geoUnits.active, true))).limit(1);
+  if (!r) return { districts: [] as string[] };
+  const rows = await ctx.db.select({ name: schema.geoUnits.name }).from(schema.geoUnits).where(and(eq(schema.geoUnits.parentId, r.id), eq(schema.geoUnits.active, true))).orderBy(schema.geoUnits.name);
+  return { districts: rows.map((x) => x.name) };
+}
+
 export async function resendVerification(ctx: Ctx, email: string) {
   if ((await rateLimit('verify:' + sha256(email.toLowerCase()), 3600)) > 3) return { ok: true };
   const [u] = await ctx.db.select().from(schema.users).where(and(sql`lower(${schema.users.email}) = ${email.toLowerCase()}`, eq(schema.users.emailVerified, false), eq(schema.users.active, true))).limit(1);
