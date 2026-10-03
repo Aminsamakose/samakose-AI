@@ -103,7 +103,7 @@ export async function removeMember(ctx: Ctx, id: string) {
 }
 
 /** Area names come from the published framework when it has them; otherwise the code stands in. */
-async function areaNames(ctx: Ctx, orgType: string): Promise<Record<string, { name: string; dimension?: string }>> {
+export async function areaNames(ctx: Ctx, orgType: string): Promise<Record<string, { name: string; dimension?: string }>> {
   try {
     const v = await resolveVersion(ctx.db, orgType);
     const out: Record<string, { name: string; dimension?: string }> = {};

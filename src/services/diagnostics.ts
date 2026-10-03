@@ -73,10 +73,10 @@ export async function computeScore(ctx: Ctx, caseId: string, diagnosticId: strin
   return row;
 }
 
-type SubmitOpts = { uuid?: string; source: 'web' | 'kobo'; persistRejection: boolean };
+type SubmitOpts = { uuid?: string; source: 'web' | 'kobo'; persistRejection: boolean; /** Team round: who gave each answer, and the round it came from. Scoring does not read either. */ answeredBy?: Record<string, string>; roundId?: string; /** The framework version a round was opened under. Later publications do not change what that round is checked against. */ versionId?: string | null };
 export async function submitDiagnosticCore(ctx: Ctx, caseRow: typeof schema.cases.$inferSelect, answers: Record<string, AnswerInput>, o: SubmitOpts) {
   if (stateIndex(caseRow.status) < stateIndex('PROFILED')) throw unprocessable('The business profile must be complete before a diagnostic can be taken');
-  const fv = await versionForCase(ctx, caseRow.id);
+  const fv = o.versionId ? await versionForRow(ctx.db, o.versionId) : await versionForCase(ctx, caseRow.id);
   const rules = rulesFor(fv, await loadRules(ctx.db));
   const qs = questionsOf(fv);
   const seen = o.uuid ? (await ctx.db.select({ u: schema.diagnostics.submissionUuid }).from(schema.diagnostics).where(eq(schema.diagnostics.submissionUuid, o.uuid))).map((r) => r.u!) : [];
@@ -115,9 +115,9 @@ export async function submitDiagnosticCore(ctx: Ctx, caseRow: typeof schema.case
   }
   const [d] = await ctx.db.insert(schema.diagnostics).values({
     caseId: caseRow.id, status: 'Validated', source: o.source, frameworkVersionId: fv.id, submissionUuid: o.uuid ?? null, completion: v.completion.toFixed(3),
-    submittedBy: ctx.user?.id ?? null, version: (prev?.version ?? 0) + 1, supersedesId: prev?.id ?? null
+    submittedBy: ctx.user?.id ?? null, version: (prev?.version ?? 0) + 1, supersedesId: prev?.id ?? null, assessmentRoundId: o.roundId ?? null
   }).returning();
-  const resp = await ctx.db.insert(schema.responses).values(rows.map((r) => ({ diagnosticId: d.id, questionCode: r.q.code, value: r.value, notApplicable: r.na, evidenceClass: r.cls, evidenceRef: r.ref }))).returning();
+  const resp = await ctx.db.insert(schema.responses).values(rows.map((r) => ({ diagnosticId: d.id, questionCode: r.q.code, value: r.value, notApplicable: r.na, evidenceClass: r.cls, evidenceRef: r.ref, answeredBy: o.answeredBy?.[r.q.code] ?? ctx.user?.id ?? null }))).returning();
   const byCode = new Map(resp.map((r) => [r.questionCode, r]));
   const docs = refs.length ? await ctx.db.select({ id: schema.documents.id, code: schema.documents.code }).from(schema.documents).where(inArray(schema.documents.code, refs)) : [];
   const docId = new Map(docs.map((x) => [x.code, x.id]));

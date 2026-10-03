@@ -50,6 +50,8 @@ Rules on combining answers: each question belongs to one sub-dimension and there
 
 Gate rule: submission is refused until every gate question is answered and every sub-dimension that contains a gate has a named respondent.
 
+Built in slice B (migration 0022): `assessment_rounds` and `response_drafts` as above, `responses.answered_by`, and `diagnostics.assessment_round_id`. Two simplifications against the table above, both deliberate. Assignments stay per business (`area_assignments`, from slice A) and are not copied per round, so a reassignment takes effect at once and the earlier answer is kept in the audit trail (`round.draft_replaced`). The round pins the framework version it was opened under, and submission is checked and scored against that version. `diagnostics.assessment_mode` is not added yet.
+
 ## 4. Access control
 
 - A respondent can read and answer only their own assignments. They cannot read other sections, scores, diagnoses or prescriptions.
