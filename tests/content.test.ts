@@ -64,6 +64,21 @@ describe('content rules', () => {
     expect(r.status).toBe(400); expect(Object.keys(r.error.details ?? {})).toEqual(expect.arrayContaining(['verified', 'consent']));
     expect((await loadForTest()).testimonials.some((x) => x.name === 'Ama Mensah')).toBe(false);
   });
+  it('a team member needs the person\'s consent, is listed by position, and only appears once published', async () => {
+    const base = { role: 'Programme Lead', bio: 'Leads programme delivery.', photo: '/media/00000000-0000-0000-0000-000000000001' };
+    const a = (await mk(manager, 'team_member', { data: { ...base, name: 'Team Test Second', position: '2', consent: true } })).data;
+    const b = (await mk(manager, 'team_member', { data: { ...base, name: 'Team Test First', position: '1', consent: true } })).data;
+    const c = (await mk(manager, 'team_member', { data: { ...base, name: 'Team Test NoConsent', consent: false } })).data;
+    const r = await api(manager).post(`/admin/content/${c.id}/publish`, {});
+    expect(r.status).toBe(400); expect(Object.keys(r.error.details ?? {})).toContain('consent');
+    expect((await loadForTest()).team.some((x) => x.name === 'Team Test Second')).toBe(false);
+    expect((await api(manager).post(`/admin/content/${a.id}/publish`, {})).status).toBe(200);
+    expect((await api(manager).post(`/admin/content/${b.id}/publish`, {})).status).toBe(200);
+    const names = (await loadForTest()).team.map((x) => x.name).filter((n) => n.startsWith('Team Test'));
+    expect(names).toEqual(['Team Test First', 'Team Test Second']);
+    expect((await api(manager).put(`/admin/content/${a.id}`, { data: { ...base, name: 'Team Test Second', position: 'two', consent: true } })).status).toBe(400);
+    expect((await api(manager).put(`/admin/content/${a.id}`, { data: { ...base, name: 'Team Test Second', photo: 'http://insecure.example/p.jpg', consent: true } })).status).toBe(400);
+  });
   it('a result needs a source and a verified flag', async () => {
     const s = (await mk(manager, 'stat', { data: { value: '38%', label: 'Improved score', source: '', verified: true } })).data;
     expect((await api(manager).post(`/admin/content/${s.id}/publish`, {})).status).toBe(400);

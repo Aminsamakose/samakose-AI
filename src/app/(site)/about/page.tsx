@@ -6,7 +6,8 @@ import { getSite, contactOf } from '@/lib/site-content';
 export const metadata: Metadata = { title: 'About', description: 'Samakose is an enterprise development and business transformation organisation based in Tamale, Northern Ghana.' };
 
 export default async function AboutPage() {
-  const SITE = contactOf(await getSite());
+  const site = await getSite();
+  const SITE = contactOf(site);
   return (
     <>
       <PageHero eyebrow="About Samakose" title="Helping enterprises become sustainable and investment-ready." intro="Samakose is an enterprise development and business transformation organisation based in Tamale, Northern Ghana. The Business Doctor is how we diagnose, treat and track the health of the enterprises we serve." />
@@ -36,6 +37,21 @@ export default async function AboutPage() {
               <div className="p-6"><p className="font-display text-xl font-semibold">Amin Yahaya</p><p className="text-sm text-muted">Founder and Lead Advisor</p><p className="mt-3 text-sm leading-relaxed text-muted">Amin Yahaya is the Founder and Lead Advisor of Samakose, based in Tamale, Northern Ghana. He has worked in business diagnostics and delivery consulting, supporting enterprises, cooperatives and development partners through coaching, agribusiness advisory and practical working systems. He created Samakose&rsquo;s S-CEAF, a six-phase framework for strengthening cooperatives, and its 16-section Agri-Business Capacity Diagnostic Tool. Samakose&rsquo;s long-term goal is one million enterprise health assessments across ten African countries by 2036. Amin holds an MSc in Leadership and Organisational Development, a BSc in Organizational Development with an Entrepreneurship and Innovation specialization, and an HND in Information and Communication Technology.</p></div>
             </div>
           </div>
+          {site.team.length > 0 && (
+            <ul className="mt-4 grid list-none gap-4 p-0 md:grid-cols-2">
+              {site.team.map((m) => (
+                <li key={m.name + m.role} className="flex overflow-hidden rounded-card border border-line bg-surface">
+                  {m.photo && <img src={m.photo} alt={`${m.name}, ${m.role}`} width={160} height={160} loading="lazy" decoding="async" className="aspect-square w-28 shrink-0 bg-white object-cover object-top sm:w-36" />}
+                  <div className="p-5">
+                    <p className="font-display text-lg font-semibold">{m.name}</p>
+                    <p className="text-sm text-muted">{m.role}</p>
+                    {m.bio && <p className="mt-2 text-sm leading-relaxed text-muted">{m.bio}</p>}
+                    {/^https:\/\//.test(m.linkedin) && <p className="mt-2 text-sm"><a href={m.linkedin} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-leaf-ink">LinkedIn<span className="sr-only"> profile of {m.name} (opens in a new tab)</span></a></p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="mt-8"><ButtonLink href="/contact">Get in touch</ButtonLink></div>
         </Reveal>
       </Section>
