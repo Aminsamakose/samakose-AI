@@ -10,7 +10,8 @@ import { env } from '@/lib/env';
 import { PERMISSIONS, ROLE_LABEL } from '@/lib/rbac';
 import { queueTemplate } from '@/domain/notify';
 import { switchOn } from './switches';
-import { DRAFT_MAPPING, MODES, OTHER_ROLE, isKnownRole, platformForOrgType, type AssessmentMode } from '@/domain/routing';
+import { loadMapping } from './registration-config';
+import { MODES, OTHER_ROLE, isKnownRole, platformForOrgType, type AssessmentMode } from '@/domain/routing';
 import { need } from './common';
 
 const LOCK_AFTER = 5;
@@ -216,7 +217,7 @@ export async function register(ctx: Ctx, b: { name: string; email: string; passw
   }
   if (b.routing) {
     if (!MODES.includes(b.routing.assessmentMode)) throw fieldError({ assessmentMode: 'Choose how the assessment will be answered' });
-    if (!isKnownRole(DRAFT_MAPPING, platformForOrgType(b.orgType), b.routing.jobRole)) throw fieldError({ jobRole: 'Choose your role from the list, or Other' });
+    if (!isKnownRole(await loadMapping(ctx.db), platformForOrgType(b.orgType), b.routing.jobRole)) throw fieldError({ jobRole: 'Choose your role from the list, or Other' });
     if (b.routing.jobRole === OTHER_ROLE && !b.routing.jobRoleOther?.trim()) throw fieldError({ jobRoleOther: 'Tell us your role' });
   }
   const [dupe] = await ctx.db.select({ id: schema.users.id }).from(schema.users).where(sql`lower(${schema.users.email}) = ${email}`).limit(1);
@@ -259,7 +260,7 @@ export async function registrationOptions(ctx: Ctx, countryCode = 'GH') {
   if (!c) throw fieldError({ countryCode: 'This country is not open yet' });
   const regions = await ctx.db.select({ id: schema.geoUnits.id, name: schema.geoUnits.name }).from(schema.geoUnits).where(and(eq(schema.geoUnits.countryCode, country), eq(schema.geoUnits.level, 1), eq(schema.geoUnits.active, true))).orderBy(schema.geoUnits.name);
   const notices = await ctx.db.select({ id: schema.consentNotices.id, purpose: schema.consentNotices.purpose, version: schema.consentNotices.version, text: schema.consentNotices.text }).from(schema.consentNotices).where(and(eq(schema.consentNotices.countryCode, country), eq(schema.consentNotices.status, 'Published')));
-  return { country: { code: c.countryCode, name: c.name, levelLabels: c.levelLabels }, regions, notices, modes: MODES, roles: Object.fromEntries(Object.entries(DRAFT_MAPPING.roles)), other: OTHER_ROLE };
+  return { country: { code: c.countryCode, name: c.name, levelLabels: c.levelLabels }, regions, notices, modes: MODES, roles: (await loadMapping(ctx.db)).roles, other: OTHER_ROLE };
 }
 
 export async function resendVerification(ctx: Ctx, email: string) {
