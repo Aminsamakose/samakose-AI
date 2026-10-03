@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -15,7 +15,7 @@ import { submitDiagnosticCore, type AnswerInput } from './diagnostics';
 /** A team round: the owner collects answers from colleagues as drafts and submits once.
  *  Scoring still receives one full answer set at submission. Nothing here reads or changes a score. */
 const OWNER_CLASSES: EvidenceClass[] = ['Self-reported', 'Unverified', 'Missing', 'Document-supported'];
-const TEAM_CLASSES: EvidenceClass[] = ['Self-reported', 'Unverified', 'Missing'];
+const TEAM_CLASSES: EvidenceClass[] = ['Self-reported', 'Unverified', 'Missing', 'Document-supported'];
 const stateIndex = (s: string) => CASE_STATES.indexOf(s as any);
 
 export type DraftInput = null | { value?: number | null; notApplicable?: boolean; evidence?: string; ref?: string | null; note?: string | null };
@@ -28,7 +28,7 @@ async function ownerOrg(ctx: Ctx) {
 }
 
 /** The business a person answers for: the owner's own, or the one a team member belongs to. Null member means the owner. */
-async function myPlace(ctx: Ctx) {
+export async function myPlace(ctx: Ctx) {
   const c = need(ctx);
   if (c.user.role === 'OWNER' && c.user.orgId) return { orgId: c.user.orgId, memberId: null as string | null, isOwner: true };
   if (c.user.role === 'RESPONDENT') {
@@ -47,7 +47,7 @@ async function areaOwners(ctx: Ctx, orgId: string, platform: string) {
 }
 const whoOf = (owners: Map<string, { memberId: string | null; confirmed: boolean }>, sd?: string) => (sd && owners.get(sd)) || { memberId: null, confirmed: false };
 
-async function openRound(ctx: Ctx, orgId: string) {
+export async function openRound(ctx: Ctx, orgId: string) {
   const [r] = await ctx.db.select().from(schema.assessmentRounds).where(and(eq(schema.assessmentRounds.orgId, orgId), eq(schema.assessmentRounds.status, 'Collecting'))).limit(1);
   return r ?? null;
 }
@@ -91,7 +91,9 @@ export async function roundView(ctx: Ctx, caseId: string) {
   const owners = await areaOwners(ctx, o.id, platformForOrgType(o.type as any));
   const names = await areaNames(ctx, o.type);
   const members = await ctx.db.select({ id: schema.orgMembers.id, name: schema.users.name }).from(schema.orgMembers).innerJoin(schema.users, eq(schema.users.id, schema.orgMembers.userId)).where(eq(schema.orgMembers.orgId, o.id));
-  const drafts = await ctx.db.select({ code: schema.responseDrafts.questionCode, value: schema.responseDrafts.value, na: schema.responseDrafts.notApplicable }).from(schema.responseDrafts).where(eq(schema.responseDrafts.roundId, r.id));
+  const drafts = await ctx.db.select({ code: schema.responseDrafts.questionCode, value: schema.responseDrafts.value, na: schema.responseDrafts.notApplicable, cls: schema.responseDrafts.evidenceClass, ref: schema.responseDrafts.evidenceRef, by: schema.responseDrafts.answeredBy }).from(schema.responseDrafts).where(eq(schema.responseDrafts.roundId, r.id));
+  const docRows = await ctx.db.select({ id: schema.documents.id, code: schema.documents.code, filename: schema.documents.filename, by: schema.users.name }).from(schema.documents).leftJoin(schema.users, eq(schema.users.id, schema.documents.uploadedBy)).where(and(eq(schema.documents.orgId, o.id), eq(schema.documents.caseId, caseId)));
+  const uploads = drafts.filter((x) => x.cls === 'Document-supported' && x.ref).map((x) => ({ question: x.code, document: x.ref!, documentId: docRows.find((y) => y.code === x.ref)?.id ?? null, filename: docRows.find((y) => y.code === x.ref)?.filename ?? x.ref!, uploadedBy: docRows.find((y) => y.code === x.ref)?.by ?? 'Unknown' }));
   const answered = new Set(drafts.filter((d) => d.value !== null || d.na).map((d) => d.code));
   const byArea = new Map<string, typeof qs>();
   for (const q of qs) byArea.set(q.subDimension ?? '', [...(byArea.get(q.subDimension ?? '') ?? []), q]);
@@ -108,7 +110,7 @@ export async function roundView(ctx: Ctx, caseId: string) {
       total: list.length, answered: list.filter((q) => answered.has(q.code)).length, gates: gates.length
     };
   }).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
-  return { round: { id: r.id, createdAt: r.createdAt, total: qs.length, answered: qs.filter((q) => answered.has(q.code)).length, areas, blockers, canSubmit: blockers.length === 0 } };
+  return { round: { id: r.id, createdAt: r.createdAt, total: qs.length, answered: qs.filter((q) => answered.has(q.code)).length, areas, uploads, blockers, canSubmit: blockers.length === 0 } };
 }
 
 /** Only my own questions, with my saved answers. A colleague never sees another area, a score or anyone else's answers. */
@@ -129,7 +131,7 @@ export async function myRound(ctx: Ctx) {
     round: {
       id: r.id,
       questions: mine.map((q) => ({ ...q, area: q.subDimension ? names[q.subDimension]?.name ?? q.subDimension : null })),
-      answers: Object.fromEntries(drafts.filter((d) => mineSet.has(d.questionCode)).map((d) => [d.questionCode, { value: d.value, notApplicable: d.notApplicable, evidence: d.evidenceClass, note: d.note }]))
+      answers: Object.fromEntries(drafts.filter((d) => mineSet.has(d.questionCode)).map((d) => [d.questionCode, { value: d.value, notApplicable: d.notApplicable, evidence: d.evidenceClass, ref: d.evidenceRef, note: d.note }]))
     }
   };
 }
@@ -146,6 +148,10 @@ export async function saveDrafts(ctx: Ctx, roundId: string, answers: Record<stri
   const owners = await areaOwners(ctx, o.id, platformForOrgType(o.type as any));
   const mine = new Map(formQuestionsOf(v).filter((q) => whoOf(owners, q.subDimension).memberId === place.memberId).map((q) => [q.code, q]));
   const classes = place.isOwner ? OWNER_CLASSES : TEAM_CLASSES;
+  // A document can back an answer only if it belongs to this business, is not quarantined, and (for a colleague) was uploaded by them.
+  const refs = [...new Set(Object.values(answers).map((a) => (a && a.evidence === 'Document-supported' ? a.ref : null)).filter((x): x is string => !!x))];
+  const okDocs = new Set<string>();
+  if (refs.length) (await ctx.db.select({ code: schema.documents.code, by: schema.documents.uploadedBy }).from(schema.documents).where(and(eq(schema.documents.orgId, place.orgId), eq(schema.documents.status, 'Stored'), inArray(schema.documents.code, refs)))).forEach((x) => { if (place.isOwner || x.by === c.user.id) okDocs.add(x.code); });
   const problems: Record<string, string> = {};
   const writes: { code: string; value: number | null; na: boolean; cls: string; ref: string | null; note: string | null }[] = [];
   const clears: string[] = [];
@@ -159,9 +165,10 @@ export async function saveDrafts(ctx: Ctx, roundId: string, answers: Record<stri
     if (!na && (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 4)) { problems[code] = 'The value must be a whole number from 0 to 4'; continue; }
     const cls = a.evidence ?? 'Self-reported';
     if (!EVIDENCE_CLASSES.includes(cls as EvidenceClass) || !classes.includes(cls as EvidenceClass)) { problems[code] = 'This evidence type is not available to you'; continue; }
+    if (cls === 'Document-supported' && !(a.ref && okDocs.has(a.ref))) { problems[code] = 'Attach a document you uploaded for this answer'; continue; }
     const note = a.note?.trim() || null;
     if (note && note.length > 500) { problems[code] = 'Notes can be at most 500 characters'; continue; }
-    writes.push({ code, value: value ?? null, na, cls, ref: a.ref ?? null, note });
+    writes.push({ code, value: value ?? null, na, cls, ref: cls === 'Document-supported' ? a.ref ?? null : null, note });
   }
   if (Object.keys(problems).length) throw fieldError(problems);
   await ctx.db.transaction(async (tx) => {

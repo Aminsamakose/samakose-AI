@@ -229,7 +229,7 @@ export const documents = pgTable('documents', {
   status: text('status').notNull().default('Stored'), // Stored | Quarantined
   uploadedBy: uuid('uploaded_by'),
   createdAt: created()
-}, (t) => [index('doc_case_idx').on(t.caseId), index('doc_org_idx').on(t.orgId)]);
+}, (t) => [index('doc_case_idx').on(t.caseId), index('doc_org_idx').on(t.orgId), index('doc_uploader_idx').on(t.orgId, t.uploadedBy)]);
 
 export const evidence = pgTable('evidence', {
   id: id(), code: codeCol('ev'),

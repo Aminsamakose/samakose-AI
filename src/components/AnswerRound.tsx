@@ -4,10 +4,12 @@ import { api, errText } from '@/lib/client/api';
 import { Async, Button, Card, Empty, FormError, useApi, useToast } from '@/components/ui';
 
 type Q = { code: string; text: string; dimension: string; area: string | null; anchors?: (string | null)[]; applies?: string };
-type Saved = { value: number | null; notApplicable: boolean; evidence: string; note: string | null };
+type Saved = { value: number | null; notApplicable: boolean; evidence: string; ref?: string | null; note: string | null };
+type Doc = { id: string; code: string; filename: string; size: number };
 type Mine = { business: string; round: null | { id: string; questions: Q[]; answers: Record<string, Saved> } };
-type Draft = { value: string; na: boolean; evidence: string; note: string };
-const EVIDENCE = ['Self-reported', 'Unverified', 'Missing'];
+type Draft = { value: string; na: boolean; evidence: string; ref: string; note: string };
+const EVIDENCE = ['Self-reported', 'Unverified', 'Missing', 'Document-supported'];
+const EV_LABEL: Record<string, string> = { 'Document-supported': 'A document proves it' };
 const isCond = (q: Q) => !!q.applies && q.applies.trim().toLowerCase() !== 'all';
 
 /** The questions assigned to me in the open team assessment. Saved answers are drafts: nothing is scored until the owner submits. */
@@ -22,7 +24,9 @@ export function AnswerRound() {
 
 function Form({ business, round, onSaved }: { business: string; round: NonNullable<Mine['round']>; onSaved: () => void }) {
   const toast = useToast();
-  const start = (): Record<string, Draft> => Object.fromEntries(round.questions.map((q) => { const a = round.answers[q.code]; return [q.code, { value: a?.value != null ? String(a.value) : '', na: !!a?.notApplicable, evidence: a?.evidence ?? 'Self-reported', note: a?.note ?? '' }]; }));
+  const start = (): Record<string, Draft> => Object.fromEntries(round.questions.map((q) => { const a = round.answers[q.code]; return [q.code, { value: a?.value != null ? String(a.value) : '', na: !!a?.notApplicable, evidence: a?.evidence ?? 'Self-reported', ref: a?.ref ?? '', note: a?.note ?? '' }]; }));
+  const docs = useApi<Doc[]>(`/me/rounds/${round.id}/documents`);
+  const [uploading, setUploading] = useState<string | null>(null);
   const [d, setD] = useState<Record<string, Draft>>(start);
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [formErr, setFormErr] = useState<string | null>(null);
@@ -33,13 +37,19 @@ function Form({ business, round, onSaved }: { business: string; round: NonNullab
   const answered = round.questions.filter((q) => d[q.code].value !== '' || d[q.code].na).length;
   const groups = Array.from(round.questions.reduce((m, q) => m.set(q.area ?? 'Other questions', [...(m.get(q.area ?? 'Other questions') ?? []), q]), new Map<string, Q[]>()));
 
+  const upload = async (q: string, f: File | undefined) => {
+    if (!f) return;
+    setUploading(q); setErrs((e) => { const n = { ...e }; delete n[q]; return n; });
+    try { const fd = new FormData(); fd.append('file', f); const r = await api.upload<Doc>(`/me/rounds/${round.id}/documents`, fd); docs.reload(); patch(q, { evidence: 'Document-supported', ref: r.code }); toast(`${r.filename} uploaded`); }
+    catch (e: any) { setErrs((x) => ({ ...x, [q]: errText(e) })); } finally { setUploading(null); }
+  };
   const save = async () => {
     setFormErr(null);
     const body: Record<string, unknown> = {};
     for (const q of round.questions) {
       const x = d[q.code]; const saved = round.answers[q.code];
       if (x.na) body[q.code] = { notApplicable: true, note: x.note.trim() || null };
-      else if (x.value !== '') body[q.code] = { value: Number(x.value), evidence: x.evidence, note: x.note.trim() || null };
+      else if (x.value !== '') body[q.code] = { value: Number(x.value), evidence: x.evidence, ref: x.evidence === 'Document-supported' ? x.ref || null : null, note: x.note.trim() || null };
       else if (saved) body[q.code] = null; // cleared
     }
     setBusy(true);
@@ -64,8 +74,13 @@ function Form({ business, round, onSaved }: { business: string; round: NonNullab
         {x.value !== '' && q.anchors?.[Number(x.value)] && <p className="small muted" style={{ margin: 0 }}>{q.anchors[Number(x.value)]}</p>}
         <div className="row">
           <div className="field" style={{ flex: '1 1 220px' }}><label htmlFor={`n-${q.code}`}>Note (optional)</label><input id={`n-${q.code}`} value={x.note} maxLength={500} onChange={(e) => patch(q.code, { note: e.target.value })} /></div>
-          <div className="field"><label htmlFor={`ev-${q.code}`}>How do you know?</label><select id={`ev-${q.code}`} value={x.evidence} onChange={(e) => patch(q.code, { evidence: e.target.value })}>{EVIDENCE.map((c) => <option key={c}>{c}</option>)}</select></div>
+          <div className="field"><label htmlFor={`ev-${q.code}`}>How do you know?</label><select id={`ev-${q.code}`} value={x.evidence} onChange={(e) => patch(q.code, { evidence: e.target.value })}>{EVIDENCE.map((c) => <option key={c} value={c}>{EV_LABEL[c] ?? c}</option>)}</select></div>
         </div>
+        {x.evidence === 'Document-supported' && <div className="row">
+          <div className="field" style={{ flex: '1 1 220px' }}><label htmlFor={`doc-${q.code}`}>Document</label>
+            <select id={`doc-${q.code}`} value={x.ref} onChange={(e) => patch(q.code, { ref: e.target.value })}><option value="">Choose a document you uploaded</option>{(docs.data ?? []).map((f) => <option key={f.code} value={f.code}>{f.filename}</option>)}</select></div>
+          <div className="field"><label htmlFor={`up-${q.code}`}>Or upload one</label><input id={`up-${q.code}`} type="file" disabled={uploading === q.code} onChange={(e) => { upload(q.code, e.target.files?.[0]); e.target.value = ''; }} /></div>
+        </div>}
         {err && <p id={`e-${q.code}`} className="small" role="alert" style={{ color: 'var(--bad, #b42318)', margin: 0 }}>{err}</p>}
       </fieldset>; })}
     </div></Card>)}
