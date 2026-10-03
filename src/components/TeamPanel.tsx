@@ -13,10 +13,13 @@ export function TeamPanel() {
   return <div className="stack">
     <Async state={team}>{(t) => <>
       <Card title="Invite a colleague"><Invite t={t} onDone={reload} /></Card>
-      <Card title="Your team">{t.members.length === 0 ? <Empty title="No colleagues yet" hint="You can answer every area yourself, or invite people who know parts of the business better." /> :
-        <div className="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Status</th><th><span className="sr">Actions</span></th></tr></thead><tbody>{t.members.map((m: any) => <tr key={m.id}>
+      <Card title="Your team">
+        <div className="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Status</th><th><span className="sr">Actions</span></th></tr></thead><tbody>
+          <tr><td>{t.me.name} (you)<div className="small muted">Owner of the account</div></td><td>{t.roles[t.me.jobRole] ?? t.me.jobRole ?? 'Owner'}</td><td><Badge tone="ok">Active</Badge></td><td /></tr>
+          {t.members.map((m: any) => <tr key={m.id}>
           <td>{m.name}<div className="small muted">{m.email}</div></td><td>{t.roles[m.jobRole] ?? m.jobRole}</td><td><Badge tone={m.status === 'active' ? 'ok' : 'info'}>{m.status === 'active' ? 'Active' : 'Invited'}</Badge></td>
-          <td><Row m={m} onDone={reload} /></td></tr>)}</tbody></table></div>}</Card></>}</Async>
+          <td><Row m={m} onDone={reload} /></td></tr>)}</tbody></table></div>
+        {t.members.length === 0 && <p className="muted small">No colleagues yet. You can answer every area yourself, or invite people who know parts of the business better.</p>}</Card></>}</Async>
     <TeamRound />
     <Card title="Who answers what">
       <p className="muted small">These are suggestions based on each person's role. Nothing is final until you confirm it. Areas without a colleague stay with you.</p>
