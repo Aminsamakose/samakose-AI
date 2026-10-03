@@ -13,7 +13,6 @@ export function LoginForm() {
   const sp = useSearchParams();
   const f = useForm({ email: '', password: '' }, (v) => api.post('/auth/login', v), { onDone: (d) => { window.location.href = dest(d.next, safeNext(sp.get('next'))); } });
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
-    <h1>Sign in</h1>
     <GoogleNotice />
     <GoogleButton />
     <FormError message={f.formError} />
@@ -109,7 +108,7 @@ export function RegisterForm() {
   const [prov, setProv] = useState<{ selfRegistration: boolean; roles: string[] } | null>(null);
   useEffect(() => { api.get<{ selfRegistration: boolean; roles: string[] }>('/auth/providers').then(setProv).catch(() => setProv({ selfRegistration: true, roles: SELF.map((s) => s[0]) })); }, []);
   if (!prov) return <div className="stack"><span className="spin" role="status" aria-label="Loading" /></div>;
-  if (!prov.selfRegistration) return <div className="stack"><h1>Registration is closed</h1><p className="muted">New accounts are by invitation at the moment. If you expect to be invited, ask your Samakose contact to send the invitation again.</p><Link href="/login">Back to sign in</Link></div>;
+  if (!prov.selfRegistration) return <div className="stack"><h2>Registration is closed</h2><p className="muted">New accounts are by invitation at the moment. If you expect to be invited, ask your Samakose contact to send the invitation again.</p><Link href="/login">Back to sign in</Link></div>;
   return <RegisterFormInner roles={prov.roles} />;
 }
 
@@ -138,12 +137,11 @@ function RegisterFormInner({ roles }: { roles: string[] }) {
     return api.post('/auth/register', { ...v, consent, orgType: owner ? v.orgType : undefined, geoUnitId: owner && geoUnitId ? geoUnitId : undefined, consentPurposes: routing ? ['account', 'assessment'] : ['account'], routing });
   }, { onDone: () => setDone(true) });
   useEffect(() => { setJobRole(''); setJobRoleOther(''); }, [f.values.orgType]); // the role list depends on the type of business
-  if (done) return <div className="stack"><h1>Check your email</h1><p className="muted">We sent a link to <b>{f.values.email}</b>. Open it to confirm your address.</p>
+  if (done) return <div className="stack"><h2>Check your email</h2><p className="muted">We sent a link to <b>{f.values.email}</b>. Open it to confirm your address.</p>
     <p className="small muted">{f.values.role === 'OWNER' ? 'After you confirm, you can sign in and start your health check. Our team checks business details before any report leaves your organisation.' : 'After you confirm, an administrator reviews your request. You will not see any organisation or programme data until you are approved and linked to your work.'}</p>
     <Link href="/login">Back to sign in</Link></div>;
   const owner = f.values.role === 'OWNER';
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
-    <h1>Create your account</h1>
     <GoogleNotice />
     <GoogleButton label="Sign up with Google" />
     <FormError message={f.formError} />
