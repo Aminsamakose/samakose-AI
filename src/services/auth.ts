@@ -290,7 +290,10 @@ export async function getProfile(ctx: Ctx) {
   const c = need(ctx);
   if (c.user.role !== 'OWNER' || !c.user.orgId) throw forbidden();
   const [o] = await ctx.db.select().from(schema.organisations).where(eq(schema.organisations.id, c.user.orgId)).limit(1);
-  return { required: c.user.profileRequired, name: o.name, type: o.type, sector: o.sector, region: o.region, district: o.district, size: o.size, contactPhone: o.contactPhone, registrationNumber: o.registrationNumber, consentGiven: !!o.consentAt };
+  // The region chosen at registration is offered back as a suggestion. The owner confirms or changes it.
+  let suggestedRegion: string | null = null;
+  if (!o.region && o.geoUnitId) { const [g] = await ctx.db.select({ name: schema.geoUnits.name }).from(schema.geoUnits).where(eq(schema.geoUnits.id, o.geoUnitId)).limit(1); suggestedRegion = g?.name ?? null; }
+  return { required: c.user.profileRequired, name: o.name, type: o.type, sector: o.sector, region: o.region, suggestedRegion, district: o.district, size: o.size, contactPhone: o.contactPhone, registrationNumber: o.registrationNumber, consentGiven: !!o.consentAt };
 }
 
 const DIGITS = /\d/g;
@@ -307,12 +310,16 @@ export async function saveProfile(ctx: Ctx, b: { name: string; type: 'SME' | 'AG
   if ((b.contactPhone.match(DIGITS) ?? []).length < 9) errs.contactPhone = 'Enter a phone number we can reach you on';
   if (!b.consent && !o.consentAt) errs.consent = 'Please agree so we can use your business information';
   if (Object.keys(errs).length) throw fieldError(errs);
+  // Keep the location link in step with the region name, and note whether a suggestion was confirmed or changed.
+  const [geo] = await ctx.db.select({ id: schema.geoUnits.id }).from(schema.geoUnits).where(and(eq(schema.geoUnits.countryCode, o.countryCode), eq(schema.geoUnits.level, 1), eq(schema.geoUnits.name, b.region.trim()))).limit(1);
+  let suggestion: 'confirmed' | 'changed' | undefined;
+  if (!o.region && o.geoUnitId) suggestion = geo?.id === o.geoUnitId ? 'confirmed' : 'changed';
   await ctx.db.update(schema.organisations).set({
-    name: b.name.trim(), type: b.type, sector: b.sector.trim(), region: b.region.trim(), district: b.district.trim(), size: b.size.trim(),
+    name: b.name.trim(), type: b.type, sector: b.sector.trim(), region: b.region.trim(), ...(geo ? { geoUnitId: geo.id } : {}), district: b.district.trim(), size: b.size.trim(),
     contactPhone: b.contactPhone.trim(), registrationNumber: b.registrationNumber?.trim() || null,
     ...(o.consentAt ? {} : { consentAt: new Date(), consentBy: c.user.email }), updatedAt: new Date()
   }).where(eq(schema.organisations.id, o.id));
   await ctx.db.update(schema.users).set({ profileRequired: false, updatedAt: new Date() }).where(eq(schema.users.id, c.user.id));
-  await audit(ctx, 'user.profile_completed', 'organisation', o.id);
+  await audit(ctx, 'user.profile_completed', 'organisation', o.id, undefined, suggestion ? { regionSuggestion: suggestion } : undefined);
   return { ok: true };
 }

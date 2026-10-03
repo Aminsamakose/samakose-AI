@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { api, errText } from '@/lib/client/api';
 import { Async, Badge, Button, Card, ConfirmButton, Field, FormError, KV, PageHead, useForm, useToast } from '@/components/ui';
 import { useMe, useTitle } from '@/components/dash/common';
+import { OptionalCard } from '@/components/OptionalAnswers';
 
 function NameForm({ name, onSaved }: { name: string; onSaved: () => void }) {
   const f = useForm({ name }, async (v) => { return api.patch('/auth/me', { name: v.name.trim() }); }, { success: 'Name updated', onDone: onSaved });
@@ -94,6 +95,7 @@ export default function ProfilePage() {
           <NameForm name={d.user.name} onSaved={me.reload} />
         </div>
       </Card>
+      <OptionalCard />
       <Card title="Change password"><PasswordForm /></Card>
       <Card title="Two-step verification"><MfaSection enabled={d.user.mfaEnabled} onChanged={me.reload} /></Card>
       <Card title="Sessions">

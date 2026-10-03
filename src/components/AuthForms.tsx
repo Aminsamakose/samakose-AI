@@ -210,7 +210,7 @@ export function GoogleNotice() {
   return e && GOOGLE_ERR[e] ? <div role="alert" className="alert bad">{GOOGLE_ERR[e]}</div> : null;
 }
 
-type Profile = { required: boolean; name: string; type: string; sector: string | null; region: string | null; district: string | null; size: string | null; contactPhone: string | null; registrationNumber: string | null; consentGiven: boolean };
+type Profile = { required: boolean; name: string; type: string; sector: string | null; region: string | null; suggestedRegion?: string | null; district: string | null; size: string | null; contactPhone: string | null; registrationNumber: string | null; consentGiven: boolean };
 export function CompleteProfile() {
   const [p, setP] = useState<Profile | null>(null); const [err, setErr] = useState<string | null>(null); const [consent, setConsent] = useState(false);
   useEffect(() => { api.get<Profile>('/auth/profile').then(setP).catch((e: any) => setErr(e.message)); }, []);
@@ -226,7 +226,7 @@ export function CompleteProfile() {
     if (Object.keys(e).length) throw new ApiFail(422, 'validation', 'Check the highlighted fields', e);
     return api.put('/auth/profile', { ...v, consent: consent || !!p?.consentGiven });
   }, { onDone: () => { window.location.href = '/dashboard'; } });
-  useEffect(() => { if (p) f.setValues({ name: p.name.endsWith('to confirm)') ? '' : p.name, type: p.type, sector: p.sector ?? '', region: p.region ?? '', district: p.district ?? '', size: p.size ?? '', contactPhone: p.contactPhone ?? '', registrationNumber: p.registrationNumber ?? '' }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [p]);
+  useEffect(() => { if (p) f.setValues({ name: p.name.endsWith('to confirm)') ? '' : p.name, type: p.type, sector: p.sector ?? '', region: p.region ?? p.suggestedRegion ?? '', district: p.district ?? '', size: p.size ?? '', contactPhone: p.contactPhone ?? '', registrationNumber: p.registrationNumber ?? '' }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [p]);
   if (err) return <div className="stack"><h1>Complete your profile</h1><FormError message={err} /><Link href="/login">Sign in</Link></div>;
   if (!p) return <div className="stack"><h1>Complete your profile</h1><span className="spin" role="status" aria-label="Loading" /></div>;
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
@@ -236,7 +236,7 @@ export function CompleteProfile() {
     <Field label="Business name" name="name" error={f.errors.name} required>{(q) => <input {...q} {...f.input('name')} />}</Field>
     <Field label="Type of business" name="type">{(q) => <select {...q} {...f.input('type')}><option value="SME">SME</option><option value="AGRIFOOD">Agribusiness or food</option><option value="ESO">Support organisation</option></select>}</Field>
     <Field label="Sector" name="sector" error={f.errors.sector} required>{(q) => <><input {...q} list="sectors" {...f.input('sector')} /><datalist id="sectors">{SECTORS.map((x) => <option key={x} value={x} />)}</datalist></>}</Field>
-    <Field label="Region" name="region" error={f.errors.region} required>{(q) => <select {...q} {...f.input('region')}><option value="">Choose a region</option>{REGIONS.map((x) => <option key={x}>{x}</option>)}</select>}</Field>
+    <Field label="Region" name="region" error={f.errors.region} required hint={!p.region && p.suggestedRegion ? `Suggested from your sign-up: ${p.suggestedRegion}. Please confirm or change it.` : undefined}>{(q) => <select {...q} {...f.input('region')}><option value="">Choose a region</option>{REGIONS.map((x) => <option key={x}>{x}</option>)}</select>}</Field>
     <Field label="District or town" name="district" error={f.errors.district} required>{(q) => <input {...q} {...f.input('district')} />}</Field>
     <Field label="Number of people working in the business" name="size" error={f.errors.size} required>{(q) => <select {...q} {...f.input('size')}><option value="">Choose</option>{SIZES.map((x) => <option key={x}>{x}</option>)}</select>}</Field>
     <Field label="Phone number" name="contactPhone" error={f.errors.contactPhone} hint="A number we can call or message on WhatsApp." required>{(q) => <input {...q} type="tel" autoComplete="tel" {...f.input('contactPhone')} />}</Field>

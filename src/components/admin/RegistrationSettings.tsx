@@ -9,8 +9,8 @@ const LABEL: Record<string, string> = { account: 'Account (required)', assessmen
 export function RegistrationSettings({ canEdit, canApprove }: { canEdit: boolean; canApprove: boolean }) {
   const [tab, setTab] = useState('consent');
   return <div className="stack">
-    <Tabs tabs={[{ id: 'consent', label: 'Consent notices' }, { id: 'mapping', label: 'Role mapping' }]} active={tab} onChange={setTab} />
-    {tab === 'consent' ? <Notices canEdit={canEdit} canApprove={canApprove} /> : <Mappings canEdit={canEdit} canApprove={canApprove} />}
+    <Tabs tabs={[{ id: 'consent', label: 'Consent notices' }, { id: 'mapping', label: 'Role mapping' }, { id: 'reach', label: 'Reach totals' }]} active={tab} onChange={setTab} />
+    {tab === 'consent' ? <Notices canEdit={canEdit} canApprove={canApprove} /> : tab === 'mapping' ? <Mappings canEdit={canEdit} canApprove={canApprove} /> : <Reach />}
   </div>;
 }
 
@@ -91,4 +91,16 @@ function DraftMapping({ id, version, canEdit, canApprove, busy, run }: { id: str
       {dirty && <p className="small muted">Save the draft before publishing.</p>}
     </div>;
   }}</Async>;
+}
+
+/* ------------------------------- reach totals ------------------------------- */
+function Reach() {
+  const st = useApi<any>('/admin/demographics');
+  const cell = (n: number | null) => n === null ? 'Hidden (small group)' : n;
+  const Table = ({ title, rows }: { title: string; rows: { key: string; n: number | null }[] }) => <div><h3 style={{ marginTop: 0 }}>{title}</h3>{rows.length === 0 ? <p className="muted small">No answers yet.</p> : <div className="table-wrap"><table><thead><tr><th>Answer</th><th>People</th></tr></thead><tbody>{rows.map((r) => <tr key={r.key}><td>{r.key}</td><td>{cell(r.n)}</td></tr>)}</tbody></table></div>}</div>;
+  return <Async state={st}>{(d) => <div className="stack">
+    <p className="muted small">Totals only, from people who chose to answer. Any group smaller than {d.minGroupSize} is hidden. None of this is used in a score.</p>
+    <p><strong>People who answered gender and age:</strong> {cell(d.demographics.total)}. <strong>Disability question:</strong> {cell(d.disability.total)}.</p>
+    <Table title="Gender" rows={d.demographics.gender} /><Table title="Age band" rows={d.demographics.ageBand} /><Table title="Disability" rows={d.disability.status} />
+  </div>}</Async>;
 }

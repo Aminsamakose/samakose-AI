@@ -25,8 +25,8 @@ describe('every endpoint enforces its permission for every role', () => {
   const guarded = routes.filter((r) => r.permission && r.auth !== 'public' && r.auth !== 'webhook');
   it('has a permission on every session route that touches business data', () => {
     const open = routes.filter((r) => !r.permission && r.auth !== 'public' && r.auth !== 'webhook').map((r) => `${r.method} ${r.path}`);
-    // Open to any signed-in user by design: own profile, own notifications, search (scoped inside), job status (owner-checked), password and MFA
-    for (const p of open) expect(p).toMatch(/\/auth\/|\/notifications|\/search|\/jobs\/:id/);
+    // Open to any signed-in user by design: own profile, own optional answers and next step (/me), own notifications, search (scoped inside), job status (owner-checked), password and MFA
+    for (const p of open) expect(p).toMatch(/\/auth\/|\/me\/|\/notifications|\/search|\/jobs\/:id/);
   });
   for (const r of guarded) {
     it(`${r.method} ${r.path}`, async () => {
