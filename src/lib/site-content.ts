@@ -8,6 +8,7 @@ type Rec = Record<string, any>;
 export type Faq = { question: string; answer: string };
 export type Testimonial = { quote: string; name: string; role: string; organisation: string };
 export type Partner = { name: string; website: string; note: string };
+export type TeamMember = { name: string; role: string; bio: string; photo: string; linkedin: string };
 export type Stat = { value: string; label: string; source: string };
 export type PublicArticle = { slug: string; title: string; summary: string; date: string; author: string; body: string };
 export type PricingCard = { name: string; audience: string; features: string[]; price: string | null; reference: string | null; period: string; ctaLabel: string; ctaHref: string; highlighted: boolean };
@@ -15,7 +16,7 @@ export type PricingView = { confirmed: boolean; banner: string; currency: 'GHS' 
 export type SiteContent = {
   pricing: PricingView; pricing_settings: Rec;
   analytics: Rec; maintenance: { on: boolean; message: string }; brand: Rec; navigation: Rec; nav: { label: string; href: string }[]; contact: Rec; social: Rec; announcement: Rec; seo: Rec; home: Rec & { sections: HomeSection[] };
-  faqs: Faq[]; testimonials: Testimonial[]; partners: Partner[]; stats: Stat[]; articles: PublicArticle[];
+  faqs: Faq[]; testimonials: Testimonial[]; partners: Partner[]; team: TeamMember[]; stats: Stat[]; articles: PublicArticle[];
 };
 
 const D = (id: string): Rec => ({ ...KIND_BY_ID[id].defaults });
@@ -35,7 +36,7 @@ export function buildPricing(s: Rec, cards: Rec[]): PricingView {
 }
 
 export function defaultSite(): SiteContent {
-  return { pricing: buildPricing(D('pricing_settings'), []), pricing_settings: D('pricing_settings'), analytics: D('analytics'), maintenance: { on: false, message: '' }, brand: D('brand'), navigation: D('navigation'), nav: parseMenu(DEFAULT_MENU).items, contact: D('contact'), social: D('social'), announcement: D('announcement'), seo: D('seo'), home: D('home') as any, faqs: [], testimonials: [], partners: [], stats: [], articles: [] };
+  return { pricing: buildPricing(D('pricing_settings'), []), pricing_settings: D('pricing_settings'), analytics: D('analytics'), maintenance: { on: false, message: '' }, brand: D('brand'), navigation: D('navigation'), nav: parseMenu(DEFAULT_MENU).items, contact: D('contact'), social: D('social'), announcement: D('announcement'), seo: D('seo'), home: D('home') as any, faqs: [], testimonials: [], partners: [], team: [], stats: [], articles: [] };
 }
 
 /** What a visitor sees: published copies, plus anything whose scheduled time has passed. Gated items (consent, verification) are checked again here. */
@@ -62,6 +63,7 @@ async function load(): Promise<SiteContent> {
   site.faqs = of('faq') as Faq[];
   site.testimonials = of('testimonial') as Testimonial[];
   site.partners = of('partner') as Partner[];
+  site.team = (of('team_member') as (TeamMember & { position?: string })[]).map((m, i) => ({ m, k: m.position ? Number(m.position) : 1000 + i })).sort((a, b) => a.k - b.k).map((x) => x.m);
   site.stats = of('stat') as Stat[];
   site.pricing = buildPricing(site.pricing_settings, of('pricing_plan'));
   site.articles = (of('article') as PublicArticle[]).sort((a, b) => b.date.localeCompare(a.date));

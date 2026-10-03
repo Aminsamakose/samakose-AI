@@ -212,6 +212,21 @@ export const KINDS: Kind[] = [
     defaults: { name: '', website: '', note: '', permission: false }
   },
   {
+    id: 'team_member', label: 'Team member', plural: 'Team members', group: 'content', singleton: false, titleField: 'name',
+    blurb: 'People shown under "The people behind Samakose" on the About page. A person appears only when they have agreed to be shown. Use Position to set the order, 1 first.',
+    fields: [
+      { key: 'name', label: 'Full name', type: 'text', max: 80, required: true },
+      { key: 'role', label: 'Role', type: 'text', max: 100, required: true, hint: 'For example Chief of Staff.' },
+      { key: 'bio', label: 'Short biography', type: 'textarea', max: 700, hint: 'Two to four sentences. State only what can be verified.' },
+      url('photo', 'Photo address', 'Upload the photo in the Media library, then paste its address here, for example /media/abc123. Use a clear head and shoulders photo.'),
+      { key: 'position', label: 'Position in the list', type: 'text', max: 3, hint: 'A number. 1 is shown first. Leave empty to show last.' },
+      url('linkedin', 'LinkedIn address (optional)'),
+      { key: 'consent', label: 'This person has agreed to be shown on the website, with their photo and biography', type: 'bool' }
+    ],
+    gates: [{ key: 'consent', message: 'Confirm the person has agreed to be shown on the website' }],
+    defaults: { name: '', role: '', bio: '', photo: '', position: '', linkedin: '', consent: false }
+  },
+  {
     id: 'stat', label: 'Result', plural: 'Impact results', group: 'content', singleton: false, titleField: 'label',
     blurb: 'Headline numbers. Each must be backed by a source and marked verified before it is shown.',
     fields: [
@@ -282,6 +297,7 @@ export function validateData(kind: Kind, input: unknown, opts: { forPublish?: bo
     else if (lines.some((l) => l.length > 120)) errs.features = 'Keep each point under 120 characters';
     if (out.ctaLabel && !out.ctaHref) errs.ctaHref = 'Add an address for the button';
   }
+  if (kind.id === 'team_member' && out.position && !/^\d{1,3}$/.test(String(out.position))) errs.position = 'Enter a whole number such as 1 or 2';
   if (kind.id === 'pricing_settings') {
     if (out.currency && !['GHS', 'USD'].includes(String(out.currency))) errs.currency = 'Choose GHS or USD';
     if (!out.currency) out.currency = 'GHS';
