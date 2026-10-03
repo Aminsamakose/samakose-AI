@@ -82,7 +82,7 @@ export const Card = ({ title, actions, children, className }: { title?: ReactNod
 /** Whole numbers count up once; anything else (money, scores with decimals, text) is shown as it is. */
 export function AnimatedValue({ value }: { value: ReactNode }) {
   const raw = typeof value === 'number' ? String(value) : typeof value === 'string' ? value : '';
-  if (/^\d{1,3}(,\d{3})*$|^\d+$/.test(raw) && Number(raw.replace(/,/g, '')) < 1e9) return <CountUp to={Number(raw.replace(/,/g, ''))} />;
+  if (/^\d{1,3}(,\d{3})*$|^\d+$/.test(raw) && Number(raw.replace(/,/g, '')) < 1e9) return <CountUp to={Number(raw.replace(/,/g, ''))} onChangeOnly />;
   return <>{value}</>;
 }
 export const Tile = ({ label, value, hint, tone }: { label: string; value: ReactNode; hint?: string; tone?: string }) => (

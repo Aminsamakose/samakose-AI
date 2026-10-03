@@ -32,16 +32,23 @@ export function Item({ children, className }: { children: ReactNode; className?:
 }
 
 /** Counts up to a value when first seen. Shows the final value immediately for reduced motion. */
-export function CountUp({ to, duration = 1.1, className }: { to: number; duration?: number; className?: string }) {
+export function CountUp({ to, duration = 1.1, className, onChangeOnly = false }: { to: number; duration?: number; className?: string; onChangeOnly?: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
   const reduce = useReducedMotion();
-  const [v, setV] = useState(reduce ? to : 0);
+  const [v, setV] = useState(reduce || onChangeOnly ? to : 0);
+  const shown = useRef(reduce || onChangeOnly ? to : 0);
   useEffect(() => {
+    if (onChangeOnly) {
+      /* Dashboards: the real figure is there from the first paint. Only a later change animates, from the old figure. */
+      if (reduce || shown.current === to) { shown.current = to; setV(to); return; }
+      const c = animate(shown.current, to, { duration: Math.min(duration, 0.6), ease: [0.2, 0.7, 0.3, 1], onUpdate: (x) => setV(Math.round(x)), onComplete: () => { shown.current = to; } });
+      return () => c.stop();
+    }
     if (!inView) return;
     if (reduce) { setV(to); return; }
     const c = animate(0, to, { duration, ease: [0.2, 0.7, 0.3, 1], onUpdate: (x) => setV(Math.round(x)) });
     return () => c.stop();
-  }, [inView, to, duration, reduce]);
+  }, [inView, to, duration, reduce, onChangeOnly]);
   return <span ref={ref} className={className} style={{ fontVariantNumeric: 'tabular-nums' }}>{v.toLocaleString('en-GB')}</span>;
 }
