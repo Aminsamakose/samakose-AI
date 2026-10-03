@@ -198,6 +198,8 @@ export const diagnostics = pgTable('diagnostics', {
   frameworkVersionId: uuid('framework_version_id').references((): any => frameworkVersions.id),
   /** The team round this diagnostic was built from, when it came from one. */
   assessmentRoundId: uuid('assessment_round_id'),
+  /** How the answers were actually given: self, hybrid, team, consultant or imported. Null for diagnostics taken before this was recorded. Scoring does not read it. */
+  assessmentMode: text('assessment_mode'),
   createdAt: created()
 }, (t) => [index('diag_case_idx').on(t.caseId)]);
 

@@ -169,6 +169,13 @@
       "when": 1791492224083,
       "tag": "0023_phase_a_feedback",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791578624083,
+      "tag": "0024_phase_a_assessment_mode",
+      "breakpoints": true
     }
   ]
 }
