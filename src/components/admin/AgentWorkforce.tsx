@@ -55,7 +55,7 @@ function Detail({ id, canEdit, onChange }: { id: string; canEdit: boolean; onCha
           <Field label="Warn at (%)" name="alertPct">{(p) => <input {...p} type="number" min={1} max={99} disabled={!canEdit} value={lim.alertPct ?? String(a.limits.alertPct)} onChange={(e) => setLim({ ...lim, alertPct: e.target.value })} />}</Field>
           <Field label="When a limit is reached" name="onLimit">{(p) => <select {...p} disabled={!canEdit} value={lim.onLimit ?? a.limits.onLimit} onChange={(e) => setLim({ ...lim, onLimit: e.target.value })}><option value="throttle">Hold new tasks until the limit resets</option><option value="pause">Pause the agent</option></select>}</Field>
           {canEdit && <Button variant="primary" loading={busy === 'limits'} disabled={!Object.keys(lim).length} onClick={() => save('limits', async () => { await api.patch(`/admin/agents/${id}`, { limits: Object.fromEntries(Object.entries(lim).map(([k, v]) => [k, k === 'onLimit' ? v : Number(v)])) }); setLim({}); }, 'Limits saved')}>Save limits</Button>}
-          <p className="small muted" style={{ marginTop: 8 }}>The default limits are placeholders. They stop a runaway loop, not normal use. A monthly cost cap is still to be set.</p>
+          <p className="small muted" style={{ marginTop: 8 }}>The default limits are placeholders. They stop a runaway loop, not normal use. The platform-wide monthly cost cap is set in Settings and applies to all agents together.</p>
         </Card>
         <Card title="What this agent may and may not do">
           <h3 className="small">Permitted</h3><ul>{(cfg.permittedActions ?? []).map((x: string) => <li key={x}>{x}</li>)}</ul>
