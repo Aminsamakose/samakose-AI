@@ -9,7 +9,7 @@ import { allow, need } from './common';
 
 /**
  * Billing configuration for Finance. It is stored apart from the public pricing cards, which never read or write it,
- * and the finance tables (plans, contracts, invoices) never read the public cards. Tax is off until Finance confirms Samakose's position.
+ * and the finance tables (plans, contracts, invoices) never read the public cards. Tax is off until Finance confirms Samakose Accelerator Lab's position.
  */
 export type Billing = {
   currency: 'GHS' | 'USD'; usdReferenceEnabled: boolean;

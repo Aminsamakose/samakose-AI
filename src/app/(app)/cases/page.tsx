@@ -7,7 +7,7 @@ import { CASE_STATE_ORDER, MaturityBadge, StateBadge, useMe, one } from '@/compo
 type Row = { id: string; code: string; orgName: string; region: string | null; status: string; programmeName: string | null; consultantName: string | null; score: number | null; maturity: string | null; updatedAt: string };
 
 export default function CasesPage() {
-  useEffect(() => { document.title = 'Cases | Samakose'; }, []);
+  useEffect(() => { document.title = 'Cases | Business Doctor'; }, []);
   const { me, can, ready } = useMe();
   const [status, setStatus] = useState('');
   const [programmeId, setProgrammeId] = useState('');

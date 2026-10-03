@@ -15,7 +15,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <dl style={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', gap: '8px 16px', margin: 0 }}>
         <dt>Business</dt><dd>{v.organisation}</dd><dt>Level</dt><dd>{v.level}</dd>
         <dt>Issued</dt><dd>{fmt(v.issuedAt)}</dd><dt>{v.status === 'Revoked' ? 'Revoked' : 'Valid until'}</dt><dd>{fmt(v.status === 'Revoked' ? v.revokedAt : v.expiresAt)}</dd>
-        <dt>Issued by</dt><dd>Samakose, The Business Doctor</dd>
+        <dt>Issued by</dt><dd>Samakose Accelerator Lab, Business Doctor</dd>
       </dl>
       <p className="small" style={{ opacity: 0.8 }}>This page confirms the level and dates only. It is not a credit decision or a guarantee, and it shows no scores or private records. The business decides whether to share it.</p>
     </>}

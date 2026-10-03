@@ -36,7 +36,7 @@ export function SiteFooter({ site }: { site: SiteContent }) {
           </address>
         </div>
         <div className="flex flex-col gap-2 border-t border-white/15 py-6 text-xs text-white/60 sm:flex-row sm:justify-between">
-          <p>&copy; {new Date().getFullYear()} {site.brand.siteName}. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Samakose Accelerator Lab. All rights reserved.</p>
           <p className="flex flex-wrap gap-x-4 gap-y-1"><Link href="/privacy" className="inline-flex min-h-11 items-center text-white/70 underline underline-offset-2">Privacy notice</Link><Link href="/terms" className="inline-flex min-h-11 items-center text-white/70 underline underline-offset-2">Terms of use</Link><span>Illustrations and sample figures are labelled as examples.</span></p>
         </div>
       </Container>

@@ -35,7 +35,7 @@ function Workspace() {
   const { me, can, ready } = useMe();
   const st = useApi<CaseData>(`/cases/${id}`);
   const c = st.data;
-  useEffect(() => { document.title = c ? `${c.code} | Samakose` : 'Case | Samakose'; }, [c]);
+  useEffect(() => { document.title = c ? `${c.code} | Business Doctor` : 'Case | Business Doctor'; }, [c]);
 
   const tabs = useMemo(() => CASE_TABS.filter((t) => { const p = TAB_PERMISSION[t.id]; return !p || can(p[0], p[1]); }).map((t) => ({ id: t.id, label: t.label })), [ready]); // eslint-disable-line react-hooks/exhaustive-deps
   const requested = sp.get('tab') ?? 'overview';

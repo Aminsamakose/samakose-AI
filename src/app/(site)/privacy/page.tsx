@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import { LegalPage } from '@/components/site/LegalPage';
 import { getSite, contactOf } from '@/lib/site-content';
 
-export const metadata: Metadata = { title: 'Privacy notice', description: 'How Samakose handles personal information collected through this website and platform.' };
+export const metadata: Metadata = { title: 'Privacy notice', description: 'How Samakose Accelerator Lab handles personal information collected through this website and platform.' };
 
 const body = (SITE: { email: string; phone: string; address: string[] }) => `
 ## Who we are
-Samakose is based at ${SITE.address.join(', ')}. You can reach us at ${SITE.email} or ${SITE.phone}. We are responsible for the personal information described in this notice.
+Samakose Accelerator Lab is based at ${SITE.address.join(', ')}. You can reach us at ${SITE.email} or ${SITE.phone}. We are responsible for the personal information described in this notice.
 
 ## What we collect
 **When you send us a message or sign up.** Your name, email address, organisation, phone number, the topic you are interested in, your message, and a record that you agreed to be contacted. We also store a one-way scrambled form of your connection address, which helps us spot spam without keeping the address itself.

@@ -26,7 +26,7 @@ export default function ContractsPage() {
     { key: 'actions', label: 'Actions', render: (r) => <Button size="sm" onClick={() => setManaging(r)} aria-label={`${canEdit ? 'Manage' : 'View'} contract ${r.code}`}>{canEdit ? 'Manage' : 'View'}</Button> }
   ];
   return <>
-    <PageHead title="Contracts" sub="Agreements between Samakose and organisations. Active contracts ending within 30 days are flagged." actions={canCreate ? <Button variant="primary" onClick={() => setCreating(true)}>New contract</Button> : undefined} />
+    <PageHead title="Contracts" sub="Agreements between Samakose Accelerator Lab and organisations. Active contracts ending within 30 days are flagged." actions={canCreate ? <Button variant="primary" onClick={() => setCreating(true)}>New contract</Button> : undefined} />
     <Card>
       <DataTable<Contract> endpoint="/contracts" columns={cols} params={{ status }} exportable={me.can('contracts', 'export')} placeholder="Search by contract or organisation"
         defaultSort={{ key: 'end', dir: 'asc' }} refreshKey={tick} toolbar={<StatusFilter label="Status" value={status} onChange={setStatus} options={STATUSES} />}

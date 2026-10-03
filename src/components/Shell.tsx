@@ -61,7 +61,7 @@ export function Shell({ user, children }: { user: { name: string; role: Role; em
     <div className="shell">
       {open && <div className="scrim" onClick={() => setOpen(false)} />}
       <nav className={`nav ${open ? 'open' : ''}`} aria-label="Main">
-        <div className="brand"><b>Samakose</b><span>The Business Doctor</span></div>
+        <div className="brand"><b>Business Doctor</b><span>by Samakose Accelerator Lab</span></div>
         {groups.map((g) => <div key={g.title}><h4>{g.title}</h4>{g.items.map((i) => <Link key={i.href} className="item" href={i.href} aria-current={current(i.href) ? 'page' : undefined} onClick={() => setOpen(false)}><Icon name={i.icon} />{i.label}</Link>)}</div>)}
         <Link className="site-link" href="/">Back to the public website</Link>
       </nav>

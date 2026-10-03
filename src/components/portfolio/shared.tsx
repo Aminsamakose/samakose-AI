@@ -15,5 +15,5 @@ export function usePerms() {
   const can = (res: string, act: string) => !!me.data?.permissions?.[res]?.includes(act);
   return { ready: !!me.data, role: me.data?.user.role ?? null, can, me };
 }
-export function useTitle(t: string) { useEffect(() => { document.title = `${t} | Samakose`; }, [t]); }
+export function useTitle(t: string) { useEffect(() => { document.title = `${t} | Business Doctor`; }, [t]); }
 export const num = (v: string) => (v.trim() === '' ? null : Number(v));

@@ -49,7 +49,7 @@ export function OrgForm({ org, ownerOnly, onDone, onCancel }: { org?: OrgRow; ow
     {!editing && <fieldset className="stack" style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
       <legend>Consent</legend>
       <Field label="Consent given by" name="consentBy" required error={e.consentBy} hint="Full name of the person who agreed on behalf of the organisation">{(p) => <input {...p} {...i('consentBy')} maxLength={160} />}</Field>
-      <div className="field"><label><input type="checkbox" name="consent" checked={form.values.consent} onChange={(ev) => { form.set('consent', ev.target.checked); setLocal((l) => { const n = { ...l }; delete n.consent; return n; }); }} aria-invalid={e.consent ? true : undefined} aria-describedby={e.consent ? 'consent-err' : undefined} /> The organisation has agreed to Samakose processing its business data for diagnostics and programme reporting.</label>
+      <div className="field"><label><input type="checkbox" name="consent" checked={form.values.consent} onChange={(ev) => { form.set('consent', ev.target.checked); setLocal((l) => { const n = { ...l }; delete n.consent; return n; }); }} aria-invalid={e.consent ? true : undefined} aria-describedby={e.consent ? 'consent-err' : undefined} /> The organisation has agreed to Samakose Accelerator Lab processing its business data for diagnostics and programme reporting.</label>
         {e.consent && <span className="err" id="consent-err" role="alert">{e.consent}</span>}</div>
     </fieldset>}
     <div className="form-actions"><Button variant="primary" type="submit" loading={form.busy}>{editing ? 'Save changes' : 'Register organisation'}</Button>{onCancel && <Button type="button" onClick={onCancel}>Cancel</Button>}</div>
