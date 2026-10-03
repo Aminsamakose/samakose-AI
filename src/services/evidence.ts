@@ -80,6 +80,17 @@ const safeName = (n: string) => path.basename(n).replace(/[^\w.\- ()]/g, '_').re
 export async function uploadDocument(ctx: Ctx, form: FormData) {
   allow(ctx, 'documents', 'create');
   const u = need(ctx).user;
+  const caseId = (form.get('caseId') as string) || null;
+  let orgId = (form.get('orgId') as string) || u.orgId;
+  if (caseId) { const cs = await assertCase(ctx, caseId); orgId = cs.orgId; }
+  else if (orgId) await assertOrg(ctx, orgId);
+  if (!orgId) throw fieldError({ orgId: 'Choose the organisation this document belongs to' });
+  return storeDocument(ctx, form, orgId, caseId);
+}
+
+/** Checks and stores one uploaded file for a business. Callers decide who may upload and for which business; the file rules are the same for everyone. */
+export async function storeDocument(ctx: Ctx, form: FormData, orgId: string, caseId: string | null) {
+  const u = need(ctx).user;
   const file = form.get('file');
   if (!(file instanceof File) || !file.size) throw fieldError({ file: 'Choose a file to upload' });
   if (file.size > env.maxUploadBytes) throw fieldError({ file: `Files can be at most ${Math.round(env.maxUploadBytes / 1048576)} MB` });
@@ -89,11 +100,6 @@ export async function uploadDocument(ctx: Ctx, form: FormData) {
   if (!type) throw fieldError({ file: `This file type is not accepted. Use ${ALLOWED_EXTENSIONS.join(', ')}` });
   const buf = Buffer.from(await file.arrayBuffer());
   if (!type.magic(buf)) throw fieldError({ file: 'The file content does not match its type' });
-  const caseId = (form.get('caseId') as string) || null;
-  let orgId = (form.get('orgId') as string) || u.orgId;
-  if (caseId) { const cs = await assertCase(ctx, caseId); orgId = cs.orgId; }
-  else if (orgId) await assertOrg(ctx, orgId);
-  if (!orgId) throw fieldError({ orgId: 'Choose the organisation this document belongs to' });
   const now = new Date();
   const key = [String(now.getUTCFullYear()), String(now.getUTCMonth() + 1).padStart(2, '0'), crypto.randomUUID()].join('/');
   await storage().put(key, buf, type.mime);
@@ -123,6 +129,11 @@ export async function downloadDocument(ctx: Ctx, id: string) {
   if (d.caseId) await assertCase(ctx, d.caseId);
   else await assertOrg(ctx, d.orgId);
   if (u.role === 'OWNER' && u.orgId !== d.orgId) throw notFound('Document not found');
+  return sendDocument(ctx, d);
+}
+
+/** Streams a stored document after checking its fingerprint. The caller has already decided the person may read it. */
+export async function sendDocument(ctx: Ctx, d: typeof schema.documents.$inferSelect) {
   const data = await storage().get(d.storageKey);
   if (!data) throw new ApiError(410, 'file_missing', 'The stored file is no longer available');
   if (sha256(data) !== d.sha256) throw new ApiError(500, 'integrity_failed', 'The stored file failed its integrity check');

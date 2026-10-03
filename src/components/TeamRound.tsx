@@ -4,7 +4,8 @@ import { api, errText } from '@/lib/client/api';
 import { Async, Badge, Button, Card, ConfirmButton, Empty, LinkButton, useApi, useToast } from '@/components/ui';
 
 type Area = { code: string; name: string; confirmed: boolean; who: string; total: number; answered: number; gates: number };
-type View = { round: null | { id: string; total: number; answered: number; areas: Area[]; blockers: { code: string; message: string }[]; canSubmit: boolean } };
+type Upload = { question: string; document: string; documentId: string | null; filename: string; uploadedBy: string };
+type View = { round: null | { id: string; total: number; answered: number; areas: Area[]; uploads: Upload[]; blockers: { code: string; message: string }[]; canSubmit: boolean } };
 
 /** The owner's team assessment: open it, watch each area's progress, and submit once. Colleagues answer as drafts. Scoring only sees the full set at submission. */
 export function TeamRound() {
@@ -34,6 +35,9 @@ function Round({ caseId }: { caseId: string }) {
       <div className="table-wrap"><table><caption className="sr">Progress by assessment area</caption><thead><tr><th>Area</th><th>Answered by</th><th className="r">Progress</th></tr></thead>
         <tbody>{r.areas.map((a) => <tr key={a.code || 'other'}><td>{a.name}{a.gates > 0 && <> <Badge tone="info">Key questions</Badge></>}</td>
           <td>{a.who}{!a.confirmed && <div className="small muted">Not confirmed yet</div>}</td><td className="r num">{a.answered} of {a.total}</td></tr>)}</tbody></table></div>
+      {r.uploads.length > 0 && <div className="table-wrap"><table><caption>Documents attached to answers. Check them before you submit.</caption><thead><tr><th>Question</th><th>Document</th><th>Added by</th><th><span className="sr">Actions</span></th></tr></thead>
+        <tbody>{r.uploads.map((u) => <tr key={u.question}><td className="mono">{u.question}</td><td>{u.documentId ? <a href={`/api/v1/me/rounds/${r.id}/documents/${u.documentId}/download`}>{u.filename}</a> : u.filename}</td><td>{u.uploadedBy}</td>
+          <td><ConfirmButton label="Remove" message={`The answer ${u.question} goes back to Self-reported. The file stays on record.`} onConfirm={async () => { await api.post(`/rounds/${r.id}/answers/${u.question}/detach`, {}); toast('Document removed from the answer'); st.reload(); }} /></td></tr>)}</tbody></table></div>}
       {r.blockers.length > 0 && <div className="alert" role="status"><b>Before you can submit</b><ul style={{ margin: '6px 0 0', paddingLeft: 20 }}>{r.blockers.map((b, i) => <li key={i}>{b.message}</li>)}</ul></div>}
       {err && <div className="alert bad" role="alert">{err}</div>}
       <div className="form-actions">

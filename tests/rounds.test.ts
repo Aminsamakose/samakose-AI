@@ -148,3 +148,75 @@ describe('team assessment rounds', () => {
     expect((await q(`select count(*)::int n from response_drafts where round_id=$1`, [id])).rows[0].n).toBe(4);
   });
 });
+
+const pdf = (name = 'statement.pdf') => { const f = new FormData(); f.set('file', new File([new Uint8Array(Buffer.from('%PDF-1.4 test statement'))], name)); return f; };
+const upl = (s: Session, id: string, form: FormData) => call('POST', `/me/rounds/${id}/documents`, { cookie: s.cookie, form });
+
+describe('colleague evidence uploads', () => {
+  async function setup() {
+    const w = await world();
+    const { id } = (await api(w.owner).post(`/cases/${w.caseId}/round`, {})).data; await pinBank(id, w.fin, w.own);
+    await api(w.owner).put(`/team/assignments/${w.fin}`, { memberId: w.memberId });
+    await api(w.owner).put(`/team/assignments/${w.own}`, { memberId: null });
+    return { ...w, id };
+  }
+
+  it('a colleague sees and downloads only their own uploads; the owner sees all; other businesses see none', async () => {
+    const w = await setup();
+    const mine = await upl(w.colleague, w.id, pdf()); expect(mine.status, JSON.stringify(mine.error)).toBe(201);
+    const ownerDoc = await upl(w.owner, w.id, pdf('licence.pdf')); expect(ownerDoc.status).toBe(201);
+    expect((await api(w.colleague).get(`/me/rounds/${w.id}/documents`)).data.map((d: any) => d.code)).toEqual([mine.data.code]);
+    expect((await api(w.owner).get(`/me/rounds/${w.id}/documents`)).data.length).toBe(2);
+    expect((await api(w.colleague).get(`/me/rounds/${w.id}/documents/${mine.data.id}/download`)).status).toBe(200);
+    expect((await api(w.colleague).get(`/me/rounds/${w.id}/documents/${ownerDoc.data.id}/download`)).status).toBe(404);
+    const other = await setup();
+    expect((await api(other.colleague).get(`/me/rounds/${w.id}/documents`)).status).toBe(404);
+    expect((await upl(other.colleague, w.id, pdf())).status).toBe(404);
+    expect((await upl(await makeUser('EXPERT'), w.id, pdf())).status).toBe(403);
+  });
+
+  it('refuses a wrong file type, a mismatched file, and uploads beyond the daily limit', async () => {
+    const w = await setup();
+    const bad = new FormData(); bad.set('file', new File([new Uint8Array(Buffer.from('MZ not a pdf'))], 'x.pdf'));
+    expect((await upl(w.colleague, w.id, bad)).status).toBe(400);
+    const exe = new FormData(); exe.set('file', new File([new Uint8Array(Buffer.from('MZ'))], 'x.exe'));
+    expect((await upl(w.colleague, w.id, exe)).status).toBe(400);
+    for (let i = 0; i < 20; i++) await q(`insert into documents (org_id,case_id,filename,mime,size,sha256,storage_key,uploaded_by) values ($1,$2,'f.pdf','application/pdf',1,'x','k/'||gen_random_uuid(),$3)`, [w.org.id, w.caseId, w.colleague.userId]);
+    expect((await upl(w.colleague, w.id, pdf())).status).toBe(429);
+  });
+
+  it('a colleague can mark Document-supported only with their own stored document, never Verified', async () => {
+    const w = await setup();
+    const mine = (await upl(w.colleague, w.id, pdf())).data; const theirs = (await upl(w.owner, w.id, pdf('o.pdf'))).data;
+    const put = (a: any) => api(w.colleague).put(`/me/rounds/${w.id}/answers`, { answers: { A1: a } });
+    expect((await put({ value: 3, evidence: 'Document-supported' })).status).toBe(400); // no document
+    expect((await put({ value: 3, evidence: 'Document-supported', ref: theirs.code })).status).toBe(400); // someone else's file
+    expect((await put({ value: 3, evidence: 'Document-supported', ref: 'doc-nope' })).status).toBe(400);
+    expect((await put({ value: 3, evidence: 'Verified', ref: mine.code })).status).toBe(400);
+    expect((await put({ value: 3, evidence: 'Document-supported', ref: mine.code })).status).toBe(200);
+    expect((await api(w.colleague).get('/me/round')).data.round.answers.A1).toMatchObject({ evidence: 'Document-supported', ref: mine.code });
+    // A quarantined document cannot be attached.
+    await q(`update documents set status='Quarantined' where id=$1`, [mine.id]);
+    expect((await put({ value: 3, evidence: 'Document-supported', ref: mine.code })).status).toBe(400);
+    // Another business's document cannot be attached by this business's owner.
+    const o2 = await setup(); const foreign = (await upl(o2.owner, o2.id, pdf('f.pdf'))).data;
+    expect((await api(w.owner).put(`/me/rounds/${w.id}/answers`, { answers: { B1: { value: 2, evidence: 'Document-supported', ref: foreign.code } } })).status).toBe(400);
+  });
+
+  it('the owner sees attached documents, can detach one, and the submitted evidence carries the document', async () => {
+    const w = await setup();
+    const doc = (await upl(w.colleague, w.id, pdf())).data;
+    await api(w.colleague).put(`/me/rounds/${w.id}/answers`, { answers: { A1: { value: 3, evidence: 'Document-supported', ref: doc.code }, A2: { value: 2, evidence: 'Document-supported', ref: doc.code } } });
+    const view = (await api(w.owner).get(`/cases/${w.caseId}/round`)).data.round;
+    expect(view.uploads.map((u: any) => u.question).sort()).toEqual(['A1', 'A2']); expect(view.uploads[0]).toMatchObject({ filename: 'statement.pdf', document: doc.code });
+    expect((await api(w.colleague).post(`/rounds/${w.id}/answers/A2/detach`, {})).status).toBe(403);
+    expect((await api(w.owner).post(`/rounds/${w.id}/answers/A2/detach`, {})).status).toBe(200);
+    expect((await api(w.owner).post(`/rounds/${w.id}/answers/A2/detach`, {})).status).toBe(422); // nothing left to detach
+    expect((await api(w.colleague).get('/me/round')).data.round.answers.A2).toMatchObject({ evidence: 'Self-reported', ref: null });
+    await api(w.owner).put(`/me/rounds/${w.id}/answers`, { answers: { B1: { value: 4 }, B2: { value: 3 } } });
+    const done = await api(w.owner).post(`/rounds/${w.id}/submit`, {}); expect(done.status, JSON.stringify(done.error)).toBe(201);
+    const rows = (await q(`select question_code c, evidence_class e, evidence_ref r from responses where diagnostic_id=$1 order by 1`, [done.data.id])).rows;
+    expect(rows.find((r) => r.c === 'A1')).toMatchObject({ e: 'Document-supported', r: doc.code });
+    expect(rows.find((r) => r.c === 'A2')).toMatchObject({ e: 'Self-reported', r: null });
+  });
+});
