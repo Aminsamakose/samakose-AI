@@ -121,6 +121,13 @@ export const organisations = pgTable('organisations', {
   consentAt: timestamp('consent_at', { withTimezone: true }),
   consentBy: text('consent_by'),
   status: text('status').notNull().default('Active'),
+  /** Where the organisation operates. The country comes first so the platform can scale beyond Ghana. */
+  countryCode: text('country_code').notNull().default('GH').references((): any => countrySettings.countryCode),
+  geoUnitId: uuid('geo_unit_id').references((): any => geoUnits.id),
+  community: text('community'),
+  urbanRural: text('urban_rural'),
+  yearsOperating: integer('years_operating'),
+  ownershipStructure: text('ownership_structure'),
   createdBy: uuid('created_by'),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdAt: created(), updatedAt: updated()
@@ -744,3 +751,103 @@ export const certificates = pgTable('certificates', {
   /** The owner has agreed that anyone with the certificate link may confirm its level and validity. Off by default. */
   verifyPublic: boolean('verify_public').notNull().default(false)
 }, (t) => [index('cert_case_idx').on(t.caseId, t.proposedAt), index('cert_org_idx').on(t.orgId)]);
+
+
+/* ------------------- registration routing, phase 1 -------------------- */
+/** One row per country. Ghana first. Nothing else in the platform should assume Ghana. */
+export const countrySettings = pgTable('country_settings', {
+  countryCode: text('country_code').primaryKey(),
+  name: text('name').notNull(),
+  currency: text('currency').notNull(),
+  phoneCode: text('phone_code').notNull(),
+  defaultLanguage: text('default_language').notNull().default('en'),
+  /** Names of the location levels, for example Region, District, Community. */
+  levelLabels: jsonb('level_labels').notNull().$type<string[]>().default(sql`'[]'::jsonb`),
+  dataProtectionRegime: text('data_protection_regime'),
+  regulatorName: text('regulator_name'),
+  youthMaxAge: integer('youth_max_age').notNull().default(35),
+  active: boolean('active').notNull().default(false),
+  createdAt: created(), updatedAt: updated()
+});
+
+/** Location hierarchy as reference data: country, region, district, community. */
+export const geoUnits = pgTable('geo_units', {
+  id: id(),
+  countryCode: text('country_code').notNull().references(() => countrySettings.countryCode),
+  level: integer('level').notNull(),
+  parentId: uuid('parent_id').references((): any => geoUnits.id),
+  code: text('code'),
+  name: text('name').notNull(),
+  active: boolean('active').notNull().default(true),
+  source: text('source'),
+  sourceDate: date('source_date'),
+  createdAt: created()
+}, (t) => [index('geo_parent_idx').on(t.parentId), index('geo_country_level_idx').on(t.countryCode, t.level)]);
+
+export const CONSENT_PURPOSES = ['account', 'assessment', 'team_invites', 'demographics', 'disability', 'funder_aggregate'] as const;
+export type ConsentPurpose = (typeof CONSENT_PURPOSES)[number];
+
+/** Versioned consent wording, per purpose and country. */
+export const consentNotices = pgTable('consent_notices', {
+  id: id(),
+  purpose: text('purpose').notNull(),
+  countryCode: text('country_code').notNull().references(() => countrySettings.countryCode),
+  version: integer('version').notNull(),
+  text: text('text').notNull(),
+  effectiveFrom: timestamp('effective_from', { withTimezone: true }),
+  status: text('status').notNull().default('Draft'),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: created()
+}, (t) => [uniqueIndex('consent_notice_uq').on(t.purpose, t.countryCode, t.version)]);
+
+/** Every grant and every withdrawal is a new row. Append-only. */
+export const consents = pgTable('consents', {
+  id: id(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  orgId: uuid('org_id').references(() => organisations.id),
+  noticeId: uuid('notice_id').notNull().references(() => consentNotices.id),
+  action: text('action').notNull(),
+  at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  source: text('source').notNull()
+}, (t) => [index('consent_user_idx').on(t.userId, t.at)]);
+
+/** The routing inputs captured at registration. Job role is not permission. */
+export const registrationAnswers = pgTable('registration_answers', {
+  id: id(),
+  userId: uuid('user_id').notNull().unique().references(() => users.id),
+  orgId: uuid('org_id').references(() => organisations.id),
+  platform: text('platform').notNull(),
+  jobRole: text('job_role').notNull(),
+  jobRoleOther: text('job_role_other'),
+  responsibility: text('responsibility'),
+  assessmentMode: text('assessment_mode').notNull(),
+  suggestionSource: text('suggestion_source').notNull().default('user'),
+  createdAt: created(), updatedAt: updated()
+});
+
+/** Versioned, Administrator-managed mapping from job role to assessment area. One Published version per framework. */
+export const roleMappings = pgTable('role_mappings', {
+  id: id(),
+  frameworkCode: text('framework_code').notNull(),
+  version: integer('version').notNull(),
+  status: text('status').notNull().default('Draft'),
+  data: jsonb('data').notNull(),
+  note: text('note'),
+  createdBy: uuid('created_by').references(() => users.id),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  createdAt: created()
+}, (t) => [uniqueIndex('role_mapping_version_uq').on(t.frameworkCode, t.version)]);
+
+/** Optional demographics and disability status. Kept apart from the organisation record so access and withdrawal stay simple.
+ *  Never read by scoring or diagnosis. Each category needs its own granted consent. */
+export const demographicProfiles = pgTable('demographic_profiles', {
+  id: id(),
+  subjectType: text('subject_type').notNull(),
+  subjectId: uuid('subject_id').notNull(),
+  category: text('category').notNull(),
+  fields: jsonb('fields').notNull().default(sql`'{}'::jsonb`),
+  consentId: uuid('consent_id').notNull().references(() => consents.id),
+  updatedAt: updated()
+}, (t) => [uniqueIndex('demographic_subject_uq').on(t.subjectType, t.subjectId, t.category)]);

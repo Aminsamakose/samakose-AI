@@ -134,6 +134,13 @@
       "when": 1791060224083,
       "tag": "0018_app_role_owns_new_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791146624083,
+      "tag": "0019_registration_routing_phase1",
+      "breakpoints": true
     }
   ]
 }
