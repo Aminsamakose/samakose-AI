@@ -5,7 +5,7 @@ import { can, type Resource } from '../src/lib/rbac';
 
 const AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
-const PUBLIC = ['/', '/login', '/contact', '/faq', '/about', '/services', '/verify/00000000-0000-0000-0000-000000000000'];
+const PUBLIC = ['/', '/platform', '/solutions', '/impact', '/resources', '/pricing', '/login', '/register', '/contact', '/about', '/privacy', '/terms', '/resources/why-evidence-matters-for-your-score'];
 const USERS: [string, string][] = [['ADMIN', 'admin'], ['EXECUTIVE', 'exec'], ['PROGRAMME_MANAGER', 'pm'], ['EXPERT', 'consultant'], ['REVIEWER', 'reviewer'], ['FINANCE', 'finance'], ['OWNER', 'owner'], ['FUNDER', 'funder']];
 const PAGES: { path: string; need?: [Resource, any]; roles?: string[] }[] = [
   { path: '/dashboard', need: ['dashboard', 'read'] }, { path: '/cases', need: ['cases', 'read'] }, { path: '/my-case', roles: ['OWNER'] }, { path: '/reviews', need: ['prescriptions', 'approve'] },
