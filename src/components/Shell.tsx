@@ -36,6 +36,7 @@ const GROUPS: Group[] = [
     { icon: 'users', href: '/admin/users', label: 'Users', need: ['users', 'create'] },
     { icon: 'users', href: '/admin/registrations', label: 'Pending approvals', need: ['users', 'edit'] },
     { icon: 'system', href: '/admin/agents', label: 'AI workforce', need: ['agents', 'read'] },
+    { icon: 'settings', href: '/admin/registration', label: 'Registration settings', need: ['consent', 'read'] },
     { icon: 'inbox', href: '/admin/website', label: 'Website', need: ['content', 'read'] },
     { icon: 'audit', href: '/admin/audit', label: 'Audit trail', need: ['audit', 'read'] },
     { icon: 'settings', href: '/admin/settings', label: 'Settings', need: ['settings', 'read'] },

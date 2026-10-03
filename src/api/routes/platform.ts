@@ -14,6 +14,7 @@ import * as sw from '@/services/switches';
 import * as sys from '@/services/system';
 import * as bill from '@/services/billing';
 import * as inq from '@/services/inquiries';
+import * as rc from '@/services/registration-config';
 import { getJob } from '@/domain/jobs';
 import { need } from '@/services/common';
 import { forbidden, notFound } from '@/lib/errors';
@@ -177,3 +178,16 @@ defineRoute({ method: 'POST', path: '/admin/media', tag: CM, summary: 'Upload an
 defineRoute({ method: 'PATCH', path: '/admin/media/:id', tag: CM, summary: 'Rename or re-describe a file', permission: ['media', 'edit'], body: z.object({ name: z.string().trim().min(1).max(120).optional(), altText: z.string().trim().max(200).nullish(), category: z.string().max(40).optional() }), handler: ({ ctx, params, body }) => media.updateMedia(ctx, params.id, body as any) });
 defineRoute({ method: 'DELETE', path: '/admin/media/:id', tag: CM, summary: 'Delete a file that no page uses', permission: ['media', 'delete'], handler: ({ ctx, params }) => media.deleteMedia(ctx, params.id) });
 defineRoute({ method: 'GET', path: '/admin/command-centre', tag: AD, summary: 'Administrator Command Centre figures', permission: ['users', 'create'], handler: ({ ctx }) => adm.commandCentre(ctx) });
+
+/* ------------------------ registration settings (administrator) ------------------------ */
+
+const RG = 'Registration settings';
+defineRoute({ method: 'GET', path: '/admin/consent-notices', tag: RG, summary: 'Consent wording by purpose and version, with how many people agreed to each', permission: ['consent', 'read'], query: z.object({ country: z.string().length(2).optional() }), handler: ({ ctx, query }) => rc.listNotices(ctx, query.country) });
+defineRoute({ method: 'POST', path: '/admin/consent-notices', tag: RG, summary: 'Start a new draft version of a consent notice', permission: ['consent', 'create'], body: z.object({ purpose: z.string().max(40), countryCode: z.string().length(2).optional(), text: z.string().max(4000) }), handler: async ({ ctx, body }) => status(201, await rc.createNotice(ctx, body)) });
+defineRoute({ method: 'PATCH', path: '/admin/consent-notices/:id', tag: RG, summary: 'Edit a draft notice', permission: ['consent', 'edit'], body: z.object({ text: z.string().max(4000) }), handler: ({ ctx, params, body }) => rc.updateNotice(ctx, params.id, body.text) });
+defineRoute({ method: 'POST', path: '/admin/consent-notices/:id/publish', tag: RG, summary: 'Publish a draft notice and retire the live one', permission: ['consent', 'approve'], body: empty, handler: ({ ctx, params }) => rc.publishNotice(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/admin/role-mappings', tag: RG, summary: 'Role mapping versions by framework', permission: ['role_mapping', 'read'], handler: ({ ctx }) => rc.listMappings(ctx) });
+defineRoute({ method: 'POST', path: '/admin/role-mappings', tag: RG, summary: 'Start a draft mapping, from the reviewed default or from the data sent', permission: ['role_mapping', 'create'], body: z.object({ frameworkCode: z.string().max(20), note: z.string().max(500).optional(), data: z.any().optional() }), handler: async ({ ctx, body }) => status(201, await rc.createMapping(ctx, body)) });
+defineRoute({ method: 'GET', path: '/admin/role-mappings/:id', tag: RG, summary: 'One mapping with its full data', permission: ['role_mapping', 'read'], handler: ({ ctx, params }) => rc.getMapping(ctx, params.id) });
+defineRoute({ method: 'PATCH', path: '/admin/role-mappings/:id', tag: RG, summary: 'Edit a draft mapping', permission: ['role_mapping', 'edit'], body: z.object({ data: z.any().optional(), note: z.string().max(500).optional() }), handler: ({ ctx, params, body }) => rc.updateMapping(ctx, params.id, body) });
+defineRoute({ method: 'POST', path: '/admin/role-mappings/:id/publish', tag: RG, summary: 'Approve and publish a draft mapping', permission: ['role_mapping', 'approve'], body: empty, handler: ({ ctx, params }) => rc.publishMapping(ctx, params.id) });
