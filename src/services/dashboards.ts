@@ -1,3 +1,4 @@
+import { myAreas } from './team';
 import { and, eq, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
@@ -36,6 +37,7 @@ export async function dashboard(ctx: Ctx) {
     case 'REVIEWER': return { ...base, kind: 'reviewer', ...(await reviewer(ctx)) };
     case 'FINANCE': return { ...base, kind: 'finance', ...(await finance(ctx)) };
     case 'OWNER': return { ...base, kind: 'owner', ...(await owner(ctx)) };
+    case 'RESPONDENT': return { ...base, kind: 'respondent', ...(await myAreas(ctx)) };
     case 'FUNDER': return { ...base, kind: 'funder', ...(await funder(ctx)) };
     case 'CONTENT_EDITOR': case 'SITE_MANAGER': return { ...base, kind: 'website', ...(await website(ctx)) };
   }

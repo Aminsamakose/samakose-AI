@@ -148,6 +148,13 @@
       "when": 1791233024083,
       "tag": "0020_ghana_districts",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791319424083,
+      "tag": "0021_phase2_invites",
+      "breakpoints": true
     }
   ]
 }

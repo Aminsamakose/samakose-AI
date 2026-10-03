@@ -159,12 +159,36 @@ export async function resetPassword(ctx: Ctx, token: string, password: string) {
   await audit({ ...ctx, user: { id: u.id, email: u.email } as any }, 'auth.password_reset', 'user', u.id);
   return { ok: true };
 }
-export async function acceptInvite(ctx: Ctx, token: string, password: string, name?: string) {
+/** What an invitation is for, shown before the person sets a password. Does not use up the link. */
+export async function inviteInfo(ctx: Ctx, token: string) {
+  const [t] = await ctx.db.select().from(schema.userTokens)
+    .where(and(eq(schema.userTokens.tokenHash, sha256(token)), eq(schema.userTokens.kind, 'invite'), isNull(schema.userTokens.usedAt), gt(schema.userTokens.expiresAt, new Date()))).limit(1);
+  if (!t) throw new ApiError(400, 'bad_token', 'This link is invalid or has expired. Ask for a new one.');
+  const [u] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, t.userId)).limit(1);
+  if (!u || !u.active) throw new ApiError(400, 'bad_token', 'This link is invalid or has expired. Ask for a new one.');
+  if (u.role !== 'RESPONDENT' || !u.orgId) return { respondent: false as const };
+  const [o] = await ctx.db.select().from(schema.organisations).where(eq(schema.organisations.id, u.orgId)).limit(1);
+  const [n] = await ctx.db.select({ text: schema.consentNotices.text, version: schema.consentNotices.version }).from(schema.consentNotices).where(and(eq(schema.consentNotices.purpose, 'account'), eq(schema.consentNotices.countryCode, o.countryCode), eq(schema.consentNotices.status, 'Published'))).limit(1);
+  return { respondent: true as const, name: u.name, business: o.name, notice: n ?? null };
+}
+
+export async function acceptInvite(ctx: Ctx, token: string, password: string, name?: string, consent?: boolean) {
   const { t, u } = await takeToken(ctx, token, 'invite');
   const problems = passwordProblems(password, u.email, name ?? u.name);
   if (problems.length) throw fieldError({ password: problems.join('. ') });
+  // A colleague is a person in their own right: they agree to the account wording themselves, and it is recorded against that exact wording.
+  let notice: { id: string } | undefined;
+  if (u.role === 'RESPONDENT' && u.orgId) {
+    const [o] = await ctx.db.select({ c: schema.organisations.countryCode }).from(schema.organisations).where(eq(schema.organisations.id, u.orgId)).limit(1);
+    [notice] = await ctx.db.select({ id: schema.consentNotices.id }).from(schema.consentNotices).where(and(eq(schema.consentNotices.purpose, 'account'), eq(schema.consentNotices.countryCode, o?.c ?? 'GH'), eq(schema.consentNotices.status, 'Published'))).limit(1);
+    if (notice && !consent) throw fieldError({ consent: 'Please agree to create your account' });
+  }
   await ctx.db.update(schema.users).set({ passwordHash: await hashPassword(password), name: name?.trim() || u.name, mustChangePassword: false, updatedAt: new Date() }).where(eq(schema.users.id, u.id));
   await ctx.db.update(schema.userTokens).set({ usedAt: new Date() }).where(eq(schema.userTokens.id, t.id));
+  if (u.role === 'RESPONDENT') {
+    if (notice) await ctx.db.insert(schema.consents).values({ userId: u.id, orgId: u.orgId, noticeId: notice.id, action: 'granted', source: 'invitation' });
+    await ctx.db.update(schema.orgMembers).set({ status: 'active', updatedAt: new Date() }).where(and(eq(schema.orgMembers.userId, u.id), eq(schema.orgMembers.status, 'invited')));
+  }
   await audit({ ...ctx, user: { id: u.id, email: u.email } as any }, 'auth.invite_accepted', 'user', u.id);
   return { ok: true };
 }
