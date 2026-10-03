@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { defineRoute, parseCookies, status } from '../framework';
 import { COOKIE } from '@/lib/session';
 import * as auth from '@/services/auth';
+import * as demo from '@/services/demographics';
 import * as users from '@/services/users';
 import { googleCallback, googleEnabled, startGoogle } from '@/services/google';
 import { env } from '@/lib/env';
@@ -49,6 +50,12 @@ defineRoute({ method: 'POST', path: '/users/:id/reject', tag: U, summary: 'Rejec
 defineRoute({ method: 'GET', path: '/auth/profile', tag: T, summary: 'Own business profile (business owners)', gateExempt: true, handler: ({ ctx }) => auth.getProfile(ctx) });
 defineRoute({ method: 'PUT', path: '/auth/profile', tag: T, summary: 'Complete or update the business profile. Required before a new owner can use the platform', gateExempt: true,
   body: z.object({ name: z.string().trim().max(160), type: z.enum(['SME', 'AGRIFOOD', 'ESO']), sector: z.string().trim().max(120), region: z.string().trim().max(80), district: z.string().trim().max(120), size: z.string().trim().max(40), contactPhone: z.string().trim().max(40), registrationNumber: z.string().trim().max(60).optional(), consent: z.boolean() }), handler: ({ ctx, body }) => auth.saveProfile(ctx, body) });
+const CAT = z.enum(['demographics', 'disability']);
+defineRoute({ method: 'GET', path: '/me/demographics', tag: T, summary: 'My optional demographic and disability answers, with the consent wording for each', handler: ({ ctx }) => demo.getMine(ctx) });
+defineRoute({ method: 'PUT', path: '/me/demographics/:category', tag: T, summary: 'Save an optional answer. Agreeing is recorded against the wording shown', body: z.object({ gender: z.string().max(40).optional(), ageBand: z.string().max(40).optional(), status: z.string().max(40).optional() }), handler: ({ ctx, params, body }) => demo.save(ctx, CAT.parse(params.category), body) });
+defineRoute({ method: 'DELETE', path: '/me/demographics/:category', tag: T, summary: 'Withdraw consent and remove my answers', handler: ({ ctx, params }) => demo.withdraw(ctx, CAT.parse(params.category)) });
+defineRoute({ method: 'GET', path: '/me/next-step', tag: T, summary: 'The next best action after registration, from the routing answers', handler: ({ ctx }) => demo.nextBestAction(ctx) });
+defineRoute({ method: 'GET', path: '/admin/demographics', tag: T, summary: 'Totals only. Groups below the privacy minimum are hidden', permission: ['consent', 'read'], handler: ({ ctx }) => demo.aggregate(ctx) });
 defineRoute({ method: 'GET', path: '/auth/providers', tag: T, summary: 'Which sign-in options are switched on', auth: 'public', handler: async ({ ctx }) => {
   const s = await allSwitches(ctx.db);
   const open = s['switch.self_registration'];
