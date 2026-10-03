@@ -141,6 +141,13 @@
       "when": 1791146624083,
       "tag": "0019_registration_routing_phase1",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791233024083,
+      "tag": "0020_ghana_districts",
+      "breakpoints": true
     }
   ]
 }
