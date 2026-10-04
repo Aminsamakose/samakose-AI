@@ -103,6 +103,14 @@ describe('team invitations', () => {
     const log = (await q(`select action from audit_log where entity_id=(select id::text from users where lower(email)=$1)`, [email])).rows.map((r: any) => r.action);
     expect(log).toContain('team.invite_cancelled');
   });
+  it('an admin can delete a cancelled colleague invitation, which also clears the membership', async () => {
+    await open(); const { o } = await owner(); const email = `d.${uniq()}@example.org`;
+    const { data } = await invite(o, { email }); await api(o).post(`/team/members/${data.id}/cancel`, {});
+    const uid = (await q(`select id from users where email=$1`, [email])).rows[0].id;
+    expect((await api(admin).del(`/users/${uid}/invitation`)).status).toBe(200);
+    expect((await q(`select count(*)::int n from users where id=$1`, [uid])).rows[0].n).toBe(0);
+    expect((await q(`select count(*)::int n from org_members where user_id=$1`, [uid])).rows[0].n).toBe(0);
+  });
   it('cannot unsend an invitation that was already accepted, and another business cannot', async () => {
     await open(); const a = await owner(); const b = await owner(); const email = `v.${uniq()}@example.org`;
     const { data } = await invite(a.o, { email }); const token = tokenFrom((await lastEmailTo(email)).body);

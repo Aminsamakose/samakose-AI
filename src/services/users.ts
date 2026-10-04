@@ -96,6 +96,30 @@ export async function cancelInvite(ctx: Ctx, id: string) {
   return { ok: true };
 }
 
+/** Delete a cancelled invitation for good. Only someone who never set a password, whose invitation was cancelled first, and who has no records of their own. The audit trail keeps the fact that it happened. */
+export async function deleteInvitee(ctx: Ctx, id: string) {
+  allow(ctx, 'users', 'delete');
+  const c = need(ctx);
+  const [row] = await ctx.db.select().from(u).where(eq(u.id, id)).for('update').limit(1);
+  if (!row) throw notFound('User not found');
+  if (row.id === c.user.id) throw conflict('You cannot delete yourself');
+  if (row.passwordHash) throw unprocessable('This person has an account. Deactivate it instead; deleting would erase their history.');
+  if (row.active) throw unprocessable('Cancel the invitation first, then delete it');
+  try {
+    await ctx.db.transaction(async (tx) => {
+      const mems = await tx.select({ id: schema.orgMembers.id }).from(schema.orgMembers).where(eq(schema.orgMembers.userId, row.id));
+      if (mems.length) await tx.delete(schema.areaAssignments).where(inArray(schema.areaAssignments.memberId, mems.map((m) => m.id)));
+      await tx.delete(schema.orgMembers).where(eq(schema.orgMembers.userId, row.id));
+      await tx.delete(u).where(eq(u.id, row.id)); // sessions, tokens, programmes and notifications go with the record
+    });
+  } catch (e: any) {
+    if ((e?.cause?.code ?? e?.code) === '23503') throw conflict('This record is linked to other work and cannot be deleted. It stays deactivated instead.');
+    throw e;
+  }
+  await audit(ctx, 'user.invite_deleted', 'user', row.id, undefined, { email: row.email, role: row.role });
+  return { ok: true };
+}
+
 async function activeAdmins(ctx: Ctx) {
   return Number(((await ctx.db.select({ n: countOf }).from(u).where(and(eq(u.role, 'ADMIN'), eq(u.active, true))))[0]).n);
 }

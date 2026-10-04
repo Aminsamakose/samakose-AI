@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, ApiFail, dateTime, errText } from '@/lib/client/api';
 import { Async, Badge, Button, Card, ConfirmButton, Field, FormError, KV, Modal, PageHead, Tabs, useApi, useToast } from '@/components/ui';
@@ -76,7 +76,7 @@ function ProgrammeAccess({ u, onSaved }: { u: User; onSaved: () => void }) {
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
   const st = useApi<User>(`/users/${id}`);
-  const toast = useToast();
+  const toast = useToast(); const router = useRouter();
   const [tab, setTab] = useState('by');
   useDocTitle(st.data ? st.data.name : 'User');
   const act = (path: string, msg: string) => async () => { await api.post(`/users/${id}/${path}`); toast(msg); st.reload(); };
@@ -89,6 +89,7 @@ export default function UserDetail() {
           actions={<>
             {u.invited && u.active && <ConfirmButton label="Resend invite" variant="primary" message={`Send a new invitation email to ${u.email}? Earlier links stop being the latest.`} onConfirm={act('resend-invite', 'Invitation sent')} />}
             {u.invited && u.active && <ConfirmButton label="Cancel invitation" variant="danger" message={`Cancel the invitation to ${u.email}? Any link already sent stops working and the pending account is closed. An email already delivered cannot be recalled, but its link will say the invitation was withdrawn. You can invite the person again later.`} onConfirm={act('cancel-invite', 'Invitation cancelled')} />}
+            {u.invited && !u.active && <ConfirmButton label="Delete invitation" variant="danger" message={`Delete ${u.email} for good? This cannot be undone. The audit log keeps a note that it was deleted.`} onConfirm={async () => { await api.del(`/users/${id}/invitation`); toast('Invitation deleted'); router.push('/admin/users'); }} />}
             {locked && <ConfirmButton label="Unlock account" message={`Clear the sign-in lockout for ${u.name}?`} onConfirm={act('unlock', 'Account unlocked')} />}
             {u.mfaEnabled && <ConfirmButton label="Reset two-step" variant="danger" message={`Remove two-step verification for ${u.name}? They are signed out and must set it up again. Only do this after confirming their identity.`} onConfirm={act('reset-mfa', 'Two-step verification reset')} />}
           </>} />
@@ -103,7 +104,8 @@ export default function UserDetail() {
               ['Last sign-in', u.lastLoginAt ? dateTime(u.lastLoginAt) : 'Never'],
               ['Created', dateTime(u.createdAt)]
             ]} />
-            {u.invited && <div className="alert info" style={{ marginTop: 12 }}>This person has not accepted the invitation yet.</div>}
+            {u.invited && u.active && <div className="alert info" style={{ marginTop: 12 }}>This person has not accepted the invitation yet.</div>}
+            {u.invited && !u.active && <div className="alert info" style={{ marginTop: 12 }}>This invitation was cancelled. Its links no longer work. You can delete it, or invite the person again from the Users page.</div>}
           </Card>
           <Card title="Edit account"><EditProfile u={u} self={self} onSaved={st.reload} /></Card>
         </div>

@@ -119,6 +119,25 @@ describe('password flows', () => {
     const log = (await db().select().from(schema.auditLog).where(eq(schema.auditLog.entityId, inv.data.id))).map((l) => l.action);
     expect(log).toEqual(expect.arrayContaining(['user.invited', 'user.invite_cancelled', 'user.invite_reissued']));
   });
+  it('a cancelled invitation can be deleted for good, an active one or an accepted person cannot', async () => {
+    const admin = await makeUser('ADMIN'); const email = `del-${uniq()}@x.test`;
+    const inv = await api(admin).post('/users', { email, name: 'Gone Soon', role: 'EXPERT' });
+    expect((await api(admin).del(`/users/${inv.data.id}/invitation`)).status).toBe(422); // cancel first
+    await api(admin).post(`/users/${inv.data.id}/cancel-invite`);
+    const expert = await makeUser('EXPERT'); expect((await api(expert).del(`/users/${inv.data.id}/invitation`)).status).toBe(403);
+    expect((await api(admin).del(`/users/${inv.data.id}/invitation`)).status).toBe(200);
+    expect((await api(admin).get(`/users/${inv.data.id}`)).status).toBe(404);
+    expect((await db().select().from(schema.users).where(eq(schema.users.id, inv.data.id))).length).toBe(0);
+    const log = (await db().select().from(schema.auditLog).where(eq(schema.auditLog.entityId, inv.data.id))).map((l) => l.action);
+    expect(log).toEqual(expect.arrayContaining(['user.invited', 'user.invite_cancelled', 'user.invite_deleted']));
+    // the address is free again
+    expect((await api(admin).post('/users', { email, name: 'Fresh Start', role: 'EXPERT' })).status).toBe(201);
+    // someone who accepted can never be deleted this way
+    const e2 = `acc2-${uniq()}@x.test`; const i2 = await api(admin).post('/users', { email: e2, name: 'Real Person', role: 'EXPERT' });
+    await call('POST', '/auth/accept-invite', { body: { token: tokenFrom((await lastEmailTo(e2)).body), password: 'Invite-Passw0rd-2026' } });
+    await api(admin).patch(`/users/${i2.data.id}`, { active: false });
+    expect((await api(admin).del(`/users/${i2.data.id}/invitation`)).status).toBe(422);
+  });
   it('refuses to unsend an invitation that was accepted, and needs permission', async () => {
     const admin = await makeUser('ADMIN'); const email = `acc-${uniq()}@x.test`;
     const inv = await api(admin).post('/users', { email, name: 'Active Person', role: 'EXPERT' });
