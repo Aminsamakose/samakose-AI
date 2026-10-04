@@ -1,7 +1,10 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { answerSheet, api, auditActions, call, drain, ensureReference, jobOf, makeOrg, makeUser, uniq, type Session } from './helpers';
-import { db, schema } from '@/db/client';
+import { db, pool, schema } from '@/db/client';
+import fs from 'node:fs';
+import path from 'node:path';
+import { SEED_LIBRARY } from '@/domain/logic';
 
 type World = Awaited<ReturnType<typeof build>>;
 let W: World;
@@ -22,7 +25,13 @@ async function build() {
 }
 const poll = async (s: Session, jobId: string) => { await drain(); const r = await api(s).get(`/jobs/${jobId}`); return r.data; };
 
-beforeAll(async () => { await ensureReference(); W = await build(); });
+// This suite scores against the small legacy test bank, whose dimensions use the six older names. Give it the matching library, then put the live library back.
+beforeAll(async () => {
+  await ensureReference();
+  for (const [code, , dimension] of SEED_LIBRARY) await pool().query('update library_items set dimension=$2 where code=$1', [code, dimension]);
+  W = await build();
+});
+afterAll(async () => { await pool().query(fs.readFileSync(path.resolve(process.cwd(), 'migrations/0027_intervention_library_v2.sql'), 'utf8')); });
 
 describe('the full case lifecycle', () => {
   let caseId = '', caseCode = '', dgnId = '', rxId = '';
