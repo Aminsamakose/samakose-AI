@@ -4,11 +4,12 @@ import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { conflict, fieldError, notFound } from '@/lib/errors';
 import { assertProgramme } from '@/domain/scope';
+import { checkParent, type Level } from '@/domain/logframe';
 import { basisOf, METRICS, progress, valueOf, type Facts, type Metric } from '@/domain/indicators';
 import { allow, loadRules, need } from './common';
 
 const t = schema.programmeIndicators;
-type Input = { name: string; metric: Metric; target: number; dueDate?: string | null; note?: string | null };
+type Input = { name: string; metric: Metric; target: number; dueDate?: string | null; note?: string | null; level?: Level; parentId?: string | null };
 
 /** Counts and averages for one programme, computed from scores. No personal data. */
 export async function programmeFacts(ctx: Ctx, programmeId: string): Promise<Facts> {
@@ -31,7 +32,7 @@ export async function indicatorsWithProgress(ctx: Ctx, programmeId: string, fact
     const hidden = hide && basisOf(metric, f) < min;
     const value = hidden ? null : valueOf(metric, f);
     const p = progress(value, target, r.dueDate, new Date());
-    return { id: r.id, name: r.name, metric, metricLabel: METRICS[metric].label, unit: METRICS[metric].unit, target, dueDate: r.dueDate, note: r.note, value, pct: p.pct, status: hidden ? 'Hidden' : p.status, hidden, minGroupSize: min };
+    return { id: r.id, name: r.name, metric, metricLabel: METRICS[metric].label, unit: METRICS[metric].unit, target, dueDate: r.dueDate, note: r.note, level: r.level as Level, parentId: r.parentId, value, pct: p.pct, status: hidden ? 'Hidden' : p.status, hidden, minGroupSize: min };
   });
 }
 
@@ -40,12 +41,21 @@ export async function listIndicators(ctx: Ctx, programmeId: string) {
   await assertProgramme(ctx, programmeId);
   return indicatorsWithProgress(ctx, programmeId);
 }
+async function validParent(ctx: Ctx, programmeId: string, level: Level, parentId: string | null | undefined, selfId?: string) {
+  if (!parentId) { const m = checkParent(level, null, programmeId); if (m) throw fieldError({ level: m }); return; }
+  if (parentId === selfId) throw fieldError({ parentId: 'A target cannot sit under itself' });
+  const [par] = await ctx.db.select({ level: t.level, programmeId: t.programmeId }).from(t).where(eq(t.id, parentId)).limit(1);
+  if (!par) throw fieldError({ parentId: 'Parent not found' });
+  const m = checkParent(level, par, programmeId); if (m) throw fieldError({ parentId: m });
+}
+
 export async function createIndicator(ctx: Ctx, programmeId: string, b: Input) {
   allow(ctx, 'programmes', 'edit');
   await assertProgramme(ctx, programmeId);
   if (['avg_score', 'pct_improved'].includes(b.metric) && b.target > 100) throw fieldError({ target: 'A target for this measure cannot be above 100' });
+  const level = b.level ?? 'output'; await validParent(ctx, programmeId, level, b.parentId);
   try {
-    const [row] = await ctx.db.insert(t).values({ programmeId, name: b.name.trim(), metric: b.metric, target: String(b.target), dueDate: b.dueDate ?? null, note: b.note?.trim() || null, createdBy: need(ctx).user.id }).returning({ id: t.id });
+    const [row] = await ctx.db.insert(t).values({ programmeId, level, parentId: b.parentId ?? null, name: b.name.trim(), metric: b.metric, target: String(b.target), dueDate: b.dueDate ?? null, note: b.note?.trim() || null, createdBy: need(ctx).user.id }).returning({ id: t.id });
     await audit(ctx, 'indicator.created', 'programme', programmeId, undefined, { name: b.name, metric: b.metric, target: b.target });
     return { id: row.id };
   } catch (e: any) { if (String(e?.code ?? e?.cause?.code) === '23505') throw conflict('This programme already has an indicator with that name'); throw e; }
@@ -59,15 +69,22 @@ async function load(ctx: Ctx, id: string) {
 export async function updateIndicator(ctx: Ctx, id: string, b: Partial<Input>) {
   allow(ctx, 'programmes', 'edit');
   const row = await load(ctx, id);
+  const level = (b.level ?? row.level) as Level; const parentId = b.parentId !== undefined ? b.parentId : row.parentId;
+  if (b.level !== undefined || b.parentId !== undefined) {
+    await validParent(ctx, row.programmeId, level, parentId, id);
+    if (b.level !== undefined && b.level !== row.level) { const kids = await ctx.db.select({ n: sql<number>`count(*)::int` }).from(t).where(eq(t.parentId, id)); if (Number(kids[0].n) > 0) throw conflict('Move or remove the targets beneath this one before changing its level'); }
+  }
   const metric = b.metric ?? (row.metric as Metric); const target = b.target ?? Number(row.target);
   if (['avg_score', 'pct_improved'].includes(metric) && target > 100) throw conflict('A target for this measure cannot be above 100');
-  await ctx.db.update(t).set({ ...(b.name ? { name: b.name.trim() } : {}), ...(b.metric ? { metric: b.metric } : {}), ...(b.target !== undefined ? { target: String(b.target) } : {}), ...(b.dueDate !== undefined ? { dueDate: b.dueDate } : {}), ...(b.note !== undefined ? { note: b.note?.trim() || null } : {}), updatedAt: new Date() }).where(eq(t.id, id));
+  await ctx.db.update(t).set({ ...(b.name ? { name: b.name.trim() } : {}), ...(b.metric ? { metric: b.metric } : {}), ...(b.target !== undefined ? { target: String(b.target) } : {}), ...(b.dueDate !== undefined ? { dueDate: b.dueDate } : {}), ...(b.note !== undefined ? { note: b.note?.trim() || null } : {}), ...(b.level !== undefined ? { level: b.level } : {}), ...(b.parentId !== undefined ? { parentId: b.parentId } : {}), updatedAt: new Date() }).where(eq(t.id, id));
   await audit(ctx, 'indicator.updated', 'programme', row.programmeId, { name: row.name, metric: row.metric, target: row.target }, { name: b.name ?? row.name, metric, target });
   return { ok: true };
 }
 export async function deleteIndicator(ctx: Ctx, id: string) {
   allow(ctx, 'programmes', 'edit');
   const row = await load(ctx, id);
+  const kids = await ctx.db.select({ n: sql<number>`count(*)::int` }).from(t).where(eq(t.parentId, id));
+  if (Number(kids[0].n) > 0) throw conflict('This target has targets beneath it. Remove or move those first.');
   await ctx.db.delete(t).where(and(eq(t.id, id)));
   await audit(ctx, 'indicator.deleted', 'programme', row.programmeId, { name: row.name }, undefined);
   return { ok: true };

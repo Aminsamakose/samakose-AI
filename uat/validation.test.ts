@@ -402,7 +402,16 @@ describe('7 permissions, overrides, audit, edge cases and finance', () => {
       const fl = (await api(funder).get(`/programmes/${prog.id}/indicators`)).data ?? [];
       return all(eq(made.status, 201, 'create'), row ? undefined : ['FAIL', 'not listed'], row && row.status === 'Hidden' ? ['FAIL', 'staff value hidden'] : undefined, fl.length ? undefined : ['FAIL', 'funder sees no target']);
     });
-    await check('Programmes', 'Logframe outcome levels, budget lines, tranches', async () => ['GAP', 'Indicators with targets and live actuals exist. Budget lines, tranches and a logframe hierarchy do not']);
+    await check('Programmes', 'Logframe outcome levels, budget lines, tranches', async () => {
+      const imp = await api(pm).post(`/programmes/${prog.id}/indicators`, { name: 'TEST Impact (Synthetic)', metric: 'avg_change', target: 10, level: 'impact' });
+      const out = await api(pm).post(`/programmes/${prog.id}/indicators`, { name: 'TEST Outcome (Synthetic)', metric: 'pct_improved', target: 50, level: 'outcome', parentId: imp.data?.id });
+      const skip = await api(pm).post(`/programmes/${prog.id}/indicators`, { name: 'TEST Skip (Synthetic)', metric: 'enrolled', target: 5, level: 'output', parentId: imp.data?.id });
+      const line = await api(pm).post(`/programmes/${prog.id}/budget-lines`, { category: 'TEST Coaching (Synthetic)', amountGhs: 1000 });
+      const over = await api(pm).post(`/programmes/${prog.id}/budget-lines`, { category: 'TEST Overspend (Synthetic)', amountGhs: 99999999 });
+      const tr = await api(pm).post(`/programmes/${prog.id}/tranches`, { label: 'TEST Tranche 1 (Synthetic)', amountGhs: 1000, dueDate: '2026-12-01' });
+      const rec = await api(pm).post(`/tranches/${tr.data?.id}/receive`, { receivedOn: '2026-10-01', receivedGhs: 990 });
+      return all(eq(imp.status, 201, 'impact'), eq(out.status, 201, 'outcome'), eq(skip.status, 400, 'level skip refused'), eq(line.status, 201, 'line'), eq(over.status, 400, 'overspend refused'), eq(tr.status, 201, 'tranche'), eq(rec.status, 200, 'receipt'));
+    });
     await check('Organisations', 'Registration number / TIN captured; completeness score; merge duplicates; unarchive', async () => {
       const mk = async (n: string, x: object = {}) => (await api(admin).post('/organisations', { name: n, region: 'Northern', consent: true, consentBy: 'TEST Owner (Synthetic)', ...x })).data.id as string;
       const a = await mk(SYN('Registry Foods')); const b = await mk(SYN('Registry Foods Ltd'), { tin: 'TEST' + Date.now().toString().slice(-8), registrationNumber: 'RG-SYN-1' });

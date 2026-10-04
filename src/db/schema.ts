@@ -160,9 +160,36 @@ export const programmeIndicators = pgTable('programme_indicators', {
   target: numeric('target', { precision: 10, scale: 1 }).notNull(),
   dueDate: date('due_date'),
   note: text('note'),
+  /** Logframe level: impact above outcome above output. A parent is always exactly one level up. */
+  level: text('level').notNull().default('output'),
+  parentId: uuid('parent_id').references((): any => programmeIndicators.id),
   createdBy: uuid('created_by').references(() => users.id),
   createdAt: created(), updatedAt: updated()
 }, (t) => [uniqueIndex('ind_name_uq').on(t.programmeId, t.name)]);
+/** A planned spend category inside the programme budget. The lines can never add up to more than the budget. */
+export const programmeBudgetLines = pgTable('programme_budget_lines', {
+  id: id(),
+  programmeId: uuid('programme_id').notNull().references(() => programmes.id),
+  category: text('category').notNull(),
+  description: text('description'),
+  amountGhs: numeric('amount_ghs', { precision: 14, scale: 2 }).notNull(),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [uniqueIndex('pbl_cat_uq').on(t.programmeId, t.category)]);
+/** A funder payment schedule entry. Planned until money lands, then Received with the date and amount. */
+export const programmeTranches = pgTable('programme_tranches', {
+  id: id(),
+  programmeId: uuid('programme_id').notNull().references(() => programmes.id),
+  label: text('label').notNull(),
+  amountGhs: numeric('amount_ghs', { precision: 14, scale: 2 }).notNull(),
+  dueDate: date('due_date'),
+  status: text('status').notNull().default('Planned'),
+  receivedOn: date('received_on'),
+  receivedGhs: numeric('received_ghs', { precision: 14, scale: 2 }),
+  note: text('note'),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [uniqueIndex('ptr_label_uq').on(t.programmeId, t.label)]);
 export const cohorts = pgTable('cohorts', {
   id: id(), code: codeCol('cohort'),
   programmeId: uuid('programme_id').notNull().references(() => programmes.id),

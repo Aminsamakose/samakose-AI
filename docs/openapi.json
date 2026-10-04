@@ -79,6 +79,9 @@
     },
     {
       "name": "Programme indicators"
+    },
+    {
+      "name": "Programme budget"
     }
   ],
   "components": {
@@ -20592,6 +20595,26 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "level": {
+                    "type": "string",
+                    "enum": [
+                      "impact",
+                      "outcome",
+                      "output"
+                    ]
+                  },
+                  "parentId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -20697,6 +20720,26 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "level": {
+                    "type": "string",
+                    "enum": [
+                      "impact",
+                      "outcome",
+                      "output"
+                    ]
+                  },
+                  "parentId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }
@@ -20746,6 +20789,549 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/programmes/{id}/budget": {
+      "get": {
+        "tags": [
+          "Programme budget"
+        ],
+        "summary": "Budget lines, funder payment tranches and the position against the programme budget",
+        "operationId": "get__programmes_id_budget",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "dashboard:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/programmes/{id}/budget-lines": {
+      "post": {
+        "tags": [
+          "Programme budget"
+        ],
+        "summary": "Add a budget line. Lines cannot exceed the programme budget",
+        "operationId": "post__programmes_id_budget_lines",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "programmes:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 300
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amountGhs": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000000
+                  }
+                },
+                "required": [
+                  "category",
+                  "amountGhs"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/budget-lines/{id}": {
+      "patch": {
+        "tags": [
+          "Programme budget"
+        ],
+        "summary": "Change a budget line",
+        "operationId": "patch__budget_lines_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "programmes:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 300
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amountGhs": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Programme budget"
+        ],
+        "summary": "Remove a budget line",
+        "operationId": "delete__budget_lines_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "programmes:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/programmes/{id}/tranches": {
+      "post": {
+        "tags": [
+          "Programme budget"
+        ],
+        "summary": "Plan a funder payment tranche. The schedule cannot exceed the programme budget",
+        "operationId": "post__programmes_id_tranches",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "programmes:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "amountGhs": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "dueDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "note": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 300
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "label",
+                  "amountGhs"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/tranches/{id}": {
+      "patch": {
+        "tags": [
+          "Programme budget"
+        ],
+        "summary": "Change a planned tranche",
+        "operationId": "patch__tranches_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "programmes:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "amountGhs": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "dueDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "note": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 300
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Programme budget"
+        ],
+        "summary": "Remove a planned tranche",
+        "operationId": "delete__tranches_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "programmes:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/tranches/{id}/receive": {
+      "post": {
+        "tags": [
+          "Programme budget"
+        ],
+        "summary": "Record that a tranche was received",
+        "operationId": "post__tranches_id_receive",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "programmes:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "receivedOn": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "receivedGhs": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  }
+                },
+                "required": [
+                  "receivedOn",
+                  "receivedGhs"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success. Body is { data }"
