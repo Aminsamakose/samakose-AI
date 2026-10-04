@@ -6,3 +6,4 @@ storage
 tsconfig.tsbuildinfo
 e2e/shots
 *.log
+.uat-storage
