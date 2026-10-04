@@ -5,7 +5,7 @@ import type { Ctx } from '@/lib/context';
 import { caseScope, orgScope, programmeScope, assertProgramme } from '@/domain/scope';
 import { suppress } from '@/domain/logic';
 import { allow, loadRules, need, respondList } from './common';
-import { forbidden } from '@/lib/errors';
+import { forbidden, notFound } from '@/lib/errors';
 import { ROLE_LABEL } from '@/lib/rbac';
 import type { ListQuery } from '@/api/list';
 import { csvResponse } from '@/api/framework';
@@ -26,6 +26,19 @@ const NEXT_STEP: Record<string, string> = {
 const scopeC = (u: Parameters<typeof caseScope>[0]) => sql`c.id in (select id from cases where ${caseScope(u)})`;
 const latestScores = (u: Parameters<typeof caseScope>[0]) => sql`(select distinct on (h.case_id) h.case_id, h.overall::float overall, h.maturity, h.created_at
   from health_scores h where h.case_id in (select id from cases where ${caseScope(u)}) order by h.case_id, h.created_at desc)`;
+
+/** An administrator can look at any person's dashboard exactly as they see it. Read-only: the view is built from that person's scope, nothing is written except the audit record. */
+export async function dashboardAs(ctx: Ctx, userId: string) {
+  const a = need(ctx).user;
+  if (a.role !== 'ADMIN') throw forbidden('Only an administrator can view another person’s dashboard');
+  const [t] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, userId)).limit(1);
+  if (!t) throw notFound('User not found');
+  const progs = await ctx.db.select({ p: schema.userProgrammes.programmeId }).from(schema.userProgrammes).where(eq(schema.userProgrammes.userId, t.id));
+  const target = { id: t.id, email: t.email, name: t.name, role: t.role, orgId: t.orgId, programmeIds: progs.map((x) => x.p), mfaEnabled: t.mfaEnabled, mfaVerified: true, sessionId: a.sessionId, mustChangePassword: false, approvalStatus: t.approvalStatus, profileRequired: false };
+  await audit(ctx, 'dashboard.viewed_as', 'user', t.id, undefined, { role: t.role });
+  const d: any = await dashboard({ ...ctx, user: target });
+  return { ...d, viewingAs: { id: t.id, name: t.name, role: t.role, roleLabel: ROLE_LABEL[t.role] } };
+}
 
 export async function dashboard(ctx: Ctx) {
   allow(ctx, 'dashboard', 'read');
