@@ -4,6 +4,7 @@ import { api, dateTime, errText } from '@/lib/client/api';
 import { Async, Badge, Button, Card, Empty, KV, PageHead, Tile, useApi, useToast } from '@/components/ui';
 import { Guard } from '@/components/admin/common';
 import { PaymentReadiness } from '@/components/admin/SystemSettings';
+import { AiProviderCard } from '@/components/admin/AiProviderCard';
 
 type Status = {
   database: { ok: boolean; latencyMs: number }; jobs: Record<string, number>;
@@ -107,6 +108,7 @@ export default function SystemPage() {
           {me.can('integrations', 'edit') && <Card title="Connection tests"><TestButtons /></Card>}
         </div>
       </div>
+      <AiProviderCard canEdit={me.can('settings', 'edit')} />
       <PaymentReadiness />
       <EmailLog canEdit={me.can('integrations', 'edit')} />
       <Card title="Job queue">

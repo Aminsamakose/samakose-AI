@@ -14,7 +14,7 @@ export class NonRetryable extends Error {}
 /** The registry refused the task: paused, disabled, over a limit, or not approved for the live model. Nothing was sent to a model. */
 export class AgentBlocked extends NonRetryable {}
 export type { ModelReply, Transport } from './ai-providers';
-import { activeProvider, modelFor, providerHasKey, transportFor, type Transport } from './ai-providers';
+import { activeProvider, modelFor, providerHasKey, refreshAiConfig, transportFor, type Transport } from './ai-providers';
 
 let transportOverride: Transport | null = null;
 /** Tests replace the transport to exercise retries and invalid output. */
@@ -34,6 +34,7 @@ export async function runAgent<T>(o: {
   /** An evaluation run may use the live model while the agent is still in Testing or Evaluation. */
   evaluation?: boolean;
 }): Promise<{ output: T; requestId: string; requestCode: string }> {
+  await refreshAiConfig(db());
   const payload = JSON.stringify(o.context);
   const mock = aiIsMock();
   // The registry decides first. A refused task is recorded, nothing is sent to a model, and the requester is told.

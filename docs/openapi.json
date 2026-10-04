@@ -14451,6 +14451,154 @@
         }
       }
     },
+    "/settings/ai": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Which AI provider is in use, which keys are set, and the saved choices",
+        "operationId": "get__settings_ai",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Choose the AI provider and models. Changing provider needs confirmation and a reason",
+        "operationId": "put__settings_ai",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "settings:edit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "anthropic",
+                      "openai",
+                      "openai-compatible"
+                    ]
+                  },
+                  "claudeModel": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "openaiModel": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "openaiBaseUrl": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "confirm": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "provider"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/settings/ai/test": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Send one harmless test request to the chosen AI provider",
+        "operationId": "post__settings_ai_test",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "integrations:edit",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
     "/settings/maintenance": {
       "get": {
         "tags": [

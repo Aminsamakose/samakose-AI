@@ -12,6 +12,7 @@ import * as asst from '@/services/assistant';
 import * as ag from '@/services/agents';
 import { AGENT_STATUSES } from '@/domain/agents';
 import * as sw from '@/services/switches';
+import * as aiset from '@/services/ai-settings';
 import * as sys from '@/services/system';
 import * as bill from '@/services/billing';
 import * as inq from '@/services/inquiries';
@@ -120,6 +121,9 @@ defineRoute({ method: 'PUT', path: '/settings/billing', tag: AD, summary: 'Chang
   handler: ({ ctx, body }) => bill.saveBilling(ctx, body as any) });
 defineRoute({ method: 'GET', path: '/admin/system/payments', tag: AD, summary: 'Is Paystack ready for real money', permission: ['integrations', 'read'], handler: ({ ctx }) => bill.readPaymentReadiness(ctx) });
 defineRoute({ method: 'GET', path: '/settings/security', tag: AD, summary: 'Security overview', permission: ['settings', 'read'], handler: ({ ctx }) => sys.securityOverview(ctx) });
+defineRoute({ method: 'GET', path: '/settings/ai', tag: AD, summary: 'Which AI provider is in use, which keys are set, and the saved choices', permission: ['settings', 'read'], handler: ({ ctx }) => aiset.readAiSettings(ctx) });
+defineRoute({ method: 'PUT', path: '/settings/ai', tag: AD, summary: 'Choose the AI provider and models. Changing provider needs confirmation and a reason', permission: ['settings', 'edit'], body: z.object({ provider: z.enum(['anthropic', 'openai', 'openai-compatible']), claudeModel: z.string().trim().max(80).optional(), openaiModel: z.string().trim().max(80).optional(), openaiBaseUrl: z.string().trim().max(200).optional(), confirm: z.boolean().optional(), reason: z.string().trim().max(500).optional() }), handler: ({ ctx, body }) => aiset.saveAiSettings(ctx, body as any) });
+defineRoute({ method: 'POST', path: '/settings/ai/test', tag: AD, summary: 'Send one harmless test request to the chosen AI provider', permission: ['integrations', 'edit'], handler: ({ ctx }) => aiset.testAiProvider(ctx) });
 defineRoute({ method: 'GET', path: '/settings/maintenance', tag: AD, summary: 'Maintenance mode', permission: ['settings', 'read'], handler: ({ ctx }) => sys.readMaintenance(ctx) });
 defineRoute({ method: 'PUT', path: '/settings/maintenance', tag: AD, summary: 'Turn maintenance mode on or off', permission: ['settings', 'edit'], body: z.object({ on: z.boolean(), blockSignin: z.boolean(), message: z.string().max(600) }), handler: ({ ctx, body }) => sys.setMaintenance(ctx, body) });
 defineRoute({ method: 'GET', path: '/settings/config/export', tag: AD, summary: 'Download the website and workflow configuration as a file', permission: ['settings', 'edit'], handler: async ({ ctx }) => new Response(JSON.stringify(await sys.exportConfig(ctx), null, 2), { headers: { 'content-type': 'application/json; charset=utf-8', 'content-disposition': 'attachment; filename="samakose-config.json"', 'cache-control': 'no-store' } }) });
