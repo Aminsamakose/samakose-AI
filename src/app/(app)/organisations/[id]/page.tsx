@@ -43,6 +43,7 @@ export default function OrganisationPage() {
       <PageHead crumbs={<Link href="/organisations">Organisations</Link>} title={o.name} sub={<><span className="mono">{o.code}</span> · {typeLabel(o.type)} · <Badge>{o.status}</Badge></>}
         actions={<>
           {can('scores', 'read') && role !== 'FUNDER' && <Link href={`/organisations/${o.id}/record`} className="btn">Health record</Link>}
+          {can('opportunities', 'read') && role !== 'OWNER' && <Link href={`/organisations/${o.id}/pathway`} className="btn">Opportunities</Link>}
           {can('cases', 'create') && !archived && <Button variant="primary" onClick={() => setNewCase(true)}>Open a new case</Button>}
           {can('organisations', 'edit') && !editing && !archived && <Button onClick={() => setEditing(true)}>Edit</Button>}
           {can('organisations', 'delete') && !archived && <ConfirmButton variant="danger" label="Archive organisation" message="This removes the organisation from lists. Its records stay in the audit trail. Organisations with cases that are not graduated cannot be archived." onConfirm={async () => { await api.del(`/organisations/${o.id}`); toast('Organisation archived'); router.push('/organisations'); }} />}

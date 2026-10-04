@@ -1020,3 +1020,62 @@ export const engagementRatings = pgTable('engagement_ratings', {
   supersedesId: uuid('supersedes_id'),
   createdAt: created()
 }, (t) => [index('er_assignment_idx').on(t.assignmentId)]);
+
+/* ------------------------------ UNLOCK -------------------------------- */
+export const OPPORTUNITY_TYPES = ['Funding', 'Grant', 'Loan', 'Equity', 'Partnership', 'Market', 'Procurement', 'Programme', 'Assistance', 'Training'] as const;
+export const OPPORTUNITY_STATES = ['Draft', 'Open', 'Closed', 'Archived'] as const;
+export const REFERRAL_STATES = ['Suggested', 'Consented', 'Approved', 'Referred', 'Applied', 'Shortlisted', 'Awarded', 'Declined', 'Withdrawn'] as const;
+
+/** Something an enterprise can reach once it is ready: money, a partner, a market, a programme. Eligibility lives in `criteria`, set per opportunity. */
+export const opportunities = pgTable('opportunities', {
+  id: id(),
+  title: text('title').notNull(),
+  type: text('type').notNull(),
+  provider: text('provider').notNull(),
+  summary: text('summary').notNull(),
+  url: text('url'),
+  valueMin: numeric('value_min', { precision: 14, scale: 2 }), valueMax: numeric('value_max', { precision: 14, scale: 2 }),
+  currency: text('currency').notNull().default('GHS'),
+  deadline: date('deadline'),
+  status: text('status').notNull().default('Draft'),
+  criteria: jsonb('criteria').notNull().default(sql`'{}'::jsonb`).$type<Record<string, unknown>>(),
+  /** manual, or the system it was imported from (for example sopis). With a source reference, the same item is never imported twice. */
+  source: text('source').notNull().default('manual'),
+  sourceRef: text('source_ref'),
+  createdBy: uuid('created_by').references(() => users.id),
+  publishedBy: uuid('published_by').references(() => users.id),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [index('opp_status_idx').on(t.status, t.deadline), uniqueIndex('opp_source_uq').on(t.source, t.sourceRef).where(sql`${t.sourceRef} is not null`)]);
+
+/** One enterprise and one opportunity. The database refuses to move past Approved without the owner's consent and a person's approval. */
+export const opportunityReferrals = pgTable('opportunity_referrals', {
+  id: id(),
+  orgId: uuid('org_id').notNull().references(() => organisations.id),
+  opportunityId: uuid('opportunity_id').notNull().references(() => opportunities.id),
+  status: text('status').notNull().default('Suggested'),
+  suggestedBy: uuid('suggested_by').references(() => users.id),
+  consentBy: uuid('consent_by').references(() => users.id),
+  consentAt: timestamp('consent_at', { withTimezone: true }),
+  /** What the owner agreed may be shared: overall, maturity, dimensions, certification, readiness. */
+  consentScope: text('consent_scope').array().notNull().default(sql`'{}'::text[]`),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  referredAt: timestamp('referred_at', { withTimezone: true }),
+  amountGhs: numeric('amount_ghs', { precision: 14, scale: 2 }),
+  outcomeNote: text('outcome_note'),
+  /** The match as it stood when the referral was made, so history shows what was known then. */
+  matchSnapshot: jsonb('match_snapshot'),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [index('ref_org_idx').on(t.orgId), index('ref_status_idx').on(t.status),
+  uniqueIndex('ref_live_uq').on(t.orgId, t.opportunityId).where(sql`${t.status} not in ('Declined','Withdrawn')`)]);
+
+export const opportunityReferralEvents = pgTable('opportunity_referral_events', {
+  id: id(),
+  referralId: uuid('referral_id').notNull().references(() => opportunityReferrals.id),
+  fromStatus: text('from_status'),
+  toStatus: text('to_status').notNull(),
+  actorId: uuid('actor_id').references(() => users.id),
+  note: text('note'),
+  createdAt: created()
+}, (t) => [index('refev_idx').on(t.referralId, t.createdAt)]);

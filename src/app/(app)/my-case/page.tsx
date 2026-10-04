@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { Async, Card, Empty, PageHead, useApi } from '@/components/ui';
 import { useMe, useTitle } from '@/components/dash/common';
 import { CaseTeamCard } from '@/components/case/core/CaseTeam';
@@ -31,6 +32,7 @@ function Detail({ id }: { id: string }) {
     <Card title={`${c.orgName} (${c.code})`}><Lifecycle status={c.status} /></Card>
     <CaseTeamCard caseId={id} role="OWNER" reload={st.reload} />
     <Card title="Your health score"><ScorePanel score={c.score} /></Card>
+    <Card title="Opportunities for your business"><p style={{ marginTop: 0 }}>Funding, partners, markets and programmes matched to your health record, with what to do to qualify.</p><Link href={`/organisations/${c.orgId}/pathway`} className="btn">See your opportunities</Link> <Link href={`/organisations/${c.orgId}/record`} className="btn">Your health record</Link></Card>
     <Card title="Does your score match your business?"><ResultFeedback caseId={id} /></Card>
     <Card title="Your actions"><ActionsPanel caseId={id} /></Card>
     <div className="grid two">
