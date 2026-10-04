@@ -98,6 +98,35 @@ describe('password flows', () => {
     expect((await call('POST', '/auth/login', { body: { email, password: 'Invite-Passw0rd-2026' } })).status).toBe(200);
     expect((await call('POST', '/auth/accept-invite', { body: { token, password: 'Invite-Passw0rd-2027' } })).status).toBe(400);
   });
+  it('an admin can unsend a staff invitation; the link then says withdrawn, and inviting again reuses the record', async () => {
+    const admin = await makeUser('ADMIN');
+    const email = `cancel-${uniq()}@x.test`;
+    const inv = await api(admin).post('/users', { email, name: 'Second Admin', role: 'ADMIN' }); expect(inv.status).toBe(201);
+    const link1 = tokenFrom((await lastEmailTo(email)).body);
+    expect((await api(admin).post(`/users/${inv.data.id}/cancel-invite`)).status).toBe(200);
+    const info = await call('GET', `/auth/invite-info?token=${encodeURIComponent(link1)}`);
+    expect(info.status).toBe(400); expect(info.error.code).toBe('invite_withdrawn'); expect(info.error.message).toMatch(/withdrawn/);
+    expect((await call('POST', '/auth/accept-invite', { body: { token: link1, password: 'Invite-Passw0rd-2026' } })).status).toBe(400);
+    expect((await api(admin).post(`/users/${inv.data.id}/cancel-invite`)).status).toBe(422); // already cancelled
+    expect((await api(admin).post(`/users/${inv.data.id}/resend-invite`)).status).toBe(200); // resend alone does not revive it
+    const [row] = await db().select().from(schema.users).where(eq(schema.users.id, inv.data.id));
+    expect(row.active).toBe(false);
+    const again = await api(admin).post('/users', { email, name: 'Second Admin', role: 'EXPERT' }); expect(again.status).toBe(201);
+    expect(again.data.id).toBe(inv.data.id);
+    const link2 = tokenFrom((await lastEmailTo(email)).body);
+    expect((await call('POST', '/auth/accept-invite', { body: { token: link1, password: 'Invite-Passw0rd-2026' } })).status).toBe(400);
+    expect((await call('POST', '/auth/accept-invite', { body: { token: link2, password: 'Invite-Passw0rd-2026' } })).status).toBe(200);
+    const log = (await db().select().from(schema.auditLog).where(eq(schema.auditLog.entityId, inv.data.id))).map((l) => l.action);
+    expect(log).toEqual(expect.arrayContaining(['user.invited', 'user.invite_cancelled', 'user.invite_reissued']));
+  });
+  it('refuses to unsend an invitation that was accepted, and needs permission', async () => {
+    const admin = await makeUser('ADMIN'); const email = `acc-${uniq()}@x.test`;
+    const inv = await api(admin).post('/users', { email, name: 'Active Person', role: 'EXPERT' });
+    await call('POST', '/auth/accept-invite', { body: { token: tokenFrom((await lastEmailTo(email)).body), password: 'Invite-Passw0rd-2026' } });
+    expect((await api(admin).post(`/users/${inv.data.id}/cancel-invite`)).status).toBe(422);
+    const pending = await api(admin).post('/users', { email: `p-${uniq()}@x.test`, name: 'Pending Person', role: 'EXPERT' });
+    const expert = await makeUser('EXPERT'); expect((await api(expert).post(`/users/${pending.data.id}/cancel-invite`)).status).toBe(403);
+  });
   it('drains the outbox in log-only mode', async () => {
     await drainJobs();
     const pending = await db().select().from(schema.outboxEmails).where(eq(schema.outboxEmails.status, 'Pending'));

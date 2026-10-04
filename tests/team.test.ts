@@ -83,6 +83,34 @@ describe('team invitations', () => {
     expect((await q(`select count(*)::int n from area_assignments where member_id=$1`, [data.id])).rows[0].n).toBe(0);
     expect((await api(o).get('/team')).data.members).toEqual([]);
   });
+  it('an owner can unsend a colleague invitation: the link says withdrawn, the seat is freed, and the same person can be invited again', async () => {
+    await open(); const { o, orgId } = await owner(); const email = `u.${uniq()}@example.org`;
+    const { data } = await invite(o, { email }); const link1 = tokenFrom((await lastEmailTo(email)).body);
+    expect((await api(o).get('/team')).data.members).toHaveLength(1);
+    expect((await api(o).post(`/team/members/${data.id}/cancel`, {})).status).toBe(200);
+    expect((await api(o).get('/team')).data.members).toEqual([]);
+    const info = await call('GET', `/auth/invite-info?token=${encodeURIComponent(link1)}`); expect(info.status).toBe(400); expect(info.error.code).toBe('invite_withdrawn');
+    const acc = await call('POST', '/auth/accept-invite', { body: { token: link1, password: PASSWORD, consent: true } }); expect(acc.status).toBe(400); expect(acc.error.code).toBe('invite_withdrawn');
+    expect((await api(o).post(`/team/members/${data.id}/cancel`, {})).status).toBe(404); // already gone
+    expect((await api(o).post(`/team/members/${data.id}/resend`, {})).status).toBe(404);
+    // invite the same person again: same record, new working link, old link still dead
+    const again = await invite(o, { email, name: 'Kofi Again', jobRole: 'FINANCE' }); expect(again.status, JSON.stringify(again.error)).toBe(201);
+    expect((await q(`select count(*)::int n from users where lower(email)=$1`, [email])).rows[0].n).toBe(1);
+    const link2 = tokenFrom((await lastEmailTo(email)).body); expect(link2).not.toBe(link1);
+    expect((await call('POST', '/auth/accept-invite', { body: { token: link1, password: PASSWORD, consent: true } })).status).toBe(400);
+    expect((await call('POST', '/auth/accept-invite', { body: { token: link2, password: PASSWORD, consent: true } })).status).toBe(200);
+    expect((await q(`select status from org_members where org_id=$1 and user_id=(select id from users where lower(email)=$2)`, [orgId, email])).rows[0].status).toBe('active');
+    const log = (await q(`select action from audit_log where entity_id=(select id::text from users where lower(email)=$1)`, [email])).rows.map((r: any) => r.action);
+    expect(log).toContain('team.invite_cancelled');
+  });
+  it('cannot unsend an invitation that was already accepted, and another business cannot', async () => {
+    await open(); const a = await owner(); const b = await owner(); const email = `v.${uniq()}@example.org`;
+    const { data } = await invite(a.o, { email }); const token = tokenFrom((await lastEmailTo(email)).body);
+    expect((await api(b.o).post(`/team/members/${data.id}/cancel`, {})).status).toBe(404);
+    await call('POST', '/auth/accept-invite', { body: { token, password: PASSWORD, consent: true } });
+    expect((await api(a.o).post(`/team/members/${data.id}/cancel`, {})).status).toBe(422);
+    const s = await makeUser('FINANCE'); expect((await api(s).post(`/team/members/${data.id}/cancel`, {})).status).toBe(403);
+  });
   it('only a business owner can invite', async () => {
     await open();
     for (const r of ['EXPERT', 'FINANCE', 'FUNDER'] as const) { const s = await makeUser(r); expect((await api(s).post('/team/members', { name: 'A B', email: `z.${uniq()}@example.org`, jobRole: 'FINANCE', agree: true })).status, r).toBe(403); }

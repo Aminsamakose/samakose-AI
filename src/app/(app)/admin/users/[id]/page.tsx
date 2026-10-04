@@ -88,6 +88,7 @@ export default function UserDetail() {
         <PageHead title={u.name} crumbs={<Link href="/admin/users">Users</Link>} sub={<>{u.email} <span className="mono small">{u.code}</span></>}
           actions={<>
             {u.invited && u.active && <ConfirmButton label="Resend invite" variant="primary" message={`Send a new invitation email to ${u.email}? Earlier links stop being the latest.`} onConfirm={act('resend-invite', 'Invitation sent')} />}
+            {u.invited && u.active && <ConfirmButton label="Cancel invitation" variant="danger" message={`Cancel the invitation to ${u.email}? Any link already sent stops working and the pending account is closed. An email already delivered cannot be recalled, but its link will say the invitation was withdrawn. You can invite the person again later.`} onConfirm={act('cancel-invite', 'Invitation cancelled')} />}
             {locked && <ConfirmButton label="Unlock account" message={`Clear the sign-in lockout for ${u.name}?`} onConfirm={act('unlock', 'Account unlocked')} />}
             {u.mfaEnabled && <ConfirmButton label="Reset two-step" variant="danger" message={`Remove two-step verification for ${u.name}? They are signed out and must set it up again. Only do this after confirming their identity.`} onConfirm={act('reset-mfa', 'Two-step verification reset')} />}
           </>} />
