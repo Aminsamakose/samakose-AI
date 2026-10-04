@@ -5,6 +5,7 @@ import { Async, Card, Empty, PageHead, useApi } from '@/components/ui';
 import { useMe, useTitle } from '@/components/dash/common';
 import { CaseTeamCard } from '@/components/case/core/CaseTeam';
 import { ResultFeedback } from '@/components/ResultFeedback';
+import { MessageThread } from '@/components/case/MessageThread';
 import { ActionsPanel, EvidencePanel, InvoicesPanel, KpiPanel, Lifecycle, ReportsPanel, ScorePanel, SessionsPanel } from '@/components/dash/MyCasePanels';
 
 export default function MyCasePage() {
@@ -34,6 +35,7 @@ function Detail({ id }: { id: string }) {
     <Card title="Your health score"><ScorePanel score={c.score} /></Card>
     <Card title="Opportunities for your business"><p style={{ marginTop: 0 }}>Funding, partners, markets and programmes matched to your health record, with what to do to qualify.</p><Link href={`/organisations/${c.orgId}/pathway`} className="btn">See your opportunities</Link> <Link href={`/organisations/${c.orgId}/record`} className="btn">Your health record</Link></Card>
     <Card title="Does your score match your business?"><ResultFeedback caseId={id} /></Card>
+    <Card title="Messages with your team"><MessageThread caseId={id} /></Card>
     <Card title="Your actions"><ActionsPanel caseId={id} /></Card>
     <div className="grid two">
       <Card title="Reports for you"><ReportsPanel caseId={id} /></Card>

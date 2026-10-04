@@ -188,7 +188,7 @@ export async function updateSession(ctx: Ctx, id: string, b: { status?: 'Held' |
   if (!before) throw notFound('Session not found');
   await assertCase(ctx, before.caseId);
   const patch: Partial<typeof s.$inferInsert> = { updatedAt: new Date() };
-  if (b.scheduledAt) { if (before.status !== 'Scheduled') throw unprocessable('Only a scheduled session can be moved'); patch.scheduledAt = new Date(b.scheduledAt); }
+  if (b.scheduledAt) { if (before.status !== 'Scheduled') throw unprocessable('Only a scheduled session can be moved'); patch.scheduledAt = new Date(b.scheduledAt); patch.reminderSentAt = null; }
   if (b.notes !== undefined) patch.notes = b.notes.trim();
   if (b.status) {
     if (!SESSION_MOVES[before.status]?.includes(b.status)) throw unprocessable(`A ${before.status} session cannot become ${b.status}`);

@@ -22,6 +22,10 @@ export const DEFAULT_RULES: Rules = {
   'prescription.min_days': 5,
   'prescription.max_days': 400,
   'session.min_for_monitoring': 3,
+  'sla.session_reminder_hours': 24,
+  'sla.session_outcome_hours': 24,
+  'sla.stalled_days': 14,
+  'messaging.retention_months': 12,
   'privacy.min_cell_size': 5,
   'readiness.not_ready_below': 45,
   'readiness.emerging_below': 60,
@@ -46,6 +50,10 @@ export const DEFAULT_RULES: Rules = {
   'ai.usd_per_million_output_tokens': 15
 };
 export const RULE_NOTES: Record<string, string> = {
+  'sla.session_reminder_hours': 'Coaching sessions: remind the coach and the owner this many hours ahead (checked daily, so the reminder lands within 12 hours either side)',
+  'sla.session_outcome_hours': 'Coaching sessions: flag a session whose outcome is still not recorded this many hours after it was due',
+  'sla.stalled_days': 'Cases: flag a case to the programme manager when nobody has acted on it for this many days',
+  'messaging.retention_months': 'Case messages on a graduated case are deleted this many months after they were sent',
   'evidence.multiplier.Verified': 'Share of a stated answer that counts when the evidence is verified',
   'evidence.multiplier.Document-supported': 'Share that counts when a document supports the answer',
   'evidence.multiplier.Self-reported': 'Share that counts when the owner states it without evidence',

@@ -18,12 +18,13 @@ import TabActions from '@/components/case/TabActions';
 import TabKpis from '@/components/case/TabKpis';
 import TabRisks from '@/components/case/TabRisks';
 import TabCoaching from '@/components/case/TabCoaching';
+import TabMessages from '@/components/case/TabMessages';
 import TabReports from '@/components/case/TabReports';
 import TabActivity from '@/components/case/TabActivity';
 
 const COMPONENTS: Record<string, (p: TabProps) => React.ReactNode> = {
   overview: TabOverview, diagnostic: TabDiagnostic, evidence: TabEvidence, score: TabScore, diagnosis: TabDiagnosis, prescription: TabPrescription,
-  actions: TabActions, kpis: TabKpis, risks: TabRisks, coaching: TabCoaching, reports: TabReports, activity: TabActivity
+  actions: TabActions, kpis: TabKpis, risks: TabRisks, coaching: TabCoaching, messages: TabMessages, reports: TabReports, activity: TabActivity
 };
 
 export default function CasePage() {

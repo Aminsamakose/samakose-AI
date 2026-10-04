@@ -403,6 +403,8 @@ export const coachingSessions = pgTable('coaching_sessions', {
   status: text('status').notNull().default('Scheduled'), // Scheduled | Held | Missed | Cancelled
   notes: text('notes'),
   brief: text('brief'),
+  /** Set when the reminder before the session was sent. Cleared when the session is moved. */
+  reminderSentAt: timestamp('reminder_sent_at', { withTimezone: true }),
   createdAt: created(), updatedAt: updated()
 }, (t) => [index('sess_case_idx').on(t.caseId)]);
 
@@ -1079,3 +1081,30 @@ export const opportunityReferralEvents = pgTable('opportunity_referral_events', 
   note: text('note'),
   createdAt: created()
 }, (t) => [index('refev_idx').on(t.referralId, t.createdAt)]);
+
+/* ---- Delivery: escalations for stalled work and the message thread on each case (migration 0030). CHECKs and the no-update trigger live in the SQL. ---- */
+export const ESCALATION_KINDS = ['stalled', 'session_outcome'] as const;
+export const caseEscalations = pgTable('case_escalations', {
+  id: id(),
+  caseId: uuid('case_id').notNull().references(() => cases.id),
+  kind: text('kind').notNull(),
+  /** The session, for session_outcome. */
+  refId: uuid('ref_id'),
+  detail: text('detail'),
+  flaggedAt: timestamp('flagged_at', { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true })
+}, (t) => [index('esc_case_idx').on(t.caseId)]);
+
+export const caseMessages = pgTable('case_messages', {
+  id: id(),
+  caseId: uuid('case_id').notNull().references(() => cases.id),
+  senderId: uuid('sender_id').notNull().references(() => users.id),
+  body: text('body').notNull(),
+  createdAt: created()
+}, (t) => [index('msg_case_idx').on(t.caseId, t.createdAt)]);
+
+export const caseMessageReads = pgTable('case_message_reads', {
+  caseId: uuid('case_id').notNull().references(() => cases.id),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  readAt: timestamp('read_at', { withTimezone: true }).notNull().defaultNow()
+}, (t) => [primaryKey({ columns: [t.caseId, t.userId], name: 'case_message_reads_pk' })]);

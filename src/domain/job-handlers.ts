@@ -216,6 +216,15 @@ registerJob('expire_sessions', async () => {
   return { sessions: s.rowCount, tokens: t.rowCount, rateLimits: r.rowCount };
 });
 
+/** A reminder before each coaching session, once per scheduled time. */
+registerJob('session_reminder', async () => tx(async (t) => (await import('@/services/sla')).remindSessions(systemCtx(t, 'scan'))));
+
+/** Stalled cases and sessions with no recorded outcome are raised to the people who can act, and cleared when the cause goes. */
+registerJob('escalation_scan', async () => tx(async (t) => (await import('@/services/sla')).scanEscalations(systemCtx(t, 'scan'))));
+
+/** Messages on a graduated case are deleted after the retention period. */
+registerJob('message_retention', async () => tx(async (t) => (await import('@/services/messages')).purgeExpired(systemCtx(t, 'scan'))));
+
 registerJob('kobo_pull', async () => koboPull());
 
 /** Website items whose scheduled time has passed go live, and the public pages refresh. */

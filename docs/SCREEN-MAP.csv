@@ -221,3 +221,5 @@ Mobile action plan,Partly built,Responsive layouts,Every page works at phone wid
 220. Case team and matching,Built,Cases,"/cases/:id: assign with explained matches, accept or decline, rate"
 221. Opportunities catalogue,Built,Admin,"/admin/opportunities: add, edit, publish, close, archive, import from SOPIS as drafts; referral totals"
 222. Opportunity pathway,Built,Portfolio,"/organisations/:id/pathway and /pathway (owner): eligible, close, not yet; consent, referral tracking, history"
+223. Case messages,Built,Cases,"/cases/:id?tab=messages (staff) and /my-case (owner): thread between the business and practitioners, unread marks, oversight read for managers (audited)"
+224. Needs attention,Built,Dashboard,"/dashboard (admin, programme manager): stalled cases and sessions with no recorded outcome; clears itself"

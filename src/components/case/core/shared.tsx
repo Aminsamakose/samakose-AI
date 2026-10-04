@@ -41,7 +41,7 @@ export const FACT_LABEL: Record<string, string> = {
 export const TAB_PERMISSION: Record<string, [string, string]> = {
   diagnostic: ['diagnostics', 'read'], evidence: ['evidence', 'read'], score: ['scores', 'read'], diagnosis: ['diagnoses', 'read'],
   prescription: ['prescriptions', 'read'], actions: ['actions', 'read'], kpis: ['kpis', 'read'], risks: ['risks', 'read'],
-  coaching: ['sessions', 'read'], reports: ['reports', 'read']
+  coaching: ['sessions', 'read'], messages: ['messages', 'read'], reports: ['reports', 'read']
 };
 
 export const GHANA_REGIONS = ['Ahafo', 'Ashanti', 'Bono', 'Bono East', 'Central', 'Eastern', 'Greater Accra', 'North East', 'Northern', 'Oti', 'Savannah', 'Upper East', 'Upper West', 'Volta', 'Western', 'Western North'];
