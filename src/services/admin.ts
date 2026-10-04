@@ -10,6 +10,7 @@ import { caseScope, orgScope, programmeScope } from '@/domain/scope';
 import { can } from '@/lib/rbac';
 import { env } from '@/lib/env';
 import { aiIsMock } from './ai';
+import { activeProvider, providerHost, providerModel } from './ai-providers';
 import { paystackIsMock } from './finance';
 import { mailConfigured } from '@/lib/mail';
 import { orderBy, search, countOf, escapeLike, type ListQuery } from '@/api/list';
@@ -136,7 +137,7 @@ export async function systemStatus(ctx: Ctx) {
   return {
     database: { ok: true, latencyMs: latency }, jobs: Object.fromEntries(jobs.map((j) => [j.status, j.n])), failedJobs: failed.map((j) => ({ id: j.id, kind: j.kind, attempts: j.attempts, lastError: j.lastError, updatedAt: j.updatedAt })),
     email: { mode: mailConfigured() ? 'smtp' : 'log-only', queue: Object.fromEntries(mail.map((m) => [m.status, m.n])) },
-    ai: { mode: aiIsMock() ? 'mock' : 'claude', model: aiIsMock() ? null : env.claudeModel },
+    ai: { mode: aiIsMock() ? 'mock' : activeProvider() === 'anthropic' ? 'claude' : activeProvider(), provider: aiIsMock() ? null : activeProvider(), host: aiIsMock() ? null : providerHost(), model: aiIsMock() ? null : providerModel() },
     payments: { provider: 'paystack', mode: paystackIsMock() ? 'mock' : 'live' },
     kobo: { configured: !!env.koboSecret, pullConfigured: !!(env.koboToken && env.koboAsset), server: env.koboServer },
     storage: { driver: env.storageDriver, location: fileStorage().location, status: storageStatus, maxUploadMb: env.maxUploadBytes / 1048576 },
