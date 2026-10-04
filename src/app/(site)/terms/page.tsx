@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import { LegalPage } from '@/components/site/LegalPage';
 import { getSite, contactOf } from '@/lib/site-content';
 
-export const metadata: Metadata = { title: 'Terms of use', description: 'The terms that apply to using the Samakose website and platform, operated by Samakose Accelerator Lab.' };
+export const metadata: Metadata = { title: 'Terms of use', description: 'The terms that apply to using the Business Doctor website and platform, operated by Samakose Accelerator Lab.' };
 
 const body = (SITE: { email: string; phone: string; address: string[] }) => `
 ## About these terms
-These terms apply to your use of the Samakose website and platform, operated by Samakose Accelerator Lab. By using them you agree to these terms. If you use the platform through a programme or an organisation, the agreement you have with that programme or organisation also applies.
+These terms apply to your use of the Business Doctor website and platform, operated by Samakose Accelerator Lab. By using them you agree to these terms. If you use the platform through a programme or an organisation, the agreement you have with that programme or organisation also applies.
 
 ## Using the website
 You may read and share the public pages of this website for lawful purposes. Please do not misuse the site, attempt to break into it, send spam through it, or use automated tools to collect its content in bulk.

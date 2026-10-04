@@ -7,7 +7,7 @@ import { getSite } from '@/lib/site-content';
 export const revalidate = 120;
 const PERIOD: Record<string, string> = { 'one-off': 'one-off', month: 'per month', quarter: 'per quarter', year: 'per year', participant: 'per participant' };
 
-export const metadata: Metadata = { title: 'Pricing', description: 'Plan structure for Samakose business health products. Prices to be confirmed.' };
+export const metadata: Metadata = { title: 'Pricing', description: 'Plan structure for Business Doctor by Samakose. Prices to be confirmed.' };
 
 const BUILT_IN = [
   { name: 'Discovery', who: 'Owners who want to see where they stand.', pts: ['A basic assessment', 'A limited health score', 'Basic recommendations'] },

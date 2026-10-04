@@ -92,7 +92,7 @@ export function TokenPasswordForm({ mode }: { mode: 'reset' | 'accept' }) {
   if (mode === 'accept' && !info) return <div className="stack"><span className="spin" role="status" aria-label="Loading" /></div>;
   const resp = info && info.respondent ? info : null;
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
-    <h1>{mode === 'reset' ? 'Choose a new password' : 'Welcome to Samakose'}</h1>
+    <h1>{mode === 'reset' ? 'Choose a new password' : 'Welcome to Business Doctor'}</h1>
     {mode === 'accept' && <p className="muted">{resp ? `You have been invited to answer part of the business health check for ${resp.business}. You will see only the questions assigned to you. Set a password to activate your account.` : 'Set a password to activate your account.'}</p>}
     <FormError message={f.formError} />
     <Field label="Password" name="password" error={f.errors.password} hint="At least 12 characters. Avoid your name or email." required>{(p) => <input {...p} type="password" autoComplete="new-password" {...f.input('password')} />}</Field>

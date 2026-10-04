@@ -74,7 +74,7 @@ export const KINDS: Kind[] = [
       { key: 'footerBlurb', label: 'Footer description', type: 'textarea', max: 240 },
       { key: 'primaryColour', label: 'Main brand colour (light theme)', type: 'colour', hint: 'Used for buttons, headers and the footer. White text sits on it, so it must be dark enough to read: contrast of at least 4.5 to 1. Leave empty for the standard green.' }
     ],
-    defaults: { siteName: 'Samakose', tagline: 'The Business Doctor', primaryColour: '', browserTitle: 'Samakose | The Business Doctor', footerBlurb: 'Diagnose, prescribe and track the health of enterprises across Africa. Built in Tamale, Northern Ghana.' }
+    defaults: { siteName: 'Business Doctor by Samakose', tagline: 'by Samakose', primaryColour: '', browserTitle: 'Business Doctor by Samakose', footerBlurb: 'Diagnose, prescribe and track the health of enterprises across Africa. Built in Tamale, Northern Ghana.' }
   },
   {
     id: 'navigation', label: 'Menu', plural: 'Menu and navigation', group: 'site_settings', singleton: true,

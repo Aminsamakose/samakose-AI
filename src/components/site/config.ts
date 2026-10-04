@@ -1,7 +1,7 @@
 /** Single place for public-site facts. Contact details are Samakose's own; everything else is labelled where unverified. */
 export const SITE = {
-  name: 'Samakose',
-  tagline: 'The Business Doctor',
+  name: 'Business Doctor by Samakose',
+  tagline: 'by Samakose',
   /** The registered company. Shown only where the law or a contract needs it (terms, privacy, consent, certificates, invoices). Everywhere else the brand is `name`. */
   legalName: 'Samakose Accelerator Lab',
   email: 'info@samakose.com',

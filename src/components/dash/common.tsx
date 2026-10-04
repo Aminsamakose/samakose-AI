@@ -6,7 +6,7 @@ import { AnimatedValue, Badge, BarList, Button, Empty, Field, FormError, Modal, 
 
 export type Me = { user: { id: string; name: string; email: string; role: string; roleLabel: string; orgId: string | null; mfaEnabled: boolean }; permissions: Record<string, string[]> };
 
-export function useTitle(t: string) { useEffect(() => { document.title = `${t} | Samakose`; }, [t]); }
+export function useTitle(t: string) { useEffect(() => { document.title = `${t} | Business Doctor by Samakose`; }, [t]); }
 export function useMe() { return useApi<Me>('/auth/me'); }
 export const canDo = (me: Me | null, resource: string, action: string) => !!me?.permissions?.[resource]?.includes(action);
 

@@ -1,4 +1,4 @@
-# Samakose Business Doctor
+# Business Doctor by Samakose
 
 The Business Doctor platform, by Samakose. Formerly named Samakose AI Business Health OS.
 

@@ -15,7 +15,7 @@ const STARTS = [
 ];
 
 export default function NewCasePage() {
-  useEffect(() => { document.title = 'New case | Samakose'; }, []);
+  useEffect(() => { document.title = 'New case | Business Doctor by Samakose'; }, []);
   const router = useRouter();
   const { can, ready, me, error: meError, loading: meLoading } = useMe();
   const [q, setQ] = useState(''); const [dq, setDq] = useState('');
