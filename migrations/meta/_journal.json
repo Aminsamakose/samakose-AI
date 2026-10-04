@@ -232,6 +232,13 @@
       "when": 1792013624083,
       "tag": "0032_contract_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792014624083,
+      "tag": "0033_org_registry",
+      "breakpoints": true
     }
   ]
 }

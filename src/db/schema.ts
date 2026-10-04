@@ -120,6 +120,10 @@ export const organisations = pgTable('organisations', {
   sector: text('sector'), region: text('region'), district: text('district'),
   size: text('size'),
   registrationNumber: text('registration_number'),
+  /** Tax identification number. Unique among live organisations. */
+  tin: text('tin'),
+  /** Set when this record was merged into another. */
+  mergedInto: uuid('merged_into'),
   contactName: text('contact_name'), contactEmail: text('contact_email'), contactPhone: text('contact_phone'),
   consentAt: timestamp('consent_at', { withTimezone: true }),
   consentBy: text('consent_by'),

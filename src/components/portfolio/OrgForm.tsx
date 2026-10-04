@@ -4,7 +4,7 @@ import { api } from '@/lib/client/api';
 import { Button, Field, FormError, useForm } from '@/components/ui';
 import { ORG_TYPES, REGIONS, SECTORS, SIZES } from './shared';
 
-export type OrgRow = { id: string; name: string; type: string; sector: string | null; region: string | null; district: string | null; size: string | null; contactName: string | null; contactEmail: string | null; contactPhone: string | null; status: string };
+export type OrgRow = { id: string; name: string; type: string; sector: string | null; region: string | null; district: string | null; size: string | null; contactName: string | null; contactEmail: string | null; contactPhone: string | null; status: string; registrationNumber?: string | null; tin?: string | null };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Create (no org) or edit (org given). Owners can only change contact details, as the API enforces. */
@@ -12,11 +12,11 @@ export function OrgForm({ org, ownerOnly, onDone, onCancel }: { org?: OrgRow; ow
   const editing = !!org;
   const form = useForm({
     name: org?.name ?? '', type: org?.type ?? 'SME', sector: org?.sector ?? '', region: org?.region ?? '', district: org?.district ?? '', size: org?.size ?? '',
-    contactName: org?.contactName ?? '', contactEmail: org?.contactEmail ?? '', contactPhone: org?.contactPhone ?? '', status: org?.status ?? 'Active', consent: false, consentBy: ''
+    contactName: org?.contactName ?? '', contactEmail: org?.contactEmail ?? '', contactPhone: org?.contactPhone ?? '', registrationNumber: org?.registrationNumber ?? '', tin: org?.tin ?? '', status: org?.status ?? 'Active', consent: false, consentBy: ''
   }, async (v) => {
     const contact = { contactName: v.contactName, contactEmail: v.contactEmail, contactPhone: v.contactPhone };
-    if (editing) return api.patch(`/organisations/${org!.id}`, ownerOnly ? contact : { name: v.name, type: v.type, sector: v.sector, region: v.region, district: v.district, size: v.size, ...contact, ...(org!.status === 'Archived' ? {} : { status: v.status }) });
-    return api.post('/organisations', { name: v.name, type: v.type, sector: v.sector, region: v.region, district: v.district, size: v.size, ...contact, consent: v.consent, consentBy: v.consentBy });
+    if (editing) return api.patch(`/organisations/${org!.id}`, ownerOnly ? contact : { name: v.name, type: v.type, sector: v.sector, region: v.region, district: v.district, size: v.size, registrationNumber: v.registrationNumber, tin: v.tin, ...contact, ...(org!.status === 'Archived' ? {} : { status: v.status }) });
+    return api.post('/organisations', { name: v.name, type: v.type, sector: v.sector, region: v.region, district: v.district, size: v.size, registrationNumber: v.registrationNumber, tin: v.tin, ...contact, consent: v.consent, consentBy: v.consentBy });
   }, { onDone, success: editing ? 'Organisation updated' : 'Organisation registered' });
   const [local, setLocal] = useState<Record<string, string>>({});
   const e = { ...local, ...form.errors };
@@ -41,6 +41,8 @@ export function OrgForm({ org, ownerOnly, onDone, onCancel }: { org?: OrgRow; ow
       <Field label="Region" name="region" error={e.region}>{(p) => <select {...p} {...i('region')} disabled={dis}><option value="">Not set</option>{org?.region && !REGIONS.includes(org.region) && <option value={org.region}>{org.region}</option>}{REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}</select>}</Field>
       <Field label="District" name="district" error={e.district}>{(p) => <input {...p} {...i('district')} disabled={dis} maxLength={200} />}</Field>
       <Field label="Size (number of people)" name="size" error={e.size}>{(p) => <select {...p} {...i('size')} disabled={dis}><option value="">Not set</option>{org?.size && !SIZES.includes(org.size) && <option value={org.size}>{org.size}</option>}{SIZES.map((s) => <option key={s} value={s}>{s}</option>)}</select>}</Field>
+      <Field label="Registration number" name="registrationNumber" error={e.registrationNumber} hint="Registrar General or cooperative number">{(p) => <input {...p} {...i('registrationNumber')} disabled={dis} maxLength={40} autoComplete="off" />}</Field>
+      <Field label="Tax identification number (TIN)" name="tin" error={e.tin} hint="5 to 20 characters. Used to spot duplicates">{(p) => <input {...p} {...i('tin')} disabled={dis} maxLength={20} autoComplete="off" />}</Field>
       <Field label="Contact person" name="contactName" error={e.contactName}>{(p) => <input {...p} {...i('contactName')} maxLength={200} autoComplete="off" />}</Field>
       <Field label="Contact email" name="contactEmail" error={e.contactEmail}>{(p) => <input {...p} {...i('contactEmail')} type="email" maxLength={200} autoComplete="off" />}</Field>
       <Field label="Contact phone" name="contactPhone" error={e.contactPhone}>{(p) => <input {...p} {...i('contactPhone')} type="tel" maxLength={40} autoComplete="off" />}</Field>
