@@ -183,6 +183,13 @@
       "when": 1791665024083,
       "tag": "0025_phase_a_colleague_uploads",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791751424083,
+      "tag": "0026_mfa_recovery_codes",
+      "breakpoints": true
     }
   ]
 }

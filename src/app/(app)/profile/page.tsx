@@ -4,6 +4,7 @@ import { api, errText } from '@/lib/client/api';
 import { Async, Badge, Button, Card, ConfirmButton, Field, FormError, KV, PageHead, useForm, useToast } from '@/components/ui';
 import { useMe, useTitle } from '@/components/dash/common';
 import { OptionalCard } from '@/components/OptionalAnswers';
+import { RecoveryCodes } from '@/components/RecoveryCodes';
 
 function NameForm({ name, onSaved }: { name: string; onSaved: () => void }) {
   const f = useForm({ name }, async (v) => { return api.patch('/auth/me', { name: v.name.trim() }); }, { success: 'Name updated', onDone: onSaved });
@@ -41,12 +42,28 @@ function PasswordForm() {
 }
 
 type Setup = { secret: string; otpauthUrl: string; qr: string };
-function MfaSection({ enabled, onChanged }: { enabled: boolean; onChanged: () => void }) {
+function RecoverySection({ left, onShown }: { left: number; onShown: (codes: string[]) => void }) {
+  const f = useForm({ password: '', code: '' }, (v) => api.post<{ recoveryCodes: string[] }>('/auth/mfa/recovery-codes', { password: v.password, code: v.code.trim() }), { onDone: (d) => { f.setValues({ password: '', code: '' }); onShown(d.recoveryCodes); } });
+  const [loc, setLoc] = useState<Record<string, string>>({});
+  return <form className="stack" noValidate onSubmit={(e) => { e.preventDefault(); const err: Record<string, string> = {}; if (!f.values.password) err.password = 'Enter your password'; if (!/^\d{6}$/.test(f.values.code.trim())) err.code = 'Enter the 6-digit code'; setLoc(err); if (!Object.keys(err).length) f.onSubmit(); }}>
+    <p><strong>Recovery codes:</strong> {left > 0 ? <>{left} unused. </> : <Badge tone="warn">None left</Badge>} {left === 0 && ' '}Each code signs you in once if you lose your phone.{left <= 2 && ' Make a new set soon.'}</p>
+    <FormError message={f.formError} />
+    <p className="small muted">Making a new set replaces the old one. Confirm your password and a current code.</p>
+    <div className="form-grid">
+      <Field label="Password" name="rc-password" required error={loc.password ?? f.errors.password}>{(p) => <input {...p} {...f.input('password')} type="password" autoComplete="current-password" />}</Field>
+      <Field label="6-digit code" name="rc-code" required error={loc.code ?? f.errors.code}>{(p) => <input {...p} {...f.input('code')} inputMode="numeric" autoComplete="one-time-code" maxLength={6} />}</Field>
+    </div>
+    <div className="form-actions"><Button type="submit" loading={f.busy}>Make new recovery codes</Button></div>
+  </form>;
+}
+
+function MfaSection({ enabled, recoveryLeft, onChanged }: { enabled: boolean; recoveryLeft: number; onChanged: () => void }) {
+  const [codes, setCodes] = useState<string[] | null>(null);
   const [setup, setSetup] = useState<Setup | null>(null);
   const [starting, setStarting] = useState(false);
   const [startErr, setStartErr] = useState<string | null>(null);
   const start = async () => { setStarting(true); setStartErr(null); try { setSetup(await api.post<Setup>('/auth/mfa/setup')); } catch (e) { setStartErr(errText(e)); } finally { setStarting(false); } };
-  const enable = useForm({ code: '' }, (v) => api.post('/auth/mfa/enable', { code: v.code.trim() }), { success: 'Two-step verification is on', onDone: () => { setSetup(null); onChanged(); } });
+  const enable = useForm({ code: '' }, (v) => api.post('/auth/mfa/enable', { code: v.code.trim() }), { success: 'Two-step verification is on', onDone: (d) => { setSetup(null); setCodes(d.recoveryCodes); } });
   const disable = useForm({ password: '', code: '' }, (v) => api.post('/auth/mfa/disable', { password: v.password, code: v.code.trim() }), { success: 'Two-step verification is off', onDone: () => { disable.setValues({ password: '', code: '' }); onChanged(); } });
   const [loc, setLoc] = useState<Record<string, string>>({});
   const checkCode = (code: string, extra?: { password: string }) => {
@@ -55,7 +72,8 @@ function MfaSection({ enabled, onChanged }: { enabled: boolean; onChanged: () =>
     if (extra && !extra.password) err.password = 'Enter your password';
     setLoc(err); return !Object.keys(err).length;
   };
-  if (enabled) return <form className="stack" noValidate onSubmit={(e) => { e.preventDefault(); if (checkCode(disable.values.code, disable.values)) disable.onSubmit(); }}>
+  if (codes) return <RecoveryCodes codes={codes} onDone={() => { setCodes(null); onChanged(); }} />;
+  if (enabled) return <div className="stack"><RecoverySection left={recoveryLeft} onShown={setCodes} /><hr /><form className="stack" noValidate onSubmit={(e) => { e.preventDefault(); if (checkCode(disable.values.code, disable.values)) disable.onSubmit(); }}>
     <p><Badge tone="ok">On</Badge> Your account asks for a code from your authenticator app each time you sign in.</p>
     <FormError message={disable.formError} />
     <p className="small muted">To turn it off, confirm your password and a current code. Some roles must keep two-step verification on, and the system will tell you if yours is one of them.</p>
@@ -64,7 +82,7 @@ function MfaSection({ enabled, onChanged }: { enabled: boolean; onChanged: () =>
       <Field label="6-digit code" name="code" required error={loc.code ?? disable.errors.code}>{(p) => <input {...p} {...disable.input('code')} inputMode="numeric" autoComplete="one-time-code" maxLength={6} />}</Field>
     </div>
     <div className="form-actions"><Button variant="danger" type="submit" loading={disable.busy}>Turn off two-step verification</Button></div>
-  </form>;
+  </form></div>;
   if (!setup) return <div className="stack">
     <p><Badge>Off</Badge> Add a second step at sign in using an authenticator app on your phone.</p>
     <FormError message={startErr} />
@@ -97,7 +115,7 @@ export default function ProfilePage() {
       </Card>
       <OptionalCard />
       <Card title="Change password"><PasswordForm /></Card>
-      <Card title="Two-step verification"><MfaSection enabled={d.user.mfaEnabled} onChanged={me.reload} /></Card>
+      <Card title="Two-step verification"><MfaSection enabled={d.user.mfaEnabled} recoveryLeft={(d as any).recoveryCodesLeft ?? 0} onChanged={me.reload} /></Card>
       <Card title="Sessions">
         <div className="stack">
           <p>You are signed in on this device. If you used a shared or lost device, sign out everywhere else.</p>

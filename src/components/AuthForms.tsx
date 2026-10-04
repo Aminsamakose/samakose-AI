@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { api, ApiFail } from '@/lib/client/api';
 import { Button, Field, FormError, useForm } from './ui';
+import { RecoveryCodes } from './RecoveryCodes';
 import { REGIONS, SECTORS, SIZES } from './portfolio/shared';
 
 const dest = (next: string, fallback: string) => ({ ok: fallback, mfa: '/mfa', mfa_setup: '/mfa-setup', change_password: '/change-password', pending: '/pending', profile: '/complete-profile' } as Record<string, string>)[next] ?? fallback;
@@ -28,9 +29,9 @@ export function MfaForm() {
   const f = useForm({ code: '' }, (v) => api.post('/auth/mfa/verify', v), { onDone: (d) => { window.location.href = dest(d.next, '/dashboard'); } });
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
     <h1>Two-step verification</h1>
-    <p className="muted">Enter the 6-digit code from your authenticator app.</p>
+    <p className="muted">Enter the 6-digit code from your authenticator app. Lost your phone? Enter one of your recovery codes instead.</p>
     <FormError message={f.formError} />
-    <Field label="Code" name="code" error={f.errors.code} required>{(p) => <input {...p} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]*" maxLength={6} autoFocus {...f.input('code')} />}</Field>
+    <Field label="Code or recovery code" name="code" error={f.errors.code} required>{(p) => <input {...p} autoComplete="one-time-code" maxLength={11} autoCapitalize="characters" spellCheck={false} autoFocus {...f.input('code')} />}</Field>
     <Button variant="primary" loading={f.busy} type="submit">Verify</Button>
     <button type="button" className="btn ghost" onClick={async () => { await api.post('/auth/logout').catch(() => {}); window.location.href = '/login'; }}>Use a different account</button>
   </form>;
@@ -38,7 +39,9 @@ export function MfaForm() {
 
 export function MfaSetupForm() {
   const [setup, setSetup] = useState<{ secret: string; qr: string } | null>(null); const [err, setErr] = useState<string | null>(null); const [busy, setBusy] = useState(false);
-  const f = useForm({ code: '' }, (v) => api.post('/auth/mfa/enable', v), { onDone: () => { window.location.href = '/dashboard'; } });
+  const [codes, setCodes] = useState<string[] | null>(null);
+  const f = useForm({ code: '' }, (v) => api.post<{ recoveryCodes: string[] }>('/auth/mfa/enable', v), { onDone: (d) => { setCodes(d.recoveryCodes); } });
+  if (codes) return <RecoveryCodes codes={codes} doneLabel="Continue" onDone={() => { window.location.href = '/dashboard'; }} />;
   return <div className="stack">
     <h1>Set up two-step verification</h1>
     <p className="muted">Your role needs a second step at sign-in. Use an authenticator app such as Google Authenticator or Microsoft Authenticator.</p>
