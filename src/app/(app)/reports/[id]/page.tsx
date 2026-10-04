@@ -51,7 +51,7 @@ export default function ReportPage() {
       return <>
         <div className="no-print"><PageHead title={r.title} crumbs={<><Link href="/cases">Cases</Link> / <Link href={`/cases/${r.caseId}`}>{r.caseCode}</Link> / Report</>}
           sub={<>{r.org.name} <Badge tone={draft ? '' : 'ok'}>{draft ? 'Draft' : 'Released'}</Badge></>}
-          actions={<Button onClick={() => window.print()}>Print or save as PDF</Button>} /></div>
+          actions={<>{!draft && <><a className="btn" href={`/api/v1/reports/${r.id}/export?format=pdf`} download>Download PDF</a> <a className="btn" href={`/api/v1/reports/${r.id}/export?format=docx`} download>Download Word</a> </>}<Button onClick={() => window.print()}>Print</Button></>} /></div>
 
         {draft && <div className="alert warn no-print">This is a draft. It is not visible to the business owner until the reviewer releases it.</div>}
 

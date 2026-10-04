@@ -9113,6 +9113,64 @@
         }
       }
     },
+    "/reports/{id}/export": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Download a released report as Word or PDF",
+        "operationId": "get__reports_id_export",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "reports:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "pdf",
+              "type": "string",
+              "enum": [
+                "docx",
+                "pdf"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
     "/reports/{id}/release": {
       "post": {
         "tags": [
