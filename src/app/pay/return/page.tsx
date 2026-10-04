@@ -26,7 +26,7 @@ function Return() {
     finally { setChecking(false); }
   }, [reference]);
 
-  useEffect(() => { document.title = 'Payment result | Samakose'; if (reference) check(); }, [reference, check]);
+  useEffect(() => { document.title = 'Payment result | Business Doctor by Samakose'; if (reference) check(); }, [reference, check]);
   useEffect(() => {
     if (out?.status === 'Pending' && tries < MAX_TRIES && !checking) { timer.current = setTimeout(check, RETRY_MS); return () => { if (timer.current) clearTimeout(timer.current); }; }
   }, [out, tries, checking, check]);

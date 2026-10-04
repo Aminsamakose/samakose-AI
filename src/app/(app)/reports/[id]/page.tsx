@@ -35,7 +35,7 @@ export default function ReportPage() {
   const caseSt = useApi<CaseLite>(canApprove && st.data ? `/cases/${st.data.caseId}` : null);
   const toast = useToast();
   const [editing, setEditing] = useState(false);
-  useEffect(() => { if (st.data) document.title = `${st.data.title} | Samakose`; }, [st.data]);
+  useEffect(() => { if (st.data) document.title = `${st.data.title} | Business Doctor by Samakose`; }, [st.data]);
 
   return <div className="stack">
     <style>{PRINT_CSS}</style>

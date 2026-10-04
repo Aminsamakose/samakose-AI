@@ -14,7 +14,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   if (site.maintenance.on) {
     return <div className="site flex min-h-screen flex-col items-center justify-center px-6 text-center">
       <main id="main" className="max-w-xl" style={{ display: 'grid', gap: 16 }}>
-        <h1>{String(site.brand.name || 'Samakose')} is being updated</h1>
+        <h1>{String(site.brand.name || 'Business Doctor by Samakose')} is being updated</h1>
         <p style={{ opacity: 0.85 }}>{site.maintenance.message || 'We are making improvements and will be back shortly. Thank you for your patience.'}</p>
         <p className="small" style={{ opacity: 0.7 }}>Team members can still <a href="/login">sign in</a>.</p>
       </main>

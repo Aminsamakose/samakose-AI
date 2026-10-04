@@ -41,7 +41,7 @@ export async function testIntegration(ctx: Ctx, what: string) {
   let result: { ok: boolean; message: string };
   if (what === 'email') {
     try {
-      const r = await sendMail(me.email, 'Samakose test email', 'This is a test email from the System page. If you can read it, outgoing email works.');
+      const r = await sendMail(me.email, 'Business Doctor test email', 'This is a test email from the System page. If you can read it, outgoing email works.');
       result = r.logOnly ? { ok: false, message: 'Email is in log-only mode, so nothing was delivered. Set the mail server on the host to send real email.' } : { ok: true, message: `A test email was sent to ${me.email}. Check the inbox, and the spam folder if it does not arrive.` };
     } catch (e) { result = { ok: false, message: `The mail server refused the message: ${(e as Error).message.slice(0, 200)}` }; }
   } else if (what === 'storage') {
@@ -112,7 +112,7 @@ export async function exportConfig(ctx: Ctx): Promise<Bundle> {
 export async function importConfig(ctx: Ctx, raw: unknown, dryRun: boolean) {
   allow(ctx, 'settings', 'edit');
   const b = raw as Partial<Bundle>;
-  if (!b || b.format !== 'samakose-config' || b.version !== 1) throw fieldError({ file: 'This is not a Samakose configuration file, or it is from a newer version.' });
+  if (!b || b.format !== 'samakose-config' || b.version !== 1) throw fieldError({ file: 'This is not a Business Doctor configuration file, or it is from a newer version.' });
   const problems: string[] = []; const plan = { drafts: 0, switches: 0, templates: 0, reportText: 0 };
   const content = Array.isArray(b.content) ? b.content : [];
   if (content.length > 500) problems.push('The file holds more than 500 content items');
