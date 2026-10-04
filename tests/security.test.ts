@@ -10,7 +10,7 @@ import { db, schema } from '@/db/client';
 const NIL = '00000000-0000-4000-8000-000000000000';
 const fill = (p: string) => p.replace(/:reference/g, 'nothing').replace(/:[a-zA-Z]+/g, NIL);
 // The route allows the role, but the service narrows it further by design (documented in ARCHITECTURE.md).
-const NARROWED = new Set(['POST /invoices/:id/manual-payment:OWNER', 'POST /payments/:reference/mock-complete:OWNER', 'POST /kpis/:id/readings:OWNER']);
+const NARROWED = new Set(['PATCH /practitioners/:id:EXPERT', 'POST /practitioners/:id/submit:EXPERT', 'POST /practitioners/:id/submit:ADMIN', 'GET /practitioners/:id/conflicts:EXPERT', 'GET /practitioners/:id/performance:EXPERT', 'GET /practitioners/:id/performance:PROGRAMME_MANAGER', 'POST /invoices/:id/manual-payment:OWNER', 'POST /payments/:reference/mock-complete:OWNER', 'POST /kpis/:id/readings:OWNER']);
 
 let sessions: Record<Role, Session>;
 beforeAll(async () => {
@@ -26,7 +26,7 @@ describe('every endpoint enforces its permission for every role', () => {
   it('has a permission on every session route that touches business data', () => {
     const open = routes.filter((r) => !r.permission && r.auth !== 'public' && r.auth !== 'webhook').map((r) => `${r.method} ${r.path}`);
     // Open to any signed-in user by design: own profile, own optional answers and next step (/me), own notifications, search (scoped inside), job status (owner-checked), password and MFA
-    for (const p of open) expect(p).toMatch(/\/auth\/|\/me\/|\/notifications|\/search|\/jobs\/:id/);
+    for (const p of open) expect(p).toMatch(/\/auth\/|\/me\/|\/notifications|\/search|\/jobs\/:id|\/users\/:id\/photo/);
   });
   for (const r of guarded) {
     it(`${r.method} ${r.path}`, async () => {

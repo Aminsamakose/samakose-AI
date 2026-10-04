@@ -8,6 +8,7 @@ import { notifyUsers } from './notify';
 import { audit } from '@/lib/audit';
 import { sendMail } from '@/lib/mail';
 import { AgentBlocked, NonRetryable, runAgent } from '@/services/ai';
+import { scanUnacknowledged } from '@/services/assignments';
 import { latestDiagnosis, latestScore, loadRules, systemCtx } from '@/services/common';
 import { validateDiagnosis, validatePrescription } from './logic';
 import { mockBrief, mockDiagnosis, mockPrescription, mockReport, type BriefContext, type DiagnosisContext, type PrescriptionContext, type ReportContext } from './mockai';
@@ -184,6 +185,9 @@ registerJob('overdue_scan', async () => {
     return { flagged: rows.length };
   });
 });
+
+/** Assignments nobody has answered within their time: one reminder to the people who can reassign. */
+registerJob('assignment_scan', async () => tx(async (t) => scanUnacknowledged(systemCtx(t, 'scan'))));
 
 /** Invoices past their date become Overdue. Contracts ending within 30 days raise one alert. */
 registerJob('invoice_scan', async () => {

@@ -7,6 +7,7 @@ import { assertCase, assertOrg, caseScope, isInternal, assertLeadCase } from '@/
 import { CASE_TRANSITIONS, canTransitionCase } from '@/domain/logic';
 import { notifyUsers } from '@/domain/notify';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
+import { place, completeForCase } from './assignments';
 import { advanceCase, allow, caseFacts, latestScore, need, respondList } from './common';
 import { CASE_STATES, type CaseState } from '@/db/schema';
 
@@ -82,31 +83,12 @@ export async function createCase(ctx: Ctx, b: { orgId: string; programmeId?: str
     if (dupe.length) throw conflict('This organisation already has an open case in this programme');
   } else if (u.role === 'PROGRAMME_MANAGER') throw fieldError({ programmeId: 'Choose one of your programmes' });
   const [row] = await ctx.db.insert(c).values({
-    orgId: b.orgId, programmeId, cohortId: b.cohortId ?? null, status: b.startState ?? 'PROFILED', createdBy: u.id,
-    consultantId: u.role === 'EXPERT' ? u.id : null
+    orgId: b.orgId, programmeId, cohortId: b.cohortId ?? null, status: b.startState ?? 'PROFILED', createdBy: u.id
   }).returning({ id: c.id, code: c.code, status: c.status });
+  // An expert who opens a case becomes its lead through the same checks as any other assignment (approved profile, no declared conflict).
+  if (u.role === 'EXPERT') await place(ctx, row.id, { fn: 'lead', userId: u.id, reason: 'Opened the case' });
   await audit(ctx, 'case.created', 'case', row.id, undefined, { orgId: b.orgId, programmeId, cohortId: b.cohortId ?? null, status: row.status }, row.id);
   return row;
-}
-
-export async function assignCase(ctx: Ctx, id: string, b: { consultantId?: string | null; coachId?: string | null; reviewerId?: string | null }) {
-  allow(ctx, 'cases', 'assign');
-  const u = need(ctx).user;
-  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(u.role)) throw forbidden('Only administrators and programme managers assign people to cases');
-  const before = await assertLeadCase(ctx, id);
-  const next = { consultantId: b.consultantId === undefined ? before.consultantId : b.consultantId, coachId: b.coachId === undefined ? before.coachId : b.coachId, reviewerId: b.reviewerId === undefined ? before.reviewerId : b.reviewerId };
-  const check = async (uid: string | null, role: string, field: string) => {
-    if (!uid) return;
-    const [x] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, uid)).limit(1);
-    if (!x || !x.active || x.role !== role) throw fieldError({ [field]: `Choose an active ${role.toLowerCase()}` });
-  };
-  await check(next.consultantId, 'EXPERT', 'consultantId'); await check(next.coachId, 'EXPERT', 'coachId'); await check(next.reviewerId, 'REVIEWER', 'reviewerId');
-  if (next.consultantId && next.consultantId === next.reviewerId) throw fieldError({ reviewerId: 'The reviewer must be a different person from the lead expert' });
-  await ctx.db.update(c).set({ ...next, updatedAt: new Date() }).where(eq(c.id, id));
-  await audit(ctx, 'case.assigned', 'case', id, { consultantId: before.consultantId, coachId: before.coachId, reviewerId: before.reviewerId }, next, id);
-  const newly = [next.consultantId, next.coachId, next.reviewerId].filter((x, i) => x && x !== [before.consultantId, before.coachId, before.reviewerId][i]) as string[];
-  await notifyUsers(ctx, newly, { kind: 'CaseAssigned', title: `You were assigned to ${before.code}`, link: `/cases/${id}`, email: true });
-  return { ok: true };
 }
 
 export async function transitionCase(ctx: Ctx, id: string, to: CaseState, reason?: string) {
@@ -124,6 +106,7 @@ export async function transitionCase(ctx: Ctx, id: string, to: CaseState, reason
   await ctx.db.update(c).set({ status: to, updatedAt: new Date() }).where(eq(c.id, id));
   await audit(ctx, 'case.state', 'case', id, { status: cs.status }, { status: to, trigger: t.trigger, reason: reason ?? null, automatic: false }, id);
   await advanceCase(ctx, id);
+  if (to === 'GRADUATED') await completeForCase(ctx, id);
   return { status: to };
 }
 
