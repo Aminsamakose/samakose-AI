@@ -17,6 +17,11 @@ export const env = {
   get aiMode() { return str('AI_MODE', 'mock'); },
   get claudeKey() { return str('CLAUDE_API_KEY'); },
   get claudeModel() { return str('CLAUDE_MODEL', 'claude-sonnet-5-5'); },
+  /** Which model provider handles live AI: 'anthropic' (Claude, default), 'openai' (ChatGPT), or 'openai-compatible' (any service that speaks the OpenAI chat format, such as Gemini, Mistral, Groq or Azure, via OPENAI_BASE_URL). */
+  get aiProvider() { return str('AI_PROVIDER', 'anthropic').trim().toLowerCase(); },
+  get openaiKey() { return str('OPENAI_API_KEY').trim().replace(/^["']|["']$/g, '').trim(); },
+  get openaiModel() { return str('OPENAI_MODEL', 'gpt-5'); },
+  get openaiBaseUrl() { return str('OPENAI_BASE_URL', 'https://api.openai.com/v1').replace(/\/$/, ''); },
   get koboSecret() { return str('KOBO_WEBHOOK_SECRET'); },
   get koboServer() { return str('KOBO_SERVER', 'https://kf.kobotoolbox.org'); },
   get koboToken() { return str('KOBO_TOKEN'); },

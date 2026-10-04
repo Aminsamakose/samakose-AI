@@ -9,7 +9,7 @@ type Status = {
   database: { ok: boolean; latencyMs: number }; jobs: Record<string, number>;
   failedJobs: { id: string; kind: string; attempts: number; lastError: string | null; updatedAt: string }[];
   email: { mode: 'smtp' | 'log-only'; queue: Record<string, number> };
-  ai: { mode: 'mock' | 'claude'; model: string | null }; payments: { provider: string; mode: 'mock' | 'live' };
+  ai: { mode: string; provider: string | null; host: string | null; model: string | null }; payments: { provider: string; mode: 'mock' | 'live' };
   kobo: { configured: boolean; pullConfigured: boolean; server: string };
   storage: { dir: string; status: string; maxUploadMb: number };
   security: { mfaRequiredRoles: string[]; trustProxy: boolean; https: boolean };
@@ -78,7 +78,7 @@ export default function SystemPage() {
     <Async state={st}>{(s) => <>
       <div className="grid">
         <Tile label="Database" value={s.database.ok ? 'Up' : 'Down'} hint={`${s.database.latencyMs} ms`} />
-        <Tile label="AI" value={s.ai.mode === 'claude' ? 'Live' : 'Mock'} hint={s.ai.mode === 'claude' ? s.ai.model ?? undefined : 'Canned answers, no AI provider key set'} />
+        <Tile label="AI" value={s.ai.mode !== 'mock' ? 'Live' : 'Mock'} hint={s.ai.mode !== 'mock' ? `${s.ai.provider} · ${s.ai.model ?? ''}` : 'Canned answers, no AI provider key set'} />
         <Tile label="Payments" value={s.payments.mode === 'live' ? 'Live' : 'Mock'} hint={s.payments.mode === 'live' ? 'Paystack' : 'Paystack key not set; test payments only'} />
         <Tile label="Email" value={s.email.mode === 'smtp' ? 'SMTP' : 'Log only'} hint={s.email.mode === 'smtp' ? 'Sent through the mail server' : 'Mail is written to the log, not sent'} />
         <Tile label="Failed jobs" value={s.jobs.failed ?? 0} hint={counts(s.jobs)} />
@@ -89,7 +89,7 @@ export default function SystemPage() {
       <div className="grid two">
         <Card title="Environment">
           <KV items={[
-            ['AI mode', mode(s.ai.mode === 'claude', `Live (${s.ai.model ?? 'Claude'})`, 'Mock')],
+            ['AI mode', mode(s.ai.mode !== 'mock', `Live (${s.ai.provider ?? 'claude'}: ${s.ai.model ?? ''}, sent to ${s.ai.host ?? ''})`, 'Mock')],
             ['Payment mode', mode(s.payments.mode === 'live', 'Live Paystack', 'Mock')],
             ['Mail mode', mode(s.email.mode === 'smtp', 'SMTP', 'Log only')],
             ['Mail queue', counts(s.email.queue)],

@@ -13,27 +13,20 @@ import { gate } from './agent-gate';
 export class NonRetryable extends Error {}
 /** The registry refused the task: paused, disabled, over a limit, or not approved for the live model. Nothing was sent to a model. */
 export class AgentBlocked extends NonRetryable {}
-export type ModelReply = { text: string; inputTokens: number; outputTokens: number };
-export type Transport = (system: string, user: string, signal: AbortSignal, model?: string | null) => Promise<ModelReply>;
+export type { ModelReply, Transport } from './ai-providers';
+import { activeProvider, modelFor, providerHasKey, transportFor, type Transport } from './ai-providers';
 
-const claudeTransport: Transport = async (system, user, signal, model) => {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST', signal,
-    headers: { 'content-type': 'application/json', 'x-api-key': env.claudeKey, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: model ?? env.claudeModel, max_tokens: 3000, temperature: 0.2, system, messages: [{ role: 'user', content: user }] })
-  });
-  if (!res.ok) throw new Error(`Model service answered ${res.status}`);
-  const j: any = await res.json();
-  return { text: (j.content ?? []).map((b: any) => b.text ?? '').join(''), inputTokens: j.usage?.input_tokens ?? 0, outputTokens: j.usage?.output_tokens ?? 0 };
-};
 let transportOverride: Transport | null = null;
 /** Tests replace the transport to exercise retries and invalid output. */
 export const setAiTransport = (t: Transport | null) => { transportOverride = t; };
-export const aiIsMock = () => !transportOverride && !(env.aiMode === 'claude' && env.claudeKey);
+export const aiIsMock = () => !transportOverride && !(env.aiMode === 'claude' && providerHasKey());
 let liveOverride: boolean | null = null;
 /** True when requests would go to the real model. Tests can force it to exercise the live-model gate. */
-export const aiIsLive = () => (liveOverride ?? (env.aiMode === 'claude' && !!env.claudeKey));
+export const aiIsLive = () => (liveOverride ?? (env.aiMode === 'claude' && providerHasKey()));
 export const setAiLiveOverride = (v: boolean | null) => { liveOverride = v; };
+
+/** What is recorded against a request: the model name, with the provider in front when it is not Claude, so spend and quality can be compared by provider. */
+const modelLabel = (pinned: string | null | undefined) => { const p = activeProvider(); const m = modelFor(pinned, p); return p === 'anthropic' ? m : `${p}:${m}`; };
 
 export async function runAgent<T>(o: {
   agent: string; caseId: string | null; requestedBy: string | null; context: Record<string, unknown>;
@@ -46,10 +39,10 @@ export async function runAgent<T>(o: {
   // The registry decides first. A refused task is recorded, nothing is sent to a model, and the requester is told.
   const g = await gate(db(), o.agent, { live: aiIsLive(), evaluation: o.evaluation });
   if (!g.ok) {
-    await db().insert(schema.aiRequests).values({ agent: o.agent, caseId: o.caseId, model: mock ? 'mock' : env.claudeModel, contextBytes: Buffer.byteLength(payload), requestedBy: o.requestedBy, ok: false, agentId: g.agentId, agentVersionId: g.versionId, blockedReason: g.reason });
+    await db().insert(schema.aiRequests).values({ agent: o.agent, caseId: o.caseId, model: mock ? 'mock' : modelLabel(null), contextBytes: Buffer.byteLength(payload), requestedBy: o.requestedBy, ok: false, agentId: g.agentId, agentVersionId: g.versionId, blockedReason: g.reason });
     throw new AgentBlocked(g.reason);
   }
-  const [req] = await db().insert(schema.aiRequests).values({ agent: o.agent, caseId: o.caseId, model: mock ? 'mock' : (g.model ?? env.claudeModel), contextBytes: Buffer.byteLength(payload), requestedBy: o.requestedBy, agentId: g.agentId, agentVersionId: g.versionId }).returning();
+  const [req] = await db().insert(schema.aiRequests).values({ agent: o.agent, caseId: o.caseId, model: mock ? 'mock' : modelLabel(g.model), contextBytes: Buffer.byteLength(payload), requestedBy: o.requestedBy, agentId: g.agentId, agentVersionId: g.versionId }).returning();
   let feedback = '';
   for (let attempt = 1; attempt <= 2; attempt++) {
     const started = Date.now();
@@ -57,7 +50,7 @@ export async function runAgent<T>(o: {
     try {
       if (mock) { parsed = o.mock(); raw = JSON.stringify(parsed); }
       else {
-        const r = await (transportOverride ?? claudeTransport)(g.prompt, payload + feedback, AbortSignal.timeout(45_000), g.model);
+        const r = await (transportOverride ?? transportFor())(g.prompt, payload + feedback, AbortSignal.timeout(45_000), g.model);
         raw = r.text; inTok = r.inputTokens; outTok = r.outputTokens;
         parsed = extractJson(raw);
       }
