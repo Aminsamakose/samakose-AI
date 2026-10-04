@@ -5,4 +5,5 @@ import './network';
 import './unlock';
 import './delivery';
 import './indicators';
+import './programme-finance';
 export { routes } from '../framework';

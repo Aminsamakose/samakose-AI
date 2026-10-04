@@ -3,7 +3,7 @@ import { Async, Badge, BarList, Card, Empty, Tile, useApi } from '@/components/u
 import { titleCase } from '@/lib/client/api';
 
 type Group = { key: string; n: number | null };
-export type Indicator = { id: string; name: string; metric: string; metricLabel: string; unit: string; target: number; dueDate: string | null; note: string | null; value: number | null; pct: number | null; status: string; hidden: boolean };
+export type Indicator = { id: string; name: string; metric: string; metricLabel: string; unit: string; target: number; dueDate: string | null; note: string | null; level?: string; parentId?: string | null; value: number | null; pct: number | null; status: string; hidden: boolean };
 type Dash = {
   programme: { id: string; code: string; name: string; status: string };
   minGroupSize: number; total: number | null; byState: Group[]; maturity: Group[];
