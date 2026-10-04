@@ -64,6 +64,14 @@ export async function updateOrg(ctx: Ctx, id: string, b: Partial<OrgInput> & { s
   const before = await assertOrg(ctx, id);
   const patch: Record<string, unknown> = {};
   const ownerFields = ['contactName', 'contactEmail', 'contactPhone'] as const;
+  // Name, type, registration number and TIN identify the business for everyone who works with it. Past registration, only an administrator changes them.
+  const identity = ['name', 'type', 'registrationNumber', 'tin'] as const;
+  const touchesIdentity = identity.some((k) => (b as any)[k] !== undefined && String((b as any)[k] ?? '').trim() !== String((before as any)[k] ?? '').trim());
+  if (touchesIdentity && ctx.user!.role !== 'ADMIN' && ctx.user!.role !== 'OWNER') {
+    const mine = before.createdBy === ctx.user!.id;
+    const cs = await ctx.db.select({ n: countOf }).from(schema.cases).where(eq(schema.cases.orgId, id));
+    if (!mine || Number(cs[0].n) > 0) throw forbidden('Only an administrator can change the name, type, registration number or TIN once the organisation has cases or was registered by someone else. Ask an administrator.');
+  }
   for (const [k, v] of Object.entries(b)) {
     if (v === undefined) continue;
     if (ctx.user!.role === 'OWNER' && !(ownerFields as readonly string[]).includes(k)) throw forbidden('Owners can update contact details only');
