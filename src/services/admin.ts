@@ -10,7 +10,7 @@ import { caseScope, orgScope, programmeScope } from '@/domain/scope';
 import { can } from '@/lib/rbac';
 import { env } from '@/lib/env';
 import { aiIsMock } from './ai';
-import { activeProvider, providerHost, providerModel } from './ai-providers';
+import { activeProvider, providerHost, providerModel, refreshAiConfig } from './ai-providers';
 import { paystackIsMock } from './finance';
 import { mailConfigured } from '@/lib/mail';
 import { orderBy, search, countOf, escapeLike, type ListQuery } from '@/api/list';
@@ -127,6 +127,7 @@ export async function updateLibraryItem(ctx: Ctx, id: string, b: { title?: strin
 /* -------------------------------- system ------------------------------- */
 export async function systemStatus(ctx: Ctx) {
   allow(ctx, 'integrations', 'read');
+  await refreshAiConfig(ctx.db);
   const t0 = Date.now();
   await ctx.db.execute(sql`select 1`);
   const latency = Date.now() - t0;
