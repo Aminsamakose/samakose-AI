@@ -102,7 +102,7 @@ export function BillingEditor({ canEdit }: { canEdit: boolean }) {
       </div>
     </Card>
     <Card title="Tax (off until Finance confirms)">
-      <p className="small muted" style={{ marginBottom: 12 }}>Switch tax on only after Finance has confirmed whether Samakose Accelerator Lab is registered and how it is treated. It cannot be turned on without a rate, a registration number and a confirmation reference.</p>
+      <p className="small muted" style={{ marginBottom: 12 }}>Switch tax on only after Finance has confirmed whether Samakose is registered and how it is treated. It cannot be turned on without a rate, a registration number and a confirmation reference.</p>
       <div className="stack">
         <label className="row" style={{ gap: 10 }}><input type="checkbox" disabled={!canEdit} checked={v.taxEnabled} onChange={(e) => set('taxEnabled', e.target.checked)} /> Tax is applied</label>
         <div className="form-grid">{n('taxLabel', 'Tax label')}{n('taxRatePercent', 'Rate (percent)', undefined, 'number')}{n('taxRegistrationNumber', 'Tax registration number')}{n('taxConfirmationRef', 'Finance confirmation reference', 'Who confirmed this and when.')}</div>

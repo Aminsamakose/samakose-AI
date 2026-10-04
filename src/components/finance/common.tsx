@@ -13,7 +13,7 @@ export function useMe() {
   return { ...st, role: st.data?.user.role, can: (res: string, act: string) => !!perms[res]?.includes(act) };
 }
 
-export function useTitle(t: string) { useEffect(() => { document.title = `${t} | Business Doctor`; }, [t]); }
+export function useTitle(t: string) { useEffect(() => { document.title = `${t} | Samakose`; }, [t]); }
 
 export const today = () => new Date().toISOString().slice(0, 10);
 export const daysUntil = (d: string | null | undefined) => d ? Math.ceil((new Date(d + 'T00:00:00').getTime() - new Date(today() + 'T00:00:00').getTime()) / 86400000) : null;

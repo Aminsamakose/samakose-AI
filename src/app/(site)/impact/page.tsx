@@ -3,7 +3,7 @@ import { PageHero, Section, Eyebrow, ButtonLink, Card } from '@/components/site/
 import { Reveal, Stagger, Item } from '@/components/site/motion';
 import { RESULTS, TESTIMONIALS, PARTNERS } from '@/lib/impact-data';
 
-export const metadata: Metadata = { title: 'Impact', description: 'How Samakose Accelerator Lab measures change, and the verified results we publish.' };
+export const metadata: Metadata = { title: 'Impact', description: 'How Samakose measures change, and the verified results we publish.' };
 
 const METHOD = [
   { t: 'Baseline', d: 'Every business starts with a health check, so later change is measured against a clear starting point.' },

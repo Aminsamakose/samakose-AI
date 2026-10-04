@@ -3,14 +3,14 @@ import { PageHero, Section, Eyebrow, ButtonLink } from '@/components/site/ui';
 import { Reveal } from '@/components/site/motion';
 import { getSite, contactOf } from '@/lib/site-content';
 
-export const metadata: Metadata = { title: 'About', description: 'Samakose Accelerator Lab is an enterprise development and business transformation organisation based in Tamale, Northern Ghana.' };
+export const metadata: Metadata = { title: 'About', description: 'Samakose is an enterprise development and business transformation organisation based in Tamale, Northern Ghana.' };
 
 export default async function AboutPage() {
   const site = await getSite();
   const SITE = contactOf(site);
   return (
     <>
-      <PageHero eyebrow="About Samakose Accelerator Lab" title="Helping enterprises become sustainable and investment-ready." intro="Samakose Accelerator Lab is an enterprise development and business transformation organisation based in Tamale, Northern Ghana. The Business Doctor is how we diagnose, treat and track the health of the enterprises we serve." />
+      <PageHero eyebrow="About Samakose" title="Helping enterprises become sustainable and investment-ready." intro="Samakose is an enterprise development and business transformation organisation based in Tamale, Northern Ghana. The Business Doctor is how we diagnose, treat and track the health of the enterprises we serve." />
       <Section>
         <div className="grid gap-12 lg:grid-cols-2">
           <Reveal>
@@ -30,11 +30,11 @@ export default async function AboutPage() {
       <Section tone="soft">
         <Reveal>
           <Eyebrow>Leadership and team</Eyebrow>
-          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">The people behind Samakose Accelerator Lab.</h2>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">The people behind Samakose.</h2>
           <div className="mt-6 grid gap-4">
             <div className="flex flex-col overflow-hidden rounded-card border border-line bg-surface sm:flex-row sm:items-start">
-              <img src="/team/amin-yahaya.webp" width={520} height={520} alt="Amin Yahaya, Founder and Lead Advisor of Samakose Accelerator Lab, seated in a navy suit" loading="lazy" decoding="async" className="aspect-square w-full bg-white object-cover object-top sm:h-52 sm:w-52 sm:shrink-0" />
-              <div className="p-6"><p className="font-display text-xl font-semibold">Amin Yahaya</p><p className="text-sm text-muted">Founder and Lead Advisor</p><p className="mt-3 text-sm leading-relaxed text-muted">Amin Yahaya is the Founder and Lead Advisor of Samakose Accelerator Lab, based in Tamale, Northern Ghana. He has worked in business diagnostics and delivery consulting, supporting enterprises, cooperatives and development partners through coaching, agribusiness advisory and practical working systems. He created Samakose Accelerator Lab&rsquo;s S-CEAF, a six-phase framework for strengthening cooperatives, and its 16-section Agri-Business Capacity Diagnostic Tool. Samakose Accelerator Lab&rsquo;s long-term goal is one million enterprise health assessments across ten African countries by 2036. Amin holds an MSc in Leadership and Organisational Development, a BSc in Organizational Development with an Entrepreneurship and Innovation specialization, and an HND in Information and Communication Technology.</p></div>
+              <img src="/team/amin-yahaya.webp" width={520} height={520} alt="Amin Yahaya, Founder and Lead Advisor of Samakose, seated in a navy suit" loading="lazy" decoding="async" className="aspect-square w-full bg-white object-cover object-top sm:h-52 sm:w-52 sm:shrink-0" />
+              <div className="p-6"><p className="font-display text-xl font-semibold">Amin Yahaya</p><p className="text-sm text-muted">Founder and Lead Advisor</p><p className="mt-3 text-sm leading-relaxed text-muted">Amin Yahaya is the Founder and Lead Advisor of Samakose, based in Tamale, Northern Ghana. He has worked in business diagnostics and delivery consulting, supporting enterprises, cooperatives and development partners through coaching, agribusiness advisory and practical working systems. He created Samakose&rsquo;s S-CEAF, a six-phase framework for strengthening cooperatives, and its 16-section Agri-Business Capacity Diagnostic Tool. Samakose&rsquo;s long-term goal is one million enterprise health assessments across ten African countries by 2036. Amin holds an MSc in Leadership and Organisational Development, a BSc in Organizational Development with an Entrepreneurship and Innovation specialization, and an HND in Information and Communication Technology.</p></div>
             </div>
           </div>
           {site.team.length > 0 && (

@@ -23,6 +23,6 @@ export default function FunderReportsPage() {
   return <div className="stack">
     <PageHead title="Reports" sub="Programme results for the programmes you fund. Figures are aggregates: groups with too few businesses are hidden to protect privacy." />
     <DataTable<Row> endpoint="/programmes" columns={cols} rowHref={(r) => `/programmes/${r.id}`} placeholder="Search programmes"
-      empty={{ title: 'No programmes to report on yet', hint: 'Individual business reports are not shared with funders. Results dashboards appear here for each programme linked to your account. Contact Samakose Accelerator Lab if a programme is missing.', action: <LinkButton href="/programmes" size="sm">Open programmes</LinkButton> }} />
+      empty={{ title: 'No programmes to report on yet', hint: 'Individual business reports are not shared with funders. Results dashboards appear here for each programme linked to your account. Contact Samakose if a programme is missing.', action: <LinkButton href="/programmes" size="sm">Open programmes</LinkButton> }} />
   </div>;
 }

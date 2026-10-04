@@ -89,4 +89,4 @@ export function verifyTotp(secret: string, code: string, at = Date.now()): boole
   return [-1, 0, 1].some((w) => safeEqual(totp(secret, at + w * 30_000), c));
 }
 export const otpauthUrl = (email: string, secret: string) =>
-  `otpauth://totp/${encodeURIComponent('Business Doctor:' + email)}?secret=${secret}&issuer=Business%20Doctor&digits=6&period=30`;
+  `otpauth://totp/${encodeURIComponent('Samakose:' + email)}?secret=${secret}&issuer=Samakose&digits=6&period=30`;
