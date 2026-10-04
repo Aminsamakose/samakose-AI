@@ -42,7 +42,7 @@ defineRoute({ method: 'POST', path: '/integrations/kobo/webhook', tag: 'Integrat
 
 /* ---------------------- dashboards, search, notifications --------------- */
 const M = 'Insight';
-defineRoute({ method: 'GET', path: '/dashboard', tag: M, summary: 'Dashboard data for the signed-in role', permission: ['dashboard', 'read'], handler: ({ ctx }) => dash.dashboard(ctx) });
+defineRoute({ method: 'GET', path: '/dashboard', tag: M, summary: 'Dashboard data for the signed-in role. An administrator can add as=<user id> to see that person\'s dashboard, read-only and audited', permission: ['dashboard', 'read'], query: z.object({ as: z.string().uuid().optional() }), handler: ({ ctx, query }) => query.as ? dash.dashboardAs(ctx, query.as) : dash.dashboard(ctx) });
 defineRoute({ method: 'GET', path: '/programmes/:id/dashboard', tag: M, summary: 'Programme results (funders see suppressed aggregates)', permission: ['dashboard', 'read'], handler: ({ ctx, params }) => dash.programmeDashboard(ctx, params.id) });
 defineRoute({ method: 'GET', path: '/programmes/:id/export', tag: M, summary: 'Programme summary as CSV', permission: ['dashboard', 'export'], handler: ({ ctx, params }) => dash.exportProgramme(ctx, params.id) });
 defineRoute({ method: 'GET', path: '/search', tag: M, summary: 'Search across what you may see', query: z.object({ q: z.string().trim().min(2, 'Type at least 2 characters').max(80) }), handler: ({ ctx, query }) => adm.globalSearch(ctx, query.q) });
