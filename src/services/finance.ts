@@ -11,6 +11,7 @@ import { env } from '@/lib/env';
 import { hmacHex, randomToken, safeEqual } from '@/lib/crypto';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
 import { allow, need, respondList, today } from './common';
+import { contractScope } from './contracts';
 
 const con = schema.contracts, inv = schema.invoices, pay = schema.payments, pl = schema.plans, o = schema.organisations;
 const CONTRACT_MOVES: Record<string, string[]> = { Draft: ['Active', 'Cancelled'], Active: ['Expired', 'Cancelled'], Expired: [], Cancelled: [] };
@@ -38,12 +39,12 @@ export async function updatePlan(ctx: Ctx, id: string, b: { name?: string; descr
 }
 
 /* ------------------------------ contracts ------------------------------ */
-const conCols = { id: con.id, code: con.code, orgId: con.orgId, org: o.name, planId: con.planId, programmeId: con.programmeId, status: con.status, startDate: con.startDate, endDate: con.endDate, amountGhs: con.amountGhs, createdAt: con.createdAt };
+const conCols = { id: con.id, code: con.code, orgId: con.orgId, org: o.name, planId: con.planId, programmeId: con.programmeId, status: con.status, startDate: con.startDate, endDate: con.endDate, amountGhs: con.amountGhs, createdAt: con.createdAt, acceptedAt: con.acceptedAt, signatoryName: con.signatoryName, renewalOf: con.renewalOf };
 export async function listContracts(ctx: Ctx, q: ListQuery & { status?: string; orgId?: string }) {
   allow(ctx, 'contracts', 'read');
   const u = ctx.user!;
-  // A programme manager sees contracts for their own programmes or for organisations on cases they can see, never the whole book.
-  const pmScope = u.role === 'PROGRAMME_MANAGER' ? or(u.programmeIds.length ? inArray(con.programmeId, u.programmeIds) : sql`false`, inArray(con.orgId, sql`(select org_id from cases where ${caseScope(u)})`)) : undefined;
+  // An owner sees only their own non-draft contracts. A programme manager sees their programmes and the organisations on their cases, never the whole book.
+  const pmScope = contractScope(u);
   const where = and(pmScope, search(q.q, [con.code, o.name]), q.status ? eq(con.status, q.status) : undefined, q.orgId ? eq(con.orgId, q.orgId) : undefined);
   const from = (b: any) => b.from(con).innerJoin(o, eq(o.id, con.orgId));
   return respondList(ctx, 'contracts', q,

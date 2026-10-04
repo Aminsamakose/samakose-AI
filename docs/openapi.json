@@ -9809,6 +9809,49 @@
             "description": "Too many requests"
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "One contract with acceptance, amendments and invoicing",
+        "operationId": "get__contracts_id_",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "contracts:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
       }
     },
     "/invoices": {
@@ -9981,6 +10024,258 @@
                   "amountGhs",
                   "dueDate"
                 ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/contracts/{id}/accept": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "The business accepts the contract, or staff record a signed copy",
+        "operationId": "post__contracts_id_accept",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "contracts:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "signatoryName": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 120
+                  },
+                  "signatoryTitle": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "note": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "signatoryName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/contracts/{id}/amend": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "Extend an active contract or change its amount, with a reason",
+        "operationId": "post__contracts_id_amend",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "contracts:edit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "endDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amountGhs": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/contracts/{id}/renew": {
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "Start a renewal as a new draft contract",
+        "operationId": "post__contracts_id_renew",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "contracts:create",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "startDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "endDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amountGhs": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  }
+                }
               }
             }
           }

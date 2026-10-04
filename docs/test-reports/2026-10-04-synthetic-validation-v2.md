@@ -6,16 +6,16 @@ Synthetic data on an isolated database, with the AI in mock mode. Production was
 
 | Status | First run | This run |
 |---|---|---|
-| Pass | 111 (of 133 recorded in the first report) | 140 |
+| Pass | 111 (of 133 recorded in the first report) | 142 |
 | Fail | 10 | 0 |
 | Partial | 4 | 4 |
-| Gap | 6 | 5 |
+| Gap | 6 | 3 |
 | Total checks | 148 | 149 |
 
 The first report counted 133 checks at the time it was written. The check list has grown since, so compare the failure column rather than the pass column.
 
 ## Resolved since the first report
-Questions and prescriptions for every platform, manager scoping on contracts and organisations, draft-cohort enrolment, invoice limits, programme completion cascade, intervention library coverage (28 items on the eight current dimensions, with AgriFood and ESO dimensions mapped), report download as PDF and Word (T079), programme indicators and targets with live actuals (T131), session reminders and stalled-case escalations (T095, partly).
+Questions and prescriptions for every platform, manager scoping on contracts and organisations, draft-cohort enrolment, invoice limits, programme completion cascade, intervention library coverage (28 items on the eight current dimensions, with AgriFood and ESO dimensions mapped), report download as PDF and Word (T079), owner contract view (T126), signatory and acceptance evidence, amendments and renewals (T127), programme indicators and targets with live actuals (T131), session reminders and stalled-case escalations (T095, partly).
 
 One correction: T129 was recorded as a failure because the probe compared raw framework dimension names with the library and skipped the platform's own mapping. The probe now applies the mapping. Production already holds the 28-item library.
 
@@ -23,8 +23,6 @@ One correction: T129 was recorded as a failure because the probe compared raw fr
 | Check | Status | What is missing |
 |---|---|---|
 | T091 | Gap | Funder breakdowns by gender, youth and disability. Grouping logic is written; the database step was blocked by a personal-data safeguard and is waiting for a decision |
-| T126 | Gap | A business owner cannot view their own contract (invoices work) |
-| T127 | Gap | Contract signatory, acceptance evidence, amendments and renewals |
 | T132 | Gap | Budget lines, tranches and a logframe hierarchy (indicators and targets now exist) |
 | T133 | Gap | Registration number or TIN, completeness score, duplicate merge, unarchive, ownership transfer |
 | T095 | Partial | The daily 06:00 UTC schedule has not been observed running in production yet |
