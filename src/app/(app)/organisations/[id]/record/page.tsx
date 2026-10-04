@@ -4,9 +4,10 @@ import { useParams } from 'next/navigation';
 import { dateFmt } from '@/lib/client/api';
 import { Async, Badge, Card, Empty, PageHead, useApi } from '@/components/ui';
 import { typeLabel, useTitle } from '@/components/portfolio/shared';
+import { TrendChart } from '@/components/TrendChart';
 
 type Dim = { dimension: string; value: number };
-type Score = { id: string; run: number; at: string; overall: number; maturity: string; confidence: string; framework: string; dimensions: Dim[]; change: { delta: number | null; dimensions: { dimension: string; delta: number }[]; reason: string } };
+type Score = { id: string; run: number; at: string; overall: number; maturity: string; confidence: string; framework: string; dimensions: Dim[]; change: { delta: number | null; comparable?: boolean; dimensions: { dimension: string; delta: number }[]; reason: string } };
 type CaseRec = {
   id: string; code: string; status: string; openedAt: string;
   diagnostics: { id: string; code: string; at: string; status: string; version: number; completion: number; framework: string }[];
@@ -59,6 +60,7 @@ export default function RecordPage() {
   return <Async state={st}>{(r) => <div className="stack">
     <PageHead crumbs={<Link href={`/organisations/${r.organisation.id}`}>{r.organisation.name}</Link>} title="Business Health Record" sub={<><span className="mono">{r.organisation.code}</span> · {typeLabel(r.organisation.type)}</>} />
     <p className="muted small">Read-only history of every case for this organisation. Each score shows the framework version it was produced under, so a change can be traced to the business or to the framework.</p>
+    {r.cases.length > 0 && <Card title="Health trend"><TrendChart cases={r.cases} /></Card>}
     {r.cases.length === 0 ? <Empty title="No cases in your view" hint="Cases you are allowed to see appear here." /> : r.cases.map((c) => <CaseBlock key={c.id} c={c} />)}
   </div>}</Async>;
 }
