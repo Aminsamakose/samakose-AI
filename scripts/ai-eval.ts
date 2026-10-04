@@ -7,8 +7,8 @@
  * Output: docs/quality/ai-eval-latest.md
  */
 import fs from 'node:fs';
-import { AI_CASES } from '../tests/ai/cases';
-import { checkDiagnosis } from '../tests/ai/checks';
+import { AI_CASES } from '../src/domain/ai-eval-cases';
+import { checkDiagnosis } from '../src/domain/ai-eval-checks';
 import { extractJson } from '../src/domain/logic';
 import { SYSTEM } from '../src/services/ai';
 import { activeProvider, modelFor, providerKey, transportFor } from '../src/services/ai-providers';

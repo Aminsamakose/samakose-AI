@@ -9,7 +9,7 @@ import { env } from '@/lib/env';
 import { nextStep } from './auth';
 
 /* Google sign-in (authorization code flow, server side). Business owners only: staff and partners keep
-   invitation, password and two-step verification, so Google can never skip administrator approval. */
+   invitation, password and two-step verification, so Google follows the same approval switch as password sign-up and cannot skip administrator approval. */
 
 const STATE_COOKIE = () => (env.isProd ? '__Host-sk-oauth' : 'sk_oauth');
 export const googleEnabled = () => !!env.googleClientId && !!env.googleClientSecret;
@@ -52,7 +52,7 @@ export async function signInWithGoogle(ctx: Ctx, c: GoogleClaims, userAgent: str
     if (!(await switchOn(ctx.db, 'switch.google_signin')) || !(await switchOn(ctx.db, 'switch.self_registration'))) return { error: 'google_not_allowed' as const };
     const name = (c.name ?? email.split('@')[0]).trim().slice(0, 160) || 'New owner';
     const [o] = await ctx.db.insert(schema.organisations).values({ name: `${name} (business name to confirm)`, type: 'SME', contactName: name, contactEmail: email, status: 'Pending verification' }).returning({ id: schema.organisations.id });
-    [u] = await ctx.db.insert(schema.users).values({ email, name, role: 'OWNER', orgId: o.id, googleSub: c.sub, emailVerified: true, approvalStatus: 'approved', profileRequired: true, mustChangePassword: false }).returning();
+    [u] = await ctx.db.insert(schema.users).values({ email, name, role: 'OWNER', orgId: o.id, googleSub: c.sub, emailVerified: true, approvalStatus: (await switchOn(ctx.db, 'switch.owner_needs_approval')) ? 'pending' : 'approved', profileRequired: true, mustChangePassword: false }).returning();
     await audit({ ...ctx, user: { id: u.id, email } as any }, 'auth.registered', 'user', u.id, undefined, { role: 'OWNER', via: 'google', orgId: o.id });
   }
   const token = await createSession(u.id, ctx.ip, userAgent, !u.mfaEnabled);

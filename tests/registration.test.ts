@@ -113,6 +113,16 @@ describe('Google sign-in rules', () => {
     const [o] = await db().select().from(schema.organisations).where(eq(schema.organisations.id, u.orgId!));
     expect(o.status).toBe('Pending verification');
   });
+  it('puts a new Google owner behind administrator approval when that switch is on', async () => {
+    const { signInWithGoogle } = await import('@/services/google');
+    await db().insert(schema.rules).values({ key: 'switch.owner_needs_approval', value: '1' }).onConflictDoUpdate({ target: schema.rules.key, set: { value: '1' } });
+    try {
+      const c = claims(); const r: any = await signInWithGoogle(ctx(), c, 'test');
+      expect(r.step).toBe('pending');
+      const [u] = await db().select().from(schema.users).where(eq(schema.users.googleSub, c.sub));
+      expect(u.approvalStatus).toBe('pending');
+    } finally { await db().update(schema.rules).set({ value: '0' }).where(eq(schema.rules.key, 'switch.owner_needs_approval')); }
+  });
   it('never signs staff or partners in with Google', async () => {
     const { signInWithGoogle } = await import('@/services/google');
     const staff = await makeUser('EXPERT');

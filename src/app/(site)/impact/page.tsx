@@ -38,7 +38,7 @@ export default function ImpactPage() {
           <div className="mt-8 grid gap-5 md:grid-cols-2">{TESTIMONIALS.map((t) => <blockquote key={t.name} className="rounded-card border border-line bg-surface p-6"><p className="text-lg">&ldquo;{t.quote}&rdquo;</p><footer className="mt-4 text-sm text-muted">{t.name}, {t.role}, {t.organisation}</footer></blockquote>)}</div>
         )}</>}
         {PARTNERS.length > 0 && <><h3 className="mt-12 font-display text-2xl font-semibold">Partners</h3>
-          <ul className="mt-6 flex flex-wrap items-center gap-8">{PARTNERS.map((p) => <li key={p.name}><img src={p.logoSrc} alt={p.name} className="h-12 w-auto" /></li>)}</ul></>}
+          <ul className="mt-6 flex flex-wrap items-center gap-8">{PARTNERS.map((p) => <li key={p.name}><img src={p.logoSrc} alt={p.name} height={48} loading="lazy" className="h-12 w-auto" /></li>)}</ul></>}
         <div className="mt-12"><ButtonLink href="/contact">Talk to us about results in your context</ButtonLink></div>
       </Section>
     </>
