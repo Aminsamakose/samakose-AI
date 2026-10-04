@@ -69,7 +69,8 @@ export async function createCase(ctx: Ctx, b: { orgId: string; programmeId?: str
     if (programmeId && co.programmeId !== programmeId) throw fieldError({ cohortId: 'This cohort belongs to a different programme' });
     programmeId = co.programmeId;
     if (co.status === 'Closed') throw fieldError({ cohortId: 'This cohort is closed' });
-    const n = Number((await ctx.db.select({ n: countOf }).from(c).where(eq(c.cohortId, co.id)))[0].n);
+    if (co.status === 'Draft') throw fieldError({ cohortId: 'This cohort is still a draft. Open it before enrolling businesses' });
+    const n = Number((await ctx.db.select({ n: countOf }).from(c).where(and(eq(c.cohortId, co.id), sql`${c.status} <> 'GRADUATED'`)))[0].n);
     if (n >= co.capacity) throw conflict('This cohort is full');
   }
   if (programmeId) {

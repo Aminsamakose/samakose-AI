@@ -63,6 +63,11 @@ export async function updateProgramme(ctx: Ctx, id: string, b: Partial<ProgInput
   for (const [k, v] of Object.entries(b)) if (v !== undefined) patch[k] = k === 'budgetGhs' && v !== null ? Number(v).toFixed(2) : v;
   await ctx.db.update(p).set({ ...patch, updatedAt: new Date() }).where(eq(p.id, id));
   await audit(ctx, 'programme.updated', 'programme', id, before, patch);
+  if ((b.status === 'Completed' || b.status === 'Cancelled') && b.status !== before.status) {
+    // A closed programme takes no new businesses: its open and draft cohorts close with it. Cases already running are left alone.
+    const closed = await ctx.db.update(schema.cohorts).set({ status: 'Closed', updatedAt: new Date() }).where(and(eq(schema.cohorts.programmeId, id), sql`${schema.cohorts.status} <> 'Closed'`)).returning({ id: schema.cohorts.id });
+    for (const c of closed) await audit(ctx, 'cohort.closed_with_programme', 'cohort', c.id, undefined, { programme: before.code, programmeStatus: b.status });
+  }
   if (b.status === 'Completed' && before.status !== 'Completed') await emitEvent(ctx, 'ProgrammeCompleted', { payload: { programme: before.code } });
   return { ok: true };
 }

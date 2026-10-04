@@ -199,6 +199,7 @@ registerJob('invoice_scan', async () => {
       await emitEvent(ctx, 'ContractExpiring', { orgId: c.orgId, payload: { contract: c.code } }); alerts++;
     }
     const ended = await t.update(schema.contracts).set({ status: 'Expired', updatedAt: new Date() }).where(and(eq(schema.contracts.status, 'Active'), sql`${schema.contracts.endDate} < current_date`)).returning({ id: schema.contracts.id });
+    for (const c of ended) await audit(ctx, 'contract.expired', 'contract', c.id, { status: 'Active' }, { status: 'Expired', reason: 'End date passed' });
     return { overdue: upd.length, expiringAlerts: alerts, expired: ended.length };
   });
 });

@@ -1,9 +1,9 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { ApiError, conflict, fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
-import { assertOrg } from '@/domain/scope';
+import { assertOrg, caseScope } from '@/domain/scope';
 import { emitEvent } from '@/domain/events';
 import { notifyUsers } from '@/domain/notify';
 import { INVOICE_TRANSITIONS } from '@/domain/logic';
@@ -41,7 +41,10 @@ export async function updatePlan(ctx: Ctx, id: string, b: { name?: string; descr
 const conCols = { id: con.id, code: con.code, orgId: con.orgId, org: o.name, planId: con.planId, programmeId: con.programmeId, status: con.status, startDate: con.startDate, endDate: con.endDate, amountGhs: con.amountGhs, createdAt: con.createdAt };
 export async function listContracts(ctx: Ctx, q: ListQuery & { status?: string; orgId?: string }) {
   allow(ctx, 'contracts', 'read');
-  const where = and(search(q.q, [con.code, o.name]), q.status ? eq(con.status, q.status) : undefined, q.orgId ? eq(con.orgId, q.orgId) : undefined);
+  const u = ctx.user!;
+  // A programme manager sees contracts for their own programmes or for organisations on cases they can see, never the whole book.
+  const pmScope = u.role === 'PROGRAMME_MANAGER' ? or(u.programmeIds.length ? inArray(con.programmeId, u.programmeIds) : sql`false`, inArray(con.orgId, sql`(select org_id from cases where ${caseScope(u)})`)) : undefined;
+  const where = and(pmScope, search(q.q, [con.code, o.name]), q.status ? eq(con.status, q.status) : undefined, q.orgId ? eq(con.orgId, q.orgId) : undefined);
   const from = (b: any) => b.from(con).innerJoin(o, eq(o.id, con.orgId));
   return respondList(ctx, 'contracts', q,
     (limit, off) => from(ctx.db.select(conCols)).where(where).orderBy(orderBy(q, { code: con.code, org: o.name, end: con.endDate, amount: con.amountGhs, status: con.status }, con.createdAt)).limit(limit).offset(off),
@@ -101,10 +104,19 @@ export async function getInvoice(ctx: Ctx, id: string) {
   const payments = await ctx.db.select({ id: pay.id, code: pay.code, provider: pay.provider, reference: pay.reference, amountGhs: pay.amountGhs, status: pay.status, createdAt: pay.createdAt }).from(pay).where(eq(pay.invoiceId, id)).orderBy(desc(pay.createdAt));
   return { ...row, payments };
 }
+/** Invoices on a contract may not add up to more than the contract value. Void invoices do not count. */
+async function withinContract(ctx: Ctx, c: { id: string; amountGhs: string | number | null }, add: number, exceptInvoice?: string) {
+  const [r] = await ctx.db.select({ s: sql<string>`coalesce(sum(${inv.amountGhs}), 0)` }).from(inv).where(and(eq(inv.contractId, c.id), sql`${inv.status} <> 'Void'`, exceptInvoice ? sql`${inv.id} <> ${exceptInvoice}` : undefined));
+  const left = Number(c.amountGhs ?? 0) - Number(r.s);
+  if (add > left + 0.005) throw fieldError({ amountGhs: `This would take invoices above the contract value. GHS ${Math.max(0, left).toFixed(2)} is left to invoice on this contract` });
+}
 export async function createInvoice(ctx: Ctx, b: { orgId: string; contractId?: string | null; amountGhs: number; dueDate: string }) {
   allow(ctx, 'invoices', 'create');
   await assertOrg(ctx, b.orgId);
-  if (b.contractId) { const [c] = await ctx.db.select().from(con).where(eq(con.id, b.contractId)).limit(1); if (!c || c.orgId !== b.orgId) throw fieldError({ contractId: 'Contract not found for this organisation' }); }
+  if (b.contractId) {
+    const [c] = await ctx.db.select().from(con).where(eq(con.id, b.contractId)).limit(1); if (!c || c.orgId !== b.orgId) throw fieldError({ contractId: 'Contract not found for this organisation' });
+    await withinContract(ctx, c, b.amountGhs);
+  }
   const [row] = await ctx.db.insert(inv).values({ orgId: b.orgId, contractId: b.contractId ?? null, amountGhs: dec(b.amountGhs), dueDate: b.dueDate }).returning({ id: inv.id, code: inv.code });
   await audit(ctx, 'invoice.created', 'invoice', row.id, undefined, b);
   return row;
@@ -115,6 +127,7 @@ export async function updateInvoice(ctx: Ctx, id: string, b: { status?: 'Sent' |
   if (!before) throw notFound('Invoice not found');
   if ((b.amountGhs !== undefined) && before.status !== 'Draft') throw unprocessable('The amount can be changed while the invoice is a draft');
   if (b.dueDate !== undefined && ['Paid', 'Void'].includes(before.status)) throw unprocessable('This invoice is closed');
+  if (b.amountGhs !== undefined && before.contractId) { const [c] = await ctx.db.select().from(con).where(eq(con.id, before.contractId)).limit(1); if (c) await withinContract(ctx, c, b.amountGhs, id); }
   const patch: Partial<typeof inv.$inferInsert> = { updatedAt: new Date() };
   if (b.amountGhs !== undefined) patch.amountGhs = dec(b.amountGhs);
   if (b.dueDate !== undefined) patch.dueDate = b.dueDate;
