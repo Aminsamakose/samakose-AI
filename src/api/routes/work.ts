@@ -14,6 +14,7 @@ import * as ev from '@/services/evidence';
 import * as clin from '@/services/clinical';
 import * as del from '@/services/delivery';
 import * as rep from '@/services/reports';
+import { exportReport } from '@/services/report-export';
 
 /* ---------------------------- organisations ---------------------------- */
 const O = 'Organisations';
@@ -105,6 +106,7 @@ defineRoute({ method: 'POST', path: '/cases/:id/reports/generate', tag: RP, summ
 defineRoute({ method: 'GET', path: '/cases/:id/reports', tag: RP, summary: 'Reports for a case', permission: ['reports', 'read'], handler: ({ ctx, params }) => rep.listReports(ctx, params.id) });
 defineRoute({ method: 'GET', path: '/reports/:id', tag: RP, summary: 'One report', permission: ['reports', 'read'], handler: ({ ctx, params }) => rep.getReport(ctx, params.id) });
 defineRoute({ method: 'PATCH', path: '/reports/:id', tag: RP, summary: 'Edit a draft report', permission: ['reports', 'create'], body: z.object({ title: text(3, 200).optional(), content: z.array(z.object({ heading: text(1, 200), body: text(1, 6000) })).min(1).max(20).optional() }), handler: ({ ctx, params, body }) => rep.editReport(ctx, params.id, body) });
+defineRoute({ method: 'GET', path: '/reports/:id/export', tag: RP, summary: 'Download a released report as Word or PDF', permission: ['reports', 'read'], query: z.object({ format: z.enum(['docx', 'pdf']).default('pdf') }), handler: ({ ctx, params, query }) => exportReport(ctx, params.id, (query as { format: 'docx' | 'pdf' }).format) });
 defineRoute({ method: 'POST', path: '/reports/:id/release', tag: RP, summary: 'Release a report to the owner (reviewer only)', permission: ['reports', 'approve'], body: empty, handler: ({ ctx, params }) => rep.releaseReport(ctx, params.id, 'release') });
 defineRoute({ method: 'POST', path: '/reports/:id/return', tag: RP, summary: 'Send a report back to the author', permission: ['reports', 'approve'], body: z.object({ reason: text(5, 1000) }), handler: ({ ctx, params, body }) => rep.releaseReport(ctx, params.id, 'return', body.reason) });
 export { email };

@@ -30,6 +30,9 @@ export type RouteDef = {
 export type Csv = { __csv: true; filename: string; content: string };
 export const csvResponse = (filename: string, content: string): Csv => ({ __csv: true, filename, content });
 
+export type FileOut = { __file: true; filename: string; contentType: string; bytes: Uint8Array };
+export const fileResponse = (filename: string, contentType: string, bytes: Uint8Array): FileOut => ({ __file: true, filename, contentType, bytes });
+
 export const routes: RouteDef[] = [];
 export const defineRoute = (r: RouteDef) => { routes.push(r); return r; };
 
@@ -149,6 +152,10 @@ export async function dispatch(req: Request, basePath = '/api/v1'): Promise<Resp
     for (const fn of afters) { try { await fn(); } catch (e) { console.error('after-commit', e); } }
 
     if (result instanceof Response) return result;
+    if ((result as FileOut)?.__file) {
+      const f = result as FileOut;
+      return new Response(f.bytes as unknown as BodyInit, { status: 200, headers: { 'content-type': f.contentType, 'content-disposition': `attachment; filename="${f.filename}"`, 'cache-control': 'no-store', 'x-request-id': requestId } });
+    }
     if ((result as Csv)?.__csv) {
       const c = result as Csv;
       return new Response(c.content, { status: 200, headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${c.filename}"`, 'cache-control': 'no-store', 'x-request-id': requestId } });
