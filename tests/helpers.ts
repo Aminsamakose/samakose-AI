@@ -44,6 +44,8 @@ export async function makeUser(role: Role, o: { orgId?: string; name?: string; p
   const email = o.email ?? `${role.toLowerCase()}-${uniq()}@test.samakose.test`;
   const [u] = await db().insert(schema.users).values({ email, name: o.name ?? `${role} ${uniq()}`, role, orgId: o.orgId ?? null, passwordHash: hash }).returning();
   for (const p of o.programmeIds ?? []) await db().insert(schema.userProgrammes).values({ userId: u.id, programmeId: p });
+  // Test experts are vetted, so the assignment rules apply to them as they would to a real approved practitioner.
+  if (role === 'EXPERT') await db().insert(schema.practitionerProfiles).values({ userId: u.id, functions: ['expert', 'coach'], vettingStatus: 'Approved', maxActive: 50 }).onConflictDoNothing();
   const s = await login(email);
   return { ...s, name: u.name };
 }

@@ -5,6 +5,7 @@ import { Async, Badge, Button, Card, ConfirmButton, Field, FormError, KV, PageHe
 import { useMe, useTitle } from '@/components/dash/common';
 import { OptionalCard } from '@/components/OptionalAnswers';
 import { RecoveryCodes } from '@/components/RecoveryCodes';
+import { PhotoCard, PractitionerProfileCard } from '@/components/PractitionerProfile';
 
 function NameForm({ name, onSaved }: { name: string; onSaved: () => void }) {
   const f = useForm({ name }, async (v) => { return api.patch('/auth/me', { name: v.name.trim() }); }, { success: 'Name updated', onDone: onSaved });
@@ -113,6 +114,8 @@ export default function ProfilePage() {
           <NameForm name={d.user.name} onSaved={me.reload} />
         </div>
       </Card>
+      <PhotoCard name={d.user.name} photoUrl={(d.user as any).photoUrl ?? null} onChanged={me.reload} />
+      {d.user.role === 'EXPERT' && <PractitionerProfileCard onPhotoChange={me.reload} />}
       <OptionalCard />
       <Card title="Change password"><PasswordForm /></Card>
       <Card title="Two-step verification"><MfaSection enabled={d.user.mfaEnabled} recoveryLeft={(d as any).recoveryCodesLeft ?? 0} onChanged={me.reload} /></Card>

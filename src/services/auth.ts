@@ -29,8 +29,11 @@ export function nextStep(u: { mfaEnabled: boolean; mfaVerified: boolean; mustCha
   return 'ok';
 }
 
-export const publicUser = (u: { id: string; code?: string; email: string; name: string; role: string; orgId: string | null; mfaEnabled: boolean; approvalStatus?: string }) =>
-  ({ approvalStatus: u.approvalStatus ?? 'approved', id: u.id, code: u.code, email: u.email, name: u.name, role: u.role, roleLabel: ROLE_LABEL[u.role as keyof typeof ROLE_LABEL], orgId: u.orgId, mfaEnabled: u.mfaEnabled });
+export const photoUrl = (u: { id: string; photoKey?: string | null; photoUpdatedAt?: Date | null }) =>
+  u.photoKey ? `/api/v1/users/${u.id}/photo?v=${u.photoUpdatedAt ? new Date(u.photoUpdatedAt).getTime() : 0}` : null;
+
+export const publicUser = (u: { id: string; code?: string; email: string; name: string; role: string; orgId: string | null; mfaEnabled: boolean; approvalStatus?: string; photoKey?: string | null; photoUpdatedAt?: Date | null }) =>
+  ({ approvalStatus: u.approvalStatus ?? 'approved', id: u.id, code: u.code, email: u.email, name: u.name, role: u.role, roleLabel: ROLE_LABEL[u.role as keyof typeof ROLE_LABEL], orgId: u.orgId, mfaEnabled: u.mfaEnabled, photoUrl: photoUrl(u) });
 
 const json = (data: unknown, cookie?: string) =>
   new Response(JSON.stringify({ data }), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...(cookie ? { 'set-cookie': cookie } : {}) } });

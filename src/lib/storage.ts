@@ -8,14 +8,16 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { S3Client, PutObjectCommand, GetObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
-import { put as blobPut, get as blobGet, list as blobList } from '@vercel/blob';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import { put as blobPut, get as blobGet, del as blobDel, list as blobList } from '@vercel/blob';
 import { env } from './env';
 
 export interface FileStorage {
   location: string;
   put(key: string, data: Buffer, contentType: string): Promise<void>;
   get(key: string): Promise<Buffer | null>;
+  /** Removes a stored file. Used for profile photos, which a person can take down. Evidence is never removed. */
+  remove(key: string): Promise<void>;
   health(): Promise<string>;
 }
 
@@ -27,6 +29,7 @@ class DiskStorage implements FileStorage {
     await fs.writeFile(full, data, { mode: 0o600 });
   }
   async get(key: string) { try { return await fs.readFile(path.join(env.storageDir, key)); } catch { return null; } }
+  async remove(key: string) { try { await fs.unlink(path.join(env.storageDir, key)); } catch { /* already gone */ } }
   async health() {
     try { await fs.mkdir(env.storageDir, { recursive: true }); await fs.access(env.storageDir); return 'ok'; } catch { return 'not writable'; }
   }
@@ -54,6 +57,7 @@ class S3Storage implements FileStorage {
       throw e;
     }
   }
+  async remove(key: string) { try { await this.c().send(new DeleteObjectCommand({ Bucket: env.s3Bucket, Key: key })); } catch { /* already gone */ } }
   async health() {
     try { await this.c().send(new HeadBucketCommand({ Bucket: env.s3Bucket })); return 'ok'; } catch (e: any) { return `unreachable: ${e?.name ?? 'error'}`; }
   }
@@ -74,6 +78,7 @@ class BlobStorage implements FileStorage {
       throw e;
     }
   }
+  async remove(key: string) { try { await blobDel(key); } catch { /* already gone */ } }
   async health() {
     try { await blobList({ limit: 1 }); return 'ok'; } catch (e: any) { return `unreachable: ${e?.name ?? 'error'}`; }
   }

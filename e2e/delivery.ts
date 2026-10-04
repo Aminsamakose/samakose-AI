@@ -8,11 +8,12 @@ const seen = (page: Page, t: string | RegExp, ms = 15000) => page.getByText(t).f
   const b = await launch();
   const { page } = await login(b, 'consultant@demo.samakose.test');
   await page.goto('/cases?status=IN%20EXECUTION'); await page.waitForLoadState('networkidle');
-  await page.locator('tbody tr a').first().click(); await page.waitForURL(/\/cases\/[0-9a-f-]{36}/);
+  // The oldest in-execution case is the seeded one with indicators and a scored diagnostic; newer ones come from other journeys.
+  const hrefs = await page.locator('tbody tr').evaluateAll((rows) => rows.filter((r) => /IN EXECUTION/.test(r.textContent ?? '')).map((r) => r.querySelector('a')!.getAttribute('href')!));
+  await page.goto(hrefs[hrefs.length - 1]); await page.waitForURL(/\/cases\/[0-9a-f-]{36}/);
   const caseUrl = page.url();
-
+  await page.getByRole('tab', { name: 'KPIs' }).click(); await page.waitForTimeout(2500);
   console.log('KPI reading');
-  await page.getByRole('tab', { name: 'KPIs' }).click(); await page.waitForTimeout(1500);
   await page.getByRole('button', { name: 'Add reading' }).first().click();
   const d = page.locator('dialog[open]'); await d.waitFor();
   await d.getByLabel(/Value/i).fill('12');

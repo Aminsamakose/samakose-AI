@@ -2,7 +2,7 @@
 export type CaseData = {
   id: string; code: string; status: string; orgId: string; orgName: string; orgCode: string; region: string | null;
   programmeId: string | null; programmeName: string | null; cohortId: string | null;
-  consultantId: string | null; consultantName: string | null; coachId: string | null; reviewerId: string | null;
+  platform?: string; consultantId: string | null; consultantName: string | null; coachId: string | null; reviewerId: string | null;
   people: { id: string; name: string; role: string }[];
   score: { overall: number; maturity: string; confidenceClass: string; dimensions: any; at: string } | null;
   facts?: Record<string, boolean>;

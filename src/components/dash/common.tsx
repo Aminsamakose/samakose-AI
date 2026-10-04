@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { api, dateFmt, errText, titleCase } from '@/lib/client/api';
 import { AnimatedValue, Badge, BarList, Button, Empty, Field, FormError, Modal, useApi, useForm, useToast } from '@/components/ui';
 
-export type Me = { user: { id: string; name: string; email: string; role: string; roleLabel: string; orgId: string | null; mfaEnabled: boolean }; permissions: Record<string, string[]> };
+export type Me = { user: { id: string; name: string; email: string; role: string; roleLabel: string; orgId: string | null; mfaEnabled: boolean; photoUrl?: string | null }; permissions: Record<string, string[]> };
 
 export function useTitle(t: string) { useEffect(() => { document.title = `${t} | Business Doctor by Samakose`; }, [t]); }
 export function useMe() { return useApi<Me>('/auth/me'); }

@@ -87,6 +87,8 @@ export const users = pgTable('users', {
   profileRequired: boolean('profile_required').notNull().default(false), // self-registered owners must finish their profile first
   signupOrgName: text('signup_org_name'),
   signupNote: text('signup_note'),
+  // One profile photo per person, for every role. The file sits in private storage and is served only after an access check.
+  photoKey: text('photo_key'), photoMime: text('photo_mime'), photoSha256: text('photo_sha256'), photoUpdatedAt: timestamp('photo_updated_at', { withTimezone: true }),
   createdAt: created(), updatedAt: updated()
 }, (t) => [uniqueIndex('users_email_uq').on(sql`lower(${t.email})`), uniqueIndex('users_google_sub_uq').on(t.googleSub), index('users_role_idx').on(t.role), index('users_org_idx').on(t.orgId)]);
 
@@ -931,3 +933,90 @@ export const feedback = pgTable('feedback', {
   handledAt: timestamp('handled_at', { withTimezone: true }),
   createdAt: created(), updatedAt: updated()
 }, (t) => [index('feedback_status_idx').on(t.status, t.createdAt), uniqueIndex('feedback_result_uq').on(t.userId, t.healthScoreId).where(sql`${t.kind} = 'result'`)]);
+
+
+/* ------------------------ practitioner network ------------------------ */
+export const PRACTITIONER_FUNCTIONS = ['expert', 'coach'] as const;
+export const VETTING_STATUSES = ['Draft', 'Submitted', 'Approved', 'Rejected', 'Suspended'] as const;
+export const AVAILABILITY = ['Available', 'Limited', 'Unavailable'] as const;
+export const ASSIGNMENT_FUNCTIONS = ['lead', 'specialist', 'coach', 'reviewer'] as const;
+export const ASSIGNMENT_STATUSES = ['Active', 'Declined', 'Completed', 'Replaced'] as const;
+export const RATING_SOURCES = ['client', 'reviewer', 'programme_manager'] as const;
+
+/** One professional profile per expert or coach, attached to the same user identity as everyone else. Fees stay in rateNote, which only administrators read. */
+export const practitionerProfiles = pgTable('practitioner_profiles', {
+  userId: uuid('user_id').primaryKey().references(() => users.id),
+  functions: text('functions').array().notNull().default(sql`'{expert}'::text[]`),
+  headline: text('headline'),
+  bio: text('bio'),
+  specialisations: text('specialisations').array().notNull().default(sql`'{}'::text[]`),
+  strengths: text('strengths').array().notNull().default(sql`'{}'::text[]`), // dimension names the person is strong in
+  sectors: text('sectors').array().notNull().default(sql`'{}'::text[]`),
+  platforms: text('platforms').array().notNull().default(sql`'{}'::text[]`),
+  businessSizes: text('business_sizes').array().notNull().default(sql`'{}'::text[]`),
+  languages: text('languages').array().notNull().default(sql`'{}'::text[]`),
+  regions: text('regions').array().notNull().default(sql`'{}'::text[]`),
+  deliveryModes: text('delivery_modes').array().notNull().default(sql`'{}'::text[]`),
+  yearsExperience: integer('years_experience'),
+  credentials: jsonb('credentials').$type<{ type: string; title: string; issuer?: string; year?: number }[]>().notNull().default(sql`'[]'::jsonb`),
+  maxActive: integer('max_active').notNull().default(5),
+  availability: text('availability').notNull().default('Available'),
+  vettingStatus: text('vetting_status').notNull().default('Draft'),
+  vettingNote: text('vetting_note'),
+  conductAcceptedAt: timestamp('conduct_accepted_at', { withTimezone: true }),
+  conductVersion: text('conduct_version'),
+  submittedAt: timestamp('submitted_at', { withTimezone: true }),
+  decidedBy: uuid('decided_by').references(() => users.id),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  rateNote: text('rate_note'),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [index('pp_status_idx').on(t.vettingStatus)]);
+
+/** A business a practitioner must not serve, and why. Matching and assignment both enforce it. */
+export const practitionerConflicts = pgTable('practitioner_conflicts', {
+  id: id(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  orgId: uuid('org_id').notNull().references(() => organisations.id),
+  reason: text('reason').notNull(),
+  declaredBy: uuid('declared_by').references(() => users.id),
+  createdAt: created()
+}, (t) => [uniqueIndex('pc_user_org_uq').on(t.userId, t.orgId)]);
+
+/** Who works on a case, in what capacity, and for how long. Rows are never edited into history: a change closes one row and opens another.
+ *  cases.consultantId, coachId and reviewerId stay as a read-through pointer to the active lead, coach and reviewer. */
+export const caseAssignments = pgTable('case_assignments', {
+  id: id(),
+  caseId: uuid('case_id').notNull().references(() => cases.id),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  fn: text('function').notNull(), // lead | specialist | coach | reviewer
+  specialisation: text('specialisation'),
+  status: text('status').notNull().default('Active'),
+  assignedBy: uuid('assigned_by').references(() => users.id),
+  matchScore: integer('match_score'),
+  matchBreakdown: jsonb('match_breakdown'),
+  reason: text('reason'),
+  replacesId: uuid('replaces_id'),
+  acknowledgeBy: timestamp('acknowledge_by', { withTimezone: true }),
+  acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+  declineReason: text('decline_reason'),
+  overdueNotifiedAt: timestamp('overdue_notified_at', { withTimezone: true }),
+  endedAt: timestamp('ended_at', { withTimezone: true }),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [
+  index('ca_case_idx').on(t.caseId), index('ca_user_idx').on(t.userId, t.status),
+  uniqueIndex('ca_single_uq').on(t.caseId, t.fn).where(sql`${t.status} = 'Active' and ${t.fn} <> 'specialist'`),
+  uniqueIndex('ca_specialist_uq').on(t.caseId, t.userId).where(sql`${t.status} = 'Active' and ${t.fn} = 'specialist'`)
+]);
+
+/** A rating of one engagement from one source. Rows are never edited or deleted; a correction is a new row from the same source. */
+export const engagementRatings = pgTable('engagement_ratings', {
+  id: id(),
+  assignmentId: uuid('assignment_id').notNull().references(() => caseAssignments.id),
+  source: text('source').notNull(),
+  raterId: uuid('rater_id').notNull().references(() => users.id),
+  scores: jsonb('scores').$type<Record<string, number>>().notNull(),
+  overall: integer('overall').notNull(), // 0 to 100
+  comment: text('comment'),
+  supersedesId: uuid('supersedes_id'),
+  createdAt: created()
+}, (t) => [index('er_assignment_idx').on(t.assignmentId)]);

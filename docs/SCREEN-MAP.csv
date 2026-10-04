@@ -216,3 +216,6 @@ Mobile action plan,Partly built,Responsive layouts,Every page works at phone wid
 215. Dependency map and scorecard,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
 216. Gap register,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
 217. Pre-build resolutions,Reference,,"Strategy, architecture, validation or audit board. It informs the design and docs, and has no runtime screen"
+218. Experts and coaches (vetting),Built,Admin,"/admin/practitioners: queue, profile review, approve, reject, suspend, caseload transfer"
+219. Practitioner profile and photo,Built,Profile,"/profile: photo for everyone; profile, conflicts and submission for experts"
+220. Case team and matching,Built,Cases,"/cases/:id: assign with explained matches, accept or decline, rate"

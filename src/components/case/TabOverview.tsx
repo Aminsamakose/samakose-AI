@@ -23,10 +23,6 @@ export default function TabOverview({ caseId, caseData: c, role }: TabProps) {
           ['Opened', dateTime(c.createdAt)], ['Last updated', dateTime(c.updatedAt)]
         ]} />
       </Card>
-      <Card title="Key people">
-        {c.people.length === 0 ? <p className="muted">No consultant, coach or reviewer has been assigned yet.</p>
-          : <ul style={{ margin: 0, paddingLeft: 18 }}>{c.people.map((p) => <li key={p.id}><strong>{p.name}</strong> <span className="muted">({ROLE_LABEL[p.role as keyof typeof ROLE_LABEL] ?? p.role})</span></li>)}</ul>}
-      </Card>
     </div>
     <div className="grid two">
       <Card title="Latest score" actions={can('scores', 'read') ? <Link className="btn sm" href={`/cases/${caseId}?tab=score`}>Open score tab</Link> : undefined}>

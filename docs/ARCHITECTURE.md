@@ -9,6 +9,7 @@ The Business Doctor as a production web application. Next.js (App Router) and Ty
 | Auth: sign in, lockout, MFA (TOTP), reset, invite, sessions | Built and tested |
 | RBAC: 10 roles (one EXPERT role replaces consultant and coach; what an expert may do on a case depends on being its lead or its coach), 29 resources, 10 actions (read, create, edit, approve, delete, export, override, assign, verify, certify), row scoping | Built and tested (every guarded route is checked for every role) |
 | Organisations, programmes, cohorts, cases, lifecycle state machine | Built and tested |
+| Expert and coach network: one profile photo capability for every person, practitioner profile and vetting (administrator approves), conflicts of interest, assignments with history and accept or decline, explained matching, three-source ratings (immutable), performance with sample size and confidence, caseload transfer | Built and tested (backend and screens). Migration 0028 is not yet applied to production |
 | Diagnostic with evidence classes, quality gate, scoring, rescoring | Built and tested |
 | Framework versions: SME360 baseline, AgriFood360 and ESO360 shells. Diagnostics and scores point at the version they were produced under; published versions are immutable (database trigger); specialised frameworks need an approved evidence trail before publishing | Built and tested. AgriFood360 and ESO360 have no content and are not production-authoritative until approved by Amin Yahaya |
 | Business Health Record: read-only history per organisation with the framework version and a reason for each score change | Built and tested |
@@ -106,6 +107,13 @@ Case states: PROSPECT, ONBOARDING, PROFILED, DIAGNOSTIC, DIAGNOSED (scored and d
 - **AI steps are asynchronous jobs.** Each call sends only minimal context (no names or contacts), validates the reply against a schema, retries once with the validation errors, and logs every request and attempt. A person always approves: diagnoses by the consultant, prescriptions and reports by the case reviewer (four-eyes: not the author, not the consultant, and not an administrator).
 - **Approving a prescription** turns its interventions into actions and KPIs with owners and due dates.
 - **Payments:** initialise with Paystack (or the labelled test checkout when no key is set), verify on return, and reconcile from the signed webhook (HMAC-SHA512, idempotent by event id, amount and currency checked). A second payment for a paid invoice is recorded as Failed and raises an event for a person to refund or reconcile.
+
+### Expert and coach network
+- **One photo capability.** `/me/photo` (and `/users/:id/photo` for administrators) accepts PNG, JPEG or WebP up to 4 MB, checks the file signature, crops to a 320 px square, converts to WebP and strips metadata. One shared `Avatar` component renders it everywhere, with initials when there is no photo.
+- **Profiles and vetting.** Every EXPERT has one profile (expert, coach or both). Draft, Submitted, Approved, Rejected, Suspended. Only an administrator decides; a rejection or suspension needs a reason. A material change after approval returns the profile to review. Only Approved profiles can be assigned.
+- **Assignments are rows, not fields.** `case_assignments` holds lead, specialist, coach and reviewer with reason, history and the person's response. `cases.consultant_id`, `coach_id`, `reviewer_id` remain as a read-through pointer written only by `services/assignments.ts`. Hard rules: approved, no declared conflict, reviewer independent of everyone on the case. Capacity and unavailability are warnings.
+- **Matching recommends, a person decides.** Score = expertise 35, sector 15, platform 10, size 5, region 10, capacity 15, experience 10, each with a stated reason. Performance is not part of the score until there is enough rated history.
+- **Ratings.** The business, the case reviewer and the programme manager rate separately (immutable table, enforced by a trigger). Performance rescales over the evidence available and always shows its sample size and confidence. It only suggests a status; an administrator decides.
 
 ### AI agent governance
 

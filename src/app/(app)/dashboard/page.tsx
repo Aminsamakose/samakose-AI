@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Async, PageHead, useApi } from '@/components/ui';
 import { dateTime } from '@/lib/client/api';
 import { useMe, useTitle } from '@/components/dash/common';
+import { NetworkPanel } from '@/components/dash/NetworkPanel';
 import { NextStepCard } from '@/components/OptionalAnswers';
 import { Respondent, Coach, Consultant, Finance, Funder, Management, Owner, Reviewer, Website } from '@/components/dash/Views';
 
@@ -23,6 +24,7 @@ export default function DashboardPage() {
       </select>
       {as && <p className="small muted" style={{ marginTop: 8 }}>Read-only. You are seeing exactly what this person sees. Each view is recorded in the audit trail.</p>}
     </div>}
+    {!as && me.data?.user?.role && <div className="stack" style={{ marginBottom: 'var(--space-4, 16px)' }}><NetworkPanel role={me.data.user.role} /></div>}
     <div aria-live="polite">
       <Async state={st}>{(d) => {
         switch (d.kind) {

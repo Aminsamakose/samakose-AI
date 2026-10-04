@@ -7,6 +7,7 @@ import { caseState, email, evidenceClass, isoDate, name, optText, orgType, text,
 import * as orgs from '@/services/orgs';
 import * as progs from '@/services/programmes';
 import * as cases from '@/services/cases';
+import * as asg from '@/services/assignments';
 import * as diag from '@/services/diagnostics';
 import * as record from '@/services/record';
 import * as ev from '@/services/evidence';
@@ -39,7 +40,7 @@ const C = 'Cases';
 defineRoute({ method: 'GET', path: '/cases', tag: C, summary: 'List cases in your scope', permission: ['cases', 'read'], query: listQuery.extend({ status: z.string().optional(), programmeId: z.string().optional(), cohortId: z.string().optional(), consultantId: z.string().optional() }), handler: ({ ctx, query }) => cases.listCases(ctx, query) });
 defineRoute({ method: 'POST', path: '/cases', tag: C, summary: 'Open a case for an organisation', permission: ['cases', 'create'], body: z.object({ orgId: uuid, programmeId: uuid.nullish(), cohortId: uuid.nullish(), startState: z.enum(['PROSPECT', 'ONBOARDING', 'PROFILED']).optional() }), handler: async ({ ctx, body }) => status(201, await cases.createCase(ctx, body)) });
 defineRoute({ method: 'GET', path: '/cases/:id', tag: C, summary: 'Case summary with facts and next steps', permission: ['cases', 'read'], handler: ({ ctx, params }) => cases.getCase(ctx, params.id) });
-defineRoute({ method: 'POST', path: '/cases/:id/assign', tag: C, summary: 'Assign lead expert, coaching expert and reviewer', permission: ['cases', 'assign'], body: z.object({ consultantId: uuid.nullish(), coachId: uuid.nullish(), reviewerId: uuid.nullish() }), handler: ({ ctx, params, body }) => cases.assignCase(ctx, params.id, body) });
+defineRoute({ method: 'POST', path: '/cases/:id/assign', tag: C, summary: 'Assign lead expert, coaching expert and reviewer', permission: ['cases', 'assign'], body: z.object({ consultantId: uuid.nullish(), coachId: uuid.nullish(), reviewerId: uuid.nullish(), reason: z.string().max(500).nullish() }), handler: ({ ctx, params, body }) => asg.assignCase(ctx, params.id, body) });
 defineRoute({ method: 'POST', path: '/cases/:id/transition', tag: C, summary: 'Confirm a manual state change', permission: ['cases', 'edit'], body: z.object({ to: caseState, reason: optText(500) }), handler: ({ ctx, params, body }) => cases.transitionCase(ctx, params.id, body.to, body.reason ?? undefined) });
 defineRoute({ method: 'GET', path: '/cases/:id/activity', tag: C, summary: 'Activity feed for a case', permission: ['cases', 'read'], handler: ({ ctx, params }) => cases.caseActivity(ctx, params.id) });
 

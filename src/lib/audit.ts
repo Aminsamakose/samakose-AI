@@ -12,8 +12,11 @@ export function redact(v: unknown, depth = 0): unknown {
     for (const [k, val] of Object.entries(v as Record<string, unknown>)) o[k] = SECRET_KEYS.has(k) && k !== 'code' ? '[redacted]' : redact(val, depth + 1);
     return o;
   }
+  // Personal data minimisation: an email address in a payload is kept recognisable (first letter and domain) but not usable.
+  if (typeof v === 'string' && EMAIL.test(v)) return v.replace(EMAIL, (_m, a: string, d: string) => `${a}***@${d}`);
   return v;
 }
+const EMAIL = /^([^@\s])[^@\s]*@([^@\s]+\.[^@\s]+)$/;
 
 /** Write one audit row inside the caller's transaction. */
 export async function audit(ctx: Ctx, action: string, entity: string, entityId: string | null, before?: unknown, after?: unknown, caseId?: string | null, actorType: 'HUMAN' | 'AI' | 'HYBRID' = 'HUMAN') {

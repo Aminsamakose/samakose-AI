@@ -11,7 +11,7 @@ const PAGES: { path: string; need?: [Resource, any]; roles?: string[] }[] = [
   { path: '/dashboard', need: ['dashboard', 'read'] }, { path: '/cases', need: ['cases', 'read'] }, { path: '/my-case', roles: ['OWNER'] }, { path: '/team', need: ['team', 'read'] }, { path: '/answer', roles: ['OWNER'] }, { path: '/reviews', need: ['prescriptions', 'approve'] },
   { path: '/actions', need: ['actions', 'read'] }, { path: '/organisations', need: ['organisations', 'read'] }, { path: '/finance/invoices', need: ['invoices', 'read'] },
   { path: '/admin/users', need: ['users', 'create'] }, { path: '/admin/settings', need: ['settings', 'read'] }, { path: '/admin/agents', need: ['agents', 'read'] }, { path: '/admin/feedback', need: ['feedback', 'read'] },
-  { path: '/notifications' }, { path: '/profile' }, { path: '/cases/new', need: ['cases', 'create'] }
+  { path: '/notifications' }, { path: '/profile' }, { path: '/admin/practitioners', need: ['practitioners', 'approve'] }, { path: '/cases/new', need: ['cases', 'create'] }
 ];
 type V = { id: string; impact: string; help: string; nodes: string[] };
 let scanned = 0;

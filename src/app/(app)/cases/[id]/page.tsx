@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Async, Loading, PageHead, Tabs, Tile, useApi } from '@/components/ui';
 import { CASE_TABS, type CaseData, type TabProps } from '@/components/case/types';
-import { AssignPanel, Lifecycle } from '@/components/case/core/Lifecycle';
+import { Lifecycle } from '@/components/case/core/Lifecycle';
+import { AssignPanel, CaseTeamCard } from '@/components/case/core/CaseTeam';
 import { MaturityBadge, StateBadge, TAB_PERMISSION, one, useMe } from '@/components/case/core/shared';
 import { ROLE_LABEL } from '@/lib/rbac';
 import TabOverview from '@/components/case/TabOverview';
@@ -52,16 +53,15 @@ function Workspace() {
       return <>
         <PageHead crumbs={<Link href="/cases">Cases</Link>}
           title={<span className="row"><span className="mono">{cd.code}</span><StateBadge state={cd.status} /></span>}
-          sub={<>{role !== 'FUNDER' ? <Link href={`/organisations/${cd.orgId}`}>{cd.orgName}</Link> : cd.orgName}{cd.region ? `, ${cd.region}` : ''}{cd.programmeName ? ` | ${cd.programmeName}` : ''}</>} />
+          sub={<>{role !== 'FUNDER' ? <Link href={`/organisations/${cd.orgId}`}>{cd.orgName}</Link> : cd.orgName}{cd.region ? `, ${cd.region}` : ''}{cd.programmeName ? ` | ${cd.programmeName}` : ''}{cd.platform ? ` | ${cd.platform}` : ''}</>} />
         <div className="grid">
           <div className="tile meter"><span className="l" id="hs-l">Health score</span>{cd.score ? <><span className="v">{one(cd.score.overall)}<span className="small muted"> / 100</span></span><div className="track" role="meter" aria-labelledby="hs-l" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Number(cd.score.overall)}><div className={`fill ${Number(cd.score.overall) < 40 ? 'bad' : Number(cd.score.overall) < 60 ? 'warn' : ''}`} style={{ width: `${Math.max(0, Math.min(100, Number(cd.score.overall)))}%` }} /></div><span className="small muted">Confidence {cd.score.confidenceClass}</span></> : <><span className="v">-</span><span className="small muted">Not scored yet</span></>}</div>
           <Tile label="Maturity" value={cd.score ? <MaturityBadge value={cd.score.maturity} /> : '-'} />
           <Tile label="Consultant" value={<span style={{ fontSize: '1.1rem' }}>{cd.consultantName ?? 'Unassigned'}</span>} />
-          <div className="tile"><span className="l">People</span>
-            {cd.people.length ? <ul className="small" style={{ margin: 0, paddingLeft: 16 }}>{cd.people.map((p) => <li key={p.id}>{p.name} ({ROLE_LABEL[p.role as keyof typeof ROLE_LABEL] ?? p.role})</li>)}</ul> : <span className="muted">Nobody assigned</span>}</div>
         </div>
         <Lifecycle c={cd} role={role} canEdit={canEdit} reload={st.reload} />
-        {canAssign && <AssignPanel key={`${cd.consultantId}-${cd.coachId}-${cd.reviewerId}`} c={cd} reload={st.reload} />}
+        {canAssign ? <AssignPanel key={`${cd.consultantId}-${cd.coachId}-${cd.reviewerId}`} c={cd} reload={st.reload} /> : null}
+        <CaseTeamCard key={`t-${cd.consultantId}-${cd.coachId}-${cd.reviewerId}`} caseId={cd.id} role={role} reload={st.reload} />
         <Tabs tabs={tabs.length ? tabs : [{ id: 'overview', label: 'Overview' }]} active={active} onChange={setTab} />
         <div role="tabpanel" aria-label={CASE_TABS.find((t) => t.id === active)?.label} className="stack">
           {ready && Tab && <Tab caseId={id} caseData={cd} role={role} reload={st.reload} />}

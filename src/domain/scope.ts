@@ -16,7 +16,8 @@ export function caseScope(u: AuthUser): SQL {
   switch (u.role) {
     case 'ADMIN': case 'EXECUTIVE': return sql`true`;
     case 'PROGRAMME_MANAGER': return u.programmeIds.length ? inArray(cases.programmeId, u.programmeIds) : NONE;
-    case 'EXPERT': return or(eq(cases.consultantId, u.id), eq(cases.coachId, u.id))!;
+    // Lead and coach through the pointers; a specialist through an active assignment.
+    case 'EXPERT': return or(eq(cases.consultantId, u.id), eq(cases.coachId, u.id), inArray(cases.id, sql`(select case_id from case_assignments where user_id = ${u.id} and status = 'Active' and function = 'specialist')`))!;
     case 'REVIEWER': return eq(cases.reviewerId, u.id);
     case 'OWNER': return u.orgId ? eq(cases.orgId, u.orgId) : NONE;
     default: return NONE;
