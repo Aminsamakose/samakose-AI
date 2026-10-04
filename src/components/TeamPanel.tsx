@@ -56,7 +56,9 @@ function Row({ m, onDone }: { m: any; onDone: () => void }) {
   const toast = useToast();
   return <div className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
     {m.status === 'invited' && <Button onClick={async () => { try { await api.post(`/team/members/${m.id}/resend`, {}); toast('Invitation sent again'); } catch (e) { toast(errText(e), 'bad'); } }}>Resend</Button>}
-    <ConfirmButton label="Remove" message={`${m.name} will lose access and their areas come back to you. Their earlier answers are kept.`} onConfirm={async () => { await api.del(`/team/members/${m.id}`); toast('Removed'); onDone(); }} />
+    {m.status === 'invited'
+      ? <ConfirmButton label="Cancel invitation" message={`Cancel the invitation to ${m.name}? The link already sent stops working. You can invite them again later.`} onConfirm={async () => { await api.post(`/team/members/${m.id}/cancel`, {}); toast('Invitation cancelled'); onDone(); }} />
+      : <ConfirmButton label="Remove" message={`${m.name} will lose access and their areas come back to you. Their earlier answers are kept.`} onConfirm={async () => { await api.del(`/team/members/${m.id}`); toast('Removed'); onDone(); }} />}
   </div>;
 }
 

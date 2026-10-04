@@ -11,6 +11,7 @@ import { ROLE_LABEL, STAFF_ROLES } from '@/lib/rbac';
 import { ROLES, type Role } from '@/db/schema';
 import { orderBy, search, type ListQuery, countOf } from '@/api/list';
 import { allow, need, respondList } from './common';
+import { isWithdrawnInvitee, withdrawInviteLinks } from './invites';
 
 const u = schema.users;
 const safe = { id: u.id, code: u.code, email: u.email, name: u.name, role: u.role, orgId: u.orgId, active: u.active, mfaEnabled: u.mfaEnabled, lockedUntil: u.lockedUntil, lastLoginAt: u.lastLoginAt, createdAt: u.createdAt, approvalStatus: u.approvalStatus, emailVerified: u.emailVerified, signupOrgName: u.signupOrgName, signupNote: u.signupNote, invited: sql<boolean>`${u.passwordHash} is null` };
@@ -55,12 +56,19 @@ export async function inviteUser(ctx: Ctx, b: { email: string; name: string; rol
   if (b.role === 'OWNER' && !b.orgId) throw fieldError({ orgId: 'Business owners must belong to an organisation' });
   if (b.role !== 'OWNER' && b.orgId) throw fieldError({ orgId: 'Only business owners belong to an organisation' });
   if (b.orgId) { const [o] = await ctx.db.select({ id: schema.organisations.id }).from(schema.organisations).where(eq(schema.organisations.id, b.orgId)).limit(1); if (!o) throw fieldError({ orgId: 'Organisation not found' }); }
-  const [dupe] = await ctx.db.select({ id: u.id }).from(u).where(sql`lower(${u.email}) = ${email}`).limit(1);
-  if (dupe) throw fieldError({ email: 'A user with this email already exists' });
-  const [row] = await ctx.db.insert(u).values({ email, name: b.name.trim(), role: b.role, orgId: b.orgId ?? null, mustChangePassword: false }).returning({ id: u.id, code: u.code });
+  const [dupe] = await ctx.db.select().from(u).where(sql`lower(${u.email}) = ${email}`).limit(1);
+  if (dupe && !isWithdrawnInvitee(dupe)) throw fieldError({ email: 'A user with this email already exists' });
+  let row: { id: string; code: string };
+  if (dupe) {
+    // Inviting again after a withdrawn invitation reuses the same record, so the history stays in one place.
+    [row] = await ctx.db.update(u).set({ name: b.name.trim(), role: b.role, orgId: b.orgId ?? null, active: true, mustChangePassword: false, updatedAt: new Date() }).where(eq(u.id, dupe.id)).returning({ id: u.id, code: u.code });
+    await ctx.db.delete(schema.userProgrammes).where(eq(schema.userProgrammes.userId, row.id));
+  } else {
+    [row] = await ctx.db.insert(u).values({ email, name: b.name.trim(), role: b.role, orgId: b.orgId ?? null, mustChangePassword: false }).returning({ id: u.id, code: u.code });
+  }
   if (b.programmeIds?.length) await setProgrammesRaw(ctx, row.id, b.programmeIds);
   await issueInvite(ctx, row.id, email, b.name.trim());
-  await audit(ctx, 'user.invited', 'user', row.id, undefined, { email, role: b.role, orgId: b.orgId ?? null });
+  await audit(ctx, dupe ? 'user.invite_reissued' : 'user.invited', 'user', row.id, undefined, { email, role: b.role, orgId: b.orgId ?? null });
   return { id: row.id, code: row.code };
 }
 
@@ -71,6 +79,20 @@ export async function resendInvite(ctx: Ctx, id: string) {
   if (row.passwordHash) throw unprocessable('This user has already set a password');
   await issueInvite(ctx, row.id, row.email, row.name);
   await audit(ctx, 'user.invite_resent', 'user', id);
+  return { ok: true };
+}
+
+/** Unsend: the links in any invitation already sent stop working and the pending account is closed. Only for someone who has not set a password yet; anyone else is deactivated from their profile. */
+export async function cancelInvite(ctx: Ctx, id: string) {
+  allow(ctx, 'users', 'edit');
+  const [row] = await ctx.db.select().from(u).where(eq(u.id, id)).for('update').limit(1);
+  if (!row) throw notFound('User not found');
+  if (row.passwordHash) throw unprocessable('This person has already accepted. Deactivate the account instead.');
+  if (!row.active) throw unprocessable('This invitation is already cancelled');
+  await withdrawInviteLinks(ctx.db, row.id);
+  await ctx.db.update(u).set({ active: false, updatedAt: new Date() }).where(eq(u.id, row.id));
+  await destroyUserSessions(row.id);
+  await audit(ctx, 'user.invite_cancelled', 'user', row.id, undefined, { email: row.email, role: row.role });
   return { ok: true };
 }
 

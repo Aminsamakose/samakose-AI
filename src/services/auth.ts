@@ -13,6 +13,7 @@ import { switchOn } from './switches';
 import { loadMapping } from './registration-config';
 import { MODES, OTHER_ROLE, isKnownRole, platformForOrgType, type AssessmentMode } from '@/domain/routing';
 import { need } from './common';
+import { WITHDRAWN_MESSAGE, wasWithdrawn } from './invites';
 
 const LOCK_AFTER = 5;
 const LOCK_MINUTES = 15;
@@ -162,10 +163,14 @@ export async function forgotPassword(ctx: Ctx, email: string) {
   return { ok: true }; // the same answer whether or not the account exists
 }
 
+async function badToken(ctx: Ctx, token: string, kind: 'reset' | 'invite') {
+  if (kind === 'invite' && (await wasWithdrawn(ctx.db, token))) return new ApiError(400, 'invite_withdrawn', WITHDRAWN_MESSAGE);
+  return new ApiError(400, 'bad_token', 'This link is invalid or has expired. Ask for a new one.');
+}
 async function takeToken(ctx: Ctx, token: string, kind: 'reset' | 'invite') {
   const [t] = await ctx.db.select().from(schema.userTokens)
     .where(and(eq(schema.userTokens.tokenHash, sha256(token)), eq(schema.userTokens.kind, kind), isNull(schema.userTokens.usedAt), gt(schema.userTokens.expiresAt, new Date()))).for('update').limit(1);
-  if (!t) throw new ApiError(400, 'bad_token', 'This link is invalid or has expired. Ask for a new one.');
+  if (!t) throw await badToken(ctx, token, kind);
   const [u] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, t.userId)).limit(1);
   if (!u || !u.active) throw new ApiError(400, 'bad_token', 'This link is invalid or has expired. Ask for a new one.');
   return { t, u };
@@ -184,7 +189,7 @@ export async function resetPassword(ctx: Ctx, token: string, password: string) {
 export async function inviteInfo(ctx: Ctx, token: string) {
   const [t] = await ctx.db.select().from(schema.userTokens)
     .where(and(eq(schema.userTokens.tokenHash, sha256(token)), eq(schema.userTokens.kind, 'invite'), isNull(schema.userTokens.usedAt), gt(schema.userTokens.expiresAt, new Date()))).limit(1);
-  if (!t) throw new ApiError(400, 'bad_token', 'This link is invalid or has expired. Ask for a new one.');
+  if (!t) throw await badToken(ctx, token, 'invite');
   const [u] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, t.userId)).limit(1);
   if (!u || !u.active) throw new ApiError(400, 'bad_token', 'This link is invalid or has expired. Ask for a new one.');
   if (u.role !== 'RESPONDENT' || !u.orgId) return { respondent: false as const };

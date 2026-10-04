@@ -11,6 +11,7 @@ import { defaultRespondent, isKnownRole, OTHER_ROLE, platformForOrgType } from '
 import { allow, need } from './common';
 import { loadMapping } from './registration-config';
 import { resolveVersion } from './frameworks';
+import { isWithdrawnInvitee, withdrawInviteLinks } from './invites';
 
 /** The owner's team. A colleague has an account of their own so that their consent and their answers are theirs. Job role is never permission:
  *  what a respondent can see comes only from the areas the owner assigns. */
@@ -59,10 +60,19 @@ export async function inviteMember(ctx: Ctx, b: { name: string; email: string; j
   const notice = await inviteNotice(ctx, o.countryCode);
   if (!notice) throw unprocessable('Team invitations are not open yet.');
   if (!b.agree) throw fieldError({ agree: 'Please confirm you have told them, so we can send the invitation' });
-  const [dupe] = await ctx.db.select({ id: schema.users.id }).from(schema.users).where(sql`lower(${schema.users.email}) = ${email}`).limit(1);
-  if (dupe) throw fieldError({ email: 'Someone with this email already has an account' });
-  const [u] = await ctx.db.insert(schema.users).values({ email, name, role: 'RESPONDENT', orgId: o.id, mustChangePassword: false }).returning({ id: schema.users.id });
-  const [mem] = await ctx.db.insert(schema.orgMembers).values({ orgId: o.id, userId: u.id, jobRole: b.jobRole, status: 'invited', invitedBy: c.user.id }).returning({ id: schema.orgMembers.id });
+  const [dupe] = await ctx.db.select().from(schema.users).where(sql`lower(${schema.users.email}) = ${email}`).limit(1);
+  // A colleague whose invitation this business withdrew can be invited again; anyone else with that email already has an account.
+  const again = dupe && isWithdrawnInvitee(dupe) && dupe.role === 'RESPONDENT' && dupe.orgId === o.id;
+  if (dupe && !again) throw fieldError({ email: 'Someone with this email already has an account' });
+  let u: { id: string }; let mem: { id: string };
+  if (again) {
+    u = dupe;
+    await ctx.db.update(schema.users).set({ name, active: true, updatedAt: new Date() }).where(eq(schema.users.id, dupe.id));
+    [mem] = await ctx.db.update(schema.orgMembers).set({ jobRole: b.jobRole, status: 'invited', invitedBy: c.user.id, updatedAt: new Date() }).where(and(eq(schema.orgMembers.orgId, o.id), eq(schema.orgMembers.userId, dupe.id))).returning({ id: schema.orgMembers.id });
+  } else {
+    [u] = await ctx.db.insert(schema.users).values({ email, name, role: 'RESPONDENT', orgId: o.id, mustChangePassword: false }).returning({ id: schema.users.id });
+    [mem] = await ctx.db.insert(schema.orgMembers).values({ orgId: o.id, userId: u.id, jobRole: b.jobRole, status: 'invited', invitedBy: c.user.id }).returning({ id: schema.orgMembers.id });
+  }
   await ctx.db.insert(schema.consents).values({ userId: c.user.id, orgId: o.id, noticeId: notice.id, action: 'granted', source: 'invitation' });
   const token = randomToken(32);
   await ctx.db.insert(schema.userTokens).values({ userId: u.id, kind: 'invite', tokenHash: sha256(token), expiresAt: new Date(Date.now() + INVITE_DAYS * 86400_000) });
@@ -87,6 +97,19 @@ export async function resendInvite(ctx: Ctx, id: string) {
   await ctx.db.insert(schema.userTokens).values({ userId: u.id, kind: 'invite', tokenHash: sha256(token), expiresAt: new Date(Date.now() + INVITE_DAYS * 86400_000) });
   await queueTemplate(ctx, u.email, 'team_invite', { user_name: u.name, inviter_name: need(ctx).user.name, business_name: o.name, link: `${env.appUrl}/accept-invite?token=${token}` });
   await audit(ctx, 'team.invite_resent', 'user', u.id);
+  return { ok: true };
+}
+
+/** Unsend an invitation the colleague has not accepted: the links already sent stop working, the seat is freed and the same person can be invited again later. */
+export async function cancelInvite(ctx: Ctx, id: string) {
+  allow(ctx, 'team', 'delete');
+  const { mem } = await memberOf(ctx, id);
+  if (mem.status !== 'invited') throw unprocessable('This person has already activated their account. Remove them instead.');
+  await withdrawInviteLinks(ctx.db, mem.userId);
+  await ctx.db.update(schema.orgMembers).set({ status: 'removed', updatedAt: new Date() }).where(eq(schema.orgMembers.id, mem.id));
+  await ctx.db.update(schema.users).set({ active: false, updatedAt: new Date() }).where(eq(schema.users.id, mem.userId));
+  await ctx.db.delete(schema.areaAssignments).where(eq(schema.areaAssignments.memberId, mem.id));
+  await audit(ctx, 'team.invite_cancelled', 'user', mem.userId);
   return { ok: true };
 }
 
