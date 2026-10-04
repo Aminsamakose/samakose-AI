@@ -4,7 +4,7 @@ import { db, schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { ApiError, fieldError, forbidden, tooMany, unauthorized } from '@/lib/errors';
-import { decrypt, encrypt, hashPassword, newTotpSecret, otpauthUrl, passwordProblems, randomToken, sha256, verifyPassword, verifyTotp } from '@/lib/crypto';
+import { decrypt, encrypt, hashPassword, hashRecoveryCode, isRecoveryCode, newRecoveryCodes, newTotpSecret, otpauthUrl, passwordProblems, randomToken, sha256, verifyPassword, verifyTotp } from '@/lib/crypto';
 import { clearRateLimit, cookieHeader, createSession, destroySession, destroyUserSessions, markMfaVerified, rateLimit } from '@/lib/session';
 import { env } from '@/lib/env';
 import { PERMISSIONS, ROLE_LABEL } from '@/lib/rbac';
@@ -75,11 +75,18 @@ export async function verifyMfa(ctx: Ctx, code: string) {
   if ((await rateLimit('mfa:' + c.user.id, 10 * 60)) > 10) throw tooMany('Too many codes tried. Wait a few minutes.');
   const [u] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, c.user.id)).limit(1);
   if (!u?.mfaEnabled || !u.mfaSecret) throw new ApiError(422, 'invalid_state', 'Two-step verification is not turned on');
-  if (!verifyTotp(decrypt(u.mfaSecret), code)) { await audit(ctx, 'auth.mfa_failed', 'user', u.id); throw fieldError({ code: 'That code is not right or has expired' }); }
+  let usedRecovery = false; let recoveryLeft: number | undefined;
+  if (isRecoveryCode(code)) {
+    // One-time use. The removal is a single atomic statement, so two requests cannot both spend the same code.
+    const h = hashRecoveryCode(code);
+    const r = await ctx.db.execute(sql`update users set mfa_recovery = array_remove(mfa_recovery, ${h}), updated_at = now() where id = ${u.id} and ${h} = any(mfa_recovery) returning cardinality(mfa_recovery) as remaining`);
+    if (!r.rows.length) { await audit(ctx, 'auth.mfa_failed', 'user', u.id, undefined, { kind: 'recovery' }); throw fieldError({ code: 'That recovery code is not right or was already used' }); }
+    usedRecovery = true; recoveryLeft = Number((r.rows[0] as { remaining: number }).remaining);
+  } else if (!verifyTotp(decrypt(u.mfaSecret), code)) { await audit(ctx, 'auth.mfa_failed', 'user', u.id); throw fieldError({ code: 'That code is not right or has expired' }); }
   await markMfaVerified(c.user.id === u.id ? c.user.sessionId : '');
   await clearRateLimit('mfa:' + c.user.id);
-  await audit(ctx, 'auth.mfa_verified', 'user', u.id);
-  return { next: nextStep({ mfaEnabled: true, mfaVerified: true, mustChangePassword: u.mustChangePassword, role: u.role, approvalStatus: u.approvalStatus, profileRequired: u.profileRequired }) };
+  await audit(ctx, usedRecovery ? 'auth.mfa_recovery_used' : 'auth.mfa_verified', 'user', u.id, undefined, usedRecovery ? { left: recoveryLeft } : undefined);
+  return { next: nextStep({ mfaEnabled: true, mfaVerified: true, mustChangePassword: u.mustChangePassword, role: u.role, approvalStatus: u.approvalStatus, profileRequired: u.profileRequired }), ...(usedRecovery ? { recoveryCodesLeft: recoveryLeft } : {}) };
 }
 
 export async function mfaSetup(ctx: Ctx) {
@@ -99,10 +106,24 @@ export async function mfaEnable(ctx: Ctx, code: string) {
   if (!u.mfaSecret) throw new ApiError(422, 'invalid_state', 'Start setup first');
   if ((await rateLimit('mfa:' + u.id, 10 * 60)) > 10) throw tooMany();
   if (!verifyTotp(decrypt(u.mfaSecret), code)) throw fieldError({ code: 'That code is not right or has expired' });
-  await ctx.db.update(schema.users).set({ mfaEnabled: true, updatedAt: new Date() }).where(eq(schema.users.id, u.id));
+  const recoveryCodes = newRecoveryCodes();
+  await ctx.db.update(schema.users).set({ mfaEnabled: true, mfaRecovery: recoveryCodes.map(hashRecoveryCode), updatedAt: new Date() }).where(eq(schema.users.id, u.id));
   await markMfaVerified(c.user.sessionId);
   await audit(ctx, 'auth.mfa_enabled', 'user', u.id);
-  return { mfaEnabled: true };
+  return { mfaEnabled: true, recoveryCodes };
+}
+/** Replace the whole set. Needs a verified session, the password and a current authenticator code; the old codes stop working. */
+export async function mfaNewRecoveryCodes(ctx: Ctx, password: string, code: string) {
+  const c = need(ctx);
+  const [u] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, c.user.id)).limit(1);
+  if (!u.mfaEnabled || !u.mfaSecret) throw new ApiError(422, 'invalid_state', 'Two-step verification is not on');
+  if ((await rateLimit('mfa:' + u.id, 10 * 60)) > 10) throw tooMany();
+  if (!(await verifyPassword(password, u.passwordHash))) throw fieldError({ password: 'Password is incorrect' });
+  if (!verifyTotp(decrypt(u.mfaSecret), code)) throw fieldError({ code: 'That code is not right or has expired' });
+  const recoveryCodes = newRecoveryCodes();
+  await ctx.db.update(schema.users).set({ mfaRecovery: recoveryCodes.map(hashRecoveryCode), updatedAt: new Date() }).where(eq(schema.users.id, u.id));
+  await audit(ctx, 'auth.mfa_recovery_regenerated', 'user', u.id);
+  return { recoveryCodes };
 }
 export async function mfaDisable(ctx: Ctx, password: string, code: string) {
   const c = need(ctx);
@@ -111,7 +132,7 @@ export async function mfaDisable(ctx: Ctx, password: string, code: string) {
   if (!u.mfaEnabled || !u.mfaSecret) throw new ApiError(422, 'invalid_state', 'Two-step verification is not on');
   if (!(await verifyPassword(password, u.passwordHash))) throw fieldError({ password: 'Password is incorrect' });
   if (!verifyTotp(decrypt(u.mfaSecret), code)) throw fieldError({ code: 'That code is not right or has expired' });
-  await ctx.db.update(schema.users).set({ mfaEnabled: false, mfaSecret: null, updatedAt: new Date() }).where(eq(schema.users.id, u.id));
+  await ctx.db.update(schema.users).set({ mfaEnabled: false, mfaSecret: null, mfaRecovery: [], updatedAt: new Date() }).where(eq(schema.users.id, u.id));
   await audit(ctx, 'auth.mfa_disabled', 'user', u.id);
   return { mfaEnabled: false };
 }
@@ -197,7 +218,7 @@ export async function me(ctx: Ctx) {
   const c = need(ctx);
   const [u] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, c.user.id)).limit(1);
   const unread = Number(((await ctx.db.execute(sql`select count(*)::int n from notifications where user_id=${c.user.id} and read_at is null`)).rows[0] as { n: number }).n);
-  return { user: publicUser(u), permissions: PERMISSIONS[u.role], programmeIds: c.user.programmeIds, unreadNotifications: unread, next: nextStep(c.user), approvalStatus: u.approvalStatus };
+  return { user: publicUser(u), permissions: PERMISSIONS[u.role], programmeIds: c.user.programmeIds, unreadNotifications: unread, next: nextStep(c.user), approvalStatus: u.approvalStatus, recoveryCodesLeft: u.mfaEnabled ? u.mfaRecovery.length : 0 };
 }
 export async function updateMe(ctx: Ctx, name: string) {
   const c = need(ctx);

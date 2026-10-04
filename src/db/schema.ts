@@ -75,6 +75,7 @@ export const users = pgTable('users', {
   active: boolean('active').notNull().default(true),
   mfaSecret: text('mfa_secret'),
   mfaEnabled: boolean('mfa_enabled').notNull().default(false),
+  mfaRecovery: text('mfa_recovery').array().notNull().default(sql`'{}'::text[]`),
   failedLogins: integer('failed_logins').notNull().default(0),
   lockedUntil: timestamp('locked_until', { withTimezone: true }),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),

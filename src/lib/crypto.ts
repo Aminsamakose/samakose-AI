@@ -88,5 +88,17 @@ export function verifyTotp(secret: string, code: string, at = Date.now()): boole
   if (!/^\d{6}$/.test(c)) return false;
   return [-1, 0, 1].some((w) => safeEqual(totp(secret, at + w * 30_000), c));
 }
+/* ---------- Recovery codes (one-time, shown once, stored as hashes) ---------- */
+const RC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+export const RECOVERY_CODE_COUNT = 10;
+export function newRecoveryCodes(n = RECOVERY_CODE_COUNT): string[] {
+  return Array.from({ length: n }, () => {
+    const b = crypto.randomBytes(10); let s = '';
+    for (const x of b) s += RC[x % 32];
+    return s.slice(0, 5) + '-' + s.slice(5);
+  });
+}
+export const isRecoveryCode = (s: string) => /^[A-Za-z0-9]{5}-?[A-Za-z0-9]{5}$/.test(s.trim());
+export const hashRecoveryCode = (s: string) => sha256('recovery:' + s.replace(/[^A-Za-z0-9]/g, '').toUpperCase());
 export const otpauthUrl = (email: string, secret: string) =>
   `otpauth://totp/${encodeURIComponent('Business Doctor:' + email)}?secret=${secret}&issuer=Business%20Doctor&digits=6&period=30`;

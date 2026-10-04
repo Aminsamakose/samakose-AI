@@ -112,7 +112,7 @@ export async function unlockUser(ctx: Ctx, id: string) {
 }
 export async function resetUserMfa(ctx: Ctx, id: string) {
   allow(ctx, 'users', 'edit');
-  const r = await ctx.db.update(u).set({ mfaEnabled: false, mfaSecret: null, updatedAt: new Date() }).where(eq(u.id, id)).returning({ id: u.id });
+  const r = await ctx.db.update(u).set({ mfaEnabled: false, mfaSecret: null, mfaRecovery: [], updatedAt: new Date() }).where(eq(u.id, id)).returning({ id: u.id });
   if (!r.length) throw notFound('User not found');
   await destroyUserSessions(id);
   await audit(ctx, 'user.mfa_reset', 'user', id);
