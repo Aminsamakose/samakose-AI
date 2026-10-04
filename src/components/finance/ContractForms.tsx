@@ -3,6 +3,7 @@ import { api, ghs } from '@/lib/client/api';
 import { Button, Field, FormError, useApi, useForm } from '@/components/ui';
 import { OrgSelect, clientFail, num } from './common';
 import type { Plan } from './PlanForm';
+import { ContractLifecycle } from './ContractLifecycle';
 
 export type Contract = { id: string; code: string; orgId: string; org: string; planId: string | null; status: string; startDate: string | null; endDate: string | null; amountGhs: string };
 
@@ -35,7 +36,7 @@ export function ContractCreate({ onDone, onCancel }: { onDone: () => void; onCan
 const MOVES: Record<string, string[]> = { Draft: ['Active', 'Cancelled'], Active: ['Expired', 'Cancelled'], Expired: [], Cancelled: [] };
 
 /** Edit terms (drafts only) and move the status. */
-export function ContractManage({ c, canEdit, onDone, onCancel }: { c: Contract; canEdit: boolean; onDone: () => void; onCancel: () => void }) {
+export function ContractManage({ c, canEdit, canCreate = false, onChanged = () => {}, onDone, onCancel }: { c: Contract; canEdit: boolean; canCreate?: boolean; onChanged?: () => void; onDone: () => void; onCancel: () => void }) {
   const draft = c.status === 'Draft';
   const moves = MOVES[c.status] ?? [];
   const f = useForm({ status: '', startDate: c.startDate ?? '', endDate: c.endDate ?? '', amountGhs: String(Number(c.amountGhs)) }, async (v) => {
@@ -53,6 +54,7 @@ export function ContractManage({ c, canEdit, onDone, onCancel }: { c: Contract; 
   }, { success: 'Contract updated', onDone });
   return <form onSubmit={f.onSubmit} className="stack" noValidate>
     <FormError message={f.formError} />
+    <ContractLifecycle id={c.id} canEdit={canEdit} canCreate={canCreate} onChanged={onChanged} />
     <p className="muted">{c.code} for {c.org}. Current status: <strong>{c.status}</strong>.{!draft && ' Terms can only be edited while the contract is a draft.'}</p>
     {draft && <div className="form-grid">
       <Field label="Amount (GHS)" name="amountGhs" required error={f.errors.amountGhs}>{(p) => <input {...p} {...f.input('amountGhs')} type="number" inputMode="decimal" min="0" step="0.01" />}</Field>

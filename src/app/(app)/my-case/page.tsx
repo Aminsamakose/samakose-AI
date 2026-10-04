@@ -6,6 +6,7 @@ import { useMe, useTitle } from '@/components/dash/common';
 import { CaseTeamCard } from '@/components/case/core/CaseTeam';
 import { ResultFeedback } from '@/components/ResultFeedback';
 import { MessageThread } from '@/components/case/MessageThread';
+import { OwnerContracts } from '@/components/finance/ContractLifecycle';
 import { ActionsPanel, EvidencePanel, InvoicesPanel, KpiPanel, Lifecycle, ReportsPanel, ScorePanel, SessionsPanel } from '@/components/dash/MyCasePanels';
 
 export default function MyCasePage() {
@@ -41,6 +42,7 @@ function Detail({ id }: { id: string }) {
       <Card title="Reports for you"><ReportsPanel caseId={id} /></Card>
       <Card title="Next coaching sessions"><SessionsPanel caseId={id} /></Card>
     </div>
+    <Card title="Your contract"><OwnerContracts /></Card>
     <Card title="Invoices"><InvoicesPanel /></Card>
     <Card title="Indicators you report"><KpiPanel caseId={id} /></Card>
     <Card title="Share evidence and documents"><EvidencePanel caseId={id} /></Card>

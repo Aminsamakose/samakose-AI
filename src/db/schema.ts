@@ -464,8 +464,24 @@ export const contracts = pgTable('contracts', {
   status: text('status').notNull().default('Draft'), // Draft | Active | Expired | Cancelled
   startDate: date('start_date'), endDate: date('end_date'),
   amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  /** Acceptance is evidence of agreement. It never blocks activation. */
+  signatoryName: text('signatory_name'), signatoryTitle: text('signatory_title'),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }), acceptedBy: uuid('accepted_by').references(() => users.id),
+  acceptanceMethod: text('acceptance_method'), // online | recorded
+  acceptanceNote: text('acceptance_note'),
+  renewalOf: uuid('renewal_of').references((): any => contracts.id),
   createdAt: created(), updatedAt: updated()
 }, (t) => [index('con_org_idx').on(t.orgId)]);
+/** Append-only record of a change to an active contract's end date or amount. */
+export const contractAmendments = pgTable('contract_amendments', {
+  id: id(),
+  contractId: uuid('contract_id').notNull().references(() => contracts.id),
+  previousEnd: date('previous_end'), newEnd: date('new_end'),
+  previousAmount: numeric('previous_amount', { precision: 12, scale: 2 }).notNull(), newAmount: numeric('new_amount', { precision: 12, scale: 2 }).notNull(),
+  reason: text('reason').notNull(),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: created()
+}, (t) => [index('amend_contract_idx').on(t.contractId, t.createdAt)]);
 export const invoices = pgTable('invoices', {
   id: id(), code: codeCol('inv'),
   contractId: uuid('contract_id').references(() => contracts.id),

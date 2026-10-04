@@ -36,7 +36,7 @@ export default function ContractsPage() {
       {creating && <ContractCreate onCancel={() => setCreating(false)} onDone={() => { setCreating(false); setTick((t) => t + 1); }} />}
     </Modal>
     <Modal open={!!managing} onClose={() => setManaging(null)} title={managing ? `Contract ${managing.code}` : 'Contract'}>
-      {managing && <ContractManage c={managing} canEdit={canEdit} onCancel={() => setManaging(null)} onDone={() => { setManaging(null); setTick((t) => t + 1); }} />}
+      {managing && <ContractManage c={managing} canEdit={canEdit} canCreate={canCreate} onChanged={() => setTick((t) => t + 1)} onCancel={() => setManaging(null)} onDone={() => { setManaging(null); setTick((t) => t + 1); }} />}
     </Modal>
   </>;
 }

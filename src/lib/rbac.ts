@@ -64,7 +64,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
   },
   OWNER: {
     organisations: [R, E], cases: [R], diagnostics: [R, C], evidence: [R, C], documents: [R, C], scores: [R], prescriptions: [R],
-    actions: [R, E], kpis: [R, C], sessions: [R], reports: [R], invoices: [R], payments: [C], dashboard: [R], ratings: [R, C], opportunities: [R], referrals: [R, C, D], messages: [R, C],
+    actions: [R, E], kpis: [R, C], sessions: [R], reports: [R], contracts: [R, A], invoices: [R], payments: [C], dashboard: [R], ratings: [R, C], opportunities: [R], referrals: [R, C, D], messages: [R, C],
     // The owner invites colleagues and decides who answers which area.
     team: [R, C, E, D]
   },
