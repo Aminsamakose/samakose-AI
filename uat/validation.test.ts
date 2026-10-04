@@ -403,7 +403,14 @@ describe('7 permissions, overrides, audit, edge cases and finance', () => {
       return all(eq(made.status, 201, 'create'), row ? undefined : ['FAIL', 'not listed'], row && row.status === 'Hidden' ? ['FAIL', 'staff value hidden'] : undefined, fl.length ? undefined : ['FAIL', 'funder sees no target']);
     });
     await check('Programmes', 'Logframe outcome levels, budget lines, tranches', async () => ['GAP', 'Indicators with targets and live actuals exist. Budget lines, tranches and a logframe hierarchy do not']);
-    await check('Organisations', 'Registration number / TIN captured; completeness score; merge duplicates; unarchive', async () => ['GAP', 'No TIN/RGD, completeness score, merge, unarchive or ownership transfer']);
+    await check('Organisations', 'Registration number / TIN captured; completeness score; merge duplicates; unarchive', async () => {
+      const mk = async (n: string, x: object = {}) => (await api(admin).post('/organisations', { name: n, region: 'Northern', consent: true, consentBy: 'TEST Owner (Synthetic)', ...x })).data.id as string;
+      const a = await mk(SYN('Registry Foods')); const b = await mk(SYN('Registry Foods Ltd'), { tin: 'TEST' + Date.now().toString().slice(-8), registrationNumber: 'RG-SYN-1' });
+      const d = (await api(admin).get(`/organisations/${b}`)).data; const found = ((await api(admin).get('/organisations/duplicates')).data.groups ?? []).some((g: any) => g.ids.includes(a) && g.ids.includes(b));
+      const m = await api(admin).post(`/organisations/${b}/merge`, { intoId: a, reason: 'Synthetic duplicate registered twice', confirm: true });
+      const arch = await api(admin).del(`/organisations/${a}`); const un = await api(admin).post(`/organisations/${a}/unarchive`);
+      return all(d.tin && d.completeness?.score > 0 ? undefined : ['FAIL', 'TIN or completeness missing'], found ? undefined : ['FAIL', 'duplicate not found'], eq(m.status, 200, 'merge'), eq(arch.status, 200, 'archive'), eq(un.status, 200, 'unarchive'));
+    });
   });
   it('performance sample', async () => {
     for (const [route, who] of [['/cases?pageSize=50', admin], ['/organisations', admin], ['/dashboard', pm], ['/audit?pageSize=100', admin]] as [string, Session][]) await check('Performance', `${route} responds in under 1s on the synthetic dataset`, async () => { const t = Date.now(); const r = await timed(route, async () => api(who).get(route)); const ms = Date.now() - t; return all(eq(r.status, 200, 'status'), ms > 1000 ? ['PARTIAL', `${ms}ms`] : undefined); });

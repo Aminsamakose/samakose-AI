@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Badge, DataTable, Modal, PageHead, Button, type Col } from '@/components/ui';
 import { OrgForm, type OrgRow } from '@/components/portfolio/OrgForm';
 import { REGIONS, ORG_TYPES, typeLabel, usePerms, useTitle } from '@/components/portfolio/shared';
@@ -30,7 +31,7 @@ export default function OrganisationsPage() {
   </>;
   const canCreate = can('organisations', 'create');
   return <div className="stack">
-    <PageHead title="Organisations" sub="Businesses and enterprise support organisations you can work with." actions={canCreate ? <Button variant="primary" onClick={() => setOpen(true)}>New organisation</Button> : undefined} />
+    <PageHead title="Organisations" sub="Businesses and enterprise support organisations you can work with." actions={<>{can('organisations', 'delete') && <Link href="/organisations/registry" className="btn">Registry clean-up</Link>}{canCreate && <Button variant="primary" onClick={() => setOpen(true)}>New organisation</Button>}</>} />
     <DataTable<Row> endpoint="/organisations" columns={cols} rowHref={(r) => `/organisations/${r.id}`} params={{ region, type, status }} toolbar={toolbar} exportable={ready && can('organisations', 'export')}
       placeholder="Search name, code, contact or district" defaultSort={{ key: 'name', dir: 'asc' }}
       empty={{ title: 'No organisations yet', hint: canCreate ? 'Register the first organisation to begin.' : 'Organisations you work with will appear here.', action: canCreate ? <Button variant="primary" size="sm" onClick={() => setOpen(true)}>New organisation</Button> : undefined }} />
