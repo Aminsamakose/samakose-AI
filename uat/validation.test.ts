@@ -212,10 +212,23 @@ describe('4 assessments: self, collaborative, hybrid', () => {
         return all(eq(r.status, 201, 'status'), eq(r.data?.caseStatus, 'DIAGNOSED', 'state'));
       });
     }
+    await check('Assessment', 'Setup: AgriFood360 and ESO360 are published in this isolated database, as they are in production (approved there by the administrator)', async () => {
+      // Production state: the shipped 100-question drafts had their evidence trails approved and were published. A fresh database still holds them as drafts.
+      const list = (await api(admin).get('/settings/frameworks')).data as any[];
+      for (const code of ['AGRIFOOD360', 'ESO360']) {
+        const draft = list.find((f) => f.code === code)?.versions?.find((v: any) => v.status === 'Draft');
+        if (!draft) return ['FAIL', `${code} has no draft to publish`];
+        const full = (await api(admin).get(`/settings/frameworks/versions/${draft.id}`)).data;
+        const ok = await api(admin).patch(`/settings/frameworks/versions/${draft.id}`, { sources: (full.sources ?? []).map((x: any) => ({ ...x, approval: 'Approved' })) });
+        if (ok.status !== 200) return ['FAIL', `${code} sources: ${ok.status} ${JSON.stringify(ok.error)}`];
+        const pub = await api(admin).post(`/settings/frameworks/versions/${draft.id}/publish`, { note: 'Synthetic UAT stand-in for the production approval' });
+        if (pub.status !== 200) return ['FAIL', `${code} publish: ${pub.status} ${JSON.stringify(pub.error)}`];
+      }
+    });
     await check('Assessment', 'Platform-specific question banks: AGRIFOOD360 and ESO360 cases are served their own banks', async () => {
       const bank = async (o: Owner) => JSON.stringify(((await api(admin).get(`/questions?caseId=${o.caseId}`)).data ?? []).map((x: any) => x.code).slice(0, 3));
       const a = await bank(owners[0]), b = await bank(owners[2]), c = await bank(owners[4]);
-      return a === b || a === c ? ['FAIL', `AGRIFOOD360 and ESO360 cases are served the SME360 questions (${a}). Their banks exist but are Draft in production, so the platform routing falls back to SME360 until approved`] : undefined;
+      return a === b || a === c ? ['FAIL', `AGRIFOOD360 and ESO360 cases are served the SME360 questions (${a}). Platform routing fell back to SME360 although the specialised banks are published`] : undefined;
     });
   });
 });
@@ -347,7 +360,7 @@ describe('7 permissions, overrides, audit, edge cases and finance', () => {
     await check('Edge', 'Draft cohort refuses enrolment', async () => { const c = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: 'TEST Draft Cohort (Synthetic)', capacity: 5 })).data; const o = (await api(admin).post('/organisations', { name: `TEST Draft Enrol ${uniq()} (Synthetic)`, region: 'Northern', consent: true, consentBy: 'TEST Owner' })).data; const r = await api(admin).post('/cases', { orgId: o.id, programmeId: prog.id, cohortId: c.id }); return r.status === 201 ? ['FAIL', `Enrolment accepted into a ${c.status ?? 'Draft'} cohort`] : undefined; });
     await check('Edge', 'Cohort capacity enforced', async () => { const c = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: 'TEST Cap1 (Synthetic)', capacity: 1 })).data; await api(admin).patch(`/cohorts/${c.id}`, { status: 'Open' }); const mk = async () => api(admin).post('/cases', { orgId: (await api(admin).post('/organisations', { name: `TEST Cap ${uniq()} (Synthetic)`, region: 'Northern', consent: true, consentBy: 'TEST Owner' })).data.id, programmeId: prog.id, cohortId: c.id }); const a = await mk(); const b = await mk(); return all(eq(a.status, 201, 'first'), eq(b.status, 409, 'second')); });
     await check('Edge', 'Second open case for same org and programme refused', async () => eq((await api(admin).post('/cases', { orgId: owners[0].orgId, programmeId: prog.id })).status, 409, 'status'));
-    await check('Edge', 'Concurrent double submit of a diagnostic creates one version, not two', async () => { const o = owners[3]; const u = `race-${uniq()}`; const a = await answers(() => 3); const before = (await q(`select count(*)::int n from diagnostics where case_id=$1`, [o.caseId])).rows[0].n; const rs = await Promise.all([1, 2].map(() => api(o.s).post(`/cases/${o.caseId}/diagnostics`, { answers: a, uuid: u }))); const after = (await q(`select count(*)::int n from diagnostics where case_id=$1`, [o.caseId])).rows[0].n; return after - before === 1 ? undefined : ['FAIL', `${after - before} rows from one submission id; statuses ${rs.map((r) => r.status)}`]; });
+    await check('Edge', 'Concurrent double submit of a diagnostic creates one version, not two', async () => { const o = owners[3]; const u = `race-${uniq()}`; const a = Object.fromEntries(((await api(admin).get(`/questions?caseId=${o.caseId}`)).data ?? []).map((x: any) => [x.code, { value: 3, evidence: 'Self-reported' }])); const before = (await q(`select count(*)::int n from diagnostics where case_id=$1`, [o.caseId])).rows[0].n; const rs = await Promise.all([1, 2].map(() => api(o.s).post(`/cases/${o.caseId}/diagnostics`, { answers: a, uuid: u }))); const after = (await q(`select count(*)::int n from diagnostics where case_id=$1`, [o.caseId])).rows[0].n; return after - before === 1 ? undefined : ['FAIL', `${after - before} rows from one submission id; statuses ${rs.map((r) => r.status)}`]; });
     await check('Edge', 'Upload: wrong type and spoofed PDF refused', async () => { const f = new FormData(); f.set('file', new File([new Uint8Array(Buffer.from('MZ'))], 'x.exe')); const g = new FormData(); g.set('file', new File([new Uint8Array(Buffer.from('MZ not pdf'))], 'x.pdf')); const col = (globalThis as any).__colleague; return all(eq((await call('POST', `/documents`, { cookie: experts[0].cookie, form: f })).status >= 400, true, 'exe'), eq((await call('POST', `/documents`, { cookie: experts[0].cookie, form: g })).status >= 400, true, 'spoof')); });
     await check('Edge', 'Login brute force is throttled', async () => { const e = `thr.${uniq()}@uat.samakose.test`; let last = 0; for (let i = 0; i < 25; i++) last = (await call('POST', '/auth/login', { body: { email: e, password: 'nope-Nope-1234' } })).status; return last === 429 || last === 401 ? undefined : ['FAIL', `last ${last}`]; });
   });
@@ -413,6 +426,53 @@ describe('8 expert and coach network', () => {
     await check('Network', 'Matches differ by platform: AgriFood360 case ranks agriculture experts first when profiles say so', async () => {
       const agri = owners.find((o) => o.platform === 'AGRIFOOD360')!; const r = await api(admin).get(`/cases/${agri.caseId}/matches?fn=lead`);
       return all(eq(r.status, 200, 'status'), r.data?.need?.platform === 'AGRIFOOD360' ? undefined : ['FAIL', `platform ${r.data?.need?.platform}`]);
+    });
+  });
+});
+
+describe('9 UNLOCK: opportunities, consent and referral', () => {
+  it('opportunities reach only the businesses they fit, and no one is referred without consent and a person\'s approval', async () => {
+    const mk = async (body: any) => { const r = await api(admin).post('/opportunities', { provider: 'TEST Partner (Synthetic)', summary: 'Synthetic opportunity for validation of matching and referral.', type: 'Funding', ...body }); await api(admin).post(`/opportunities/${r.data.id}/publish`, {}); return r.data.id as string; };
+    const agri = owners.find((o) => o.orgType === 'AGRIFOOD')!, sme = owners.find((o) => o.orgType === 'SME')!, eso = owners.find((o) => o.orgType === 'ESO')!;
+    const general = await mk({ title: SYN('Open window'), criteria: {} });
+    const agriOnly = await mk({ title: SYN('Agrifood window'), type: 'Grant', criteria: { orgTypes: ['AGRIFOOD'] } });
+    const esoOnly = await mk({ title: SYN('ESO programme'), type: 'Programme', criteria: { orgTypes: ['ESO'] } });
+    const hard = await mk({ title: SYN('High bar'), type: 'Equity', criteria: { minOverall: 100 } });
+    const draft = (await api(admin).post('/opportunities', { title: SYN('Unpublished'), type: 'Loan', provider: 'TEST Partner (Synthetic)', summary: 'Draft that must stay hidden.' })).data.id;
+    const path = async (o: Owner) => (await api(o.s).get(`/organisations/${o.orgId}/pathway`)).data;
+    await check('UNLOCK', 'Each platform owner sees only the opportunities that fit their organisation type, and never a draft', async () => {
+      const [a, s2, e] = [await path(agri), await path(sme), await path(eso)]; const has = (p: any, id: string) => p.items.some((i: any) => i.opportunity.id === id);
+      return all(eq(has(a, agriOnly), true, 'agri sees agri'), eq(has(s2, agriOnly), false, 'sme hides agri'), eq(has(e, agriOnly), false, 'eso hides agri'), eq(has(e, esoOnly), true, 'eso sees eso'), eq(has(a, esoOnly), false, 'agri hides eso'), eq(has(a, draft) || has(s2, draft), false, 'draft hidden'));
+    });
+    await check('UNLOCK', 'A requirement the business does not meet is explained in plain words with what to do', async () => {
+      const p = await path(sme); const item = p.items.find((i: any) => i.opportunity.id === hard);
+      return all(eq(['Close', 'Not yet'].includes(item?.match.status), true, 'status'), eq(/Raise the overall score to 100/.test(item?.match.gaps[0]?.label ?? ''), true, 'gap wording'));
+    });
+    await check('UNLOCK', 'Consent is needed first, a person approves, and an award is recorded with its amount and history', async () => {
+      const no = await api(sme.s).post(`/organisations/${sme.orgId}/opportunities/${general}/request`, { scope: [] });
+      const req = await api(sme.s).post(`/organisations/${sme.orgId}/opportunities/${general}/request`, { scope: ['overall', 'maturity'] });
+      const self = await api(sme.s).post(`/referrals/${req.data.id}/approve`, {});
+      const ap = await api(admin).post(`/referrals/${req.data.id}/approve`, {});
+      const skip = await api(admin).post(`/referrals/${req.data.id}/status`, { to: 'Awarded' });
+      for (const to of ['Referred', 'Applied']) await api(admin).post(`/referrals/${req.data.id}/status`, { to });
+      const aw = await api(admin).post(`/referrals/${req.data.id}/status`, { to: 'Awarded', amountGhs: 12000, note: 'Synthetic award' });
+      const hist = (await api(sme.s).get(`/referrals/${req.data.id}/history`)).data.items.map((x: any) => x.to).join('>');
+      return all(eq(no.status, 400, 'empty consent refused'), eq(req.status, 201, 'request'), eq(self.status, 403, 'owner cannot approve'), eq(ap.status, 200, 'approve'), eq(skip.status, 422, 'no skipping steps'), eq(aw.data?.amountGhs, 12000, 'amount'), eq(hist, 'Consented>Approved>Referred>Applied>Awarded', 'history'));
+    });
+    await check('UNLOCK', 'The database refuses a referral past Approved without consent and approval, even if the application tried', async () => {
+      const id = await mk({ title: SYN('Guarded'), criteria: {} });
+      const r = await api(admin).post(`/organisations/${eso.orgId}/opportunities/${id}/suggest`, {});
+      let blocked = 0; for (const sql of [`update opportunity_referrals set status='Referred' where id='${r.data.id}'`, `update opportunity_referrals set amount_ghs=5 where id='${r.data.id}'`]) { try { await q(sql); } catch { blocked++; } }
+      return eq(blocked, 2, 'blocked updates');
+    });
+    await check('UNLOCK', 'Another business, a funder and a programme manager outside scope cannot read this business\'s pathway or referrals', async () => {
+      const p1 = await api(agri.s).get(`/organisations/${sme.orgId}/pathway`); const p2 = await api(funder).get(`/organisations/${sme.orgId}/pathway`);
+      const q1 = await api(agri.s).get('/referrals');
+      return all(eq(p1.status, 404, 'other owner'), eq(p2.status, 403, 'funder'), eq(q1.status, 403, 'owner queue'));
+    });
+    await check('UNLOCK', 'Totals for leadership count the award, and every change is in the audit log', async () => {
+      const t = (await api(admin).get('/unlock/summary')).data; const a = (await q(`select count(*)::int n from audit_log where action like 'referral.%' or action like 'opportunity.%'`)).rows[0].n;
+      return all(eq(t.fundingMobilisedGhs >= 12000, true, 'funding total'), eq(a >= 8, true, `audit rows ${a}`));
     });
   });
 });
