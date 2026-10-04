@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Async, Badge, Button, Card, DataTable, Empty, KV, Modal, PageHead, Tabs, useApi, type Col } from '@/components/ui';
 import { dateFmt, ghs } from '@/lib/client/api';
 import { CohortForm, ProgrammeForm, type Cohort, type Programme } from '@/components/portfolio/ProgrammeForms';
+import { IndicatorsPanel } from '@/components/portfolio/IndicatorsPanel';
 import { ProgrammeDashboard } from '@/components/portfolio/ProgrammeDashboard';
 import { usePerms, useTitle } from '@/components/portfolio/shared';
 
@@ -24,6 +25,7 @@ export default function ProgrammePage() {
   const tabs = [
     { id: 'overview', label: 'Overview' }, { id: 'cohorts', label: 'Cohorts' },
     ...(can('cases', 'read') ? [{ id: 'cases', label: 'Cases' }] : []),
+    ...(can('dashboard', 'read') && !funder ? [{ id: 'targets', label: 'Targets' }] : []),
     ...(can('dashboard', 'read') ? [{ id: 'dashboard', label: 'Dashboard' }] : [])
   ];
   useEffect(() => { if (ready && tab === null) setTab(funder ? 'dashboard' : 'overview'); }, [ready, tab, funder]);
@@ -54,6 +56,7 @@ export default function ProgrammePage() {
             <tbody>{p.cohorts.map((c) => <tr key={c.id}><td>{c.name}</td><td className="mono">{c.code}</td><td>{dateFmt(c.startDate)} to {dateFmt(c.endDate)}</td><td className="r num">{c.capacity}</td>{!funder && <td className="r num">{c.enrolled}</td>}<td><Badge tone={c.status === 'Open' ? 'ok' : c.status === 'Closed' ? '' : 'info'}>{c.status}</Badge></td>{canCohortEdit && <td><Button size="sm" onClick={() => setCohortModal(c)} aria-label={`Edit ${c.name}`}>Edit</Button></td>}</tr>)}</tbody></table></div>}
       </Card>}
       {active === 'cases' && <Card title="Cases in this programme"><DataTable<CaseRow> endpoint="/cases" params={{ programmeId: id }} columns={caseCols} rowHref={(r) => `/cases/${r.id}`} exportable={can('cases', 'export')} refreshKey={caseKey} placeholder="Search case or organisation" empty={{ title: 'No cases in this programme yet', hint: 'Open a case from an organisation and assign it to this programme.' }} /></Card>}
+      {active === 'targets' && <IndicatorsPanel programmeId={id} canEdit={can('programmes', 'edit') && !closed} />}
       {active === 'dashboard' && <ProgrammeDashboard id={id} canExport={can('dashboard', 'export')} />}
       </div>
       <Modal open={cohortModal !== null} onClose={() => setCohortModal(null)} title={cohortModal === 'new' ? 'Add cohort' : 'Edit cohort'}>

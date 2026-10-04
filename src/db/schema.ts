@@ -146,6 +146,19 @@ export const programmes = pgTable('programmes', {
   status: text('status').notNull().default('Draft'),
   createdAt: created(), updatedAt: updated()
 });
+export const INDICATOR_METRICS = ['enrolled', 'scored', 'rescored', 'avg_score', 'avg_change', 'pct_improved'] as const;
+/** A target for a measure the platform already computes. Progress is worked out live from scores and never stored. */
+export const programmeIndicators = pgTable('programme_indicators', {
+  id: id(),
+  programmeId: uuid('programme_id').notNull().references(() => programmes.id),
+  name: text('name').notNull(),
+  metric: text('metric').notNull(),
+  target: numeric('target', { precision: 10, scale: 1 }).notNull(),
+  dueDate: date('due_date'),
+  note: text('note'),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [uniqueIndex('ind_name_uq').on(t.programmeId, t.name)]);
 export const cohorts = pgTable('cohorts', {
   id: id(), code: codeCol('cohort'),
   programmeId: uuid('programme_id').notNull().references(() => programmes.id),
