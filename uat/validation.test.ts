@@ -28,7 +28,7 @@ const SYN = (s: string) => `TEST ${s} (Synthetic)`;
 const PLAT = [['SME', 'SME360'], ['AGRIFOOD', 'AGRIFOOD360'], ['ESO', 'ESO360']] as const;
 type Owner = { s: Session; email: string; orgId: string; orgType: 'SME' | 'AGRIFOOD' | 'ESO'; platform: string; caseId?: string; mode: string; name: string };
 const owners: Owner[] = []; const experts: (Session & { name: string; expertise: string })[] = [];
-let admin: Session, pm: Session, rv1: Session, rv2: Session, fin: Session, funder: Session, exec: Session; let prog: any, cohort: any;
+let reportId = ''; let admin: Session, pm: Session, rv1: Session, rv2: Session, fin: Session, funder: Session, exec: Session; let prog: any, cohort: any;
 const EXPERTS = [
   ['Agribusiness Value Chains', 'Shea and grains processing, aggregation, market linkage'], ['SME Finance and Investment Readiness', 'Bookkeeping, cash flow, lender packs'],
   ['Organisational Development and Governance', 'Governance, HR systems, ESO institutional strengthening'], ['Digital and AI Transformation', 'Automation, data systems, digital sales'],
@@ -290,9 +290,14 @@ describe('6 progression, reports, dashboards, notifications', () => {
     await check('Reports', 'Report drafted; owner cannot see it until the case reviewer releases it', async () => {
       await api(lead).post(`/cases/${o.caseId}/reports/generate`); await drain(); const l = (await api(lead).get(`/cases/${o.caseId}/reports`)).data ?? []; const id = l[0]?.id;
       const hid = (await api(o.s).get(`/reports/${id}`)).status; const wrong = (await api(rv2).post(`/reports/${id}/release`)).status; const rel = await api(rv1).post(`/reports/${id}/release`); const seen = (await api(o.s).get(`/reports/${id}`)).status;
+      reportId = id;
       return all(eq(hid, 404, 'hidden'), wrong === 200 ? ['FAIL', 'wrong reviewer released'] : undefined, eq(rel.status, 200, 'release'), eq(seen, 200, 'visible'));
     });
-    await check('Reports', 'Report export as PDF/Word for the owner', async () => ['GAP', 'Reports are viewed in-app; no PDF or Word export route exists in the API list']);
+    await check('Reports', 'Report export as PDF/Word for the owner', async () => {
+      const get = (c: string, f: string) => call('GET', `/reports/${reportId}/export?format=${f}`, { cookie: c });
+      const pdf = await get(o.s.cookie, 'pdf'); const docx = await get(o.s.cookie, 'docx'); const other = await get(owners[1].s.cookie, 'pdf');
+      return all(eq(pdf.status, 200, 'pdf'), eq(pdf.headers.get('content-type'), 'application/pdf', 'pdf type'), eq(docx.status, 200, 'docx'), other.status >= 403 ? undefined : ['FAIL', `another business got ${other.status}`]);
+    });
   });
   it('dashboards and monitoring per role', async () => {
     const roles: [string, Session][] = [['admin', admin], ['pm', pm], ['expert', experts[0]], ['reviewer', rv1], ['finance', fin], ['owner', owners[0].s], ['funder', funder], ['executive', exec]];
@@ -306,7 +311,12 @@ describe('6 progression, reports, dashboards, notifications', () => {
   it('notifications and tasks', async () => {
     await check('Notifications', 'Experts, reviewers and owners receive in-app notifications; read marks work; others cannot mark', async () => { const n = (await api(experts[0]).get('/notifications')).data; const id = n?.items?.[0]?.id; const ok = id ? await api(experts[0]).post(`/notifications/${id}/read`) : { status: 0 }; const x = id ? await api(rv1).post(`/notifications/${id}/read`) : { status: 0 }; return all(n?.items?.length ? undefined : ['FAIL', 'none'], eq(ok.status, 200, 'read'), eq(x.status, 404, 'foreign')); });
     await check('Notifications', 'Email outbox queued for invitations and verification', async () => { const r = await q(`select count(*)::int n, count(*) filter (where status='sent')::int s from outbox_emails`); return r.rows[0].n > 5 ? undefined : ['FAIL', 'no emails queued']; });
-    await check('Notifications', 'Overdue-action reminders and escalation to expert/PM', async () => { const r = await q(`select count(*)::int n from jobs where kind ilike '%remind%' or kind ilike '%overdue%'`); return r.rows[0].n ? undefined : ['PARTIAL', 'No reminder job found in this short run; the schedule runs via cron in production and is not exercised here']; });
+    await check('Notifications', 'Session reminders and stalled-case escalation to expert/PM', async () => {
+      const { tx } = await import('@/db/client'); const { systemCtx } = await import('@/services/common'); const { remindSessions, scanEscalations } = await import('@/services/sla');
+      const r = await tx(async (t) => { const ctx = systemCtx(t as any, 'scan'); return { rem: await remindSessions(ctx), esc: await scanEscalations(ctx, new Date(Date.now() + 30 * 86_400_000)) }; });
+      const esc = (await api(admin).get('/escalations')).status;
+      return all(typeof r.rem?.reminded === 'number' ? undefined : ['FAIL', 'reminder scan did not run'], eq(esc, 200, 'escalations list'), ['PARTIAL', 'Jobs run and list correctly. The scheduled daily run (06:00 UTC cron) is not exercised in this test']);
+    });
   });
 });
 
@@ -377,7 +387,13 @@ describe('7 permissions, overrides, audit, edge cases and finance', () => {
       const uncovered = fw.filter((d) => !lib.includes(d)); return uncovered.length ? ['FAIL', `${uncovered.length} of ${fw.length} framework dimensions have no library items (library dimensions: ${lib.join(', ')}). Same mismatch in production: 16 items on 6 legacy dimension names`] : undefined;
     });
     await check('Programmes', 'Programme lifecycle: complete or cancel cascades to open cohorts and cases', async () => { const p = (await api(admin).post('/programmes', { name: 'TEST Closing Programme (Synthetic)', startDate: '2026-01-01', endDate: '2026-12-31', budgetGhs: 1 })).data; await api(admin).patch(`/programmes/${p.id}`, { status: 'Active' }); const c = (await api(admin).post(`/programmes/${p.id}/cohorts`, { name: 'TEST C (Synthetic)', capacity: 5 })).data; await api(admin).patch(`/cohorts/${c.id}`, { status: 'Open' }); await api(admin).patch(`/programmes/${p.id}`, { status: 'Completed' }); const st = (await q(`select status from cohorts where id=$1`, [c.id])).rows[0].status; return st === 'Open' ? ['FAIL', 'Cohort still Open after programme Completed'] : undefined; });
-    await check('Programmes', 'Logframe, indicators, targets vs actuals, budget lines', async () => ['GAP', 'Only a single budget figure exists; no indicators, targets, actuals, budget lines or tranches']);
+    await check('Programmes', 'Indicators and targets with live actuals; funder sees values only above the privacy minimum', async () => {
+      const made = await api(pm).post(`/programmes/${prog.id}/indicators`, { name: 'TEST Average score goal (Synthetic)', metric: 'avg_score', target: 60 });
+      const list = (await api(pm).get(`/programmes/${prog.id}/indicators`)).data ?? []; const row = list.find((x: any) => x.name.startsWith('TEST Average'));
+      const fl = (await api(funder).get(`/programmes/${prog.id}/indicators`)).data ?? [];
+      return all(eq(made.status, 201, 'create'), row ? undefined : ['FAIL', 'not listed'], row && row.status === 'Hidden' ? ['FAIL', 'staff value hidden'] : undefined, fl.length ? undefined : ['FAIL', 'funder sees no target']);
+    });
+    await check('Programmes', 'Logframe outcome levels, budget lines, tranches', async () => ['GAP', 'Indicators with targets and live actuals exist. Budget lines, tranches and a logframe hierarchy do not']);
     await check('Organisations', 'Registration number / TIN captured; completeness score; merge duplicates; unarchive', async () => ['GAP', 'No TIN/RGD, completeness score, merge, unarchive or ownership transfer']);
   });
   it('performance sample', async () => {
