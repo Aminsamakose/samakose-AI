@@ -282,3 +282,39 @@ describe('ratings: three sources, immutable, fair', () => {
     const adm = await api(admin).get(`/practitioners/${e1.userId}/performance`); expect(adm.status).toBe(200);
   });
 });
+
+describe('departures: caseload transfer, suspension, specialist notices', () => {
+  it('moves every active case of a leaving expert, reports what cannot move, and keeps history', async () => {
+    const leaving = await makeUser('EXPERT'); const taker = await makeUser('EXPERT'); const blocked = await makeUser('EXPERT');
+    const cases: string[] = [];
+    for (let i = 0; i < 3; i++) { const o = await makeOrg(admin); const id = (await api(pm).post('/cases', { orgId: o.id, programmeId: progId })).data.id; cases.push(id); expect((await api(admin).post(`/cases/${id}/assign`, { consultantId: leaving.userId })).status).toBe(200); }
+    const load = await api(admin).get(`/practitioners/${leaving.userId}/caseload`); expect(load.data.items).toHaveLength(3);
+    // The taker declared a conflict with the third business, so that one must be reported, not forced.
+    const [third] = await db().select().from(schema.cases).where(eq(schema.cases.id, cases[2]));
+    await db().insert(schema.practitionerConflicts).values({ userId: taker.userId, orgId: third.orgId, reason: 'Family business' });
+    expect((await api(admin).post(`/practitioners/${leaving.userId}/transfer-caseload`, { toUserId: taker.userId })).status).toBe(400);
+    expect((await api(e2).post(`/practitioners/${leaving.userId}/transfer-caseload`, { toUserId: taker.userId, reason: 'Leaving' })).status).toBe(403);
+    const r = await api(admin).post(`/practitioners/${leaving.userId}/transfer-caseload`, { toUserId: taker.userId, reason: 'Expert is leaving the programme' });
+    expect(r.status).toBe(200); expect(r.data.moved).toHaveLength(2); expect(r.data.skipped).toHaveLength(1); expect(r.data.skipped[0].why).toMatch(/conflict/i);
+    expect((await api(admin).get(`/practitioners/${leaving.userId}/caseload`)).data.items).toHaveLength(1);
+    const rows = await db().select().from(schema.caseAssignments).where(and(eq(schema.caseAssignments.caseId, cases[0]), eq(schema.caseAssignments.fn, 'lead')));
+    expect(rows.find((x) => x.status === 'Replaced')?.userId).toBe(leaving.userId); expect(rows.find((x) => x.status === 'Active')?.userId).toBe(taker.userId);
+    void blocked;
+  });
+  it('warns the administrators when an expert with active cases is suspended', async () => {
+    const other = await makeUser('ADMIN'); // the acting administrator already sees the result on screen; the others are told
+    const x = await makeUser('EXPERT'); const o = await makeOrg(admin); const id = (await api(pm).post('/cases', { orgId: o.id, programmeId: progId })).data.id;
+    await api(admin).post(`/cases/${id}/assign`, { consultantId: x.userId });
+    expect((await api(admin).post(`/practitioners/${x.userId}/decision`, { decision: 'Suspended', note: 'Complaint under review' })).status).toBe(200);
+    const n = await db().select().from(schema.notifications).where(eq(schema.notifications.userId, other.userId));
+    expect(n.some((r) => r.title === 'A suspended expert still has active cases')).toBe(true);
+  });
+  it('tells a specialist when work on the case is approved or overdue', async () => {
+    const spec = await makeUser('EXPERT'); const o = await makeOrg(admin); const id = (await api(pm).post('/cases', { orgId: o.id, programmeId: progId })).data.id;
+    await api(admin).post(`/cases/${id}/assign`, { consultantId: e1.userId });
+    expect((await api(pm).post(`/cases/${id}/specialists`, { userId: spec.userId, specialisation: 'Financial management' })).status).toBe(200);
+    const { caseParties } = await import('@/domain/events');
+    const parties = await caseParties(systemCtx(db() as any, 'test'), id);
+    expect(parties?.specialistIds).toEqual([spec.userId]);
+  });
+});

@@ -9,7 +9,7 @@ const PAGES: { path: string; need?: [Resource, any]; roles?: string[] }[] = [
   { path: '/reports', roles: ['FUNDER'] }, { path: '/organisations', need: ['organisations', 'read'] }, { path: '/programmes', need: ['programmes', 'read'] },
   { path: '/finance/invoices', need: ['invoices', 'read'] }, { path: '/finance/payments', need: ['payments', 'read'] }, { path: '/finance/contracts', need: ['contracts', 'read'] }, { path: '/finance/plans', need: ['plans', 'read'] },
   { path: '/admin/users', need: ['users', 'create'] }, { path: '/admin/audit', need: ['audit', 'read'] }, { path: '/admin/settings', need: ['settings', 'read'] }, { path: '/admin/system', need: ['integrations', 'read'] },
-  { path: '/notifications' }, { path: '/profile' }, { path: '/search?q=bag' }, { path: '/cases/new', need: ['cases', 'create'] }
+  { path: '/notifications' }, { path: '/profile' }, { path: '/admin/practitioners', need: ['practitioners', 'approve'] }, { path: '/search?q=bag' }, { path: '/cases/new', need: ['cases', 'create'] }
 ];
 (async () => {
   const b = await launch();

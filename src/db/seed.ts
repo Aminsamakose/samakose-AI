@@ -49,9 +49,15 @@ async function seedDemo() {
   const admin = await mk('admin@demo.samakose.test', 'Ama Admin', 'ADMIN');
   await mk('exec@demo.samakose.test', 'Kofi Executive', 'EXECUTIVE');
   const pm = await mk('pm@demo.samakose.test', 'Abena Manager', 'PROGRAMME_MANAGER');
-  await mk('consultant@demo.samakose.test', 'Yaw Consultant', 'EXPERT');
+  const consultant = await mk('consultant@demo.samakose.test', 'Yaw Consultant', 'EXPERT');
   await mk('reviewer@demo.samakose.test', 'Efua Reviewer', 'REVIEWER');
-  await mk('coach@demo.samakose.test', 'Musah Coach', 'EXPERT');
+  const coach = await mk('coach@demo.samakose.test', 'Musah Coach', 'EXPERT');
+  const applicant = await mk('applicant@demo.samakose.test', 'Kwame Applicant', 'EXPERT');
+  // Demo experts are pre-approved so the demo can assign work. Kwame is left in Draft to show the vetting queue.
+  const full = { headline: 'Agribusiness adviser, Tamale', bio: 'Helps agribusinesses and cooperatives in Northern Ghana strengthen finance, records and market access.', specialisations: ['Financial management', 'Agribusiness'], strengths: ['Finance', 'Records and systems'], sectors: ['Agriculture', 'Agro-processing'], platforms: ['SME360', 'AGRIFOOD360'], businessSizes: ['Micro', 'Small'], languages: ['English', 'Dagbani'], regions: ['Northern'], deliveryModes: ['In person'], yearsExperience: 8, maxActive: 50, conductAcceptedAt: new Date(), conductVersion: '2026-10', vettingStatus: 'Approved' as const };
+  await d.insert(schema.practitionerProfiles).values([{ userId: consultant, functions: ['expert', 'coach'], ...full }, { userId: coach, functions: ['expert', 'coach'], ...full, headline: 'Coach and agribusiness mentor' }])
+    .onConflictDoUpdate({ target: schema.practitionerProfiles.userId, set: { vettingStatus: 'Approved', functions: ['expert', 'coach'], headline: full.headline, bio: full.bio, specialisations: full.specialisations, strengths: full.strengths, sectors: full.sectors, platforms: full.platforms, businessSizes: full.businessSizes, languages: full.languages, regions: full.regions, deliveryModes: full.deliveryModes, yearsExperience: full.yearsExperience, maxActive: 50, conductAcceptedAt: full.conductAcceptedAt, conductVersion: full.conductVersion } });
+  await d.insert(schema.practitionerProfiles).values({ userId: applicant, functions: ['expert'], vettingStatus: 'Draft' }).onConflictDoNothing();
   await mk('finance@demo.samakose.test', 'Adwoa Finance', 'FINANCE');
   await mk('funder@demo.samakose.test', 'Funder Contact', 'FUNDER');
   await d.insert(schema.userProgrammes).values([{ userId: pm, programmeId: prog.id }]).onConflictDoNothing();

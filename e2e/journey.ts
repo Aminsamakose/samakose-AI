@@ -20,9 +20,10 @@ const tab = async (page: Page, name: string) => { await page.getByRole('tab', { 
   console.log('Administrator assigns the reviewer');
   const { page: ap } = await login(b, 'admin@demo.samakose.test');
   await ap.goto(caseUrl); await ap.waitForLoadState('networkidle');
-  await ap.getByLabel('Reviewer').selectOption({ label: 'Efua Reviewer' });
-  await ap.getByRole('button', { name: 'Save assignments' }).click();
-  check(await seen(ap, 'Assignments saved', 8000), 'reviewer assigned');
+  await ap.getByRole('button', { name: 'Choose reviewer' }).click();
+  await ap.locator('dialog[open]').getByLabel('Reviewer').selectOption({ label: 'Efua Reviewer' });
+  await ap.locator('dialog[open]').getByRole('button', { name: 'Assign' }).click();
+  check(await seen(ap, 'Reviewer assigned', 8000), 'reviewer assigned');
   console.log('Diagnostic');
   await tab(page, 'Diagnostic');
   check(await page.getByRole('button', { name: 'Submit diagnostic' }).isDisabled(), 'blank questionnaire cannot be submitted');
@@ -46,7 +47,7 @@ const tab = async (page: Page, name: string) => { await page.getByRole('tab', { 
   check(await seen(page, 'Current version', 30000), 'diagnosis draft appears');
   await page.waitForTimeout(1500);
   console.log('   buttons:', await page.locator('main button').allTextContents().then((a) => a.slice(12)));
-  const approve = page.getByRole('button', { name: /Approve|Mark reviewed|Accept/i }).first();
+  const approve = page.getByRole('button', { name: /Approve diagnosis|Mark reviewed/i }).first();
   check(await approve.isVisible().catch(() => false), 'diagnosis review control visible');
   await approve.click();
   await dialogConfirm(page);

@@ -9,13 +9,14 @@ import { notifyUsers } from '@/domain/notify';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
 import { place, completeForCase } from './assignments';
 import { advanceCase, allow, caseFacts, latestScore, need, respondList } from './common';
+import { platformForOrgType } from '@/domain/routing';
 import { CASE_STATES, type CaseState } from '@/db/schema';
 
 const c = schema.cases, o = schema.organisations;
 const consultant = schema.users;
 
 const cols = {
-  id: c.id, code: c.code, status: c.status, orgId: c.orgId, orgName: o.name, orgCode: o.code, region: o.region, programmeId: c.programmeId, cohortId: c.cohortId,
+  id: c.id, code: c.code, status: c.status, orgId: c.orgId, orgName: o.name, orgCode: o.code, orgType: o.type, region: o.region, programmeId: c.programmeId, cohortId: c.cohortId,
   consultantId: c.consultantId, coachId: c.coachId, reviewerId: c.reviewerId, createdAt: c.createdAt, updatedAt: c.updatedAt,
   consultantName: sql<string | null>`(select name from users where id = ${c.consultantId})`,
   programmeName: sql<string | null>`(select name from programmes where id = ${c.programmeId})`,
@@ -49,6 +50,7 @@ export async function getCase(ctx: Ctx, id: string) {
     .where(inArray(consultant.id, [row.consultantId, row.coachId, row.reviewerId].filter(Boolean) as string[]));
   return {
     ...row,
+    platform: platformForOrgType(row.orgType),
     people,
     score: score ? { overall: Number(score.overall), maturity: score.maturity, confidenceClass: score.confidenceClass, dimensions: score.dimensions, at: score.createdAt } : null,
     // Owners and funders see progress, not internal workings.

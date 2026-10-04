@@ -163,6 +163,10 @@ export async function decideVetting(ctx: Ctx, rawId: string, b: { decision: Vett
   await ctx.db.insert(schema.approvals).values({ recordType: 'practitioner_profile', recordId: id, userId: c.user.id, decision: b.decision, reason: b.note?.trim() || null });
   await audit(ctx, 'practitioner.vetting', 'user', id, { vettingStatus: from }, { vettingStatus: b.decision, note: b.note ?? null });
   await notifyUsers(ctx, [id], { kind: 'PractitionerVetting', title: `Your profile was ${b.decision.toLowerCase()}`, body: b.note ?? undefined, link: '/profile', email: true });
+  if (b.decision === 'Suspended') {
+    const n = (await loadFor(ctx, [id]))[id] ?? 0;
+    if (n) await notifyAdmins(ctx, 'A suspended expert still has active cases', `${row.user.name} was suspended with ${n} active case${n === 1 ? '' : 's'}. Move them to another expert.`);
+  }
   return getProfile(ctx, id);
 }
 

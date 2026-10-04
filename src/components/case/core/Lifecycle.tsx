@@ -58,23 +58,3 @@ function ManualStep({ caseId, from, step, allowed, reload }: { caseId: string; f
     </Modal>
   </div>;
 }
-
-/** Assign consultant, coach and reviewer. Only administrators and programme managers can do this. */
-export function AssignPanel({ c, reload }: { c: CaseData; reload: () => void }) {
-  const people = useApi<{ id: string; name: string; role: string }[]>('/users/assignable');
-  const f = useForm({ consultantId: c.consultantId ?? '', coachId: c.coachId ?? '', reviewerId: c.reviewerId ?? '' },
-    (v) => api.post(`/cases/${c.id}/assign`, { consultantId: v.consultantId || null, coachId: v.coachId || null, reviewerId: v.reviewerId || null }),
-    { success: 'Assignments saved', onDone: reload });
-  const by = (r: string) => (people.data ?? []).filter((p) => p.role === r);
-  const sel = (k: 'consultantId' | 'coachId' | 'reviewerId', label: string, role: string) => (
-    <Field label={label} name={k} error={f.errors[k]}>{(p) => <select {...p} {...f.input(k)}><option value="">Unassigned</option>{by(role).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select>}</Field>);
-  return <Card title="Assign people">
-    {people.error ? <div className="alert bad" role="alert">{people.error}</div> : null}
-    <form className="stack" onSubmit={f.onSubmit} noValidate>
-      <FormError message={f.formError} />
-      <div className="form-grid">{sel('consultantId', 'Lead expert', 'EXPERT')}{sel('coachId', 'Coaching expert', 'EXPERT')}{sel('reviewerId', 'Reviewer', 'REVIEWER')}</div>
-      <p className="small muted">The reviewer must be a different person from the lead expert. People are notified when newly assigned.</p>
-      <div className="form-actions"><Button variant="primary" type="submit" loading={f.busy} disabled={people.loading && !people.data}>Save assignments</Button></div>
-    </form>
-  </Card>;
-}

@@ -7,6 +7,7 @@ import { can, ROLE_LABEL, type Resource } from '@/lib/rbac';
 import type { Role } from '@/db/schema';
 import { api } from '@/lib/client/api';
 import { ToastProvider, useApi } from './ui';
+import { Avatar } from '@/components/Avatar';
 import { Icon, type IconName } from './Icon';
 import { FeedbackLauncher } from './FeedbackLauncher';
 
@@ -37,6 +38,7 @@ const GROUPS: Group[] = [
   { title: 'Administration', items: [
     { icon: 'dashboard', href: '/admin', label: 'Command Centre', need: ['users', 'create'] },
     { icon: 'users', href: '/admin/users', label: 'Users', need: ['users', 'create'] },
+    { icon: 'users', href: '/admin/practitioners', label: 'Experts and coaches', need: ['practitioners', 'approve'] },
     { icon: 'users', href: '/admin/registrations', label: 'Pending approvals', need: ['users', 'edit'] },
     { icon: 'system', href: '/admin/agents', label: 'AI workforce', need: ['agents', 'read'] },
     { icon: 'settings', href: '/admin/registration', label: 'Registration settings', need: ['consent', 'read'] },
@@ -48,7 +50,7 @@ const GROUPS: Group[] = [
   ] }
 ];
 
-export function Shell({ user, children }: { user: { name: string; role: Role; email: string }; children: ReactNode }) {
+export function Shell({ user, children }: { user: { name: string; role: Role; email: string; photoUrl?: string | null }; children: ReactNode }) {
   const path = usePathname(); const router = useRouter(); const [open, setOpen] = useState(false);
   const notes = useApi<{ unread: number }>('/notifications?pageSize=1');
   const groups = GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => (i.roles ? i.roles.includes(user.role) : i.need ? can(user.role, i.need[0], i.need[1]) : true)) })).filter((g) => g.items.length);
@@ -74,7 +76,7 @@ export function Shell({ user, children }: { user: { name: string; role: Role; em
           </form>
           <FeedbackLauncher />
           <Link className="btn" href="/notifications" aria-label={`Notifications${notes.data?.unread ? `, ${notes.data.unread} unread` : ''}`}><Icon name="bell" />Alerts{notes.data?.unread ? <span className="badge-n">{notes.data.unread}</span> : null}</Link>
-          <Link className="btn ghost" href="/profile" title={user.email}>{user.name}<span className="muted small hide-sm"> · {ROLE_LABEL[user.role]}</span></Link>
+          <Link className="btn ghost" href="/profile" title={user.email}><Avatar name={user.name} src={user.photoUrl} size={26} />{user.name}<span className="muted small hide-sm"> · {ROLE_LABEL[user.role]}</span></Link>
           <ThemeToggle className="btn icon" />
           <button className="btn" aria-label="Sign out" onClick={async () => { await api.post('/auth/logout').catch(() => {}); window.location.href = '/login'; }}><Icon name="logout" /><span className="hide-sm">Sign out</span></button>
         </header>

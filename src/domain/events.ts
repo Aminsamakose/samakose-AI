@@ -23,7 +23,8 @@ export async function caseParties(ctx: Ctx, caseId: string) {
   const owners = await ctx.db.select({ id: schema.users.id }).from(schema.users)
     .where(and(eq(schema.users.orgId, c.orgId), eq(schema.users.role, 'OWNER'), eq(schema.users.active, true)));
   const admins = await ctx.db.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.role, 'ADMIN'), eq(schema.users.active, true)));
-  return { c, consultantId: c.consultantId, coachId: c.coachId, reviewerId: c.reviewerId, ownerIds: owners.map((o) => o.id), adminIds: admins.map((a) => a.id) };
+  const spec = await ctx.db.select({ id: schema.caseAssignments.userId }).from(schema.caseAssignments).where(and(eq(schema.caseAssignments.caseId, caseId), eq(schema.caseAssignments.fn, 'specialist'), eq(schema.caseAssignments.status, 'Active')));
+  return { specialistIds: spec.map((x) => x.id), c, consultantId: c.consultantId, coachId: c.coachId, reviewerId: c.reviewerId, ownerIds: owners.map((o) => o.id), adminIds: admins.map((a) => a.id) };
 }
 const some = (...xs: (string | null | undefined)[]) => [...new Set(xs.filter(Boolean) as string[])];
 
@@ -44,17 +45,17 @@ export async function emitEvent(ctx: Ctx, type: EventType, o: { caseId?: string 
     case 'PrescriptionGenerated':
       return notifyUsers(ctx, some(p.reviewerId), { kind: type, title: 'Prescription waiting for your review', body: 'Approve it, or return it with a reason.', link, email: true });
     case 'PrescriptionApproved':
-      return notifyUsers(ctx, some(p.consultantId, p.coachId, ...p.ownerIds), { kind: type, title: 'Prescription approved', body: 'Actions are now in the plan.', link, email: true });
+      return notifyUsers(ctx, some(p.consultantId, p.coachId, ...p.specialistIds, ...p.ownerIds), { kind: type, title: 'Prescription approved', body: 'Actions are now in the plan.', link, email: true });
     case 'ActionCompleted':
-      return notifyUsers(ctx, some(p.coachId, p.consultantId), { kind: type, title: 'An action was completed', body: String(pl.text ?? ''), link });
+      return notifyUsers(ctx, some(p.coachId, p.consultantId, ...p.specialistIds), { kind: type, title: 'An action was completed', body: String(pl.text ?? ''), link });
     case 'ActionOverdue':
-      return notifyUsers(ctx, some(...p.ownerIds, p.coachId, p.consultantId), { kind: type, title: 'An action is overdue', body: String(pl.text ?? ''), link, email: true });
+      return notifyUsers(ctx, some(...p.ownerIds, p.coachId, p.consultantId, ...p.specialistIds), { kind: type, title: 'An action is overdue', body: String(pl.text ?? ''), link, email: true });
     case 'HealthDeclined':
       return notifyUsers(ctx, some(p.consultantId, p.coachId), { kind: type, title: 'Health score declined', body: `From ${pl.from} to ${pl.to}. Review the cause.`, link });
     case 'HealthImproved':
       return notifyUsers(ctx, some(p.consultantId, p.coachId), { kind: type, title: 'Health score improved', body: `From ${pl.from} to ${pl.to}.`, link });
     case 'DocumentUploaded':
-      return notifyUsers(ctx, some(p.consultantId), { kind: type, title: 'New document uploaded', body: String(pl.filename ?? ''), link });
+      return notifyUsers(ctx, some(p.consultantId, ...p.specialistIds), { kind: type, title: 'New document uploaded', body: String(pl.filename ?? ''), link });
     case 'CoachingMissed':
       return notifyUsers(ctx, some(p.consultantId, p.coachId), { kind: type, title: 'Coaching session missed', body: 'Reschedule with the owner.', link });
     case 'SystemError':

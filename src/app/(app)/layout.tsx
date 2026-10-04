@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { COOKIE, loadSession } from '@/lib/session';
 import { env } from '@/lib/env';
 import { Shell } from '@/components/Shell';
+import { photoUrl } from '@/services/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,5 +15,5 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (u.mfaEnabled && !u.mfaVerified) redirect('/mfa');
   if (u.mustChangePassword) redirect('/change-password');
   if (env.mfaRequiredRoles.includes(u.role) && !u.mfaEnabled) redirect('/mfa-setup');
-  return <Shell user={{ name: u.name, role: u.role, email: u.email }}>{children}</Shell>;
+  return <Shell user={{ name: u.name, role: u.role, email: u.email, photoUrl: photoUrl(u) }}>{children}</Shell>;
 }

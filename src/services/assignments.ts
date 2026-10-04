@@ -10,7 +10,7 @@ import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { notifyUsers } from '@/domain/notify';
-import { assertCase } from '@/domain/scope';
+import { assertCase, caseScope } from '@/domain/scope';
 import { assignability } from '@/domain/practitioners';
 import { rankMatches, scoreMatch, type Match, type MatchNeed, type MatchProfile } from '@/domain/matching';
 import { platformForOrgType } from '@/domain/routing';
@@ -213,4 +213,39 @@ export async function matches(ctx: Ctx, caseId: string, q: { fn: 'lead' | 'speci
     return { ...m, photoUrl: photoUrl(x.user), headline: x.p.headline };
   });
   return { need: { ...needs, weakDimensions: weak }, items: rankMatches(out), note: 'A recommendation only. Performance is not scored until practitioners have rated engagements.' };
+}
+
+/** Cases a person is working on now. Used before a suspension, a departure or a long absence. */
+export async function caseloadOf(ctx: Ctx, userId: string) {
+  allow(ctx, 'cases', 'assign');
+  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(need(ctx).user.role)) throw forbidden();
+  const rows = await ctx.db.select({ id: a.id, fn: a.fn, caseId: a.caseId, code: c.code, status: c.status, org: schema.organisations.name })
+    .from(a).innerJoin(c, eq(c.id, a.caseId)).innerJoin(schema.organisations, eq(schema.organisations.id, c.orgId))
+    .where(and(eq(a.userId, userId), eq(a.status, 'Active'), inArray(a.fn, ['lead', 'coach', 'specialist']), sql`${c.status} <> 'GRADUATED'`, caseScope(need(ctx).user))).orderBy(c.code);
+  return { items: rows };
+}
+
+/**
+ * Hands every active case of one expert to another in one step. Each case follows the normal placement rules
+ * (approved, no conflict, independence from the reviewer), so a case that cannot move is reported, never forced.
+ */
+export async function transferCaseload(ctx: Ctx, fromId: string, b: { toUserId: string; reason: string }) {
+  allow(ctx, 'cases', 'assign');
+  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(need(ctx).user.role)) throw forbidden('Only administrators and programme managers move cases');
+  if (fromId === b.toUserId) throw fieldError({ toUserId: 'Choose a different person' });
+  if ((b.reason ?? '').trim().length < 5) throw fieldError({ reason: 'Say why the cases are moving' });
+  const { items } = await caseloadOf(ctx, fromId);
+  const moved: string[] = []; const skipped: { code: string; why: string }[] = []; const warnings = new Set<string>();
+  for (const it of items) {
+    try {
+      // PMs see only their programmes' cases; assertCase enforces that for each one.
+      await assertCase(ctx, it.caseId);
+      const r = await place(ctx, it.caseId, { fn: it.fn as Fn, userId: b.toUserId, reason: `Caseload transfer: ${b.reason.trim()}` });
+      r.warnings.forEach((w) => warnings.add(w));
+      if (it.fn === 'specialist') await ctx.db.update(a).set({ status: 'Replaced', endedAt: new Date(), reason: `Caseload transfer: ${b.reason.trim()}`, updatedAt: new Date() }).where(eq(a.id, it.id));
+      moved.push(it.code);
+    } catch (e) { skipped.push({ code: it.code, why: (() => { const d = (e as { details?: Record<string, string> }).details; return d ? Object.values(d)[0]! : String((e as Error).message); })() }); }
+  }
+  await audit(ctx, 'assignment.caseload_transferred', 'user', fromId, { cases: items.length }, { toUserId: b.toUserId, moved, skipped, reason: b.reason }, fromId);
+  return { moved, skipped, warnings: [...warnings] };
 }

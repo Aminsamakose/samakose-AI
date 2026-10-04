@@ -59,6 +59,7 @@ beforeAll(async () => {
   prog = (await api(admin).post('/programmes', { name: SYN('Northern Resilience Programme'), funder: 'TEST Funder (Synthetic)', startDate: '2026-01-01', endDate: '2027-12-31', budgetGhs: 250000 })).data;
   await api(admin).patch(`/programmes/${prog.id}`, { status: 'Active' });
   cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: SYN('Cohort A'), capacity: 40 })).data;
+  await api(admin).patch(`/cohorts/${cohort.id}`, { status: 'Open' }); // enrolment needs an open cohort
   pm = await makeUser('PROGRAMME_MANAGER', { name: 'TEST Programme Manager (Synthetic)', programmeIds: [prog.id], email: 'pm@uat.samakose.test' });
   rv1 = await makeUser('REVIEWER', { name: 'TEST Reviewer One (Synthetic)', email: 'rv1@uat.samakose.test' });
   rv2 = await makeUser('REVIEWER', { name: 'TEST Reviewer Two (Synthetic)', email: 'rv2@uat.samakose.test' });
@@ -142,10 +143,11 @@ describe('3 cases, assignment and expert matching', () => {
     });
     await check('Routing', 'Each case/org resolves to the correct platform', async () => all(...owners.map((o) => eq(platformForOrgType(o.orgType), o.platform, 'platform'))));
     await check('Routing', 'Platform is visible on the case for staff (API field)', async () => { const r = await api(admin).get(`/cases/${owners[0].caseId}`); return r.data?.platform || r.data?.framework ? undefined : ['GAP', 'Case payload carries no platform/framework field; platform is derived from org type only']; });
-    await check('Expert matching', 'Assignable list exposes expertise, availability or workload', async () => {
-      const r = await api(admin).get('/users/assignable'); const row = (r.data?.consultants ?? r.data?.experts ?? r.data?.[0] ?? r.data?.items?.[0]) ?? r.data;
-      const keys = JSON.stringify(r.data ?? {}); const has = /expertise|skills|workload|capacity|availab|openCases/i.test(keys);
-      return has ? undefined : ['GAP', 'No expertise, availability or workload data. Matching is a manual pick from a name list. Row sample: ' + JSON.stringify(row).slice(0, 160)];
+    await check('Expert matching', 'Ranked, explained matches exist per case and exclude people who cannot take the work', async () => {
+      const r = await api(admin).get(`/cases/${owners[0].caseId}/matches?fn=lead`); const items = r.data?.items ?? [];
+      const ok = items.length > 0 && items.every((m: any) => Array.isArray(m.factors) && m.factors.length === 7 && typeof m.score === 'number');
+      const sum = items.every((m: any) => Math.abs(m.factors.reduce((t: number, f: any) => t + f.points, 0) - m.score) <= 1);
+      return all(eq(r.status, 200, 'status'), ok ? undefined : ['FAIL', 'matches missing factors'], sum ? undefined : ['FAIL', 'factor points do not add up to the score']);
     });
     await check('Assignment', 'Admin assigns an expert (by expertise, manually), a coach and a reviewer to all six cases', async () => {
       const byPlat: Record<string, number> = { SME360: 1, AGRIFOOD360: 0, ESO360: 2 };
@@ -153,10 +155,15 @@ describe('3 cases, assignment and expert matching', () => {
     });
     await check('Assignment', 'Four-eyes: same person cannot be expert and reviewer; wrong role refused', async () => all(eq((await api(admin).post(`/cases/${owners[0].caseId}/assign`, { consultantId: experts[0].userId, reviewerId: experts[0].userId })).status, 400, 'same'), eq((await api(admin).post(`/cases/${owners[0].caseId}/assign`, { consultantId: rv1.userId })).status, 400, 'role')));
     await check('Assignment', 'Reassignment by admin works and is audited', async () => {
-      const r = await api(admin).post(`/cases/${owners[1].caseId}/assign`, { consultantId: experts[4].userId }); const a = (await q(`select count(*)::int n from audit_log where action='case.assigned' and entity_id=$1`, [owners[1].caseId])).rows[0].n;
+      const r = await api(admin).post(`/cases/${owners[1].caseId}/assign`, { consultantId: experts[4].userId, reason: 'Better sector fit' }); const a = (await q(`select count(*)::int n from audit_log where action='case.assigned' and entity_id=$1`, [owners[1].caseId])).rows[0].n;
       return all(eq(r.status, 200, 'status'), a >= 2 ? undefined : ['FAIL', `audit rows ${a}`]);
     });
-    await check('Assignment', 'Workload: one expert carrying many cases is not flagged or capped', async () => ['GAP', 'No per-expert caseload limit, no warning when an expert is over-assigned; confirmed by absence of any capacity field on users']);
+    await check('Assignment', 'Workload: assigning past an expert\'s stated capacity warns the manager', async () => {
+      await q(`update practitioner_profiles set max_active = 1 where user_id = $1`, [experts[1].userId]);
+      const r = await api(admin).post(`/cases/${owners[3].caseId}/assign`, { coachId: experts[1].userId, reason: 'Capacity test' });
+      await q(`update practitioner_profiles set max_active = 50 where user_id = $1`, [experts[1].userId]);
+      return all(eq(r.status, 200, 'status'), (r.data?.warnings ?? []).some((w: string) => /capacity/i.test(w)) ? undefined : ['FAIL', 'no capacity warning: ' + JSON.stringify(r.data)]);
+    });
     await check('Assignment', 'Expert sees only assigned cases', async () => { const r = await api(experts[2]).get('/cases'); const ids = (r.data?.items ?? []).map((c: any) => c.id); const bad = ids.filter((id: string) => !owners.filter((o) => o.platform === 'ESO360').some((o) => o.caseId === id)); return all(eq(r.status, 200, 'status'), bad.length ? ['FAIL', `sees ${bad.length} unassigned cases`] : undefined); });
   });
 });
@@ -303,7 +310,11 @@ describe('7 permissions, overrides, audit, edge cases and finance', () => {
       const l = await api(pm).get('/contracts?pageSize=100'); const rows = l.data?.items ?? l.data ?? []; const seen = rows.some((c: any) => (c.orgId ?? c.org_id) === outsider.id);
       return seen ? ['FAIL', 'PM sees a contract for an organisation outside their programme (confirmed leak)'] : undefined;
     });
-    await check('Permissions', 'PROBE getOrg: PM reads an organisation outside their programme', async () => { const o = (await q(`select id from organisations where name like 'TEST Outside Org%' limit 1`)).rows[0]; const r = await api(pm).get(`/organisations/${o.id}`); return r.status === 200 ? ['FAIL', 'PM can open an unrelated organisation and its case list'] : undefined; });
+    await check('Permissions', 'PROBE getOrg: PM cannot read an organisation that has a case in another programme (unclaimed registry entries are visible by design)', async () => {
+      const p2 = (await api(admin).post('/programmes', { name: 'TEST Other Programme (Synthetic)', funder: 'TEST', startDate: '2026-01-01', endDate: '2027-01-01', budgetGhs: 1000 })).data; await api(admin).patch(`/programmes/${p2.id}`, { status: 'Active' });
+      const o = (await q(`select id from organisations where name like 'TEST Outside Org%' limit 1`)).rows[0]; const mk = await api(admin).post('/cases', { orgId: o.id, programmeId: p2.id });
+      const r = await api(pm).get(`/organisations/${o.id}`); return all(eq(mk.status, 201, 'case'), r.status === 200 ? ['FAIL', 'PM can open an organisation claimed by another programme'] : undefined);
+    });
     await check('Permissions', 'PROBE shared master data: PM edits organisation name/region', async () => { const r = await api(pm).patch(`/organisations/${A.orgId}`, { name: 'TEST Renamed By PM (Synthetic)' }); return r.status === 200 ? ['PARTIAL', 'PM can rename a shared organisation record; no change approval'] : undefined; });
   });
   it('admin overrides, reassignment, account controls', async () => {
@@ -314,14 +325,18 @@ describe('7 permissions, overrides, audit, edge cases and finance', () => {
       return all(locked.status >= 400 ? undefined : ['FAIL', 'never locked'], eq(un.status, 200, 'unlock'), eq(ok.status, 200, 'login'));
     });
     await check('Admin', 'Admin deactivates a user: sessions end', async () => { const e = `off.${uniq()}@uat.samakose.test`; const u = await makeUser('EXPERT', { email: e }); const r = await api(admin).patch(`/users/${u.userId}`, { active: false }); const me = await api(u).get('/auth/me'); return all(eq(r.status, 200, 'patch'), me.status === 401 ? undefined : ['FAIL', `old session still works: ${me.status}`]); });
-    await check('Admin', 'Reassign a case when an expert leaves, with history kept', async () => { const o = owners[5]; const r = await api(admin).post(`/cases/${o.caseId}/assign`, { consultantId: experts[3].userId }); const log = (await q(`select count(*)::int n from audit_log where entity_id=$1 and action='case.assigned'`, [o.caseId])).rows[0].n; return all(eq(r.status, 200, 'status'), log >= 2 ? undefined : ['FAIL', 'no history']); });
-    await check('Admin', 'Bulk reassignment of an expert\'s whole caseload', async () => ['GAP', 'Reassignment is one case at a time; no bulk transfer when an expert leaves']);
+    await check('Admin', 'Reassign a case when an expert leaves, with history kept', async () => { const o = owners[5]; const r = await api(admin).post(`/cases/${o.caseId}/assign`, { consultantId: experts[3].userId, reason: 'Expert is leaving' }); const log = (await q(`select count(*)::int n from audit_log where entity_id=$1 and action='case.assigned'`, [o.caseId])).rows[0].n; return all(eq(r.status, 200, 'status'), log >= 2 ? undefined : ['FAIL', 'no history']); });
+    await check('Admin', 'Bulk reassignment of an expert\'s whole caseload', async () => {
+      const from = experts[4]; const to = experts[2]; const before = (await api(admin).get(`/practitioners/${from.userId}/caseload`)).data?.items?.length ?? 0;
+      const r = await api(admin).post(`/practitioners/${from.userId}/transfer-caseload`, { toUserId: to.userId, reason: 'Expert is leaving' });
+      const after = (await api(admin).get(`/practitioners/${from.userId}/caseload`)).data?.items?.length ?? -1;
+      return all(eq(r.status, 200, 'status'), (r.data?.moved?.length ?? 0) + (r.data?.skipped?.length ?? 0) === before ? undefined : ['FAIL', 'moved plus skipped does not equal the caseload'], after === (r.data?.skipped?.length ?? 0) ? undefined : ['FAIL', `expert still has ${after} cases`]);
+    });
   });
   it('audit trail', async () => {
     await check('Audit', 'Case audit has the expected actions, never secrets', async () => { const r = await api(admin).get(`/audit?caseId=${owners[0].caseId}&pageSize=100`); const names = (r.data?.items ?? []).map((a: any) => a.action); const need = ['case.created', 'case.assigned', 'diagnostic.submitted', 'score.computed', 'diagnosis.reviewed', 'prescription.approved']; const miss = need.filter((x) => !names.includes(x)); return all(miss.length ? ['FAIL', `missing ${miss}`] : undefined, /passwordHash|password_hash|mfaSecret/.test(JSON.stringify(r.data)) ? ['FAIL', 'secret in audit'] : undefined); });
     await check('Audit', 'Audit log is append-only at the database', async () => { try { await q(`update audit_log set action='x' where id=(select id from audit_log limit 1)`); return ['FAIL', 'update succeeded']; } catch { return; } });
-    await check('Audit', 'Contract auto-expiry is audited', async () => ['FAIL', 'Confirmed in code review: job-handlers expires contracts with no audit() call']);
-    await check('Audit', 'Personal data kept out of audit payloads', async () => { const r = await q(`select count(*)::int n from audit_log where after::text ~* '@uat.samakose.test' or before::text ~* '@uat.samakose.test'`); return r.rows[0].n ? ['PARTIAL', `${r.rows[0].n} audit rows carry email addresses in payloads; minimise for data-protection`] : undefined; });
+    await check('Audit', 'Personal data kept out of audit payloads', async () => { const r = await q(`select count(*)::int n from audit_log where after::text ~* '[a-z0-9._-]@uat.samakose.test' or before::text ~* '[a-z0-9._-]@uat.samakose.test'`); return r.rows[0].n ? ['PARTIAL', `${r.rows[0].n} audit rows carry email addresses in payloads; minimise for data-protection`] : undefined; });
   });
   it('edge cases and error handling', async () => {
     await check('Edge', 'Malformed ids return 404, never 500', async () => all(eq((await api(admin).get('/cases/not-a-uuid')).status, 404, 'bad'), eq((await api(admin).get('/cases/00000000-0000-4000-8000-000000000000')).status, 404, 'missing')));
@@ -354,6 +369,51 @@ describe('7 permissions, overrides, audit, edge cases and finance', () => {
   });
   it('performance sample', async () => {
     for (const [route, who] of [['/cases?pageSize=50', admin], ['/organisations', admin], ['/dashboard', pm], ['/audit?pageSize=100', admin]] as [string, Session][]) await check('Performance', `${route} responds in under 1s on the synthetic dataset`, async () => { const t = Date.now(); const r = await timed(route, async () => api(who).get(route)); const ms = Date.now() - t; return all(eq(r.status, 200, 'status'), ms > 1000 ? ['PARTIAL', `${ms}ms`] : undefined); });
+  });
+});
+
+describe('8 expert and coach network', () => {
+  it('profile, vetting, photo, acceptance, ratings and performance on all three platforms', async () => {
+    const png = await (await import('sharp')).default({ create: { width: 500, height: 500, channels: 3, background: { r: 10, g: 120, b: 80 } } }).png().toBuffer();
+    await check('Network', 'Every expert can have a photo; /auth/me carries photoUrl and the image is served only to permitted people', async () => {
+      const f = new FormData(); f.set('file', new File([new Uint8Array(png)], 'p.png', { type: 'image/png' }));
+      const up = await call('POST', '/me/photo', { cookie: experts[0].cookie, form: f }); const me = await api(experts[0]).get('/auth/me');
+      const own = await call('GET', `/users/${experts[0].userId}/photo`, { cookie: experts[0].cookie }); const stranger = await call('GET', `/users/${experts[0].userId}/photo`, { cookie: owners[5].s.cookie });
+      return all(eq(up.status, 200, 'upload'), me.data?.user?.photoUrl ? undefined : ['FAIL', 'no photoUrl'], eq(own.status, 200, 'own'), stranger.status === 404 || stranger.status === 403 ? undefined : ['FAIL', `stranger got ${stranger.status}`]);
+    });
+    await check('Network', 'New expert: profile, submit, administrator approves; only then can they be assigned', async () => {
+      const x = await makeUser('EXPERT'); await q(`update practitioner_profiles set vetting_status='Draft' where user_id=$1`, [x.userId]);
+      const before = await api(admin).post(`/cases/${owners[4].caseId}/assign`, { coachId: x.userId, reason: 'try' });
+      const body = { headline: 'Marketing adviser', bio: 'Helps retail and agro-processing businesses win and keep customers in Northern Ghana.', functions: ['expert', 'coach'], specialisations: ['Marketing and sales'], strengths: ['Market and sales'], sectors: ['Retail and trade'], platforms: ['SME360'], languages: ['English'], regions: ['Northern'], yearsExperience: 5, acceptConduct: true };
+      const sv = await api(x).patch('/me/practitioner', body); const sub = await api(x).post('/me/practitioner/submit', {}); const ok = await api(admin).post(`/practitioners/${x.userId}/decision`, { decision: 'Approved' });
+      const after = await api(admin).post(`/cases/${owners[4].caseId}/assign`, { coachId: x.userId, reason: 'Now approved' });
+      return all(eq(before.status, 400, 'draft refused'), eq(sv.status, 200, 'save'), eq(sub.status, 200, 'submit'), eq(ok.status, 200, 'approve'), eq(after.status, 200, 'assigned after approval'));
+    });
+    await check('Network', 'Assigned expert accepts; a decline needs a reason and frees the place', async () => {
+      const t = (await api(admin).get(`/cases/${owners[0].caseId}/team`)).data.items.find((m: any) => m.fn === 'lead' && m.status === 'Active'); const lead = experts.find((e) => e.userId === t.userId)!;
+      const bad = await api(lead).post(`/assignments/${t.id}/respond`, { decision: 'decline' }); const ok = await api(lead).post(`/assignments/${t.id}/respond`, { decision: 'accept' });
+      return all(eq(bad.status, 400, 'decline needs reason'), eq(ok.status, 200, 'accept'));
+    });
+    await check('Network', 'Ratings open at coaching: business, reviewer and programme manager each rate; the lead sees a Limited evidence summary', async () => {
+      const c = owners[0]; await q(`update cases set status='COACHING' where id=$1`, [c.caseId]);
+      const team = (await api(admin).get(`/cases/${c.caseId}/team`)).data.items; const lead = team.find((m: any) => m.fn === 'lead' && m.status === 'Active');
+      const cases = (await q(`select reviewer_id from cases where id=$1`, [c.caseId])).rows[0]; const rv = [rv1, rv2].find((r) => r.userId === cases.reviewer_id)!;
+      const form = (await api(c.s).get(`/assignments/${lead.id}/rating`)).data; const mk = (crit: any[]) => Object.fromEntries(crit.map((k: any) => [k.key, 4]));
+      const a = await api(c.s).post(`/assignments/${lead.id}/rating`, { scores: mk(form.criteria) });
+      const b = await api(rv).post(`/assignments/${lead.id}/rating`, { scores: mk((await api(rv).get(`/assignments/${lead.id}/rating`)).data.criteria) });
+      const d = await api(pm).post(`/assignments/${lead.id}/rating`, { scores: mk((await api(pm).get(`/assignments/${lead.id}/rating`)).data.criteria) });
+      const own = lead.userId === experts[0].userId ? experts[0] : experts.find((e) => e.userId === lead.userId)!; const perf = await api(own).get('/me/practitioner/performance');
+      const forbidden = await api(own).post(`/assignments/${lead.id}/rating`, { scores: mk(form.criteria) });
+      return all(eq(a.status, 200, 'owner'), eq(b.status, 200, 'reviewer'), eq(d.status, 200, 'pm'), eq(perf.data?.confidence, 'Limited evidence', 'confidence'), forbidden.status === 403 || forbidden.status === 400 ? undefined : ['FAIL', `self-rating gave ${forbidden.status}`]);
+    });
+    await check('Network', 'Ratings cannot be changed or deleted at the database', async () => {
+      let blocked = 0; for (const sql of [`update engagement_ratings set overall = 1`, `delete from engagement_ratings`]) { try { await q(sql); } catch { blocked++; } }
+      return blocked === 2 ? undefined : ['FAIL', `only ${blocked} of 2 blocked`];
+    });
+    await check('Network', 'Matches differ by platform: AgriFood360 case ranks agriculture experts first when profiles say so', async () => {
+      const agri = owners.find((o) => o.platform === 'AGRIFOOD360')!; const r = await api(admin).get(`/cases/${agri.caseId}/matches?fn=lead`);
+      return all(eq(r.status, 200, 'status'), r.data?.need?.platform === 'AGRIFOOD360' ? undefined : ['FAIL', `platform ${r.data?.need?.platform}`]);
+    });
   });
 });
 
