@@ -19,6 +19,7 @@ import { activeProvider, modelFor, providerHasKey, refreshAiConfig, transportFor
 let transportOverride: Transport | null = null;
 /** Tests replace the transport to exercise retries and invalid output. */
 export const setAiTransport = (t: Transport | null) => { transportOverride = t; };
+export const getAiTransport = () => transportOverride;
 export const aiIsMock = () => !transportOverride && !(env.aiMode === 'claude' && providerHasKey());
 let liveOverride: boolean | null = null;
 /** True when requests would go to the real model. Tests can force it to exercise the live-model gate. */

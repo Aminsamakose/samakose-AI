@@ -13682,6 +13682,51 @@
         }
       }
     },
+    "/admin/agents/{id}/evaluate": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Run the evaluation cases against the live model for the current version and record the result",
+        "operationId": "post__admin_agents_id_evaluate",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "agents:approve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
     "/admin/agents/{id}/status": {
       "post": {
         "tags": [

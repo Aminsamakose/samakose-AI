@@ -33,7 +33,7 @@ With no keys set: `AI_MODE=mock` (deterministic drafts, clearly marked), Paystac
 
 | Command | Purpose |
 |---|---|
-| `npm test` | 223 tests on a real Postgres (`DATABASE_URL` must point at a server you can drop a `samakose_test` database on) |
+| `npm test` | The full test suite (about 800 tests) on a real Postgres (`DATABASE_URL` must point at a server you can drop a `samakose_test` database on) |
 | `npm run typecheck` | strict TypeScript |
 | `npm run openapi` | regenerate `docs/openapi.json` |
 | `npm run test:e2e` | browser journeys against `E2E_BASE` (default `http://localhost:3100`) seeded with demo data |

@@ -132,3 +132,28 @@ describe('agent registry through the API', () => {
     expect((await api(admin).get('/admin/agents')).data.cost.state).toBe('ok');
   });
 });
+
+describe('in-platform evaluation runner', () => {
+  it('refuses without the live model, refuses agents with no cases, and records Passed or Failed from the checks', async () => {
+    const { setAiTransport, setAiLiveOverride } = await import('@/services/ai');
+    const { mockDiagnosis } = await import('@/domain/mockai');
+    const { AI_CASES } = await import('@/domain/ai-eval-cases');
+    const adm = await makeUser('ADMIN');
+    const list = (await api(adm).get('/admin/agents')).data.agents as any[];
+    const diag = list.find((a) => a.code === 'diagnosis'), brief = list.find((a) => a.code === 'brief');
+    setAiLiveOverride(false); setAiTransport(null);
+    expect((await api(adm).post(`/admin/agents/${diag.id}/evaluate`, {})).status).toBe(422);
+    setAiLiveOverride(true);
+    expect((await api(adm).post(`/admin/agents/${brief.id}/evaluate`, {})).text).toMatch(/no evaluation cases/);
+    const good = async (_s: string, user: string) => ({ text: JSON.stringify(mockDiagnosis(JSON.parse(user))), inputTokens: 100, outputTokens: 100 });
+    setAiTransport(good as any);
+    const ok = await api(adm).post(`/admin/agents/${diag.id}/evaluate`, {});
+    expect(ok.status).toBe(200); expect(ok.data).toMatchObject({ result: 'Passed', passed: AI_CASES.length });
+    expect((await api(adm).get(`/admin/agents/${diag.id}`)).data.versions[0].evaluation).toBe('Passed');
+    setAiTransport((async () => ({ text: 'not json', inputTokens: 10, outputTokens: 10 })) as any);
+    const bad = await api(adm).post(`/admin/agents/${diag.id}/evaluate`, {});
+    expect(bad.data.result).toBe('Failed');
+    expect((await api(adm).get(`/admin/agents/${diag.id}`)).data.versions[0].evaluation).toBe('Failed');
+    setAiTransport(null); setAiLiveOverride(null);
+  });
+});

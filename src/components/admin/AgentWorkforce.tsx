@@ -44,6 +44,7 @@ function Detail({ id, canEdit, onChange }: { id: string; canEdit: boolean; onCha
             {a.next.includes('Paused') && <Move id={id} to="Paused" label="Emergency pause" variant="danger" done={reload} />}
             {a.next.includes('Disabled') && <Move id={id} to="Disabled" label="Disable" variant="danger" done={reload} />}
           </div>
+          {canEdit && a.code === 'diagnosis' && <div className="row"><Button size="sm" loading={busy === 'eval'} onClick={() => save('eval', async () => { const r: any = await api.post(`/admin/agents/${id}/evaluate`, {}); toast(`Evaluation ${r.result}: ${r.passed} of ${r.total} cases, about USD ${r.spentUsd}`); }, 'Evaluation finished')}>Run live evaluation</Button><span className="small muted">Runs the synthetic cases against the live model (about USD 1 cap) and records the result.</span></div>}
           <p className="small muted">An agent cannot become Active until its current version has passed evaluation. Paused and disabled agents refuse new tasks, and the person who asked is told to do the work by hand.</p>
         </div>}
       </Card>
