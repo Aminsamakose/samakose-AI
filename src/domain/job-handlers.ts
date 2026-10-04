@@ -3,6 +3,7 @@ import { getReportText } from '@/services/switches';
 import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import { db, tx, schema } from '@/db/client';
 import { registerJob } from './jobs';
+import { weakestForLibrary } from './library-map';
 import { emitEvent } from './events';
 import { notifyUsers } from './notify';
 import { audit } from '@/lib/audit';
@@ -75,7 +76,7 @@ registerJob('ai_prescription', async ({ caseId }, job) => {
   const lib = await db().select().from(schema.libraryItems).where(eq(schema.libraryItems.active, true));
   const context: PrescriptionContext & { diagnosis: unknown; overall: number } = {
     diagnosis: { summary: dgn.summary, root_causes: dgn.rootCauses, priority: dgn.priority }, overall: Number(score.overall),
-    weakest_dimensions: [...score.dimensions].sort((a, b) => a.value - b.value).slice(0, 3).map((d) => d.dimension),
+    weakest_dimensions: weakestForLibrary(score.dimensions),
     library: lib.map((l) => ({ id: l.code, title: l.title, dimension: l.dimension, description: l.description, typical_days: l.typicalDays })),
     limits: { min_days: Number(rules['prescription.min_days']), max_days: Number(rules['prescription.max_days']) }
   };
