@@ -1,14 +1,16 @@
 'use client';
-import { Async, BarList, Card, Empty, Tile, useApi } from '@/components/ui';
+import { Async, Badge, BarList, Card, Empty, Tile, useApi } from '@/components/ui';
 import { titleCase } from '@/lib/client/api';
 
 type Group = { key: string; n: number | null };
+export type Indicator = { id: string; name: string; metric: string; metricLabel: string; unit: string; target: number; dueDate: string | null; note: string | null; value: number | null; pct: number | null; status: string; hidden: boolean };
 type Dash = {
   programme: { id: string; code: string; name: string; status: string };
   minGroupSize: number; total: number | null; byState: Group[]; maturity: Group[];
   scoreChange: { n: number | null; average: number | null };
   dimensions: { dimension: string; avgValue?: number | null; avg_value?: number | null; n?: number }[];
   cohorts: { id: string; name: string; capacity: number; enrolled: number | null }[];
+  indicators?: Indicator[];
   suppressed: boolean;
 };
 
@@ -37,6 +39,12 @@ export function ProgrammeDashboard({ id, canExport }: { id: string; canExport: b
         <Tile label="Average score change" value={d.scoreChange.average === null ? (d.scoreChange.n === null ? 'Hidden' : 'None yet') : `${d.scoreChange.average > 0 ? '+' : ''}${d.scoreChange.average}`} hint="Points between first and latest score" />
         <Tile label="Cohorts" value={d.cohorts.length} />
       </div>
+      {d.indicators && d.indicators.length > 0 && <Card title="Targets">
+        <div className="table-wrap"><table><thead><tr><th>Target</th><th className="r">Now</th><th className="r">Goal</th><th className="r">Progress</th><th>Status</th></tr></thead>
+          <tbody>{d.indicators.map((x) => <tr key={x.id}><td>{x.name}<div className="small muted">{x.metricLabel}{x.dueDate ? ` · due ${x.dueDate}` : ''}</div></td>
+            <td className="r num">{x.hidden ? `Fewer than ${min}` : x.value ?? '-'}</td><td className="r num">{x.target}{x.unit === '%' ? '%' : ''}</td>
+            <td className="r num">{x.pct === null ? '-' : `${x.pct}%`}</td><td><Badge tone={x.status === 'Achieved' ? 'ok' : x.status === 'Missed' ? 'bad' : ''}>{x.status}</Badge></td></tr>)}</tbody></table></div>
+      </Card>}
       <div className="grid two">
         <Card title="Cases by state"><Groups data={d.byState} min={min} label="States" /></Card>
         <Card title="Maturity"><Groups data={d.maturity} min={min} label="Levels" /></Card>

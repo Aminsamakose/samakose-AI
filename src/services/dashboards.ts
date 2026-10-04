@@ -11,6 +11,7 @@ import type { ListQuery } from '@/api/list';
 import { csvResponse } from '@/api/framework';
 import { toCsv } from '@/lib/csv';
 import { audit } from '@/lib/audit';
+import { indicatorsWithProgress } from './indicators';
 
 type Row = Record<string, any>;
 const rows = async (ctx: Ctx, q: ReturnType<typeof sql>) => (await ctx.db.execute(q)).rows as Row[];
@@ -180,13 +181,14 @@ export async function programmeDashboard(ctx: Ctx, id: string) {
       from health_scores h join cases c on c.id=h.case_id where c.programme_id=${id} group by h.case_id having count(*) >= 2) x`);
   const dims = await rows(ctx, sql`select d->>'dimension' dimension, round(avg((d->>'value')::numeric),1)::float avg_value, count(*)::int n from
       (select distinct on (h.case_id) h.dimensions from health_scores h join cases c on c.id=h.case_id where c.programme_id=${id} order by h.case_id, h.created_at desc) s, jsonb_array_elements(s.dimensions) d group by 1 order by 1`);
+  const indicators = await indicatorsWithProgress(ctx, id);
   const cohorts = await rows(ctx, sql`select ch.id, ch.name, ch.capacity, count(c.id)::int enrolled from cohorts ch left join cases c on c.cohort_id=ch.id where ch.programme_id=${id} group by ch.id order by ch.created_at`);
   const gender = null; void gender;
   const shared = {
     programme: { id: prog.id, code: prog.code, name: prog.name, funder: prog.funder, status: prog.status, startDate: prog.startDate, endDate: prog.endDate },
     minGroupSize: min
   };
-  if (!isFunder) return { ...shared, total, byState: byState.map((g) => ({ key: g.key, n: g.n })), maturity: maturity.map((g) => ({ key: g.key, n: g.n })), scoreChange: { n: change.n ?? 0, average: change.avg_change ?? null }, dimensions: dims, cohorts, suppressed: false };
+  if (!isFunder) return { ...shared, total, byState: byState.map((g) => ({ key: g.key, n: g.n })), maturity: maturity.map((g) => ({ key: g.key, n: g.n })), scoreChange: { n: change.n ?? 0, average: change.avg_change ?? null }, dimensions: dims, cohorts, indicators, suppressed: false };
   // Funders see aggregates only. Any group smaller than the minimum is hidden.
   const dimsOut = dims.map((d) => ({ dimension: d.dimension, avgValue: suppress(Number(d.n), rules) === null ? null : d.avg_value }));
   return {
@@ -196,6 +198,7 @@ export async function programmeDashboard(ctx: Ctx, id: string) {
     scoreChange: { n: suppress(Number(change.n ?? 0), rules), average: suppress(Number(change.n ?? 0), rules) === null ? null : change.avg_change },
     dimensions: total >= min ? dimsOut : [],
     cohorts: cohorts.map((c) => ({ id: c.id, name: c.name, capacity: c.capacity, enrolled: suppress(Number(c.enrolled), rules) })),
+    indicators,
     suppressed: true
   };
 }
@@ -214,7 +217,8 @@ export async function exportProgramme(ctx: Ctx, id: string) {
   const lines: Record<string, unknown>[] = [
     ...d.byState.map((g: Group) => ({ section: 'Cases by state', item: g.key, value: g.n === null ? `fewer than ${d.minGroupSize}` : g.n })),
     ...d.maturity.map((g: Group) => ({ section: 'Maturity', item: g.key, value: g.n === null ? `fewer than ${d.minGroupSize}` : g.n })),
-    ...d.dimensions.map((x: any) => ({ section: 'Average dimension score', item: x.dimension, value: x.avgValue ?? `fewer than ${d.minGroupSize}` }))
+    ...d.dimensions.map((x: any) => ({ section: 'Average dimension score', item: x.dimension, value: x.avgValue ?? `fewer than ${d.minGroupSize}` })),
+    ...d.indicators.map((x: any) => ({ section: 'Target', item: `${x.name} (target ${x.target} ${x.unit})`, value: x.hidden ? `fewer than ${d.minGroupSize}` : x.value === null ? 'no data yet' : `${x.value} (${x.status})` }))
   ];
   await audit(ctx, 'export.csv', 'programme_dashboard', id, undefined, { rows: lines.length });
   return csvResponse(`${d.programme.code}-summary.csv`, toCsv([{ key: 'section', label: 'Section' }, { key: 'item', label: 'Item' }, { key: 'value', label: 'Value' }], lines));
