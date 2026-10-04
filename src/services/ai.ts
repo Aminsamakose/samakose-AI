@@ -14,7 +14,8 @@ export class NonRetryable extends Error {}
 /** The registry refused the task: paused, disabled, over a limit, or not approved for the live model. Nothing was sent to a model. */
 export class AgentBlocked extends NonRetryable {}
 export type { ModelReply, Transport } from './ai-providers';
-import { activeProvider, modelFor, providerHasKey, refreshAiConfig, transportFor, type Transport } from './ai-providers';
+import { tierOf } from '@/domain/model-tiers';
+import { activeProvider, modelFor, tierModel, providerHasKey, refreshAiConfig, transportFor, type Transport } from './ai-providers';
 
 let transportOverride: Transport | null = null;
 /** Tests replace the transport to exercise retries and invalid output. */
@@ -44,7 +45,8 @@ export async function runAgent<T>(o: {
     await db().insert(schema.aiRequests).values({ agent: o.agent, caseId: o.caseId, model: mock ? 'mock' : modelLabel(null), contextBytes: Buffer.byteLength(payload), requestedBy: o.requestedBy, ok: false, agentId: g.agentId, agentVersionId: g.versionId, blockedReason: g.reason });
     throw new AgentBlocked(g.reason);
   }
-  const [req] = await db().insert(schema.aiRequests).values({ agent: o.agent, caseId: o.caseId, model: mock ? 'mock' : modelLabel(g.model), contextBytes: Buffer.byteLength(payload), requestedBy: o.requestedBy, agentId: g.agentId, agentVersionId: g.versionId }).returning();
+  const tier = tierOf(o.agent), routed = g.model ?? tierModel(tier);
+  const [req] = await db().insert(schema.aiRequests).values({ agent: o.agent, tier, caseId: o.caseId, model: mock ? 'mock' : modelLabel(routed), contextBytes: Buffer.byteLength(payload), requestedBy: o.requestedBy, agentId: g.agentId, agentVersionId: g.versionId }).returning();
   let feedback = '';
   for (let attempt = 1; attempt <= 2; attempt++) {
     const started = Date.now();
@@ -52,7 +54,7 @@ export async function runAgent<T>(o: {
     try {
       if (mock) { parsed = o.mock(); raw = JSON.stringify(parsed); }
       else {
-        const r = await (transportOverride ?? transportFor())(g.prompt, payload + feedback, AbortSignal.timeout(45_000), g.model);
+        const r = await (transportOverride ?? transportFor())(g.prompt, payload + feedback, AbortSignal.timeout(45_000), routed);
         raw = r.text; inTok = r.inputTokens; outTok = r.outputTokens;
         parsed = extractJson(raw);
       }

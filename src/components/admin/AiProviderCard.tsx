@@ -6,13 +6,14 @@ import { useState } from 'react';
 type S = {
   mode: 'mock' | 'live'; active: string; activeLabel: string; host: string; model: string; chosen: string | null; claudeModel: string; openaiModel: string; openaiBaseUrl: string; aiModeOn: boolean;
   envDefaults: { provider: string; claudeModel: string; openaiModel: string; openaiBaseUrl: string };
+  tiers: { tier: string; label: string; agents: string[]; claude: string; openai: string }[];
   providers: { id: string; label: string; keySet: boolean; keyName: string }[];
 };
 
 function Editor({ s, canEdit, onDone }: { s: S; canEdit: boolean; onDone: () => void }) {
   const [confirm, setConfirm] = useState(false);
-  const f = useForm({ provider: s.active, claudeModel: s.claudeModel, openaiModel: s.openaiModel, openaiBaseUrl: s.openaiBaseUrl, reason: '' },
-    (v) => api.put('/settings/ai', { provider: v.provider, claudeModel: v.claudeModel || undefined, openaiModel: v.openaiModel || undefined, openaiBaseUrl: v.openaiBaseUrl || undefined, confirm, reason: v.reason || undefined }),
+  const f = useForm({ provider: s.active, claudeModel: s.claudeModel, openaiModel: s.openaiModel, openaiBaseUrl: s.openaiBaseUrl, reason: '', ...Object.fromEntries(s.tiers.flatMap((t) => [[`${t.tier}_claude`, t.claude], [`${t.tier}_openai`, t.openai]])) } as Record<string, string>,
+    (v) => api.put('/settings/ai', { tiers: Object.fromEntries(s.tiers.map((t) => { const fam = v.provider === 'anthropic' ? 'claude' : 'openai'; return [t.tier, { [fam]: v[`${t.tier}_${fam}`] ?? '' }]; })), provider: v.provider, claudeModel: v.claudeModel || undefined, openaiModel: v.openaiModel || undefined, openaiBaseUrl: v.openaiBaseUrl || undefined, confirm, reason: v.reason || undefined }),
     { onDone, success: 'AI settings saved' });
   const changing = f.values.provider !== s.active; const needsOpenai = f.values.provider !== 'anthropic';
   const chosen = s.providers.find((p) => p.id === f.values.provider);
@@ -24,6 +25,11 @@ function Editor({ s, canEdit, onDone }: { s: S; canEdit: boolean; onDone: () => 
       {needsOpenai && <Field label="Model (optional)" name="openaiModel" error={f.errors.openaiModel} hint={`Default: ${s.envDefaults.openaiModel}`}>{(p) => <input {...p} {...f.input('openaiModel')} disabled={!canEdit} />}</Field>}
       {f.values.provider === 'openai-compatible' && <Field label="Service address" name="openaiBaseUrl" error={f.errors.openaiBaseUrl} hint="The public https address of the service, ending in /v1">{(p) => <input {...p} {...f.input('openaiBaseUrl')} disabled={!canEdit} placeholder="https://api.example.com/v1" />}</Field>}
     </div>
+    <fieldset className="stack" style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
+      <legend>Model routing by tier</legend>
+      <p className="small muted">Send simple work to a cheaper model and keep the strongest model for diagnosis and prescription. Leave a tier empty to use the model above. Names are set separately for Claude and for ChatGPT or other OpenAI-compatible services.</p>
+      <div className="form-grid">{s.tiers.map((t) => { const fam = needsOpenai ? 'openai' : 'claude'; return <Field key={t.tier} label={t.label} name={`${t.tier}_${fam}`} error={f.errors[`tier_${t.tier}_${fam}`]} hint={`Used by: ${t.agents.join(', ')}`}>{(p) => <input {...p} {...f.input(`${t.tier}_${fam}`)} disabled={!canEdit} />}</Field>; })}</div>
+    </fieldset>
     {changing && <fieldset className="stack" style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
       <legend>Switching provider</legend>
       <p className="small">Client business information in AI requests will go to {chosen?.label}, a different company. Each AI agent's evaluation was passed on the current provider, so re-run it on the new one before relying on the answers. Update the privacy notice and the Data Protection Commission registration too.</p>

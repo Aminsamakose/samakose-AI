@@ -253,6 +253,13 @@
       "when": 1792016624083,
       "tag": "0035_scan_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1792017624083,
+      "tag": "0036_model_tiers",
+      "breakpoints": true
     }
   ]
 }

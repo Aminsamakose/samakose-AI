@@ -14,7 +14,8 @@ import {
 import { allow, need } from './common';
 import { ensureBuiltIns, gate, monthlyCost, recordEvaluation, usageOf } from './agent-gate';
 import { aiIsLive, aiIsMock, getAiTransport } from './ai';
-import { transportFor } from './ai-providers';
+import { tierModel, transportFor } from './ai-providers';
+import { tierOf } from '@/domain/model-tiers';
 import { extractJson } from '@/domain/logic';
 import { AI_CASES } from '@/domain/ai-eval-cases';
 import { checkDiagnosis } from '@/domain/ai-eval-checks';
@@ -212,7 +213,7 @@ export async function evaluateAgent(ctx: Ctx, id: string, budgetUsd = 1) {
     if (spent + worst > budgetUsd) { stopped = true; lines.push(`${c.name}: not run (budget)`); break; }
     ran++;
     try {
-      const r = await (getAiTransport() ?? transportFor())(g.prompt, payload, AbortSignal.timeout(60_000), g.model);
+      const r = await (getAiTransport() ?? transportFor())(g.prompt, payload, AbortSignal.timeout(60_000), g.model ?? tierModel(tierOf(a.code)));
       spent += (r.inputTokens * inP + r.outputTokens * outP) / 1e6;
       const out = extractJson(r.text);
       const problems = out ? checkDiagnosis(c, out) : ['Reply was not valid JSON'];

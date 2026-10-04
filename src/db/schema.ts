@@ -312,6 +312,7 @@ export const healthScores = pgTable('health_scores', {
 export const aiRequests = pgTable('ai_requests', {
   id: id(), code: codeCol('ai'),
   agent: text('agent').notNull(),
+  tier: text('tier'),
   caseId: uuid('case_id').references(() => cases.id),
   model: text('model').notNull(),
   contextBytes: integer('context_bytes').notNull().default(0),
