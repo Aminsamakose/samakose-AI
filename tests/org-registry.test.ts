@@ -95,3 +95,18 @@ describe('every org_id table is classified for merging', () => {
     expect(t.filter((x) => !known.has(x))).toEqual([]);
   });
 });
+
+describe('identity changes on shared records', () => {
+  it('a programme manager cannot rename someone else’s or an in-use organisation, but can edit other fields', async () => {
+    const theirs = (await api(pm).post('/organisations', { name: `Mine ${uniq()}`, region: 'Northern', consent: true, consentBy: 'Owner' })).data.id as string;
+    expect((await api(pm).patch(`/organisations/${theirs}`, { name: `Fixed typo ${uniq()}` })).status).toBe(200); // own record, no cases yet
+    const shared = (await makeOrg(admin)).id;
+    expect((await api(pm).patch(`/organisations/${shared}`, { name: 'Renamed by PM' })).status).toBe(403);
+    expect((await api(pm).patch(`/organisations/${shared}`, { tin: 'GHA1234567' })).status).toBe(403);
+    expect((await api(pm).patch(`/organisations/${shared}`, { sector: 'Cereals', contactName: 'New Contact' })).status).toBe(200);
+    expect((await api(pm).patch(`/organisations/${shared}`, { name: (await api(admin).get(`/organisations/${shared}`)).data.name })).status).toBe(200); // unchanged value is not a change
+    expect((await api(admin).patch(`/organisations/${shared}`, { name: `Admin renamed ${uniq()}` })).status).toBe(200);
+    expect((await api(admin).post('/cases', { orgId: theirs, startState: 'PROSPECT' })).status).toBe(201);
+    expect((await api(pm).patch(`/organisations/${theirs}`, { name: `Late rename ${uniq()}` })).status).toBe(403);
+  });
+});
