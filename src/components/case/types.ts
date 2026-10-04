@@ -15,5 +15,5 @@ export const CASE_TABS = [
   { id: 'overview', label: 'Overview' }, { id: 'diagnostic', label: 'Diagnostic' }, { id: 'evidence', label: 'Evidence' },
   { id: 'score', label: 'Score' }, { id: 'diagnosis', label: 'Diagnosis' }, { id: 'prescription', label: 'Prescription' },
   { id: 'actions', label: 'Actions' }, { id: 'kpis', label: 'KPIs' }, { id: 'risks', label: 'Risks' },
-  { id: 'coaching', label: 'Coaching' }, { id: 'reports', label: 'Reports' }, { id: 'activity', label: 'Activity' }
+  { id: 'coaching', label: 'Coaching' }, { id: 'messages', label: 'Messages' }, { id: 'reports', label: 'Reports' }, { id: 'activity', label: 'Activity' }
 ] as const;

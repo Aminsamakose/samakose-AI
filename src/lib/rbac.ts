@@ -10,7 +10,7 @@ export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
   'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments',
-  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping', 'team', 'feedback', 'practitioners', 'ratings', 'opportunities', 'referrals'
+  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping', 'team', 'feedback', 'practitioners', 'ratings', 'opportunities', 'referrals', 'messages', 'escalations'
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -35,7 +35,9 @@ const ADMIN: Grants = {
   // Vetting and conflicts are decided by the administrator. Ratings are read by the administrator; the people being rated see their own.
   practitioners: [R, E, A], ratings: [R],
   // UNLOCK. The catalogue is published by the administrator and programme manager. Referrals are decided by people, never by the matcher.
-  opportunities: [R, C, E, A], referrals: [R, C, E, A, D]
+  opportunities: [R, C, E, A], referrals: [R, C, E, A, D],
+  // Case messages: the administrator reads for oversight but does not write. Escalations are seen by those who can reassign.
+  messages: [R], escalations: [R]
 };
 export const PERMISSIONS: Record<Role, Grants> = {
   ADMIN,
@@ -45,13 +47,13 @@ export const PERMISSIONS: Record<Role, Grants> = {
   },
   PROGRAMME_MANAGER: {
     frameworks: [R], users: [R], organisations: [R, C, E, X], programmes: [R, E, X], cohorts: [R, C, E, X], cases: [R, C, E, X, S], diagnostics: [R], scores: [R],
-    diagnoses: [R], prescriptions: [R], actions: [R, X], kpis: [R], sessions: [R], reports: [R, X], contracts: [R], dashboard: [R, X], practitioners: [R], ratings: [R, C], opportunities: [R, C, E, A], referrals: [R, C, E, A, D]
+    diagnoses: [R], prescriptions: [R], actions: [R, X], kpis: [R], sessions: [R], reports: [R, X], contracts: [R], dashboard: [R, X], practitioners: [R], ratings: [R, C], opportunities: [R, C, E, A], referrals: [R, C, E, A, D], messages: [R], escalations: [R]
   },
   // One role for people who advise and coach. Lead-only actions (diagnosis, prescription, evidence verification, diagnostics) are limited to cases where the expert is the lead.
   EXPERT: {
     frameworks: [R], users: [R], organisations: [R, C, E], cases: [R, C, E], diagnostics: [R, C], evidence: [R, C, E, V], documents: [R, C], scores: [R],
     diagnoses: [R, C, E, O], prescriptions: [R, C, E, O], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E],
-    reports: [R, C], dashboard: [R], practitioners: [R, E], opportunities: [R], referrals: [R, C]
+    reports: [R, C], dashboard: [R], practitioners: [R, E], opportunities: [R], referrals: [R, C], messages: [R, C]
   },
   REVIEWER: {
     frameworks: [R], cases: [R, T], evidence: [R], documents: [R], scores: [R], diagnoses: [R], prescriptions: [R, A], actions: [R], kpis: [R], risks: [R],
@@ -62,7 +64,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
   },
   OWNER: {
     organisations: [R, E], cases: [R], diagnostics: [R, C], evidence: [R, C], documents: [R, C], scores: [R], prescriptions: [R],
-    actions: [R, E], kpis: [R, C], sessions: [R], reports: [R], invoices: [R], payments: [C], dashboard: [R], ratings: [R, C], opportunities: [R], referrals: [R, C, D],
+    actions: [R, E], kpis: [R, C], sessions: [R], reports: [R], invoices: [R], payments: [C], dashboard: [R], ratings: [R, C], opportunities: [R], referrals: [R, C, D], messages: [R, C],
     // The owner invites colleagues and decides who answers which area.
     team: [R, C, E, D]
   },

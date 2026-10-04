@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { dateFmt, dateTime, ghs, titleCase } from '@/lib/client/api';
 import { Badge, Card, Empty, LineChart, LinkButton, PageHead } from '@/components/ui';
 import { BarsWithTable, LinkTile, canDo, type Me } from './common';
+import { EscalationsCard } from './EscalationsCard';
 
 type Col<R> = { label: string; render: (r: R) => ReactNode; align?: 'r' };
 function MiniTable<R extends { id?: string }>({ rows, cols, empty, caption }: { rows: R[]; cols: Col<R>[]; empty: string; caption: string }) {
@@ -19,6 +20,7 @@ const score = (n: unknown) => (n === null || n === undefined ? '-' : Number(n).t
 export function Management({ d }: { d: any }) {
   const t = d.totals ?? {};
   return <div className="stack">
+    <EscalationsCard />
     <div className="grid">
       <LinkTile label="Organisations" value={num(t.organisations)} hint="Businesses you can see" href="/organisations" />
       <LinkTile label="Cases" value={num(t.cases)} hint="All cases, any state" href="/cases" />
