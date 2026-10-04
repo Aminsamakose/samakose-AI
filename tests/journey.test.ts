@@ -11,6 +11,7 @@ async function build() {
   const prog = (await api(admin).post('/programmes', { name: `Programme ${uniq()}`, funder: 'Test Funder', startDate: '2026-01-01', endDate: '2027-01-01', budgetGhs: 100000 })).data;
   await api(admin).patch(`/programmes/${prog.id}`, { status: 'Active' });
   const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: 'Cohort A', capacity: 40 })).data;
+  await api(admin).patch(`/cohorts/${cohort.id}`, { status: 'Open' });
   const pm = await makeUser('PROGRAMME_MANAGER', { programmeIds: [prog.id] });
   const consultant = await makeUser('EXPERT'), reviewer = await makeUser('REVIEWER'), coach = await makeUser('EXPERT');
   const finance = await makeUser('FINANCE');

@@ -3,7 +3,7 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { conflict, fieldError, forbidden } from '@/lib/errors';
-import { assertOrg, orgScope } from '@/domain/scope';
+import { assertOrg, caseScope, orgScope } from '@/domain/scope';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
 import { allow, need, respondList } from './common';
 import type { ORG_TYPES } from '@/db/schema';
@@ -29,7 +29,7 @@ export async function listOrgs(ctx: Ctx, q: ListQuery & { region?: string; type?
 export async function getOrg(ctx: Ctx, id: string) {
   await assertOrg(ctx, id);
   const [row] = await ctx.db.select(cols).from(o).where(eq(o.id, id)).limit(1);
-  const cs = await ctx.db.select({ id: schema.cases.id, code: schema.cases.code, status: schema.cases.status, programmeId: schema.cases.programmeId }).from(schema.cases).where(eq(schema.cases.orgId, id)).orderBy(schema.cases.createdAt);
+  const cs = await ctx.db.select({ id: schema.cases.id, code: schema.cases.code, status: schema.cases.status, programmeId: schema.cases.programmeId }).from(schema.cases).where(and(eq(schema.cases.orgId, id), caseScope(ctx.user!))).orderBy(schema.cases.createdAt);
   const users = ctx.user!.role === 'ADMIN' ? await ctx.db.select({ id: schema.users.id, name: schema.users.name, email: schema.users.email, active: schema.users.active }).from(schema.users).where(eq(schema.users.orgId, id)) : [];
   return { ...row, cases: cs, users };
 }
