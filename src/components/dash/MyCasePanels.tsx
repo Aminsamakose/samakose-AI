@@ -66,7 +66,7 @@ export function InvoicesPanel() {
       window.location.href = r.authorizationUrl;
     } catch (e) { toast(e instanceof Error && e.message === 'missing' ? 'The payment page could not be opened. Please try again.' : errText(e), 'bad'); setBusy(null); }
   };
-  return <Async state={st}>{(d) => d.items.length === 0 ? <Empty title="No invoices" hint="Invoices from Samakose Accelerator Lab appear here." /> :
+  return <Async state={st}>{(d) => d.items.length === 0 ? <Empty title="No invoices" hint="Invoices from Samakose appear here." /> :
     <div className="table-wrap"><table><caption className="sr">Your invoices</caption>
       <thead><tr><th>Invoice</th><th className="r">Amount</th><th>Due</th><th>Status</th><th><span className="sr">Pay</span></th></tr></thead>
       <tbody>{d.items.map((i) => <tr key={i.id}><td className="mono">{i.code}</td><td className="r num">{ghs(i.amountGhs)}</td><td>{dateFmt(i.dueDate)}</td><td><Badge>{i.status}</Badge></td>

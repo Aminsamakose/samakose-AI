@@ -1,6 +1,6 @@
-# Business Doctor
+# Samakose Business Doctor
 
-The Business Doctor platform, built by Samakose Accelerator Lab. Formerly named Samakose AI Business Health OS.
+The Business Doctor platform, by Samakose. Formerly named Samakose AI Business Health OS.
 
 Production web application for The Business Doctor: diagnose, score, prescribe, coach and report on enterprise health, with programme and finance modules. Next.js 16, TypeScript, PostgreSQL 16.
 

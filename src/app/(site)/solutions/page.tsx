@@ -3,7 +3,7 @@ import { PageHero, Section, Card, ButtonLink } from '@/components/site/ui';
 import { Stagger, Item } from '@/components/site/motion';
 import { REGISTER_HREF } from '@/components/site/config';
 
-export const metadata: Metadata = { title: 'Solutions', description: 'How business owners, coaches, programme managers and partners use Samakose Accelerator Lab.' };
+export const metadata: Metadata = { title: 'Solutions', description: 'How business owners, coaches, programme managers and partners use Samakose.' };
 
 const AUDIENCES = [
   { who: 'Business owners', line: 'Know where the business stands and what to fix first.', pts: ['Guided health assessment you can complete step by step', 'A clear list of priorities and an action plan with dates', 'Coaching and progress tracking in one place', 'Results stay within your organisation and the advisers assigned to you'] },

@@ -7,7 +7,7 @@ import { getSite } from '@/lib/site-content';
 export const revalidate = 120;
 const PERIOD: Record<string, string> = { 'one-off': 'one-off', month: 'per month', quarter: 'per quarter', year: 'per year', participant: 'per participant' };
 
-export const metadata: Metadata = { title: 'Pricing', description: 'Plan structure for Business Doctor business health products. Prices to be confirmed.' };
+export const metadata: Metadata = { title: 'Pricing', description: 'Plan structure for Samakose business health products. Prices to be confirmed.' };
 
 const BUILT_IN = [
   { name: 'Discovery', who: 'Owners who want to see where they stand.', pts: ['A basic assessment', 'A limited health score', 'Basic recommendations'] },
@@ -48,7 +48,7 @@ export default async function PricingPage() {
         </Stagger>
         <div className="mt-14">
           <h2 className="font-display text-3xl font-bold">Choose the length of your plan</h2>
-          <p className="mt-2 max-w-2xl text-muted">Actions in your platform plan are grouped by horizon, so you can see what to do in 30, 90, 180 and 360 days. The options below set how long Samakose Accelerator Lab supports you.{!pricing.confirmed && ' Prices to be confirmed.'}</p>
+          <p className="mt-2 max-w-2xl text-muted">Actions in your platform plan are grouped by horizon, so you can see what to do in 30, 90, 180 and 360 days. The options below set how long Samakose supports you.{!pricing.confirmed && ' Prices to be confirmed.'}</p>
           <Stagger className="mt-6 grid gap-5 md:grid-cols-3">
             {HORIZONS.map((h) => (
               <Item key={h.days}>

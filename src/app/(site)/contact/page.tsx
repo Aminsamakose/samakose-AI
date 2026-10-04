@@ -5,13 +5,13 @@ import { Reveal } from '@/components/site/motion';
 import { ContactForm } from '@/components/site/ContactForm';
 import { getSite, contactOf } from '@/lib/site-content';
 
-export const metadata: Metadata = { title: 'Contact', description: 'Talk to the Samakose Accelerator Lab team about a business health check, a programme tool, coaching or a partnership.' };
+export const metadata: Metadata = { title: 'Contact', description: 'Talk to the Samakose team about a business health check, a programme tool, coaching or a partnership.' };
 
 export default async function ContactPage() {
   const SITE = contactOf(await getSite());
   return (
     <>
-      <PageHero eyebrow="Contact" title="Talk to the Samakose Accelerator Lab team." intro="Tell us about your business, cooperative or programme. We will reply by email and suggest the right next step." />
+      <PageHero eyebrow="Contact" title="Talk to the Samakose team." intro="Tell us about your business, cooperative or programme. We will reply by email and suggest the right next step." />
       <Section>
         <div className="grid gap-10 lg:grid-cols-[1.3fr_0.7fr]">
           <Reveal><ContactForm /></Reveal>

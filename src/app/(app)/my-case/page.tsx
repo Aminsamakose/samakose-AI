@@ -14,7 +14,7 @@ export default function MyCasePage() {
   return <>
     <PageHead title="My business" sub="Where you are, what to do next, and what you owe." />
     <Async state={list}>{(l) => {
-      if (l.items.length === 0) return <Card><Empty title="Your business has no case yet" hint="Your adviser at Samakose Accelerator Lab will open one after your registration is confirmed. Nothing is needed from you until then." /></Card>;
+      if (l.items.length === 0) return <Card><Empty title="Your business has no case yet" hint="Your adviser at Samakose will open one after your registration is confirmed. Nothing is needed from you until then." /></Card>;
       const id = pick || l.items[0].id;
       return <div className="stack">
         {l.items.length > 1 && <div className="field" style={{ maxWidth: 360 }}><label htmlFor="case-pick">Case</label><select id="case-pick" value={id} onChange={(e) => setPick(e.target.value)}>{l.items.map((c) => <option key={c.id} value={c.id}>{c.code} ({c.orgName})</option>)}</select></div>}

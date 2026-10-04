@@ -54,7 +54,7 @@ export function ContactForm({ source = 'contact-page' }: { source?: string }) {
       <div role="status" className="flex flex-col items-start gap-3 rounded-card border border-line bg-surface p-8">
         <CheckCircle2 className="size-8 text-leaf-ink" aria-hidden="true" />
         <h3 className="font-display text-2xl font-bold">Thank you. We have your message.</h3>
-        <p className="text-muted">Someone from the Samakose Accelerator Lab team will reply by email. If it is urgent, call us on the number shown on this page.</p>
+        <p className="text-muted">Someone from the Samakose team will reply by email. If it is urgent, call us on the number shown on this page.</p>
       </div>
     );
   }

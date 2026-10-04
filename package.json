@@ -2,7 +2,7 @@
   "name": "samakose-platform",
   "version": "1.0.0",
   "private": true,
-  "description": "Business Doctor platform by Samakose Accelerator Lab: SME360, AgriFood360 and ESO360",
+  "description": "Samakose Business Doctor platform: SME360, AgriFood360 and ESO360",
   "engines": {
     "node": ">=20.11"
   },

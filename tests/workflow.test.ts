@@ -57,7 +57,7 @@ describe('email templates', () => {
     expect(m.subject).toBe('Welcome to the Business Doctor'); expect(m.body).toContain('Dear Ama Mensah'); expect(tokenFrom(m.body)).toBeTruthy();
     expect((await api(admin).post('/settings/email-templates/verify_email/reset', {})).status).toBe(200);
     const b2 = reg(); await call('POST', '/auth/register', { body: b2 });
-    expect((await lastEmailTo(b2.email)).subject).toBe('Confirm your email for Business Doctor');
+    expect((await lastEmailTo(b2.email)).subject).toBe('Confirm your email for Samakose');
     expect((await db().select().from(schema.emailTemplates).where(eq(schema.emailTemplates.key, 'verify_email'))).length).toBe(0);
   });
 });

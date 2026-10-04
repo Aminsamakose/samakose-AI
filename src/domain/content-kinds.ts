@@ -74,7 +74,7 @@ export const KINDS: Kind[] = [
       { key: 'footerBlurb', label: 'Footer description', type: 'textarea', max: 240 },
       { key: 'primaryColour', label: 'Main brand colour (light theme)', type: 'colour', hint: 'Used for buttons, headers and the footer. White text sits on it, so it must be dark enough to read: contrast of at least 4.5 to 1. Leave empty for the standard green.' }
     ],
-    defaults: { siteName: 'Business Doctor', tagline: 'by Samakose Accelerator Lab', primaryColour: '', browserTitle: 'Business Doctor | by Samakose Accelerator Lab', footerBlurb: 'Diagnose, prescribe and track the health of enterprises across Africa. Built in Tamale, Northern Ghana.' }
+    defaults: { siteName: 'Samakose', tagline: 'The Business Doctor', primaryColour: '', browserTitle: 'Samakose | The Business Doctor', footerBlurb: 'Diagnose, prescribe and track the health of enterprises across Africa. Built in Tamale, Northern Ghana.' }
   },
   {
     id: 'navigation', label: 'Menu', plural: 'Menu and navigation', group: 'site_settings', singleton: true,
@@ -170,9 +170,9 @@ export const KINDS: Kind[] = [
     ],
     defaults: {
       heroHeadline: 'Know what is holding your business back.',
-      heroText: 'Samakose Accelerator Lab reads the health of SMEs, agribusinesses and the organisations that support them, prescribes the next intervention, tracks it and coaches it to completion.',
+      heroText: 'Samakose reads the health of SMEs, agribusinesses and the organisations that support them, prescribes the next intervention, tracks it and coaches it to completion.',
       primaryCta: 'Start your health check',
-      impactNote: 'Samakose Accelerator Lab will publish outcomes here once they are documented and cleared with the organisations concerned.',
+      impactNote: 'Samakose will publish outcomes here once they are documented and cleared with the organisations concerned.',
       sections: DEFAULT_SECTIONS
     }
   },
@@ -205,7 +205,7 @@ export const KINDS: Kind[] = [
     fields: [
       { key: 'name', label: 'Organisation name', type: 'text', max: 100, required: true },
       url('website', 'Website'),
-      { key: 'note', label: 'What they do with Samakose Accelerator Lab', type: 'text', max: 140 },
+      { key: 'note', label: 'What they do with Samakose', type: 'text', max: 140 },
       { key: 'permission', label: 'Written permission to show this organisation is on file', type: 'bool' }
     ],
     gates: [{ key: 'permission', message: 'Confirm written permission is on file' }],
@@ -213,7 +213,7 @@ export const KINDS: Kind[] = [
   },
   {
     id: 'team_member', label: 'Team member', plural: 'Team members', group: 'content', singleton: false, titleField: 'name',
-    blurb: 'People shown under "The people behind Samakose Accelerator Lab" on the About page. A person appears only when they have agreed to be shown. Use Position to set the order, 1 first.',
+    blurb: 'People shown under "The people behind Samakose" on the About page. A person appears only when they have agreed to be shown. Use Position to set the order, 1 first.',
     fields: [
       { key: 'name', label: 'Full name', type: 'text', max: 80, required: true },
       { key: 'role', label: 'Role', type: 'text', max: 100, required: true, hint: 'For example Chief of Staff.' },
@@ -249,7 +249,7 @@ export const KINDS: Kind[] = [
       { key: 'date', label: 'Date', type: 'date', required: true },
       { key: 'body', label: 'Article text (Markdown)', type: 'markdown', max: 30000, required: true }
     ],
-    defaults: { title: '', slug: '', summary: '', author: 'Samakose Accelerator Lab', date: '', body: '' }
+    defaults: { title: '', slug: '', summary: '', author: 'Samakose', date: '', body: '' }
   }
 ];
 

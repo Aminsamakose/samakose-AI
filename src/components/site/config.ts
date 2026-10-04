@@ -1,7 +1,9 @@
-/** Single place for public-site facts. Contact details are Samakose Accelerator Lab's own; everything else is labelled where unverified. */
+/** Single place for public-site facts. Contact details are Samakose's own; everything else is labelled where unverified. */
 export const SITE = {
-  name: 'Business Doctor',
-  tagline: 'by Samakose Accelerator Lab',
+  name: 'Samakose',
+  tagline: 'The Business Doctor',
+  /** The registered company. Shown only where the law or a contract needs it (terms, privacy, consent, certificates, invoices). Everywhere else the brand is `name`. */
+  legalName: 'Samakose Accelerator Lab',
   email: 'info@samakose.com',
   phone: '+233 (0) 55-858-9254',
   phoneHref: '+233558589254',

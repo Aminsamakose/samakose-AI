@@ -5,7 +5,7 @@ import { PageHero, Section, Card, Placeholder } from '@/components/site/ui';
 import { Stagger, Item } from '@/components/site/motion';
 import { listAllArticles } from '@/lib/content';
 
-export const metadata: Metadata = { title: 'Resources', description: 'Plain-language guides on business health, evidence and action planning from Samakose Accelerator Lab.' };
+export const metadata: Metadata = { title: 'Resources', description: 'Plain-language guides on business health, evidence and action planning from Samakose.' };
 
 export default async function ResourcesPage() {
   const items = await listAllArticles();

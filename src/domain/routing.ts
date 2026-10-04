@@ -66,7 +66,7 @@ export type NextStep = { key: 'own_assessment' | 'team_later' | 'expert_help'; t
 
 /** The next best action after registration. Deterministic and honest: team invitations are not live yet, so team mode starts with the owner's own areas. */
 export function nextStep(mode: AssessmentMode | null | undefined, needsConfirmation = false): NextStep {
-  if (mode === 'hybrid') return { key: 'expert_help', title: 'Start your assessment with expert support', body: 'Answer what you can. A Samakose Accelerator Lab expert will help with the areas you are unsure about, and you confirm every answer.', href: '/my-case' };
+  if (mode === 'hybrid') return { key: 'expert_help', title: 'Start your assessment with expert support', body: 'Answer what you can. A Samakose expert will help with the areas you are unsure about, and you confirm every answer.', href: '/my-case' };
   if (mode === 'team') return { key: 'team_later', title: 'Start with the areas that fit your role', body: needsConfirmation ? 'Check the areas shown first and change any that are not yours. Inviting colleagues to answer the rest is coming soon.' : 'Begin with the areas that fit your role. Inviting colleagues to answer the rest is coming soon, so for now you can answer them yourself.', href: '/my-case' };
-  return { key: 'own_assessment', title: 'Start your business health assessment', body: 'You will answer every area yourself. A Samakose Accelerator Lab expert reviews every official score.', href: '/my-case' };
+  return { key: 'own_assessment', title: 'Start your business health assessment', body: 'You will answer every area yourself. A Samakose expert reviews every official score.', href: '/my-case' };
 }

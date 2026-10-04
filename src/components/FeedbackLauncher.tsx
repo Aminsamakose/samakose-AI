@@ -29,7 +29,7 @@ function FeedbackForm({ path, onDone }: { path: string; onDone: () => void }) {
     catch (e2) { setErr(errText(e2)); } finally { setBusy(false); }
   };
   return <form onSubmit={send} className="stack" noValidate>
-    <p className="muted small">This goes to the Samakose Accelerator Lab team, with your name, your role and the page you are on (<span className="mono">{path}</span>). Please do not include passwords or bank details.</p>
+    <p className="muted small">This goes to the Samakose team, with your name, your role and the page you are on (<span className="mono">{path}</span>). Please do not include passwords or bank details.</p>
     <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0 }}>
       <legend>How easy was this page to use? (optional)</legend>
       <div className="row" role="radiogroup" aria-label="Ease of use, 1 is very hard and 5 is very easy">

@@ -6,7 +6,7 @@ import { Async, Button, useApi, useToast } from '@/components/ui';
 type Given = { accuracy: string; rating: number | null; message: string | null } | null;
 const OPTIONS = [['accurate', 'Yes, it matches my business'], ['partly', 'Partly'], ['not_accurate', 'No, it does not match']] as const;
 
-/** The owner says whether their latest score matched their business. It is feedback for the Samakose Accelerator Lab team only: it never changes the score. */
+/** The owner says whether their latest score matched their business. It is feedback for the Samakose team only: it never changes the score. */
 export function ResultFeedback({ caseId }: { caseId: string }) {
   const st = useApi<{ scored: boolean; given: Given }>(`/me/feedback/result/${caseId}`);
   return <Async state={st}>{(d) => d.scored ? <Form caseId={caseId} given={d.given} onSaved={st.reload} /> : <p className="muted">You can tell us how well your score matches your business once it has been scored.</p>}</Async>;
@@ -27,7 +27,7 @@ function Form({ caseId, given, onSaved }: { caseId: string; given: Given; onSave
     catch (e2) { setErr(errText(e2)); } finally { setBusy(false); }
   };
   return <form onSubmit={send} className="stack" noValidate>
-    <p className="muted small">Your answer helps Samakose Accelerator Lab improve the health check. It does not change your score, and only the Samakose Accelerator Lab team sees it.</p>
+    <p className="muted small">Your answer helps Samakose improve the health check. It does not change your score, and only the Samakose team sees it.</p>
     <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0 }}>
       <legend>Does this score match what you know about your business?</legend>
       <div className="row" role="radiogroup" aria-label="How well the score matches">{OPTIONS.map(([v, l]) => <label key={v} className="row" style={{ gap: 6 }}><input type="radio" name="rf-acc" checked={accuracy === v} onChange={() => setAccuracy(v)} />{l}</label>)}</div>
