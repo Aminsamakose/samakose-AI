@@ -27,6 +27,8 @@ const GROUPS: Group[] = [
   ] },
   { title: 'Portfolio', items: [
     { icon: 'organisations', href: '/organisations', label: 'Organisations', need: ['organisations', 'read'] },
+    { icon: 'programmes', href: '/pathway', label: 'Opportunities', roles: ['OWNER'] },
+    { icon: 'programmes', href: '/admin/opportunities', label: 'Opportunities', need: ['opportunities', 'create'] },
     { icon: 'programmes', href: '/programmes', label: 'Programmes', need: ['programmes', 'read'] }
   ] },
   { title: 'Finance', items: [

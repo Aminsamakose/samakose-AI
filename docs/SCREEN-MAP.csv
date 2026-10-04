@@ -219,3 +219,5 @@ Mobile action plan,Partly built,Responsive layouts,Every page works at phone wid
 218. Experts and coaches (vetting),Built,Admin,"/admin/practitioners: queue, profile review, approve, reject, suspend, caseload transfer"
 219. Practitioner profile and photo,Built,Profile,"/profile: photo for everyone; profile, conflicts and submission for experts"
 220. Case team and matching,Built,Cases,"/cases/:id: assign with explained matches, accept or decline, rate"
+221. Opportunities catalogue,Built,Admin,"/admin/opportunities: add, edit, publish, close, archive, import from SOPIS as drafts; referral totals"
+222. Opportunity pathway,Built,Portfolio,"/organisations/:id/pathway and /pathway (owner): eligible, close, not yet; consent, referral tracking, history"
