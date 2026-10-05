@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Async, Badge, Button, Card, DataTable, Empty, KV, Modal, PageHead, Tabs, useApi, type Col } from '@/components/ui';
 import { dateFmt, ghs } from '@/lib/client/api';
-import { CohortForm, ProgrammeForm, type Cohort, type Programme } from '@/components/portfolio/ProgrammeForms';
+import { CohortForm, LogoEditor, ProgrammeForm, ProgrammeLogo, type Cohort, type Programme } from '@/components/portfolio/ProgrammeForms';
 import { IndicatorsPanel } from '@/components/portfolio/IndicatorsPanel';
 import { BudgetPanel } from '@/components/portfolio/BudgetPanel';
 import { ProgrammeDashboard } from '@/components/portfolio/ProgrammeDashboard';
@@ -44,13 +44,20 @@ export default function ProgrammePage() {
     const canEdit = can('programmes', 'edit'); const canCohortCreate = can('cohorts', 'create'); const canCohortEdit = can('cohorts', 'edit');
     const closed = ['Completed', 'Cancelled'].includes(p.status);
     return <div className="stack">
-      <PageHead crumbs={<Link href="/programmes">Programmes</Link>} title={p.name} sub={<><span className="mono">{p.code}</span> · <Badge>{p.status}</Badge>{p.funder ? ` · ${p.funder}` : ''}</>} />
+      <PageHead crumbs={<Link href="/programmes">Programmes</Link>} title={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}><ProgrammeLogo programme={p} size={40} />{p.name}</span>} sub={<><span className="mono">{p.code}</span> · <Badge>{p.status}</Badge>{p.funder ? ` · ${p.funder}` : ''}</>} />
       {tabs.length > 1 && <Tabs tabs={tabs} active={active} onChange={setTab} />}
       <div role="tabpanel" className="stack">
       {active === 'overview' && (editing ?
-        <Card title="Edit programme"><ProgrammeForm programme={p} onCancel={() => setEditing(false)} onDone={() => { setEditing(false); st.reload(); }} /></Card> :
+        <Card title="Edit programme"><LogoEditor programme={p} onDone={() => st.reload()} /><hr /><ProgrammeForm programme={p} onCancel={() => setEditing(false)} onDone={() => { setEditing(false); st.reload(); }} /></Card> :
         <Card title="Details" actions={canEdit ? <Button onClick={() => setEditing(true)}>Edit</Button> : undefined}>
-          <KV items={[['Funder', p.funder], ['Start date', dateFmt(p.startDate)], ['End date', dateFmt(p.endDate)], ['Budget', ghs(p.budgetGhs)], ['Cohorts', p.cohortCount], ...(funder ? [] : [['Cases', p.caseCount] as [string, any]])]} />
+          {(p.summary || p.objective || p.eligibility) && <div className="stack" style={{ marginBottom: 12 }}>
+            {p.summary && <p style={{ margin: 0, fontSize: '1.05rem' }}>{p.summary}</p>}
+            {p.objective && <div><strong>Objective</strong><p style={{ margin: '4px 0 0', whiteSpace: 'pre-line' }}>{p.objective}</p></div>}
+            {p.eligibility && <div><strong>Who can take part</strong><p style={{ margin: '4px 0 0', whiteSpace: 'pre-line' }}>{p.eligibility}</p></div>}
+          </div>}
+          <KV items={[['Funder', p.funder], ['Start date', dateFmt(p.startDate)], ['End date', dateFmt(p.endDate)], ['Budget', ghs(p.budgetGhs)], ['Target businesses', p.targetBusinesses ?? null], ['Cohorts', p.cohortCount], ...(funder ? [] : [['Cases', p.caseCount] as [string, any]]),
+            ['Sectors', p.sectors?.length ? p.sectors.join(', ') : null], ['Regions', p.regions?.length ? p.regions.join(', ') : null], ['Target groups', p.targetGroups?.length ? p.targetGroups.join(', ') : null], ['Implementing partners', p.partners ?? null],
+            ['Contact', p.contactName ? `${p.contactName}${p.contactEmail ? `, ${p.contactEmail}` : ''}` : (p.contactEmail ?? null)], ['Website', p.website ? <a href={p.website} target="_blank" rel="noopener noreferrer">{p.website}<span className="sr"> (opens in a new tab)</span></a> : null]]} />
         </Card>)}
       {active === 'cohorts' && <Card title={`Cohorts (${p.cohorts.length})`} actions={canCohortCreate && !closed ? <Button variant="primary" onClick={() => setCohortModal('new')}>Add cohort</Button> : undefined}>
         {p.cohorts.length === 0 ? <Empty title="No cohorts yet" hint={canCohortCreate && !closed ? 'Add a cohort to enrol businesses in batches.' : undefined} /> :
