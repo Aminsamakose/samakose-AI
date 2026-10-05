@@ -103,10 +103,46 @@ describe('identity changes on shared records', () => {
     const shared = (await makeOrg(admin)).id;
     expect((await api(pm).patch(`/organisations/${shared}`, { name: 'Renamed by PM' })).status).toBe(403);
     expect((await api(pm).patch(`/organisations/${shared}`, { tin: 'GHA1234567' })).status).toBe(403);
-    expect((await api(pm).patch(`/organisations/${shared}`, { sector: 'Cereals', contactName: 'New Contact' })).status).toBe(200);
+    expect((await api(pm).patch(`/organisations/${shared}`, { sector: 'Cereals', contactName: 'New Contact' })).status).toBe(403); // contact details are hidden from them, so they cannot overwrite blind
+    expect((await api(pm).patch(`/organisations/${shared}`, { sector: 'Cereals' })).status).toBe(200);
     expect((await api(pm).patch(`/organisations/${shared}`, { name: (await api(admin).get(`/organisations/${shared}`)).data.name })).status).toBe(200); // unchanged value is not a change
     expect((await api(admin).patch(`/organisations/${shared}`, { name: `Admin renamed ${uniq()}` })).status).toBe(200);
     expect((await api(admin).post('/cases', { orgId: theirs, startState: 'PROSPECT' })).status).toBe(201);
     expect((await api(pm).patch(`/organisations/${theirs}`, { name: `Late rename ${uniq()}` })).status).toBe(403);
+  });
+});
+
+describe('expert and programme manager guardrails', () => {
+  it('hides tax number and contacts on unclaimed organisations, shows them on own cases, and blocks edits and case opening', async () => {
+    const { api, makeOrg, makeUser } = await import('./helpers');
+    const admin = await makeUser('ADMIN'), expert = await makeUser('EXPERT'), other = await makeUser('EXPERT');
+    const org = await makeOrg(admin);
+    await api(admin).patch(`/organisations/${org.id}`, { tin: `TIN${Math.floor(Math.random() * 1e9)}`, contactName: 'Hidden Person', contactEmail: 'hidden@example.org', contactPhone: '0240000000' });
+    const seen = (await api(expert).get(`/organisations/${org.id}`)).data;
+    expect(seen.contactHidden).toBe(true); expect(seen.tin).toBeNull(); expect(seen.contactEmail).toBeNull(); expect(seen.contactName).toBeNull();
+    const row = (await api(expert).get(`/organisations?q=${encodeURIComponent(org.code)}&pageSize=50`)).data.items.find((r: any) => r.id === org.id);
+    expect(row.contactHidden).toBe(true); expect(row.contactPhone).toBeNull(); expect(row).not.toHaveProperty('mine');
+    expect((await api(expert).patch(`/organisations/${org.id}`, { contactEmail: 'x@example.org' })).status).toBe(403);
+    expect((await api(expert).patch(`/organisations/${org.id}`, { sector: 'Grains' })).status).toBe(200);
+    expect((await api(expert).post('/cases', { orgId: org.id })).status).toBe(403);
+    expect((await api(admin).get(`/organisations/${org.id}`)).data.tin).toBeTruthy();
+    // a case opened by an administrator with this expert as lead makes the details visible to that expert only
+    const c = (await api(admin).post('/cases', { orgId: org.id })).data;
+    const { schema } = await import('@/db/client'); const { eq } = await import('drizzle-orm');
+    await db().update(schema.cases).set({ consultantId: expert.userId }).where(eq(schema.cases.id, c.id));
+    const after = (await api(expert).get(`/organisations/${org.id}`)).data;
+    expect(after.contactHidden).toBeUndefined(); expect(after.contactEmail).toBe('hidden@example.org');
+    expect((await api(other).get(`/organisations/${org.id}`)).status).toBeLessThan(500);
+  });
+  it('an expert may open a case only for an organisation they registered, or inside a programme they belong to', async () => {
+    const { api, makeOrg, makeUser } = await import('./helpers');
+    const admin = await makeUser('ADMIN'), expert = await makeUser('EXPERT');
+    const mineOrg = (await api(expert).post('/organisations', { name: `Mine ${Date.now()}`, region: 'Northern', consent: true, consentBy: 'Owner' }));
+    expect(mineOrg.status).toBeLessThan(300);
+    expect((await api(expert).post('/cases', { orgId: mineOrg.data.id })).status).toBeLessThan(300);
+    const prog = (await api(admin).post('/programmes', { name: `P ${Date.now()}`, startDate: '2026-01-01', endDate: '2027-01-01', budgetGhs: 1000 })).data;
+    await api(admin).patch(`/programmes/${prog.id}`, { status: 'Active' });
+    const org = await makeOrg(admin);
+    expect((await api(expert).post('/cases', { orgId: org.id, programmeId: prog.id })).status).toBe(403);
   });
 });

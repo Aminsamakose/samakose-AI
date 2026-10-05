@@ -4,6 +4,7 @@ import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { conflict, fieldError, forbidden, notFound } from '@/lib/errors';
 import { assertOrg, caseScope, orgScope } from '@/domain/scope';
+import type { AuthUser } from '@/lib/context';
 import { completeness, findDuplicates } from '@/domain/org-registry';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
 import { allow, need, respondList } from './common';
@@ -17,26 +18,40 @@ const cols = {
   contactName: o.contactName, contactEmail: o.contactEmail, contactPhone: o.contactPhone, status: o.status, consentAt: o.consentAt, createdAt: o.createdAt,
   caseCount: sql<number>`(select count(*)::int from cases c where c.org_id = ${o.id})`
 };
+const colsFor = (u: AuthUser) => (restricted(u) ? { ...cols, mine: mineExpr(u) } : cols);
 
 const withCompleteness = <T extends Record<string, any>>(r: T) => ({ ...r, completeness: completeness(r as any) });
+
+/** Programme managers and experts see an organisation's tax number and contact details only when it is on one of their cases or they registered it themselves. Everyone else in the registry sees the name and place, so they can find it and ask for a case. */
+const RESTRICTED_ROLES = ['PROGRAMME_MANAGER', 'EXPERT'];
+const restricted = (u: { role: string }) => RESTRICTED_ROLES.includes(u.role);
+const mineExpr = (u: AuthUser) => sql<boolean>`(${o.createdBy} = ${u.id} or ${o.id} in (select org_id from cases where ${caseScope(u)}))`;
+const HIDDEN = ['registrationNumber', 'tin', 'contactName', 'contactEmail', 'contactPhone'] as const;
+function mask<T extends Record<string, any>>(r: T): T {
+  const { mine, ...rest } = r as any;
+  if (mine !== false) return rest;
+  const out: any = { ...rest, contactHidden: true };
+  for (const k of HIDDEN) out[k] = null;
+  return out;
+}
 
 export async function listOrgs(ctx: Ctx, q: ListQuery & { region?: string; type?: string; status?: string }) {
   allow(ctx, 'organisations', 'read');
   const archived = q.status === 'Archived' && need(ctx).user.role === 'ADMIN';
-  const where = and(orgScope(need(ctx).user), archived ? sql`${o.deletedAt} is not null and ${o.status} = 'Archived'` : isNull(o.deletedAt), search(q.q, [o.name, o.code, o.contactName, o.district]),
+  const where = and(orgScope(need(ctx).user), archived ? sql`${o.deletedAt} is not null and ${o.status} = 'Archived'` : isNull(o.deletedAt), search(q.q, restricted(need(ctx).user) ? [o.name, o.code, o.district] : [o.name, o.code, o.contactName, o.district]),
     q.region ? eq(o.region, q.region) : undefined, q.type ? eq(o.type, q.type as OrgType) : undefined, q.status && !archived ? eq(o.status, q.status) : undefined);
   return respondList(ctx, 'organisations', q,
-    async (limit, off) => (await ctx.db.select(cols).from(o).where(where).orderBy(orderBy(q, { name: o.name, code: o.code, region: o.region, type: o.type, created: o.createdAt }, o.createdAt)).limit(limit).offset(off)).map(withCompleteness),
+    async (limit, off) => (await ctx.db.select(colsFor(need(ctx).user)).from(o).where(where).orderBy(orderBy(q, { name: o.name, code: o.code, region: o.region, type: o.type, created: o.createdAt }, o.createdAt)).limit(limit).offset(off)).map((r) => mask(withCompleteness(r))),
     async () => Number((await ctx.db.select({ n: countOf }).from(o).where(where))[0].n),
     { filename: 'organisations.csv', columns: [['code', 'Code'], ['name', 'Name'], ['type', 'Type'], ['sector', 'Sector'], ['region', 'Region'], ['district', 'District'], ['size', 'Size'], ['contactName', 'Contact'], ['contactEmail', 'Email'], ['status', 'Status'], ['caseCount', 'Cases']].map(([key, label]) => ({ key, label })) });
 }
 
 export async function getOrg(ctx: Ctx, id: string) {
   await assertOrg(ctx, id);
-  const [row] = await ctx.db.select(cols).from(o).where(eq(o.id, id)).limit(1);
+  const [row] = await ctx.db.select(colsFor(need(ctx).user)).from(o).where(eq(o.id, id)).limit(1);
   const cs = await ctx.db.select({ id: schema.cases.id, code: schema.cases.code, status: schema.cases.status, programmeId: schema.cases.programmeId }).from(schema.cases).where(and(eq(schema.cases.orgId, id), caseScope(ctx.user!))).orderBy(schema.cases.createdAt);
   const users = ctx.user!.role === 'ADMIN' ? await ctx.db.select({ id: schema.users.id, name: schema.users.name, email: schema.users.email, active: schema.users.active }).from(schema.users).where(eq(schema.users.orgId, id)) : [];
-  return { ...withCompleteness(row), cases: cs, users };
+  return { ...mask(withCompleteness(row)), cases: cs, users };
 }
 
 type OrgInput = { name: string; type?: OrgType; sector?: string | null; region?: string | null; district?: string | null; size?: string | null; contactName?: string | null; contactEmail?: string | null; contactPhone?: string | null; registrationNumber?: string | null; tin?: string | null; yearsOperating?: number | null; ownershipStructure?: string | null };
@@ -62,6 +77,10 @@ export async function createOrg(ctx: Ctx, b: OrgInput & { consent: boolean; cons
 export async function updateOrg(ctx: Ctx, id: string, b: Partial<OrgInput> & { status?: string }) {
   allow(ctx, 'organisations', 'edit');
   const before = await assertOrg(ctx, id);
+  if (restricted(ctx.user!) && before.createdBy !== ctx.user!.id && HIDDEN.some((k) => (b as any)[k] !== undefined)) {
+    const onMine = await ctx.db.select({ id: schema.cases.id }).from(schema.cases).where(and(eq(schema.cases.orgId, id), caseScope(ctx.user!))).limit(1);
+    if (!onMine.length) throw forbidden('Contact details, tax number and registration number can be changed only when the organisation is on one of your cases or you registered it');
+  }
   const patch: Record<string, unknown> = {};
   const ownerFields = ['contactName', 'contactEmail', 'contactPhone'] as const;
   // Name, type, registration number and TIN identify the business for everyone who works with it. Past registration, only an administrator changes them.

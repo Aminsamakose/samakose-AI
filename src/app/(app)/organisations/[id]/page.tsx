@@ -7,7 +7,7 @@ import { Async, Badge, Button, Card, ConfirmButton, Empty, Field, FormError, KV,
 import { OrgForm, type OrgRow } from '@/components/portfolio/OrgForm';
 import { typeLabel, usePerms, useTitle } from '@/components/portfolio/shared';
 
-type Org = OrgRow & { completeness: { score: number; band: string; missing: string[] }; code: string; consentAt: string | null; createdAt: string; caseCount: number; cases: { id: string; code: string; status: string; programmeId: string | null }[]; users: { id: string; name: string; email: string; active: boolean }[] };
+type Org = OrgRow & { contactHidden?: boolean; completeness: { score: number; band: string; missing: string[] }; code: string; consentAt: string | null; createdAt: string; caseCount: number; cases: { id: string; code: string; status: string; programmeId: string | null }[]; users: { id: string; name: string; email: string; active: boolean }[] };
 type Prog = { id: string; name: string; status: string };
 type ProgDetail = { cohorts: { id: string; name: string; status: string; capacity: number; enrolled: number }[] };
 const STARTS = [['PROSPECT', 'Prospect'], ['ONBOARDING', 'Onboarding'], ['PROFILED', 'Profiled']];
@@ -49,7 +49,7 @@ export default function OrganisationPage() {
           {can('organisations', 'delete') && !archived && <ConfirmButton variant="danger" label="Archive organisation" message="This removes the organisation from lists. Its records stay in the audit trail. Organisations with cases that are not graduated cannot be archived." onConfirm={async () => { await api.del(`/organisations/${o.id}`); toast('Organisation archived'); router.push('/organisations'); }} />}
         </>} />
       {editing ? <Card title="Edit organisation"><OrgForm org={o} ownerOnly={ownerOnly} onCancel={() => setEditing(false)} onDone={() => { setEditing(false); st.reload(); }} /></Card> :
-        <Card title="Profile"><KV items={[['Registration number', o.registrationNumber], ['Tax identification number', o.tin], ['Sector', o.sector], ['Region', o.region], ['District', o.district], ['Size', o.size], ['Contact person', o.contactName], ['Contact email', o.contactEmail ? <a href={`mailto:${o.contactEmail}`}>{o.contactEmail}</a> : null], ['Contact phone', o.contactPhone], ['Consent recorded', o.consentAt ? dateFmt(o.consentAt) : 'Not recorded'], ['Registered', dateFmt(o.createdAt)]]} /></Card>}
+        <Card title="Profile">{o.contactHidden && <p className="small muted">Tax number and contact details are hidden until this organisation is on one of your cases. Ask a programme manager or an administrator to open a case.</p>}<KV items={[['Registration number', o.registrationNumber], ['Tax identification number', o.tin], ['Sector', o.sector], ['Region', o.region], ['District', o.district], ['Size', o.size], ['Contact person', o.contactName], ['Contact email', o.contactEmail ? <a href={`mailto:${o.contactEmail}`}>{o.contactEmail}</a> : null], ['Contact phone', o.contactPhone], ['Consent recorded', o.consentAt ? dateFmt(o.consentAt) : 'Not recorded'], ['Registered', dateFmt(o.createdAt)]]} /></Card>}
       <Card title={`Record completeness: ${o.completeness.score}% (${o.completeness.band})`}>
         {o.completeness.missing.length === 0 ? <p className="muted small">Every field the registry tracks is filled in.</p> : <p className="muted small">Still missing: {o.completeness.missing.join(', ')}. A fuller record is easier to match, report on and trust.</p>}
       </Card>

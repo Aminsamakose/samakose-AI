@@ -20,7 +20,7 @@ export default function OrganisationsPage() {
     { key: 'type', label: 'Type', sort: 'type', render: (r) => typeLabel(r.type) },
     { key: 'sector', label: 'Sector' },
     { key: 'region', label: 'Region', sort: 'region', render: (r) => <>{r.region ?? '-'}{r.district ? `, ${r.district}` : ''}</> },
-    { key: 'contactName', label: 'Contact', render: (r) => <>{r.contactName ?? '-'}</> },
+    { key: 'contactName', label: 'Contact', render: (r) => <>{(r as any).contactHidden ? <span className="muted">Restricted</span> : r.contactName ?? '-'}</> },
     { key: 'caseCount', label: 'Cases', align: 'r', render: (r) => <span className="num">{r.caseCount}</span> },
     { key: 'status', label: 'Status', render: (r) => <Badge>{r.status}</Badge> }
   ];

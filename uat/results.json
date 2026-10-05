@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-10-04T22:17:42.982Z",
+  "ranAt": "2026-10-05T00:21:13.762Z",
   "aiMode": "mock",
   "summary": {
     "PASS": 145,
@@ -14,7 +14,7 @@
       "title": "SME360 owner 1: register with job role and self mode",
       "status": "PASS",
       "note": "",
-      "ms": 154
+      "ms": 109
     },
     {
       "id": "T002",
@@ -22,7 +22,7 @@
       "title": "SME360 owner 1: cannot sign in before email is confirmed",
       "status": "PASS",
       "note": "",
-      "ms": 115
+      "ms": 95
     },
     {
       "id": "T003",
@@ -30,7 +30,7 @@
       "title": "SME360 owner 1: verify email, sign in, profile gate, complete profile",
       "status": "PASS",
       "note": "",
-      "ms": 156
+      "ms": 122
     },
     {
       "id": "T004",
@@ -38,7 +38,7 @@
       "title": "SME360 owner 2: register with job role and hybrid mode",
       "status": "PASS",
       "note": "",
-      "ms": 113
+      "ms": 101
     },
     {
       "id": "T005",
@@ -46,7 +46,7 @@
       "title": "SME360 owner 2: cannot sign in before email is confirmed",
       "status": "PASS",
       "note": "",
-      "ms": 110
+      "ms": 95
     },
     {
       "id": "T006",
@@ -54,7 +54,7 @@
       "title": "SME360 owner 2: verify email, sign in, profile gate, complete profile",
       "status": "PASS",
       "note": "",
-      "ms": 135
+      "ms": 125
     },
     {
       "id": "T007",
@@ -62,7 +62,7 @@
       "title": "AGRIFOOD360 owner 1: register with job role and self mode",
       "status": "PASS",
       "note": "",
-      "ms": 113
+      "ms": 108
     },
     {
       "id": "T008",
@@ -70,7 +70,7 @@
       "title": "AGRIFOOD360 owner 1: cannot sign in before email is confirmed",
       "status": "PASS",
       "note": "",
-      "ms": 104
+      "ms": 95
     },
     {
       "id": "T009",
@@ -78,7 +78,7 @@
       "title": "AGRIFOOD360 owner 1: verify email, sign in, profile gate, complete profile",
       "status": "PASS",
       "note": "",
-      "ms": 143
+      "ms": 129
     },
     {
       "id": "T010",
@@ -86,7 +86,7 @@
       "title": "AGRIFOOD360 owner 2: register with job role and hybrid mode",
       "status": "PASS",
       "note": "",
-      "ms": 130
+      "ms": 108
     },
     {
       "id": "T011",
@@ -94,7 +94,7 @@
       "title": "AGRIFOOD360 owner 2: cannot sign in before email is confirmed",
       "status": "PASS",
       "note": "",
-      "ms": 110
+      "ms": 96
     },
     {
       "id": "T012",
@@ -102,7 +102,7 @@
       "title": "AGRIFOOD360 owner 2: verify email, sign in, profile gate, complete profile",
       "status": "PASS",
       "note": "",
-      "ms": 140
+      "ms": 133
     },
     {
       "id": "T013",
@@ -110,7 +110,7 @@
       "title": "ESO360 owner 1: register with job role and self mode",
       "status": "PASS",
       "note": "",
-      "ms": 119
+      "ms": 140
     },
     {
       "id": "T014",
@@ -118,7 +118,7 @@
       "title": "ESO360 owner 1: cannot sign in before email is confirmed",
       "status": "PASS",
       "note": "",
-      "ms": 108
+      "ms": 100
     },
     {
       "id": "T015",
@@ -126,7 +126,7 @@
       "title": "ESO360 owner 1: verify email, sign in, profile gate, complete profile",
       "status": "PASS",
       "note": "",
-      "ms": 146
+      "ms": 120
     },
     {
       "id": "T016",
@@ -134,7 +134,7 @@
       "title": "ESO360 owner 2: register with job role and hybrid mode",
       "status": "PASS",
       "note": "",
-      "ms": 113
+      "ms": 103
     },
     {
       "id": "T017",
@@ -142,7 +142,7 @@
       "title": "ESO360 owner 2: cannot sign in before email is confirmed",
       "status": "PASS",
       "note": "",
-      "ms": 105
+      "ms": 96
     },
     {
       "id": "T018",
@@ -150,7 +150,7 @@
       "title": "ESO360 owner 2: verify email, sign in, profile gate, complete profile",
       "status": "PASS",
       "note": "",
-      "ms": 148
+      "ms": 122
     },
     {
       "id": "T019",
@@ -158,7 +158,7 @@
       "title": "Unknown job role for the platform is refused",
       "status": "PASS",
       "note": "",
-      "ms": 4
+      "ms": 3
     },
     {
       "id": "T020",
@@ -166,7 +166,7 @@
       "title": "Weak password refused",
       "status": "PASS",
       "note": "",
-      "ms": 4
+      "ms": 2
     },
     {
       "id": "T021",
@@ -182,7 +182,7 @@
       "title": "Consultant self-registers, stays pending, then admin approves",
       "status": "PASS",
       "note": "",
-      "ms": 316
+      "ms": 237
     },
     {
       "id": "T023",
@@ -190,7 +190,7 @@
       "title": "Registration options expose roles and consent wording",
       "status": "PASS",
       "note": "",
-      "ms": 11
+      "ms": 6
     },
     {
       "id": "T024",
@@ -198,7 +198,7 @@
       "title": "Admin verifies the six organisations (Pending verification to Active)",
       "status": "PASS",
       "note": "",
-      "ms": 70
+      "ms": 40
     },
     {
       "id": "T025",
@@ -206,7 +206,7 @@
       "title": "Next best action is returned from the routing answers",
       "status": "PASS",
       "note": "",
-      "ms": 4
+      "ms": 2
     },
     {
       "id": "T026",
@@ -214,7 +214,7 @@
       "title": "Owner invites a colleague with a job role, who accepts",
       "status": "PASS",
       "note": "",
-      "ms": 330
+      "ms": 240
     },
     {
       "id": "T027",
@@ -222,7 +222,7 @@
       "title": "Assignment screen suggests an owner per area from the role mapping",
       "status": "PASS",
       "note": "",
-      "ms": 24
+      "ms": 10
     },
     {
       "id": "T028",
@@ -230,7 +230,7 @@
       "title": "Owner assigns an area to the colleague; colleague sees it under /me/areas",
       "status": "PASS",
       "note": "",
-      "ms": 305
+      "ms": 195
     },
     {
       "id": "T029",
@@ -238,7 +238,7 @@
       "title": "Colleague cannot invite, assign or open a round",
       "status": "PASS",
       "note": "",
-      "ms": 5
+      "ms": 3
     },
     {
       "id": "T030",
@@ -254,7 +254,7 @@
       "title": "Invitation to a duplicate address does not create a second user",
       "status": "PASS",
       "note": "",
-      "ms": 8
+      "ms": 5
     },
     {
       "id": "T032",
@@ -262,7 +262,7 @@
       "title": "Programme manager opens a case per organisation (six)",
       "status": "PASS",
       "note": "",
-      "ms": 81
+      "ms": 54
     },
     {
       "id": "T033",
@@ -278,7 +278,7 @@
       "title": "Platform is visible on the case for staff (API field)",
       "status": "PASS",
       "note": "",
-      "ms": 22
+      "ms": 29
     },
     {
       "id": "T035",
@@ -286,7 +286,7 @@
       "title": "Ranked, explained matches exist per case and exclude people who cannot take the work",
       "status": "PASS",
       "note": "",
-      "ms": 26
+      "ms": 25
     },
     {
       "id": "T036",
@@ -294,7 +294,7 @@
       "title": "Admin assigns an expert (by expertise, manually), a coach and a reviewer to all six cases",
       "status": "PASS",
       "note": "",
-      "ms": 258
+      "ms": 199
     },
     {
       "id": "T037",
@@ -302,7 +302,7 @@
       "title": "Four-eyes: same person cannot be expert and reviewer; wrong role refused",
       "status": "PASS",
       "note": "",
-      "ms": 19
+      "ms": 9
     },
     {
       "id": "T038",
@@ -310,7 +310,7 @@
       "title": "Reassignment by admin works and is audited",
       "status": "PASS",
       "note": "",
-      "ms": 26
+      "ms": 14
     },
     {
       "id": "T039",
@@ -318,7 +318,7 @@
       "title": "Workload: assigning past an expert's stated capacity warns the manager",
       "status": "PASS",
       "note": "",
-      "ms": 30
+      "ms": 16
     },
     {
       "id": "T040",
@@ -326,7 +326,7 @@
       "title": "Expert sees only assigned cases",
       "status": "PASS",
       "note": "",
-      "ms": 10
+      "ms": 6
     },
     {
       "id": "T041",
@@ -334,7 +334,7 @@
       "title": "Below-gate submission rejected, nothing saved",
       "status": "PASS",
       "note": "",
-      "ms": 32
+      "ms": 26
     },
     {
       "id": "T042",
@@ -342,7 +342,7 @@
       "title": "Owner cannot claim Verified evidence",
       "status": "PASS",
       "note": "",
-      "ms": 15
+      "ms": 10
     },
     {
       "id": "T043",
@@ -350,7 +350,7 @@
       "title": "Self assessment accepted, scored, case moves to DIAGNOSED, mode=self",
       "status": "PASS",
       "note": "",
-      "ms": 83
+      "ms": 67
     },
     {
       "id": "T044",
@@ -358,7 +358,7 @@
       "title": "Duplicate submission id blocked; resubmission versions",
       "status": "PASS",
       "note": "",
-      "ms": 73
+      "ms": 60
     },
     {
       "id": "T045",
@@ -366,7 +366,7 @@
       "title": "Owner sees progress but never internal workings",
       "status": "PASS",
       "note": "",
-      "ms": 5
+      "ms": 4
     },
     {
       "id": "T046",
@@ -374,7 +374,7 @@
       "title": "Owner opens one round, once; colleague and PM cannot",
       "status": "PASS",
       "note": "",
-      "ms": 29
+      "ms": 19
     },
     {
       "id": "T047",
@@ -382,7 +382,7 @@
       "title": "Colleague sees only their area questions; owner the rest; no overlap",
       "status": "PASS",
       "note": "",
-      "ms": 35
+      "ms": 28
     },
     {
       "id": "T048",
@@ -390,7 +390,7 @@
       "title": "Colleague refused for a question outside their area; out-of-range value refused",
       "status": "PASS",
       "note": "",
-      "ms": 21
+      "ms": 17
     },
     {
       "id": "T049",
@@ -398,7 +398,7 @@
       "title": "Submit blocked until all key questions answered",
       "status": "PASS",
       "note": "",
-      "ms": 26
+      "ms": 18
     },
     {
       "id": "T050",
@@ -406,7 +406,7 @@
       "title": "Both answer; owner submits through the same gate; mode=hybrid; who answered is kept",
       "status": "PASS",
       "note": "",
-      "ms": 307
+      "ms": 224
     },
     {
       "id": "T051",
@@ -414,7 +414,7 @@
       "title": "Drafts never reach scoring; closed round refuses answers",
       "status": "PASS",
       "note": "",
-      "ms": 34
+      "ms": 4
     },
     {
       "id": "T052",
@@ -422,7 +422,7 @@
       "title": "AGRIFOOD360 owner self: assessment submits and scores",
       "status": "PASS",
       "note": "",
-      "ms": 75
+      "ms": 57
     },
     {
       "id": "T053",
@@ -430,7 +430,7 @@
       "title": "AGRIFOOD360 owner hybrid: assessment submits and scores",
       "status": "PASS",
       "note": "",
-      "ms": 58
+      "ms": 69
     },
     {
       "id": "T054",
@@ -438,7 +438,7 @@
       "title": "ESO360 owner self: assessment submits and scores",
       "status": "PASS",
       "note": "",
-      "ms": 70
+      "ms": 61
     },
     {
       "id": "T055",
@@ -446,7 +446,7 @@
       "title": "ESO360 owner hybrid: assessment submits and scores",
       "status": "PASS",
       "note": "",
-      "ms": 62
+      "ms": 49
     },
     {
       "id": "T056",
@@ -454,7 +454,7 @@
       "title": "Setup: AgriFood360 and ESO360 are published in this isolated database, as they are in production (approved there by the administrator)",
       "status": "PASS",
       "note": "",
-      "ms": 98
+      "ms": 116
     },
     {
       "id": "T057",
@@ -462,7 +462,7 @@
       "title": "Platform-specific question banks: AGRIFOOD360 and ESO360 cases are served their own banks",
       "status": "PASS",
       "note": "",
-      "ms": 26
+      "ms": 18
     },
     {
       "id": "T058",
@@ -470,7 +470,7 @@
       "title": "SME360: lead expert drafts diagnosis in background (mock AI), marked as AI-drafted",
       "status": "PARTIAL",
       "note": "Mock AI only: wiring and validation proven, model quality and cost not tested (live test on hold)",
-      "ms": 280
+      "ms": 193
     },
     {
       "id": "T059",
@@ -478,7 +478,7 @@
       "title": "SME360: prescription cannot be drafted before the diagnosis is reviewed",
       "status": "PASS",
       "note": "",
-      "ms": 7
+      "ms": 6
     },
     {
       "id": "T060",
@@ -486,7 +486,7 @@
       "title": "SME360: only the lead expert reviews the diagnosis; admin and reviewer cannot",
       "status": "PASS",
       "note": "",
-      "ms": 32
+      "ms": 26
     },
     {
       "id": "T061",
@@ -494,7 +494,7 @@
       "title": "SME360: prescription drafted from approved library, submitted for approval",
       "status": "PASS",
       "note": "",
-      "ms": 72
+      "ms": 45
     },
     {
       "id": "T062",
@@ -502,7 +502,7 @@
       "title": "SME360: four-eyes on approval: admin, expert, owner refused; wrong reviewer 404; right reviewer approves",
       "status": "PASS",
       "note": "",
-      "ms": 129
+      "ms": 93
     },
     {
       "id": "T063",
@@ -510,7 +510,7 @@
       "title": "SME360: approval creates actions with owners and dates, and KPIs",
       "status": "PASS",
       "note": "",
-      "ms": 14
+      "ms": 11
     },
     {
       "id": "T064",
@@ -518,7 +518,7 @@
       "title": "SME360: owner works own action only; Done needs an evidence note",
       "status": "PASS",
       "note": "",
-      "ms": 52
+      "ms": 39
     },
     {
       "id": "T065",
@@ -526,7 +526,7 @@
       "title": "ESO360: lead expert drafts diagnosis in background (mock AI), marked as AI-drafted",
       "status": "PARTIAL",
       "note": "Mock AI only: wiring and validation proven, model quality and cost not tested (live test on hold)",
-      "ms": 64
+      "ms": 43
     },
     {
       "id": "T066",
@@ -534,7 +534,7 @@
       "title": "ESO360: prescription cannot be drafted before the diagnosis is reviewed",
       "status": "PASS",
       "note": "",
-      "ms": 7
+      "ms": 5
     },
     {
       "id": "T067",
@@ -542,7 +542,7 @@
       "title": "ESO360: only the lead expert reviews the diagnosis; admin and reviewer cannot",
       "status": "PASS",
       "note": "",
-      "ms": 32
+      "ms": 30
     },
     {
       "id": "T068",
@@ -550,7 +550,7 @@
       "title": "ESO360: prescription drafted from approved library, submitted for approval",
       "status": "PASS",
       "note": "",
-      "ms": 66
+      "ms": 52
     },
     {
       "id": "T069",
@@ -558,7 +558,7 @@
       "title": "ESO360: four-eyes on approval: admin, expert, owner refused; wrong reviewer 404; right reviewer approves",
       "status": "PASS",
       "note": "",
-      "ms": 112
+      "ms": 80
     },
     {
       "id": "T070",
@@ -566,7 +566,7 @@
       "title": "ESO360: approval creates actions with owners and dates, and KPIs",
       "status": "PASS",
       "note": "",
-      "ms": 10
+      "ms": 8
     },
     {
       "id": "T071",
@@ -574,7 +574,7 @@
       "title": "ESO360: owner works own action only; Done needs an evidence note",
       "status": "PASS",
       "note": "",
-      "ms": 36
+      "ms": 35
     },
     {
       "id": "T072",
@@ -582,7 +582,7 @@
       "title": "Returned prescription loop: reviewer needs a reason; expert revises; resubmits",
       "status": "PASS",
       "note": "",
-      "ms": 183
+      "ms": 141
     },
     {
       "id": "T073",
@@ -590,7 +590,7 @@
       "title": "Record shows history across diagnostics with framework versions",
       "status": "PASS",
       "note": "",
-      "ms": 26
+      "ms": 15
     },
     {
       "id": "T074",
@@ -598,7 +598,7 @@
       "title": "Owner cannot read another business record",
       "status": "PASS",
       "note": "",
-      "ms": 6
+      "ms": 3
     },
     {
       "id": "T075",
@@ -606,7 +606,7 @@
       "title": "Record is longitudinal: score history grows after resubmission",
       "status": "PASS",
       "note": "",
-      "ms": 21
+      "ms": 12
     },
     {
       "id": "T076",
@@ -614,7 +614,7 @@
       "title": "Coaching sessions: past dates and unnoted Held refused; 3 held moves to MONITORING",
       "status": "PASS",
       "note": "",
-      "ms": 106
+      "ms": 80
     },
     {
       "id": "T077",
@@ -622,7 +622,7 @@
       "title": "Manual transitions: owner refused; automatic-only refused; conditions enforced",
       "status": "PASS",
       "note": "",
-      "ms": 21
+      "ms": 17
     },
     {
       "id": "T078",
@@ -630,7 +630,7 @@
       "title": "Report drafted; owner cannot see it until the case reviewer releases it",
       "status": "PASS",
       "note": "",
-      "ms": 84
+      "ms": 62
     },
     {
       "id": "T079",
@@ -638,7 +638,7 @@
       "title": "Report export as PDF/Word for the owner",
       "status": "PASS",
       "note": "",
-      "ms": 149
+      "ms": 130
     },
     {
       "id": "T080",
@@ -646,7 +646,7 @@
       "title": "admin dashboard loads with data",
       "status": "PASS",
       "note": "",
-      "ms": 10
+      "ms": 8
     },
     {
       "id": "T081",
@@ -654,7 +654,7 @@
       "title": "pm dashboard loads with data",
       "status": "PASS",
       "note": "",
-      "ms": 11
+      "ms": 6
     },
     {
       "id": "T082",
@@ -662,7 +662,7 @@
       "title": "expert dashboard loads with data",
       "status": "PASS",
       "note": "",
-      "ms": 10
+      "ms": 8
     },
     {
       "id": "T083",
@@ -678,7 +678,7 @@
       "title": "finance dashboard loads with data",
       "status": "PASS",
       "note": "",
-      "ms": 7
+      "ms": 4
     },
     {
       "id": "T085",
@@ -686,7 +686,7 @@
       "title": "owner dashboard loads with data",
       "status": "PASS",
       "note": "",
-      "ms": 7
+      "ms": 4
     },
     {
       "id": "T086",
@@ -702,7 +702,7 @@
       "title": "executive dashboard loads with data",
       "status": "PASS",
       "note": "",
-      "ms": 8
+      "ms": 5
     },
     {
       "id": "T088",
@@ -710,7 +710,7 @@
       "title": "Admin command centre shows live figures",
       "status": "PASS",
       "note": "",
-      "ms": 11
+      "ms": 19
     },
     {
       "id": "T089",
@@ -718,7 +718,7 @@
       "title": "Programme dashboard: staff see counts; funder sees suppressed aggregates (n<5) with no names",
       "status": "PASS",
       "note": "",
-      "ms": 35
+      "ms": 13
     },
     {
       "id": "T090",
@@ -726,7 +726,7 @@
       "title": "Stuck-case / overdue workflow view for managers",
       "status": "PASS",
       "note": "",
-      "ms": 9
+      "ms": 6
     },
     {
       "id": "T091",
@@ -734,7 +734,7 @@
       "title": "Demographic (gender/youth) disaggregation for funders",
       "status": "GAP",
       "note": "No gender, youth or disability disaggregation on the funder dashboard (dead stub in code)",
-      "ms": 10
+      "ms": 8
     },
     {
       "id": "T092",
@@ -750,7 +750,7 @@
       "title": "Experts, reviewers and owners receive in-app notifications; read marks work; others cannot mark",
       "status": "PASS",
       "note": "",
-      "ms": 18
+      "ms": 12
     },
     {
       "id": "T094",
@@ -766,7 +766,7 @@
       "title": "Session reminders and stalled-case escalation to expert/PM",
       "status": "PARTIAL",
       "note": "Jobs run and list correctly. The scheduled daily run (06:00 UTC cron) is not exercised in this test",
-      "ms": 57
+      "ms": 47
     },
     {
       "id": "T096",
@@ -774,7 +774,7 @@
       "title": "Owner A cannot read, list or write owner B business (case, org, diagnostics)",
       "status": "PASS",
       "note": "",
-      "ms": 14
+      "ms": 9
     },
     {
       "id": "T097",
@@ -782,7 +782,7 @@
       "title": "Funder cannot read cases or exports with names",
       "status": "PASS",
       "note": "",
-      "ms": 20
+      "ms": 12
     },
     {
       "id": "T098",
@@ -790,7 +790,7 @@
       "title": "Reviewer cannot export; owner cannot read audit or users",
       "status": "PASS",
       "note": "",
-      "ms": 7
+      "ms": 5
     },
     {
       "id": "T099",
@@ -806,7 +806,7 @@
       "title": "Finance cannot read case content",
       "status": "PASS",
       "note": "",
-      "ms": 3
+      "ms": 5
     },
     {
       "id": "T101",
@@ -814,7 +814,7 @@
       "title": "PROBE contracts: PM reads contracts outside their programme",
       "status": "PASS",
       "note": "",
-      "ms": 26
+      "ms": 21
     },
     {
       "id": "T102",
@@ -822,7 +822,7 @@
       "title": "PROBE getOrg: PM cannot read an organisation that has a case in another programme (unclaimed registry entries are visible by design)",
       "status": "PASS",
       "note": "",
-      "ms": 21
+      "ms": 20
     },
     {
       "id": "T103",
@@ -830,7 +830,7 @@
       "title": "Shared master data: PM cannot rename an organisation that is not theirs",
       "status": "PASS",
       "note": "",
-      "ms": 7
+      "ms": 4
     },
     {
       "id": "T104",
@@ -838,7 +838,7 @@
       "title": "Admin switch override needs a reason and is audited; non-admin refused",
       "status": "PASS",
       "note": "",
-      "ms": 23
+      "ms": 15
     },
     {
       "id": "T105",
@@ -846,7 +846,7 @@
       "title": "Admin unlocks a locked account after repeated failed sign-ins",
       "status": "PASS",
       "note": "",
-      "ms": 1460
+      "ms": 1184
     },
     {
       "id": "T106",
@@ -854,7 +854,7 @@
       "title": "Admin deactivates a user: sessions end",
       "status": "PASS",
       "note": "",
-      "ms": 158
+      "ms": 111
     },
     {
       "id": "T107",
@@ -862,7 +862,7 @@
       "title": "Reassign a case when an expert leaves, with history kept",
       "status": "PASS",
       "note": "",
-      "ms": 18
+      "ms": 16
     },
     {
       "id": "T108",
@@ -870,7 +870,7 @@
       "title": "Bulk reassignment of an expert's whole caseload",
       "status": "PASS",
       "note": "",
-      "ms": 30
+      "ms": 27
     },
     {
       "id": "T109",
@@ -886,7 +886,7 @@
       "title": "Audit log is append-only at the database",
       "status": "PASS",
       "note": "",
-      "ms": 3
+      "ms": 2
     },
     {
       "id": "T111",
@@ -902,7 +902,7 @@
       "title": "Malformed ids return 404, never 500",
       "status": "PASS",
       "note": "",
-      "ms": 4
+      "ms": 5
     },
     {
       "id": "T113",
@@ -910,7 +910,7 @@
       "title": "Invalid pagination and malformed JSON return 400",
       "status": "PASS",
       "note": "",
-      "ms": 10
+      "ms": 6
     },
     {
       "id": "T114",
@@ -918,7 +918,7 @@
       "title": "Unauthenticated access is refused",
       "status": "PASS",
       "note": "",
-      "ms": 0
+      "ms": 1
     },
     {
       "id": "T115",
@@ -926,7 +926,7 @@
       "title": "Script and SQL text in names is stored safely and does not break lists",
       "status": "PASS",
       "note": "",
-      "ms": 17
+      "ms": 12
     },
     {
       "id": "T116",
@@ -934,7 +934,7 @@
       "title": "Duplicate organisation name in same region blocked; null region slips through",
       "status": "PASS",
       "note": "",
-      "ms": 17
+      "ms": 15
     },
     {
       "id": "T117",
@@ -942,7 +942,7 @@
       "title": "Draft cohort refuses enrolment",
       "status": "PASS",
       "note": "",
-      "ms": 18
+      "ms": 19
     },
     {
       "id": "T118",
@@ -950,7 +950,7 @@
       "title": "Cohort capacity enforced",
       "status": "PASS",
       "note": "",
-      "ms": 56
+      "ms": 31
     },
     {
       "id": "T119",
@@ -958,7 +958,7 @@
       "title": "Second open case for same org and programme refused",
       "status": "PASS",
       "note": "",
-      "ms": 7
+      "ms": 5
     },
     {
       "id": "T120",
@@ -966,7 +966,7 @@
       "title": "Concurrent double submit of a diagnostic creates one version, not two",
       "status": "PASS",
       "note": "",
-      "ms": 81
+      "ms": 72
     },
     {
       "id": "T121",
@@ -974,7 +974,7 @@
       "title": "Upload: wrong type and spoofed PDF refused",
       "status": "PASS",
       "note": "",
-      "ms": 24
+      "ms": 17
     },
     {
       "id": "T122",
@@ -982,7 +982,7 @@
       "title": "Login brute force is throttled",
       "status": "PASS",
       "note": "",
-      "ms": 1245
+      "ms": 1026
     },
     {
       "id": "T123",
@@ -990,7 +990,7 @@
       "title": "Finance creates plan, contract and invoice; owner cannot",
       "status": "PASS",
       "note": "",
-      "ms": 31
+      "ms": 24
     },
     {
       "id": "T124",
@@ -1006,7 +1006,7 @@
       "title": "Over-invoicing: invoices beyond the contract value are blocked",
       "status": "PASS",
       "note": "",
-      "ms": 7
+      "ms": 4
     },
     {
       "id": "T126",
@@ -1014,7 +1014,7 @@
       "title": "Owner can see their own contract and invoices",
       "status": "PASS",
       "note": "",
-      "ms": 25
+      "ms": 17
     },
     {
       "id": "T127",
@@ -1022,7 +1022,7 @@
       "title": "Signatory and acceptance evidence, amendments and renewals",
       "status": "PASS",
       "note": "",
-      "ms": 73
+      "ms": 42
     },
     {
       "id": "T128",
@@ -1030,7 +1030,7 @@
       "title": "Payment (mock gateway) marks invoice paid; replay is idempotent",
       "status": "PASS",
       "note": "",
-      "ms": 35
+      "ms": 23
     },
     {
       "id": "T129",
@@ -1038,7 +1038,7 @@
       "title": "Intervention library covers every dimension of the published framework",
       "status": "PASS",
       "note": "",
-      "ms": 3
+      "ms": 2
     },
     {
       "id": "T130",
@@ -1046,7 +1046,7 @@
       "title": "Programme lifecycle: complete or cancel cascades to open cohorts and cases",
       "status": "PASS",
       "note": "",
-      "ms": 41
+      "ms": 24
     },
     {
       "id": "T131",
@@ -1054,7 +1054,7 @@
       "title": "Indicators and targets with live actuals; funder sees values only above the privacy minimum",
       "status": "PASS",
       "note": "",
-      "ms": 23
+      "ms": 17
     },
     {
       "id": "T132",
@@ -1062,7 +1062,7 @@
       "title": "Logframe outcome levels, budget lines, tranches",
       "status": "PASS",
       "note": "",
-      "ms": 65
+      "ms": 45
     },
     {
       "id": "T133",
@@ -1070,7 +1070,7 @@
       "title": "Registration number / TIN captured; completeness score; merge duplicates; unarchive",
       "status": "PASS",
       "note": "",
-      "ms": 67
+      "ms": 48
     },
     {
       "id": "T134",
@@ -1078,7 +1078,7 @@
       "title": "/cases?pageSize=50 responds in under 1s on the synthetic dataset",
       "status": "PASS",
       "note": "",
-      "ms": 5
+      "ms": 4
     },
     {
       "id": "T135",
@@ -1086,7 +1086,7 @@
       "title": "/organisations responds in under 1s on the synthetic dataset",
       "status": "PASS",
       "note": "",
-      "ms": 3
+      "ms": 6
     },
     {
       "id": "T136",
@@ -1094,7 +1094,7 @@
       "title": "/dashboard responds in under 1s on the synthetic dataset",
       "status": "PASS",
       "note": "",
-      "ms": 10
+      "ms": 7
     },
     {
       "id": "T137",
@@ -1102,7 +1102,7 @@
       "title": "/audit?pageSize=100 responds in under 1s on the synthetic dataset",
       "status": "PASS",
       "note": "",
-      "ms": 6
+      "ms": 4
     },
     {
       "id": "T138",
@@ -1110,7 +1110,7 @@
       "title": "Every expert can have a photo; /auth/me carries photoUrl and the image is served only to permitted people",
       "status": "PASS",
       "note": "",
-      "ms": 42
+      "ms": 40
     },
     {
       "id": "T139",
@@ -1118,7 +1118,7 @@
       "title": "New expert: profile, submit, administrator approves; only then can they be assigned",
       "status": "PASS",
       "note": "",
-      "ms": 192
+      "ms": 158
     },
     {
       "id": "T140",
@@ -1126,7 +1126,7 @@
       "title": "Assigned expert accepts; a decline needs a reason and frees the place",
       "status": "PASS",
       "note": "",
-      "ms": 24
+      "ms": 20
     },
     {
       "id": "T141",
@@ -1134,7 +1134,7 @@
       "title": "Ratings open at coaching: business, reviewer and programme manager each rate; the lead sees a Limited evidence summary",
       "status": "PASS",
       "note": "",
-      "ms": 67
+      "ms": 52
     },
     {
       "id": "T142",
@@ -1150,7 +1150,7 @@
       "title": "Matches differ by platform: AgriFood360 case ranks agriculture experts first when profiles say so",
       "status": "PASS",
       "note": "",
-      "ms": 17
+      "ms": 16
     },
     {
       "id": "T144",
@@ -1166,7 +1166,7 @@
       "title": "A requirement the business does not meet is explained in plain words with what to do",
       "status": "PASS",
       "note": "",
-      "ms": 9
+      "ms": 6
     },
     {
       "id": "T146",
@@ -1174,7 +1174,7 @@
       "title": "Consent is needed first, a person approves, and an award is recorded with its amount and history",
       "status": "PASS",
       "note": "",
-      "ms": 94
+      "ms": 65
     },
     {
       "id": "T147",
@@ -1182,7 +1182,7 @@
       "title": "The database refuses a referral past Approved without consent and approval, even if the application tried",
       "status": "PASS",
       "note": "",
-      "ms": 27
+      "ms": 20
     },
     {
       "id": "T148",
@@ -1190,7 +1190,7 @@
       "title": "Another business, a funder and a programme manager outside scope cannot read this business's pathway or referrals",
       "status": "PASS",
       "note": "",
-      "ms": 6
+      "ms": 10
     },
     {
       "id": "T149",
@@ -1198,33 +1198,33 @@
       "title": "Totals for leadership count the award, and every change is in the audit log",
       "status": "PASS",
       "note": "",
-      "ms": 5
+      "ms": 4
     }
   ],
   "timings": [
     {
       "route": "POST /cases/:id/diagnostics",
-      "ms": 83
+      "ms": 67
     },
     {
       "route": "POST /rounds/:id/submit",
-      "ms": 87
+      "ms": 60
     },
     {
       "route": "GET /organisations/:id/record",
-      "ms": 26
+      "ms": 15
     },
     {
       "route": "GET /dashboard",
-      "ms": 10
+      "ms": 8
     },
     {
       "route": "GET /dashboard",
-      "ms": 11
+      "ms": 6
     },
     {
       "route": "GET /dashboard",
-      "ms": 10
+      "ms": 8
     },
     {
       "route": "GET /dashboard",
@@ -1232,11 +1232,11 @@
     },
     {
       "route": "GET /dashboard",
-      "ms": 7
+      "ms": 4
     },
     {
       "route": "GET /dashboard",
-      "ms": 7
+      "ms": 4
     },
     {
       "route": "GET /dashboard",
@@ -1244,23 +1244,23 @@
     },
     {
       "route": "GET /dashboard",
-      "ms": 8
-    },
-    {
-      "route": "/cases?pageSize=50",
       "ms": 5
     },
     {
+      "route": "/cases?pageSize=50",
+      "ms": 4
+    },
+    {
       "route": "/organisations",
-      "ms": 3
+      "ms": 6
     },
     {
       "route": "/dashboard",
-      "ms": 10
+      "ms": 7
     },
     {
       "route": "/audit?pageSize=100",
-      "ms": 6
+      "ms": 4
     }
   ]
 }

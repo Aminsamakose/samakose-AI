@@ -65,6 +65,11 @@ export async function createCase(ctx: Ctx, b: { orgId: string; programmeId?: str
   const u = need(ctx).user;
   const org = await assertOrg(ctx, b.orgId);
   if (!org.consentAt) throw unprocessable('Record the organisation’s consent before opening a case');
+  // An expert opens a case for their own registration, or inside a programme they belong to. Otherwise a programme manager or administrator opens it and assigns the expert.
+  if (u.role === 'EXPERT') {
+    if (b.programmeId || b.cohortId) { /* checked below once the programme is known */ }
+    else if (org.createdBy !== u.id) throw forbidden('Ask a programme manager or an administrator to open a case for this organisation and assign you');
+  }
   let programmeId = b.programmeId ?? null;
   if (b.cohortId) {
     const [co] = await ctx.db.select().from(schema.cohorts).where(eq(schema.cohorts.id, b.cohortId)).limit(1);
@@ -80,6 +85,7 @@ export async function createCase(ctx: Ctx, b: { orgId: string; programmeId?: str
     const [pr] = await ctx.db.select().from(schema.programmes).where(eq(schema.programmes.id, programmeId)).limit(1);
     if (!pr) throw fieldError({ programmeId: 'Programme not found' });
     if (u.role === 'PROGRAMME_MANAGER' && !u.programmeIds.includes(programmeId)) throw forbidden('You are not assigned to this programme');
+    if (u.role === 'EXPERT' && !u.programmeIds.includes(programmeId) && org.createdBy !== u.id) throw forbidden('You are not a member of this programme. Ask a programme manager to open the case and assign you');
     if (['Completed', 'Cancelled'].includes(pr.status)) throw unprocessable('This programme is closed');
     const dupe = await ctx.db.select({ id: c.id }).from(c).where(and(eq(c.orgId, b.orgId), eq(c.programmeId, programmeId), sql`${c.status} <> 'GRADUATED'`)).limit(1);
     if (dupe.length) throw conflict('This organisation already has an open case in this programme');
