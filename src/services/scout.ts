@@ -93,7 +93,7 @@ async function readOne(c: Candidate, srcName: string, db: Ctx['db']): Promise<'d
     if (!(await allowedByRobots(url))) return 'Site asks not to be read';
     try { const r = await fetcher(url); if (r.status === 200) text = htmlToText(/html/i.test(r.type) ? r.text : r.text.replace(/<[^>]+>/g, ' ')); } catch { /* the snippet is all we have */ }
   }
-  const cand = { title: c.title, text };
+  const cand = { title: c.title, text, published: c.published };
   if (!looksLikeCall(cand)) return 'Not a call';
   let reading: ReaderOutput;
   try {
@@ -116,9 +116,18 @@ async function readOne(c: Candidate, srcName: string, db: Ctx['db']): Promise<'d
   return rows.length ? 'drafted' : 'Already found';
 }
 
+/** Closes what has ended. Scout drafts past their date are archived, and published opportunities past their date are closed. Safe to repeat. */
+export async function sweepExpired(db: Ctx['db'] = defaultDb()) {
+  const today = new Date().toISOString().slice(0, 10);
+  const archived = await db.update(O).set({ status: 'Archived', updatedAt: new Date() }).where(and(eq(O.source, SCOUT_SOURCE), eq(O.status, 'Draft'), lt(O.deadline, today))).returning({ id: O.id });
+  const closed = await db.update(O).set({ status: 'Closed', updatedAt: new Date() }).where(and(eq(O.status, 'Open'), lt(O.deadline, today))).returning({ id: O.id });
+  return { archived: archived.length, closed: closed.length };
+}
+
 /** One pass. Reads the sources that are due, oldest first, until the time budget or the search allowance runs out. Safe to call daily. */
 export async function runScout(o: { db?: Ctx['db']; budgetMs?: number; sourceIds?: string[]; actor?: string | null } = {}): Promise<RunResult> {
   const db = o.db ?? defaultDb(); const budget = o.budgetMs ?? 35_000; const t0 = Date.now();
+  await sweepExpired(db);
   const [run] = await db.insert(R).values({}).returning();
   const due = o.sourceIds?.length
     ? await db.select().from(S).where(inArray(S.id, o.sourceIds))
@@ -168,7 +177,8 @@ export async function listSources(ctx: Ctx) {
   const items = await ctx.db.select().from(S).orderBy(asc(S.region), asc(S.name));
   const runs = await ctx.db.select().from(R).orderBy(sql`${R.startedAt} desc`).limit(8);
   const [pending] = await ctx.db.select({ n: sql<number>`count(*)::int` }).from(O).where(and(eq(O.source, SCOUT_SOURCE), eq(O.status, 'Draft')));
-  return { items: items.map(view), search: await searchStatus(ctx.db), runs, draftsToReview: pending?.n ?? 0, regions: REGIONS };
+  const found = await ctx.db.select({ id: O.id, title: O.title, provider: O.provider, type: O.type, url: O.url, deadline: O.deadline, valueMin: O.valueMin, valueMax: O.valueMax, currency: O.currency, createdAt: O.createdAt }).from(O).where(and(eq(O.source, SCOUT_SOURCE), eq(O.status, 'Draft'))).orderBy(sql`${O.deadline} asc nulls last`, sql`${O.createdAt} desc`).limit(40);
+  return { items: items.map(view), search: await searchStatus(ctx.db), runs, draftsToReview: pending?.n ?? 0, regions: REGIONS, found: found.map((f) => ({ ...f, valueMin: f.valueMin === null ? null : Number(f.valueMin), valueMax: f.valueMax === null ? null : Number(f.valueMax) })) };
 }
 export async function addSource(ctx: Ctx, b: SourceInput) {
   allow(ctx, 'opportunities', 'create'); checkSource(b);

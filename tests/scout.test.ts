@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { api, ensureReference, makeOrg, makeUser, uniq, type Session } from './helpers';
 import { db, schema } from '@/db/client';
+import { findDeadline, closedWording } from '@/domain/opportunity-agents';
 import { htmlToText, looksLikeCall, normaliseUrl, parseFeed, robotsAllows, scamSignals, screenCandidate, titleKey } from '@/domain/scout';
 import { setScoutFetch } from '@/services/scout';
 
@@ -9,13 +10,36 @@ const RSS = `<?xml version="1.0"?><rss><channel>
 <item><title>Open call: Agribusiness Grant for Northern Ghana</title><link>https://funder.example.org/calls/agri-grant?utm_source=x</link><description><![CDATA[<p>Grants of GHS 10,000 up to GHS 50,000 for agriculture businesses in the Northern region. Apply before 2099-01-01. This programme supports small enterprises.</p>]]></description><pubDate>Mon, 05 Oct 2026 08:00:00 GMT</pubDate></item>
 <item><title>Grant: pay a processing fee to claim your award</title><link>https://funder.example.org/calls/scam</link><description>You have won a grant. Pay the processing fee today and send your bank details. Deadline 2099-02-02. Apply now for this fund.</description></item>
 <item><title>Old call for proposals</title><link>https://funder.example.org/calls/old</link><description>Call for proposals for agribusiness grants of GHS 5,000. Applications closed, deadline 2020-01-01. Apply to this funding programme.</description></item>
+<item><title>Women in agriculture grant call</title><link>https://funder.example.org/calls/women-closed</link><description>This funding call for women in agriculture offers grants of GHS 9,000. Applications are now closed. Apply to future calls when announced.</description></item>
+<item><title>Farmers grant call 2019</title><link>https://funder.example.org/calls/farmers-2019</link><description>Open call for farmers: grants of GHS 4,000 for smallholder agriculture programmes, apply through the 2019 programme portal in your district office.</description></item>
 <item><title>Staff picnic photos</title><link>https://funder.example.org/news/picnic</link><description>Pictures from the office picnic last weekend with lots of lovely food.</description></item>
 </channel></rss>`;
+
+describe('closing dates and closed calls', () => {
+  it('reads closing dates in common formats, only when tied to a closing word', () => {
+    expect(findDeadline('Deadline: 30 November 2026')).toBe('2026-11-30');
+    expect(findDeadline('Applications close on November 30th, 2026.')).toBe('2026-11-30');
+    expect(findDeadline('Apply before 15/01/2027 to be considered')).toBe('2027-01-15');
+    expect(findDeadline('Closing date: 5 Jan 2027')).toBe('2027-01-05');
+    expect(findDeadline('Published on 1 March 2026. The programme supports farmers.')).toBeNull();
+  });
+  it('recognises wording that says a call is over', () => {
+    for (const t of ['Applications are now closed', 'This call has closed', 'No longer accepting applications', 'The deadline has passed', 'CLOSED: Youth grant']) expect(closedWording(t), t).toBe(true);
+    expect(closedWording('Applications close on 30 November 2026')).toBe(false);
+  });
+  it('screens closed and out-of-date items', () => {
+    const t = 'Open call for farmers: grants of GHS 4,000 for agriculture programmes. Apply through the portal. More text to pass length.';
+    expect(screenCandidate({ title: 'Grant', text: `${t} Applications closed.` }, { deadline: null })).toEqual({ ok: false, reason: 'Already closed' });
+    expect(screenCandidate({ title: 'Grant 2019', text: t }, { deadline: null })).toEqual({ ok: false, reason: 'Looks out of date' });
+    expect(screenCandidate({ title: 'Grant', text: t, published: '2020-01-01' }, { deadline: null })).toEqual({ ok: false, reason: 'Looks out of date' });
+    expect(screenCandidate({ title: 'Grant', text: t }, { deadline: null }).ok).toBe(true);
+  });
+});
 
 describe('domain', () => {
   it('parses RSS and Atom, drops markup, and strips tracking from links', () => {
     const items = parseFeed(RSS);
-    expect(items.length).toBe(4); expect(items[0].text).toMatch(/GHS 10,000/); expect(items[0].text).not.toMatch(/</);
+    expect(items.length).toBe(6); expect(items[0].text).toMatch(/GHS 10,000/); expect(items[0].text).not.toMatch(/</);
     expect(normaliseUrl(items[0].url)).toBe('https://funder.example.org/calls/agri-grant');
     const atom = parseFeed('<feed><entry><title>Call A</title><link href="https://x.example.org/a"/><summary>Grant call</summary></entry></feed>');
     expect(atom[0].url).toBe('https://x.example.org/a');
@@ -72,12 +96,12 @@ describe('the weekly run', () => {
   it('tests a feed without saving, then saves only the genuine call as a draft and never publishes', async () => {
     const s = (await api(admin).post('/opportunity-sources', { name: `Funder feed ${uniq()}`, kind: 'feed', url: 'https://funder.example.org/feed.xml', region: 'Ghana' })).data;
     const t = await api(admin).post(`/opportunity-sources/${s.id}/test`, {});
-    expect(t.data).toMatchObject({ ok: true, count: 4 });
+    expect(t.data).toMatchObject({ ok: true, count: 6 });
     const before = (await api(admin).get('/opportunities')).data.items.length;
     expect((await api(admin).get('/opportunities')).data.items.length).toBe(before);
     const r = await api(admin).post(`/opportunity-sources/${s.id}/run`, {});
     expect(r.status, JSON.stringify(r.error)).toBe(200);
-    expect(r.data.drafted).toBe(1); expect(r.data.skipped).toMatchObject({ 'Suspected scam wording': 1, Expired: 1, 'Not a call': 1 });
+    expect(r.data.drafted).toBe(1); expect(r.data.skipped).toMatchObject({ 'Suspected scam wording': 1, Expired: 1, 'Not a call': 1, 'Already closed': 1, 'Looks out of date': 1 });
     const mine = (await api(admin).get('/opportunities?status=Draft')).data.items.filter((o: any) => o.source === 'scout');
     const o = mine.find((x: any) => x.url === 'https://funder.example.org/calls/agri-grant');
     expect(o, JSON.stringify(mine.map((x: any) => x.url))).toBeTruthy(); expect(o.status).toBe('Draft'); expect(o.valueMax).toBe(50000);
@@ -111,6 +135,20 @@ describe('the weekly run', () => {
     const r = await api(admin).post('/opportunity-sources/run', {});
     expect(r.status, JSON.stringify(r.error)).toBe(200); expect(r.data).toHaveProperty('sources');
     expect((await api(owner).post('/opportunity-sources/run', {})).status).toBe(403);
+  });
+  it('closes what has ended: expired scout drafts are archived and expired open opportunities are closed', async () => {
+    const { sweepExpired } = await import('@/services/scout');
+    const [d] = await db().insert(schema.opportunities).values({ title: `Old draft ${uniq()}`, type: 'Grant', provider: 'X', summary: 'An old call that has ended.', source: 'scout', sourceRef: `https://funder.example.org/old-${uniq()}`, deadline: '2020-01-01' }).returning();
+    const [o] = await db().insert(schema.opportunities).values({ title: `Old open ${uniq()}`, type: 'Grant', provider: 'X', summary: 'An old call that has ended.', status: 'Open', deadline: '2020-01-01' }).returning();
+    const r = await sweepExpired(db());
+    expect(r.archived).toBeGreaterThanOrEqual(1); expect(r.closed).toBeGreaterThanOrEqual(1);
+    expect((await db().select().from(schema.opportunities).where(eq(schema.opportunities.id, d.id)))[0].status).toBe('Archived');
+    expect((await db().select().from(schema.opportunities).where(eq(schema.opportunities.id, o.id)))[0].status).toBe('Closed');
+  });
+  it('lists what the Scout found with the closing date and the platform searches are in the starter set', async () => {
+    const l = (await api(admin).get('/opportunity-sources')).data;
+    expect(Array.isArray(l.found)).toBe(true); expect(l.found[0]).toHaveProperty('deadline');
+    expect((await api(admin).get('/opportunity-sources')).data.items.some((x: any) => /^Platform:/.test(x.name))).toBe(true);
   });
   it('pauses and removes a source, and audits changes', async () => {
     const s = (await api(admin).post('/opportunity-sources', { name: `P ${uniq()}`, kind: 'page', url: 'https://funder.example.org/calls' })).data;

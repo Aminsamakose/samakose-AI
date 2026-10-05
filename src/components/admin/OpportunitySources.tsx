@@ -4,6 +4,15 @@ import { api, dateFmt, errText } from '@/lib/client/api';
 import { useMe } from '@/components/case/core/shared';
 import { Async, Badge, Button, Card, Field, FormError, Modal, Tile, useApi, useToast } from '@/components/ui';
 
+const ENGINES: { label: string; url: (q: string) => string }[] = [
+  { label: 'Google', url: (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}` },
+  { label: 'Bing', url: (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}` },
+  { label: 'DuckDuckGo', url: (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}` },
+  { label: 'Google News', url: (q) => `https://news.google.com/search?q=${encodeURIComponent(q)}` },
+  { label: 'LinkedIn', url: (q) => `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(q)}` },
+  { label: 'X', url: (q) => `https://x.com/search?q=${encodeURIComponent(q)}&f=live` }
+];
+const daysLeft = (d: string | null) => d == null ? null : Math.ceil((new Date(`${d}T23:59:59Z`).getTime() - Date.now()) / 86400000);
 const KIND: Record<string, string> = { feed: 'Feed', page: 'Page', query: 'Search' };
 
 export function OpportunitySourcesPanel() {
@@ -33,7 +42,7 @@ export function OpportunitySourcesPanel() {
               <thead><tr><th>Source</th><th>Type</th><th>Region</th><th>Last run</th><th><span className="sr">Actions</span></th></tr></thead>
               <tbody>{d.items.map((s: any) => <tr key={s.id}>
                 <td><strong>{s.name}</strong><div className="small muted" style={{ overflowWrap: 'anywhere' }}>{s.kind === 'query' ? s.query : <a href={s.url} target="_blank" rel="noopener noreferrer">{s.url}<span className="sr"> (opens in a new tab)</span></a>}</div>
-                  {s.kind === 'query' && <div className="small"><a href={`https://www.google.com/search?q=${encodeURIComponent(s.query)}`} target="_blank" rel="noopener noreferrer">Open this search in Google<span className="sr"> (opens in a new tab)</span></a> · <a href={`https://duckduckgo.com/?q=${encodeURIComponent(s.query)}`} target="_blank" rel="noopener noreferrer">DuckDuckGo<span className="sr"> (opens in a new tab)</span></a></div>}</td>
+                  {s.kind === 'query' && <div className="small" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{ENGINES.map((e) => <a key={e.label} href={e.url(s.query)} target="_blank" rel="noopener noreferrer">{e.label}<span className="sr"> (opens in a new tab)</span></a>)}</div>}</td>
                 <td><Badge>{KIND[s.kind]}</Badge>{!s.active && <> <Badge tone="warn">Paused</Badge></>}</td><td>{s.region}</td>
                 <td>{s.lastRunAt ? dateFmt(s.lastRunAt) : 'Not yet'}<div className="small muted">{s.lastStatus ?? ''}{s.lastRunAt ? ` · ${s.lastFound} saved` : ''}</div></td>
                 <td><div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
@@ -43,6 +52,15 @@ export function OpportunitySourcesPanel() {
                   {me.can('opportunities', 'edit') && <Button size="sm" variant="ghost" onClick={() => run(`d${s.id}`, () => api.del(`/opportunity-sources/${s.id}`), () => 'Removed')}>Remove</Button>}
                 </div></td></tr>)}</tbody></table></div>}
         </Card>
+        {d.found.length > 0 && <Card title={`Found by the Scout, waiting for review (${d.found.length})`}>
+          <div className="table-wrap"><table><caption className="sr">Opportunities found by the Scout</caption>
+            <thead><tr><th>Opportunity</th><th>Type</th><th>Amount</th><th>Closes</th></tr></thead>
+            <tbody>{d.found.map((f: any) => { const n = daysLeft(f.deadline); return <tr key={f.id}>
+              <td><strong>{f.url ? <a href={f.url} target="_blank" rel="noopener noreferrer">{f.title}<span className="sr"> (opens the source in a new tab)</span></a> : f.title}</strong><div className="small muted">{f.provider}</div></td>
+              <td>{f.type}</td>
+              <td>{f.valueMin != null || f.valueMax != null ? `${f.currency} ${f.valueMin != null ? f.valueMin.toLocaleString('en-GB') : ''}${f.valueMin != null && f.valueMax != null ? ' to ' : ''}${f.valueMax != null ? f.valueMax.toLocaleString('en-GB') : ''}` : 'Not stated'}</td>
+              <td>{f.deadline ? <>{dateFmt(f.deadline)}<div className="small muted">{n != null && n >= 0 ? `${n} day${n === 1 ? '' : 's'} left` : 'Closed'}</div></> : <><Badge tone="warn">No date found</Badge><div className="small muted">Check the source</div></>}</td></tr>; })}</tbody></table></div>
+        </Card>}
         {d.runs.length > 0 && <Card title="Recent runs"><ul className="small">{d.runs.map((r: any) => <li key={r.id}>{dateFmt(r.startedAt)}: {r.sources} sources, {r.candidates} items read, {r.drafted} saved, {r.skipped} skipped, {r.failed} failed{r.note ? `. ${r.note}` : ''}</li>)}</ul></Card>}
       </>}</Async>
     </div>
