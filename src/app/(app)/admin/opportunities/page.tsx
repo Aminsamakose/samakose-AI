@@ -13,10 +13,10 @@ export default function OpportunitiesAdmin() {
   const [status, setStatus] = useState('');
   const st = useApi<any>(`/opportunities${status ? `?status=${status}` : ''}`);
   const sum = useApi<any>('/unlock/summary');
-  const [edit, setEdit] = useState<any>(null); const [imp, setImp] = useState(false); const toast = useToast();
+  const [edit, setEdit] = useState<any>(null); const [imp, setImp] = useState(false); const [rd, setRd] = useState(false); const toast = useToast();
   const act = async (id: string, verb: string, ok: string) => { try { await api.post(`/opportunities/${id}/${verb}`, {}); toast(ok); st.reload(); sum.reload(); } catch (e) { toast(errText(e), 'bad'); } };
   return <Guard resource="opportunities" action="create" title="Opportunities">{(me) => <>
-    <PageHead title="Opportunities" sub="Funding, partners, markets and programmes that ready businesses can reach. Each one states its own requirements. Nothing is shown to a business until you publish it." actions={<><Button onClick={() => setImp(true)}>Import</Button><Button variant="primary" onClick={() => setEdit({})}>Add opportunity</Button></>} />
+    <PageHead title="Opportunities" sub="Funding, partners, markets and programmes that ready businesses can reach. Each one states its own requirements. Nothing is shown to a business until you publish it." actions={<><Button onClick={() => setRd(true)}>Read a call</Button><Button onClick={() => setImp(true)}>Import</Button><Button variant="primary" onClick={() => setEdit({})}>Add opportunity</Button></>} />
     <div className="stack">
       <Async state={sum}>{(s) => <div className="grid">
         <Tile label="Open now" value={s.opportunitiesOpen} /><Tile label="Awaiting your decision" value={s.referrals.Consented ?? 0} hint="Owner has consented" tone={s.referrals.Consented ? 'warn' : undefined} />
@@ -38,6 +38,7 @@ export default function OpportunitiesAdmin() {
       </Card>
     </div>
     {edit && <Form o={edit} onClose={() => setEdit(null)} onDone={() => { setEdit(null); st.reload(); sum.reload(); }} />}
+    {rd && <Reader onClose={() => setRd(false)} onDraft={(d, u) => { setRd(false); setEdit({ ...d, _uncertain: u }); }} />}
     {imp && <Import onClose={() => setImp(false)} onDone={() => { setImp(false); st.reload(); }} />}
   </>}</Guard>;
 }
@@ -62,6 +63,7 @@ function Form({ o, onClose, onDone }: { o: any; onClose: () => void; onDone: () 
   };
   return <Modal open onClose={onClose} title={o.id ? 'Edit opportunity' : 'Add opportunity'}>
     <div className="stack"><FormError message={err} />
+      {o._uncertain?.length > 0 && <div className="alert info" role="note"><strong>Check these against the original call</strong><ul className="small">{o._uncertain.map((u: string) => <li key={u}>{u}</li>)}</ul></div>}
       <Field label="Title" name="t" required>{(q) => <input {...q} maxLength={160} {...set('title')} />}</Field>
       <div className="grid two"><Field label="Type" name="ty">{(q) => <select {...q} {...set('type')}>{TYPES.map((t) => <option key={t}>{t}</option>)}</select>}</Field>
         <Field label="Provider" name="p" required>{(q) => <input {...q} maxLength={160} {...set('provider')} />}</Field></div>
@@ -96,5 +98,16 @@ function Import({ onClose, onDone }: { onClose: () => void; onDone: () => void }
         <Field label="Where from" name="src">{(q) => <select {...q} value={src} onChange={(e) => setSrc(e.target.value)}><option value="sopis">SOPIS</option><option value="import">Other</option></select>}</Field>
         <Field label="List (JSON)" name="j" hint="Each item: sourceRef, title, type, provider, summary, and optionally url, valueMin, valueMax, deadline (YYYY-MM-DD). Importing again never duplicates.">{(q) => <textarea {...q} rows={8} value={text} onChange={(e) => setText(e.target.value)} placeholder='[{"sourceRef":"row-12","title":"...","type":"Grant","provider":"...","summary":"..."}]' />}</Field>
         <div className="form-actions row" style={{ gap: 8 }}><Button variant="primary" loading={busy} onClick={go}>Import as drafts</Button><Button onClick={onClose}>Cancel</Button></div></>}</div>
+  </Modal>;
+}
+
+function Reader({ onClose, onDraft }: { onClose: () => void; onDraft: (d: any, uncertain: string[]) => void }) {
+  const [text, setText] = useState(''); const [err, setErr] = useState<string | null>(null); const [busy, setBusy] = useState(false);
+  const go = async () => { setErr(null); setBusy(true); try { const r = await api.post<any>('/opportunities/read', { text }); onDraft(r.draft, r.uncertain); } catch (e) { setErr(errText(e)); } finally { setBusy(false); } };
+  return <Modal open onClose={onClose} title="Read a call">
+    <div className="stack"><FormError message={err} />
+      <p className="small muted">Paste the text of a funding call, programme or notice. The Opportunity Reader drafts the form for you. Nothing is saved until you check it and press Save, and it is never published automatically.</p>
+      <Field label="Text of the call" name="rt" hint="Do not paste personal data about individuals.">{(q) => <textarea {...q} rows={10} maxLength={20000} value={text} onChange={(e) => setText(e.target.value)} />}</Field>
+      <div className="form-actions row" style={{ gap: 8 }}><Button variant="primary" loading={busy} onClick={go}>Draft the form</Button><Button onClick={onClose}>Cancel</Button></div></div>
   </Modal>;
 }
