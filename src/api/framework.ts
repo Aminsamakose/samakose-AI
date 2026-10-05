@@ -49,7 +49,8 @@ function compile(): Compiled[] {
 }
 
 export function clientIp(req: Request): string {
-  if (env.trustProxy) return (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'unknown';
+  // Count in from the proxy side. A client can add its own leading entries, but not the ones our own proxies append.
+  if (env.trustProxy) { const p = (req.headers.get('x-forwarded-for') ?? '').split(',').map((x) => x.trim()).filter(Boolean); return p[Math.max(0, p.length - env.trustedProxyHops)] || 'unknown'; }
   return 'direct';
 }
 
@@ -71,7 +72,8 @@ function errorResponse(e: unknown, requestId: string): Response {
   if (code === '22P02') return json(400, { error: { code: 'bad_request', message: 'A value has the wrong format', requestId } }, h);
   if (code === '23503') return json(409, { error: { code: 'in_use', message: 'A related record blocks this change', requestId } }, h);
   if (code === '23514' || code === '23000') return json(422, { error: { code: 'rule_violation', message: 'The change breaks a data rule', requestId } }, h);
-  console.error(`[${requestId}]`, e);
+  // Database errors carry the failing values, which can be personal data. Log the kind and code only.
+  console.error(`[${requestId}] ${(e as Error)?.name ?? 'Error'} ${code ?? ''} ${(pg as Error)?.constructor?.name ?? ''}`.trim());
   return json(500, { error: { code: 'server_error', message: 'Something went wrong on our side', requestId } }, h);
 }
 
@@ -109,7 +111,8 @@ export async function dispatch(req: Request, basePath = '/api/v1'): Promise<Resp
       const origin = req.headers.get('origin');
       if (origin) {
         const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? url.host;
-        if (new URL(origin).host !== host) throw forbidden('Cross-site request blocked');
+        let originHost = ''; try { originHost = new URL(origin).host; } catch { /* Origin: null and other opaque values */ }
+        if (originHost !== host) throw forbidden('Cross-site request blocked');
       }
     }
     // Authentication
@@ -134,7 +137,11 @@ export async function dispatch(req: Request, basePath = '/api/v1'): Promise<Resp
     }
 
     // Input
+    const declared = Number(req.headers.get('content-length') ?? 0);
+    const limit = def.multipart ? 30 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (declared > limit) throw new ApiError(413, 'too_large', 'The request is too large');
     const rawBody = def.multipart || method === 'GET' ? '' : await req.text();
+    if (rawBody.length > limit) throw new ApiError(413, 'too_large', 'The request is too large');
     let body: unknown = undefined;
     if (def.body) {
       let parsed: unknown = {};

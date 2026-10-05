@@ -10,6 +10,14 @@ import { forbidden, unprocessable } from '@/lib/errors';
 import { assertCase, isInternal, leadOnly } from '@/domain/scope';
 import { effectiveStatus, evaluateCertification, validUntil, type CertFacts } from '@/domain/certification';
 import { allow, loadRules, need } from './common';
+import { notifyUsers } from '@/domain/notify';
+
+/** Tell the business owners and the case team. Certificates were silent before. */
+async function tell(ctx: Ctx, cs: { orgId: string; consultantId: string | null; coachId: string | null }, caseId: string, n: { kind: string; title: string; body?: string }) {
+  const owners = await ctx.db.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.orgId, cs.orgId), eq(schema.users.role, 'OWNER'), eq(schema.users.active, true)));
+  const ids = [...owners.map((o) => o.id), cs.consultantId, cs.coachId].filter(Boolean) as string[];
+  await notifyUsers(ctx, ids, { ...n, link: `/cases/${caseId}`, email: true });
+}
 
 async function facts(ctx: Ctx, caseId: string) {
   const [s] = await ctx.db.select().from(schema.healthScores).where(eq(schema.healthScores.caseId, caseId)).orderBy(desc(schema.healthScores.createdAt)).limit(1);
@@ -86,6 +94,7 @@ export async function decide(ctx: Ctx, certId: string, b: { decision: 'Certify' 
   if (b.decision === 'Decline') {
     await ctx.db.update(schema.certificates).set({ status: 'Declined', decidedBy: u.id, decidedAt: new Date(), decisionNote: b.note }).where(eq(schema.certificates.id, certId));
     await audit(ctx, 'certificate.declined', 'certificate', certId, { status: 'Proposed' }, { status: 'Declined', note: b.note }, c.caseId);
+    await tell(ctx, cs, c.caseId, { kind: 'CertificateDeclined', title: 'The certification proposal was not approved', body: b.note });
     return getOne(ctx, certId);
   }
   const el = await eligibility(ctx, c.caseId);
@@ -96,6 +105,7 @@ export async function decide(ctx: Ctx, certId: string, b: { decision: 'Certify' 
     level: el.level, scoreId: el.score.id, overall: String(el.score.overall), criteria: el.criteria as any, unlocks: el.unlocks as any
   }).where(eq(schema.certificates.id, certId));
   await audit(ctx, 'certificate.certified', 'certificate', certId, { status: 'Proposed', level: c.level }, { status: 'Certified', level: el.level, overall: Number(el.score.overall), validMonths: el.validMonths, note: b.note }, c.caseId);
+  await tell(ctx, cs, c.caseId, { kind: 'CertificateIssued', title: `Business Health certificate issued: ${el.level}`, body: `Valid until ${validUntil(now, el.validMonths).toISOString().slice(0, 10)}. A new check is due before then.` });
   return getOne(ctx, certId);
 }
 
@@ -104,10 +114,11 @@ export async function revoke(ctx: Ctx, certId: string, reason: string) {
   const u = need(ctx).user;
   const [c] = await ctx.db.select().from(schema.certificates).where(eq(schema.certificates.id, certId)).limit(1);
   if (!c) throw (await import('@/lib/errors')).notFound('Certificate not found');
-  await assertCase(ctx, c.caseId);
+  const cs = await assertCase(ctx, c.caseId);
   if (c.status !== 'Certified') throw unprocessable('Only a certified certificate can be revoked');
   await ctx.db.update(schema.certificates).set({ status: 'Revoked', revokedBy: u.id, revokedAt: new Date(), revokeReason: reason }).where(eq(schema.certificates.id, certId));
   await audit(ctx, 'certificate.revoked', 'certificate', certId, { status: 'Certified', level: c.level }, { status: 'Revoked', reason }, c.caseId);
+  await tell(ctx, cs, c.caseId, { kind: 'CertificateRevoked', title: 'A Business Health certificate was revoked', body: reason });
   return getOne(ctx, certId);
 }
 
@@ -120,7 +131,7 @@ async function getOne(ctx: Ctx, id: string) {
 export async function setVerification(ctx: Ctx, certId: string, on: boolean) {
   allow(ctx, 'cases', 'read');
   const u = need(ctx).user;
-  if (!['OWNER', 'ADMIN'].includes(u.role)) throw forbidden('Only the business owner can decide this');
+  if (u.role !== 'OWNER') throw forbidden('Only the business owner can decide this');
   const [c] = await ctx.db.select().from(schema.certificates).where(eq(schema.certificates.id, certId)).limit(1);
   if (!c) throw (await import('@/lib/errors')).notFound('Certificate not found');
   await assertCase(ctx, c.caseId);

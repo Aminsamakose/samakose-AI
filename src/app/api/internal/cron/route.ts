@@ -14,7 +14,7 @@ async function run(req: Request) {
   const given = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!env.cronSecret || !safeEqual(given, env.cronSecret)) return NextResponse.json({ error: { code: 'unauthorized', message: 'Bad secret' } }, { status: 401 });
   void registerJob;
-  for (const kind of ['overdue_scan', 'assignment_scan', 'invoice_scan', 'expire_sessions', 'content_scan', 'session_reminder', 'escalation_scan', 'message_retention', 'send_emails']) {
+  for (const kind of ['overdue_scan', 'assignment_scan', 'invoice_scan', 'recheck_scan', 'expire_sessions', 'content_scan', 'session_reminder', 'escalation_scan', 'message_retention', 'send_emails']) {
     await db().execute(sql`insert into jobs (kind, payload) select ${kind}, '{}'::jsonb where not exists (select 1 from jobs where kind = ${kind} and status in ('queued','running'))`);
   }
   if (env.koboToken && env.koboAsset) await db().execute(sql`insert into jobs (kind, payload) select 'kobo_pull', '{}'::jsonb where not exists (select 1 from jobs where kind='kobo_pull' and status in ('queued','running'))`);
