@@ -32,7 +32,8 @@ export function OpportunitySourcesPanel() {
             <div className="table-wrap"><table><caption className="sr">Opportunity sources</caption>
               <thead><tr><th>Source</th><th>Type</th><th>Region</th><th>Last run</th><th><span className="sr">Actions</span></th></tr></thead>
               <tbody>{d.items.map((s: any) => <tr key={s.id}>
-                <td><strong>{s.name}</strong><div className="small muted" style={{ overflowWrap: 'anywhere' }}>{s.kind === 'query' ? s.query : s.url}</div></td>
+                <td><strong>{s.name}</strong><div className="small muted" style={{ overflowWrap: 'anywhere' }}>{s.kind === 'query' ? s.query : <a href={s.url} target="_blank" rel="noopener noreferrer">{s.url}<span className="sr"> (opens in a new tab)</span></a>}</div>
+                  {s.kind === 'query' && <div className="small"><a href={`https://www.google.com/search?q=${encodeURIComponent(s.query)}`} target="_blank" rel="noopener noreferrer">Open this search in Google<span className="sr"> (opens in a new tab)</span></a> · <a href={`https://duckduckgo.com/?q=${encodeURIComponent(s.query)}`} target="_blank" rel="noopener noreferrer">DuckDuckGo<span className="sr"> (opens in a new tab)</span></a></div>}</td>
                 <td><Badge>{KIND[s.kind]}</Badge>{!s.active && <> <Badge tone="warn">Paused</Badge></>}</td><td>{s.region}</td>
                 <td>{s.lastRunAt ? dateFmt(s.lastRunAt) : 'Not yet'}<div className="small muted">{s.lastStatus ?? ''}{s.lastRunAt ? ` · ${s.lastFound} saved` : ''}</div></td>
                 <td><div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
