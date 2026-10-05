@@ -48,7 +48,7 @@ describe('scoring', () => {
 });
 
 describe('state machines', () => {
-  it('has 14 case transitions', () => expect(CASE_TRANSITIONS).toHaveLength(14));
+  it('has 15 case transitions', () => expect(CASE_TRANSITIONS).toHaveLength(15));
   it('blocks a jump', () => expect(canTransitionCase('PROFILED', 'DIAGNOSED', {}).ok).toBe(false));
   it('requires facts', () => {
     expect(canTransitionCase('DIAGNOSTIC', 'DIAGNOSED', {}).ok).toBe(false);

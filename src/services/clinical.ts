@@ -165,7 +165,9 @@ export async function reviewPrescription(ctx: Ctx, id: string, b: { decision: 'A
     return { status: 'RETURNED', caseStatus: cs.status };
   }
   // Older approved versions stop being current.
-  await ctx.db.update(rx).set({ status: 'SUPERSEDED' }).where(and(eq(rx.caseId, p.caseId), eq(rx.status, 'APPROVED'), sql`${rx.id} <> ${id}`));
+  const older = await ctx.db.update(rx).set({ status: 'SUPERSEDED' }).where(and(eq(rx.caseId, p.caseId), eq(rx.status, 'APPROVED'), sql`${rx.id} <> ${id}`)).returning({ id: rx.id });
+  // Interventions of the replaced prescription stop being current. Their unfinished actions are kept, and the new plan does not repeat them.
+  if (older.length) await ctx.db.update(schema.interventions).set({ status: 'REPLACED' }).where(inArray(schema.interventions.prescriptionId, older.map((o) => o.id)));
   await materialise(ctx, p, cs);
   await emitEvent(ctx, 'PrescriptionApproved', { caseId: p.caseId, payload: { prescription: p.code } });
   const state = await advanceCase(ctx, p.caseId);
@@ -178,10 +180,12 @@ async function materialise(ctx: Ctx, p: typeof rx.$inferSelect, cs: typeof schem
   const owner = (await ctx.db.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.orgId, cs.orgId), eq(schema.users.role, 'OWNER'), eq(schema.users.active, true))).orderBy(schema.users.createdAt).limit(1))[0]?.id ?? null;
   const assignee = (role: string) => (role === 'OWNER' ? owner : role === 'COACH' ? cs.coachId : cs.consultantId);
   const now = new Date();
+  const openNow = new Set((await ctx.db.select({ text: schema.actions.text }).from(schema.actions).where(and(eq(schema.actions.caseId, p.caseId), sql`${schema.actions.status} <> 'Done'`))).map((a) => a.text));
   for (const item of p.items) {
     const [iv] = await ctx.db.insert(schema.interventions).values({ caseId: p.caseId, prescriptionId: p.id, libraryCode: item.library_id }).returning({ id: schema.interventions.id });
     await emitEvent(ctx, 'InterventionAssigned', { caseId: p.caseId, payload: { library: item.library_id } });
     for (const a of item.actions) {
+      if (openNow.has(a.text)) continue;
       await ctx.db.insert(schema.actions).values({ caseId: p.caseId, interventionId: iv.id, text: a.text, ownerRole: a.owner_role, assigneeId: assignee(a.owner_role), dueDate: isoDate(addDays(now, a.deadline_days)) });
       await emitEvent(ctx, 'ActionCreated', { caseId: p.caseId, payload: { text: a.text } });
     }

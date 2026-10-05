@@ -78,6 +78,11 @@ export async function updateAction(ctx: Ctx, id: string, b: { status?: 'Open' | 
   await ctx.db.update(a).set(patch).where(eq(a.id, id));
   await audit(ctx, 'action.updated', 'action', id, { status: before.status, assigneeId: before.assigneeId, dueDate: before.dueDate }, { status: patch.status ?? before.status, assigneeId: patch.assigneeId ?? before.assigneeId, dueDate: patch.dueDate ?? before.dueDate }, before.caseId);
   if (patch.status === 'Done') await emitEvent(ctx, 'ActionCompleted', { caseId: before.caseId, payload: { text: before.text } });
+  if (patch.status && before.interventionId) {
+    const rows = await ctx.db.select({ status: a.status }).from(a).where(eq(a.interventionId, before.interventionId));
+    const next = rows.every((r) => r.status === 'Done') ? 'COMPLETED' : rows.some((r) => r.status !== 'Open') ? 'IN PROGRESS' : 'PLANNED';
+    await ctx.db.update(schema.interventions).set({ status: next }).where(and(eq(schema.interventions.id, before.interventionId), sql`${schema.interventions.status} <> 'REPLACED'`));
+  }
   if (patch.status) await advanceCase(ctx, before.caseId);
   return { ok: true, status: patch.status ?? before.status };
 }

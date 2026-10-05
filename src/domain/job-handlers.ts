@@ -194,8 +194,12 @@ registerJob('assignment_scan', async () => tx(async (t) => scanUnacknowledged(sy
 registerJob('invoice_scan', async () => {
   return tx(async (t) => {
     const ctx = systemCtx(t, 'scan');
-    const upd = await t.update(schema.invoices).set({ status: 'Overdue', updatedAt: new Date() }).where(and(eq(schema.invoices.status, 'Sent'), sql`${schema.invoices.dueDate} < current_date`)).returning({ id: schema.invoices.id, code: schema.invoices.code });
-    for (const i of upd) await audit(ctx, 'invoice.overdue', 'invoice', i.id, { status: 'Sent' }, { status: 'Overdue' });
+    const upd = await t.update(schema.invoices).set({ status: 'Overdue', updatedAt: new Date() }).where(and(eq(schema.invoices.status, 'Sent'), sql`${schema.invoices.dueDate} < current_date`)).returning({ id: schema.invoices.id, code: schema.invoices.code, orgId: schema.invoices.orgId });
+    for (const i of upd) {
+      await audit(ctx, 'invoice.overdue', 'invoice', i.id, { status: 'Sent' }, { status: 'Overdue' });
+      const people = await t.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.active, true), sql`(${schema.users.role} = 'FINANCE' or (${schema.users.role} = 'OWNER' and ${schema.users.orgId} = ${i.orgId}))`));
+      await notifyUsers(ctx, people.map((p) => p.id), { kind: 'InvoiceOverdue', title: `Invoice ${i.code} is overdue`, link: `/finance/invoices/${i.id}`, email: true });
+    }
     const expiring = await t.select().from(schema.contracts).where(and(eq(schema.contracts.status, 'Active'), sql`${schema.contracts.endDate} between current_date and current_date + 30`));
     let alerts = 0;
     for (const c of expiring) {
@@ -208,6 +212,40 @@ registerJob('invoice_scan', async () => {
     return { overdue: upd.length, expiringAlerts: alerts, expired: ended.length };
   });
 });
+
+/**
+ * The re-check loop. Two reminders, each sent once per period:
+ *  1. A case whose last health score is older than the re-check interval: the case team and the owner are told a new check is due.
+ *  2. An approved business owner with no case after a few days: administrators and programme managers are told a case is owed.
+ */
+registerJob('recheck_scan', async () => tx(async (t) => {
+  const ctx = systemCtx(t, 'scan');
+  const rules = await loadRules(t);
+  const days = Number(rules['recheck.interval_days'] ?? 180), owedDays = Number(rules['recheck.owed_case_days'] ?? 2);
+  const due = (await t.execute(sql`select c.id, c.org_id, c.code, c.consultant_id, c.coach_id from cases c
+    where c.status in ('MONITORING','MIDLINE','ENDLINE','FOLLOW-UP','GRADUATED','RE-ENTRY')
+      and coalesce((select max(h.created_at) from health_scores h where h.case_id = c.id), c.created_at) < now() - (${days} || ' days')::interval
+      and not exists (select 1 from events e where e.type = 'ClientInactive' and e.case_id = c.id and e.created_at > now() - (${days} || ' days')::interval)
+    limit 200`)).rows as { id: string; org_id: string; code: string; consultant_id: string | null; coach_id: string | null }[];
+  for (const c of due) {
+    const owners = await t.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.orgId, c.org_id), eq(schema.users.role, 'OWNER'), eq(schema.users.active, true)));
+    await emitEvent(ctx, 'ClientInactive', { caseId: c.id, orgId: c.org_id, payload: { case: c.code, intervalDays: days } });
+    await notifyUsers(ctx, [...owners.map((o) => o.id), c.consultant_id, c.coach_id].filter(Boolean) as string[], { kind: 'RecheckDue', title: 'A new Business Health check is due', body: `The last score is more than ${days} days old. Take a new check to see what has changed.`, link: `/cases/${c.id}`, email: true });
+  }
+  const owed = (await t.execute(sql`select o.id, o.name from organisations o
+    where o.deleted_at is null and o.status <> 'Merged' and exists (select 1 from users u where u.org_id = o.id and u.role = 'OWNER' and u.active and u.approval_status = 'approved' and u.updated_at < now() - (${owedDays} || ' days')::interval)
+      and not exists (select 1 from cases c where c.org_id = o.id)
+      and not exists (select 1 from events e where e.type = 'ClientInactive' and e.org_id = o.id and e.case_id is null and e.created_at > now() - interval '7 days')
+    limit 200`)).rows as { id: string; name: string }[];
+  if (owed.length) {
+    const staff = await t.select({ id: schema.users.id }).from(schema.users).where(and(inArray(schema.users.role, ['ADMIN', 'PROGRAMME_MANAGER']), eq(schema.users.active, true)));
+    for (const o of owed) {
+      await t.insert(schema.events).values({ type: 'ClientInactive', orgId: o.id, caseId: null, payload: { reason: 'case_owed' } });
+      await notifyUsers(ctx, staff.map((x) => x.id), { kind: 'CaseOwed', title: `${o.name} is approved but has no case`, body: 'Open a case so the owner can start the Business Health check.', link: `/organisations/${o.id}` });
+    }
+  }
+  return { recheckDue: due.length, casesOwed: owed.length };
+}));
 
 registerJob('expire_sessions', async () => {
   const s = await db().execute(sql`delete from sessions where expires_at < now()`);

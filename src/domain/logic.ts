@@ -46,6 +46,8 @@ export const DEFAULT_RULES: Rules = {
   'cert.min_evidence_share': 0.6,
   'cert.valid_months': 12,
   'ai.monthly_cost_cap_usd': 25,
+  'recheck.interval_days': 180,
+  'recheck.owed_case_days': 2,
   'ai.usd_per_million_input_tokens': 3,
   'ai.usd_per_million_output_tokens': 15
 };
@@ -87,6 +89,8 @@ export const RULE_NOTES: Record<string, string> = {
   'cert.investment_ready_min': 'Lowest overall score for an Investment-ready certificate. At least one readiness index must also be Ready',
   'cert.min_evidence_share': 'Share of scored answers that must be verified or document-supported before a certificate can be proposed',
   'cert.valid_months': 'How long a certificate stays valid, in months',
+  'recheck.interval_days': 'Days after the last health score before the case team and the owner are reminded to run a new check. The starting figure is a placeholder to confirm',
+  'recheck.owed_case_days': 'Days an approved business owner may wait without a case before staff are alerted that one is owed',
   'ai.monthly_cost_cap_usd': 'Most the live AI may cost in a calendar month, in US dollars, across all agents. New live tasks are refused once it is reached. 0 means no cap. The starting figure is a placeholder',
   'ai.usd_per_million_input_tokens': 'Estimated price per million input tokens, used only to estimate spend. Check it against your Anthropic invoice',
   'ai.usd_per_million_output_tokens': 'Estimated price per million output tokens, used only to estimate spend. Check it against your Anthropic invoice'
@@ -186,7 +190,8 @@ export const CASE_TRANSITIONS: { from: CaseState; to: CaseState; trigger: string
   { from: 'MIDLINE', to: 'ENDLINE', trigger: 'Endline date reached', needs: ['confirmed'], manual: true },
   { from: 'ENDLINE', to: 'FOLLOW-UP', trigger: 'Endline approved', needs: ['confirmed'], manual: true },
   { from: 'FOLLOW-UP', to: 'GRADUATED', trigger: 'Follow-up complete', needs: ['confirmed'], manual: true },
-  { from: 'GRADUATED', to: 'RE-ENTRY', trigger: 'Re-entry trigger fires', needs: ['confirmed'], manual: true }
+  { from: 'GRADUATED', to: 'RE-ENTRY', trigger: 'Re-entry trigger fires', needs: ['confirmed'], manual: true },
+  { from: 'RE-ENTRY', to: 'DIAGNOSTIC', trigger: 'Re-check opened', needs: ['confirmed'], manual: true }
 ];
 export type Facts = Partial<Record<CaseFact, boolean>>;
 export function canTransitionCase(from: CaseState, to: CaseState, facts: Facts) {

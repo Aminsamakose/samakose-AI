@@ -5,7 +5,7 @@ import { audit } from '@/lib/audit';
 import { fieldError } from '@/lib/errors';
 import { env } from '@/lib/env';
 import { allow, need } from './common';
-import { AI_RULE_KEYS, PROVIDERS, activeProvider, modelFor, providerHasKey, providerHost, providerModel, refreshAiConfig, setAiConfig, transportFor, type Provider } from './ai-providers';
+import { publicHttpsUrl, AI_RULE_KEYS, PROVIDERS, activeProvider, modelFor, providerHasKey, providerHost, providerModel, refreshAiConfig, setAiConfig, transportFor, type Provider } from './ai-providers';
 import { aiIsMock } from './ai';
 import { TIERS, TIER_LABEL, FAMILIES, tierKey, AGENT_TIER } from '@/domain/model-tiers';
 
@@ -29,9 +29,7 @@ export async function readAiSettings(ctx: Ctx) {
 }
 
 const modelOk = (v: string) => /^[A-Za-z0-9._:\/-]{2,80}$/.test(v);
-function urlOk(v: string) {
-  try { const u = new URL(v); if (u.protocol !== 'https:') return false; const h = u.hostname; if (h === 'localhost' || /^[\d.]+$/.test(h) || h.startsWith('[') || h.endsWith('.local') || h.endsWith('.internal')) return false; return !u.username && !u.password; } catch { return false; }
-}
+const urlOk = publicHttpsUrl;
 
 /** Changing provider sends client business data to a different company. It needs an explicit confirmation and a reason, and is recorded. */
 export async function saveAiSettings(ctx: Ctx, b: { provider: Provider; claudeModel?: string; openaiModel?: string; openaiBaseUrl?: string; tiers?: Record<string, { claude?: string; openai?: string }>; confirm?: boolean; reason?: string }) {
