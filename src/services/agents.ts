@@ -17,8 +17,7 @@ import { aiIsLive, aiIsMock, getAiTransport } from './ai';
 import { tierModel, transportFor } from './ai-providers';
 import { tierOf } from '@/domain/model-tiers';
 import { extractJson } from '@/domain/logic';
-import { AI_CASES } from '@/domain/ai-eval-cases';
-import { checkDiagnosis } from '@/domain/ai-eval-checks';
+import { SUITES } from '@/domain/ai-eval';
 
 const OWNER_ROLES = ['ADMIN', 'EXECUTIVE', 'PROGRAMME_MANAGER', 'EXPERT', 'REVIEWER'];
 const jobKind = (code: string) => `ai_${code}`;
@@ -198,7 +197,8 @@ export async function evaluateAgent(ctx: Ctx, id: string, budgetUsd = 1) {
   const a = await row(ctx, id);
   const v = await currentVersion(ctx, a);
   if (!v) throw unprocessable('This agent has no current version');
-  if (a.code !== 'diagnosis') throw unprocessable(`The ${a.name} has no evaluation cases yet, so it cannot be evaluated. Add a case library for it first.`);
+  const suite = SUITES[a.code];
+  if (!suite) throw unprocessable(`The ${a.name} has no evaluation cases yet, so it cannot be evaluated. Add a case library for it first.`);
   if (!aiIsLive()) throw unprocessable('Evaluation needs the live model. Set the provider key first. A mock run never counts as a pass.');
   const g = await gate(ctx.db, a.code, { live: true, evaluation: true });
   if (!g.ok) throw unprocessable(g.reason);
@@ -207,7 +207,7 @@ export async function evaluateAgent(ctx: Ctx, id: string, budgetUsd = 1) {
   const inP = price('ai.usd_per_million_input_tokens', 5), outP = price('ai.usd_per_million_output_tokens', 25);
   let spent = 0, passed = 0, ran = 0, stopped = false;
   const lines: string[] = [];
-  for (const c of AI_CASES) {
+  for (const c of suite.cases) {
     const payload = JSON.stringify(c.context);
     const worst = ((Math.ceil(payload.length / 2) + 1500) * inP + 1500 * outP) / 1e6;
     if (spent + worst > budgetUsd) { stopped = true; lines.push(`${c.name}: not run (budget)`); break; }
@@ -216,13 +216,13 @@ export async function evaluateAgent(ctx: Ctx, id: string, budgetUsd = 1) {
       const r = await (getAiTransport() ?? transportFor())(g.prompt, payload, AbortSignal.timeout(60_000), g.model ?? tierModel(tierOf(a.code)));
       spent += (r.inputTokens * inP + r.outputTokens * outP) / 1e6;
       const out = extractJson(r.text);
-      const problems = out ? checkDiagnosis(c, out) : ['Reply was not valid JSON'];
+      const problems = out ? suite.check(c, out) : ['Reply was not valid JSON'];
       if (!problems.length) passed++; else lines.push(`${c.name}: ${problems.join('; ')}`);
     } catch (e) { lines.push(`${c.name}: error ${(e as Error).message}`); }
   }
-  const ok = !stopped && ran === AI_CASES.length && passed === ran;
-  const note = `${passed} of ${AI_CASES.length} cases passed, estimated spend USD ${spent.toFixed(3)}.${lines.length ? ' ' + lines.join(' | ') : ''}`;
+  const ok = !stopped && ran === suite.cases.length && passed === ran;
+  const note = `${passed} of ${suite.cases.length} cases passed, estimated spend USD ${spent.toFixed(3)}.${lines.length ? ' ' + lines.join(' | ') : ''}`;
   await recordEvaluation(ctx.db, v.id, ok ? 'Passed' : 'Failed', note);
-  await audit(ctx, 'agent.evaluated', 'ai_agent', id, { version: v.version, previous: v.evaluation }, { result: ok ? 'Passed' : 'Failed', passed, ran, of: AI_CASES.length, spentUsd: Number(spent.toFixed(3)) });
-  return { result: ok ? 'Passed' : 'Failed', passed, ran, total: AI_CASES.length, spentUsd: Number(spent.toFixed(3)), note };
+  await audit(ctx, 'agent.evaluated', 'ai_agent', id, { version: v.version, previous: v.evaluation }, { result: ok ? 'Passed' : 'Failed', passed, ran, of: suite.cases.length, spentUsd: Number(spent.toFixed(3)) });
+  return { result: ok ? 'Passed' : 'Failed', passed, ran, total: suite.cases.length, spentUsd: Number(spent.toFixed(3)), note };
 }

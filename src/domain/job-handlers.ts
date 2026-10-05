@@ -14,6 +14,7 @@ import { latestDiagnosis, latestScore, loadRules, systemCtx } from '@/services/c
 import { validateDiagnosis, validatePrescription } from './logic';
 import { mockBrief, mockDiagnosis, mockPrescription, mockReport, type BriefContext, type DiagnosisContext, type PrescriptionContext, type ReportContext } from './mockai';
 import { koboPull } from '@/services/kobo';
+import { runScout } from '@/services/scout';
 import { questionsOf, versionForRow } from '@/services/frameworks';
 
 async function fail(caseId: string | null, requestedBy: string | null, what: string, e: unknown) {
@@ -218,6 +219,9 @@ registerJob('invoice_scan', async () => {
  *  1. A case whose last health score is older than the re-check interval: the case team and the owner are told a new check is due.
  *  2. An approved business owner with no case after a few days: administrators and programme managers are told a case is owed.
  */
+/** Opportunity Scout. Runs daily; each source is read about once a week, within a time budget and the free search allowance. Saves Drafts only. */
+registerJob('scout_weekly', async () => { const r = await runScout({ budgetMs: 30_000 }); return { sources: r.sources, drafted: r.drafted, failed: r.failed }; });
+
 registerJob('recheck_scan', async () => tx(async (t) => {
   const ctx = systemCtx(t, 'scan');
   const rules = await loadRules(t);

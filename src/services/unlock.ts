@@ -18,6 +18,8 @@ import { CERT_ORDER, CONSENT_SCOPES, acceptingReferrals, canAdvance, evaluate, i
 import { notifyUsers } from '@/domain/notify';
 import { OPPORTUNITY_TYPES } from '@/db/schema';
 import { allow, need } from './common';
+import { AgentBlocked, NonRetryable, runAgent } from './ai';
+import { READER_MAX_CHARS, mockMatch, mockReading, validateMatch, validateReading, type MatcherContext, type MatcherOutput, type ReaderOutput } from '@/domain/opportunity-agents';
 
 const o = schema.opportunities, r = schema.opportunityReferrals, ev = schema.opportunityReferralEvents;
 const list = z.array(z.string().trim().min(1).max(80)).max(30);
@@ -318,4 +320,44 @@ export async function summary(ctx: Ctx) {
   const counts = Object.fromEntries(rows.map((x) => [x.status, x.n]));
   const open = await ctx.db.select({ n: sql<number>`count(*)::int` }).from(o).where(eq(o.status, 'Open'));
   return { opportunitiesOpen: open[0]?.n ?? 0, referrals: counts, awardedCount: counts.Awarded ?? 0, fundingMobilisedGhs: Number(rows.find((x) => x.status === 'Awarded')?.amount ?? 0) };
+}
+
+
+/* --------------------------- agents that help --------------------------- */
+const agentFailure = (e: unknown) => (e instanceof AgentBlocked ? unprocessable(`${e.message}. Do this by hand, or ask an administrator.`) : e instanceof NonRetryable ? unprocessable('The assistant could not produce a usable answer. Do this by hand.') : e);
+
+/** Opportunity Reader (Luna): turn pasted call text into a draft for staff to check. Nothing is saved here. */
+export async function readOpportunityText(ctx: Ctx, b: { text: string }) {
+  allow(ctx, 'opportunities', 'create');
+  const text = b.text.trim();
+  if (text.length < 40) throw unprocessable('Paste more of the call. At least a few sentences are needed');
+  if (text.length > READER_MAX_CHARS) throw unprocessable(`The text is too long. Paste up to ${READER_MAX_CHARS.toLocaleString('en-GB')} characters`);
+  let res;
+  try { res = await runAgent({ agent: 'opportunity_reader', caseId: null, requestedBy: need(ctx).user.id, context: { text }, validate: (o) => validateReading(o, text), mock: () => mockReading(text) }); } catch (e) { throw agentFailure(e); }
+  const out = res.output as ReaderOutput;
+  const parsed = criteriaSchema.safeParse(out.criteria);
+  const uncertain = [...out.uncertain.map(String).slice(0, 12), ...(parsed.success ? [] : ['The requirements could not be read cleanly, so none were filled in'])];
+  await audit(ctx, 'opportunity.read_by_agent', 'opportunity', null, undefined, { requestId: res.requestId, characters: text.length, fields: Object.keys(out).length });
+  return {
+    requestId: res.requestId,
+    draft: { title: out.title.trim().slice(0, 200), type: out.type, provider: out.provider.trim().slice(0, 200), summary: out.summary.trim().slice(0, 1200), url: out.url && /^https?:\/\//.test(out.url) ? out.url : null, valueMin: out.valueMin, valueMax: out.valueMax, currency: (out.currency || 'GHS').slice(0, 8), deadline: out.deadline, criteria: parsed.success ? parsed.data : {} },
+    uncertain, note: 'This is a draft. Check every field against the original call before saving. Nothing has been saved or published.'
+  };
+}
+
+/** Opportunity Matcher (Sol): explain a rules-engine result in plain words. The verdict is never changed here. */
+export async function explainMatch(ctx: Ctx, orgId: string, opportunityId: string) {
+  allow(ctx, 'opportunities', 'read');
+  const { facts } = await factsFor(ctx, orgId);
+  const opp = await get(ctx, opportunityId);
+  const match = evaluate(opp.criteria as Criteria, facts);
+  const context: MatcherContext = {
+    opportunity: { title: opp.title, type: opp.type, provider: opp.provider, summary: opp.summary, valueMin: money(opp.valueMin), valueMax: money(opp.valueMax), currency: opp.currency, deadline: opp.deadline },
+    match, readiness: facts.score ? { overall: facts.score.overall, maturity: facts.score.maturity, confidence: facts.score.confidence } : null
+  };
+  let res;
+  try { res = await runAgent({ agent: 'opportunity_matcher', caseId: null, requestedBy: need(ctx).user.id, context: context as unknown as Record<string, unknown>, validate: (o) => validateMatch(o, context), mock: () => mockMatch(context) }); } catch (e) { throw agentFailure(e); }
+  const out = res.output as MatcherOutput;
+  await audit(ctx, 'opportunity.match_explained', 'organisation', orgId, undefined, { opportunity: opp.title, status: match.status, requestId: res.requestId });
+  return { status: match.status, explanation: out.explanation, nextSteps: out.next_steps, caveat: out.caveat ?? match.caution, requestId: res.requestId, note: 'This explains the rules check. It does not decide anything, and a referral still needs the owner\'s consent and a person\'s approval.' };
 }

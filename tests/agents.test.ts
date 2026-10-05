@@ -66,8 +66,8 @@ afterAll(async () => {
 });
 
 describe('agent registry through the API', () => {
-  it('registers the four agents as v1, in Testing, autonomy 1, version frozen', async () => {
-    expect(list.agents.map((a: any) => a.code).sort()).toEqual(['brief', 'diagnosis', 'enquiry', 'prescription', 'report']);
+  it('registers the seven agents as v1, in Testing, autonomy 1, version frozen', async () => {
+    expect(list.agents.map((a: any) => a.code).sort()).toEqual(['brief', 'diagnosis', 'enquiry', 'opportunity_matcher', 'opportunity_reader', 'prescription', 'report']);
     for (const a of list.agents) { expect(a.version).toBe(1); expect(a.status).toBe('Testing'); expect(a.autonomy).toBe(1); }
     const [v] = await db().select().from(schema.aiAgentVersions).where(eq(schema.aiAgentVersions.agentId, agent('diagnosis').id));
     await expect(db().update(schema.aiAgentVersions).set({ prompt: 'changed' }).where(eq(schema.aiAgentVersions.id, v.id))).rejects.toThrow();
@@ -128,7 +128,7 @@ describe('agent registry through the API', () => {
   });
   it('shows the agent summary on the command centre', async () => {
     const cc = (await api(admin).get('/admin/command-centre')).data;
-    expect(cc.agents.total).toBe(5);
+    expect(cc.agents.total).toBe(7);
     expect((await api(admin).get('/admin/agents')).data.cost.state).toBe('ok');
   });
 });

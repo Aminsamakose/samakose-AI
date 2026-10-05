@@ -54,6 +54,8 @@ export default function PathwayPage() {
 function Opp({ i, compact, owner, can, id, act, setDlg }: { i: any; compact?: boolean; owner: boolean; can: (r: string, a: string) => boolean; id: string; act: (fn: () => Promise<unknown>, ok: string) => Promise<void>; setDlg: (d: any) => void }) {
   const o = i.opportunity, m = i.match, r = i.referral;
   const staffNext = !owner && r ? STAFF_NEXT[r.status] ?? [] : [];
+  const [ex, setEx] = useState<any>(null); const [exBusy, setExBusy] = useState(false); const toast = useToast();
+  const explain = async () => { setExBusy(true); try { setEx(await api.post(`/organisations/${id}/opportunities/${o.id}/explain`, {})); } catch (e) { toast(errText(e), 'bad'); } finally { setExBusy(false); } };
   return <div className="stack" style={{ gap: 8 }}>
     <div className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
       <strong>{o.url ? <a href={o.url} target="_blank" rel="noopener noreferrer">{o.title}<span className="sr"> (opens in a new tab)</span></a> : o.title}</strong>
@@ -74,8 +76,14 @@ function Opp({ i, compact, owner, can, id, act, setDlg }: { i: any; compact?: bo
       {!owner && !r && m.status === 'Eligible' && can('referrals', 'create') && <Button variant="primary" onClick={() => act(() => api.post(`/organisations/${id}/opportunities/${o.id}/suggest`, {}), 'Suggested to the owner')}>Suggest to the owner</Button>}
       {!owner && r?.status === 'Consented' && can('referrals', 'approve') && <Button variant="primary" onClick={() => act(() => api.post(`/referrals/${r.id}/approve`, {}), 'Approved')}>Approve the match</Button>}
       {!owner && can('referrals', 'edit') && staffNext.map((to) => <Button key={to} variant={to === 'Declined' ? 'danger' : undefined} onClick={() => setDlg({ kind: 'status', item: i, to })}>{to === 'Declined' ? 'Decline' : `Mark ${to.toLowerCase()}`}</Button>)}
+      {!owner && !compact && can('opportunities', 'read') && <Button loading={exBusy} onClick={explain}>Explain this match</Button>}
       {r && <History id={r.id} />}
     </div>
+    {ex && <div className="alert info" role="status"><strong>Opportunity Matcher</strong>
+      <p style={{ margin: '4px 0' }}>{ex.explanation}</p>
+      {ex.nextSteps?.length > 0 && <ul className="small">{ex.nextSteps.map((x: string) => <li key={x}>{x}</li>)}</ul>}
+      {ex.caveat && <p className="small" style={{ margin: 0 }}><strong>Note:</strong> {ex.caveat}</p>}
+      <p className="small muted" style={{ margin: '4px 0 0' }}>{ex.note}</p></div>}
     {!owner && r?.status === 'Approved' && <p className="small muted" style={{ margin: 0 }}>The platform does not send anything to the partner. Share only the items the owner agreed to.</p>}
   </div>;
 }

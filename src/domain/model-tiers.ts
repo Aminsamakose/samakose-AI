@@ -10,7 +10,7 @@
 export const TIERS = ['luna', 'sol', 'astra'] as const;
 export type Tier = (typeof TIERS)[number];
 export const TIER_LABEL: Record<Tier, string> = { luna: 'Luna (high volume)', sol: 'Sol (standard reasoning)', astra: 'Astra (complex reasoning)' };
-export const AGENT_TIER: Record<string, Tier> = { enquiry: 'luna', brief: 'sol', report: 'sol', diagnosis: 'astra', prescription: 'astra' };
+export const AGENT_TIER: Record<string, Tier> = { enquiry: 'luna', opportunity_reader: 'luna', brief: 'sol', report: 'sol', opportunity_matcher: 'sol', diagnosis: 'astra', prescription: 'astra' };
 export const tierOf = (agent: string): Tier => AGENT_TIER[agent] ?? 'sol';
 /** Models are set per provider family, because a Claude model name means nothing to ChatGPT. */
 export const FAMILIES = ['claude', 'openai'] as const;
