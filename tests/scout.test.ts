@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { api, ensureReference, makeOrg, makeUser, uniq, type Session } from './helpers';
 import { db, schema } from '@/db/client';
 import { findDeadline, closedWording } from '@/domain/opportunity-agents';
-import { htmlToText, looksLikeCall, normaliseUrl, parseFeed, robotsAllows, scamSignals, screenCandidate, titleKey } from '@/domain/scout';
+import { extractLinks, regionFromUrl, htmlToText, looksLikeCall, normaliseUrl, parseFeed, robotsAllows, scamSignals, screenCandidate, titleKey } from '@/domain/scout';
 import { setScoutFetch } from '@/services/scout';
 
 const RSS = `<?xml version="1.0"?><rss><channel>
@@ -156,5 +156,68 @@ describe('the weekly run', () => {
     expect((await api(admin).del(`/opportunity-sources/${s.id}`)).status).toBe(200);
     const acts = (await db().select().from(schema.auditLog).where(eq(schema.auditLog.entityId, s.id))).map((a) => a.action);
     expect(acts).toEqual(expect.arrayContaining(['scout.source_added', 'scout.source_updated', 'scout.source_removed']));
+  });
+});
+
+describe('whole websites', () => {
+  beforeAll(() => {
+    setScoutFetch(async (url) => {
+      const u = new URL(url);
+      if (u.pathname === '/robots.txt') return { status: 404, text: '', type: 'text/plain', url };
+      const p = pages[url]; if (p) return { ...p, url };
+      return { status: 404, text: '', type: 'text/html', url };
+    });
+  });
+  const HOME = `<html><body><nav><a href="/about">About us</a><a href="/careers">Careers</a></nav>
+  <a href="/calls/youth-agri-grant">Youth agribusiness grant call 2099</a>
+  <a href="https://other.example.net/funding/open-call">Open call for SMEs</a>
+  <a href="/files/guide.pdf">Grant guide</a><a href="mailto:a@b.org">Apply by email</a><a href="#top">Apply</a>
+  <a href="/calls/youth-agri-grant">Youth agribusiness grant call 2099 (again)</a></body></html>`;
+  it('follows only the links that look like calls, once each', () => {
+    const l = extractLinks(HOME, 'https://sitetest.example.org/');
+    expect(l.map((x) => x.url)).toEqual(expect.arrayContaining(['https://sitetest.example.org/calls/youth-agri-grant', 'https://other.example.net/funding/open-call']));
+    expect(l.length).toBe(2);
+    expect(extractLinks('<a href="/x">hello</a>', 'https://a.example.org/')).toEqual([]);
+  });
+  it('guesses the region from the address', () => {
+    expect(regionFromUrl('https://www.gipc.gov.gh/')).toBe('Ghana');
+    expect(regionFromUrl('https://www.nigeria.gov.ng/')).toBe('West Africa');
+    expect(regionFromUrl('https://www.afdb.org/')).toBe('Africa');
+    expect(regionFromUrl('https://www.bmz.de/')).toBe('Europe');
+    expect(regionFromUrl('https://www.sba.gov/')).toBe('North America');
+    expect(regionFromUrl('https://www.dti.gov.ph/')).toBe('Asia');
+    expect(regionFromUrl('https://www.worldbank.org/')).toBe('Global');
+  });
+  it('reads a website, follows its call links, saves a draft, and respects the weekly reading limit', async () => {
+    pages['https://sitetest.example.org/'] = { status: 200, type: 'text/html', text: HOME };
+    pages['https://sitetest.example.org/calls/youth-agri-grant'] = { status: 200, type: 'text/html', text: '<html><title>Youth agribusiness grant call</title><body><p>Open call for applications. Grants of GHS 20,000 for youth agribusinesses in Northern Ghana. Apply by 2099-06-30. Eligible applicants must be registered businesses operating for at least one year in Ghana and run by people aged 18 to 35. Apply online.</p></body></html>' };
+    const src = (await api(admin).post('/opportunity-sources', { name: `Site ${uniq()}`, kind: 'site', url: 'https://sitetest.example.org/' })).data;
+    expect(src.kind).toBe('site');
+    const t = (await api(admin).post(`/opportunity-sources/${src.id}/test`, {})).data;
+    expect(t.ok).toBe(true); expect(t.count).toBe(2);
+    process.env.SCOUT_WEEKLY_READS = '0';
+    try {
+      const blocked = (await api(admin).post(`/opportunity-sources/${src.id}/run`, {})).data;
+      expect(blocked.drafted).toBe(0); expect(blocked.note).toMatch(/Weekly reading limit/);
+    } finally { delete process.env.SCOUT_WEEKLY_READS; }
+    const r = (await api(admin).post(`/opportunity-sources/${src.id}/run`, {})).data;
+    expect(r.drafted).toBe(1);
+    const d = await db().select().from(schema.opportunities).where(eq(schema.opportunities.sourceRef, 'https://sitetest.example.org/calls/youth-agri-grant'));
+    expect(d.length).toBe(1); expect(d[0].status).toBe('Draft');
+  });
+  it('says clearly when a site shows no call links', async () => {
+    pages['https://empty.example.org/'] = { status: 200, type: 'text/html', text: '<html><body><a href="/about">About</a></body></html>' };
+    const src = (await api(admin).post('/opportunity-sources', { name: `Empty ${uniq()}`, kind: 'site', url: 'https://empty.example.org/' })).data;
+    const t = (await api(admin).post(`/opportunity-sources/${src.id}/test`, {})).data;
+    expect(t.ok).toBe(false); expect(t.error).toMatch(/No call links/);
+  });
+  it('adds the worldwide website list once only', async () => {
+    await db().delete(schema.opportunitySources).where(eq(schema.opportunitySources.kind, 'site'));
+    const a = await api(admin).post('/opportunity-sources/sites', {}); const b = await api(admin).post('/opportunity-sources/sites', {});
+    expect(a.status, JSON.stringify(a.error)).toBe(200); expect(a.data.added).toBeGreaterThan(300); expect(b.data.added).toBe(0);
+    expect((await api(owner).post('/opportunity-sources/sites', {})).status).toBe(403);
+    const list = (await api(admin).get('/opportunity-sources')).data.items.filter((x: any) => x.kind === 'site');
+    expect(list.some((x: any) => x.region === 'Ghana')).toBe(true);
+    await db().delete(schema.opportunitySources).where(eq(schema.opportunitySources.kind, 'site'));
   });
 });

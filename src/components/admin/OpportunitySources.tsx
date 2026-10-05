@@ -13,18 +13,20 @@ const ENGINES: { label: string; url: (q: string) => string }[] = [
   { label: 'X', url: (q) => `https://x.com/search?q=${encodeURIComponent(q)}&f=live` }
 ];
 const daysLeft = (d: string | null) => d == null ? null : Math.ceil((new Date(`${d}T23:59:59Z`).getTime() - Date.now()) / 86400000);
-const KIND: Record<string, string> = { feed: 'Feed', page: 'Page', query: 'Search' };
+const KIND: Record<string, string> = { feed: 'Feed', page: 'Page', query: 'Search', site: 'Website' };
 
 export function OpportunitySourcesPanel() {
   const st = useApi<any>('/opportunity-sources');
   const [edit, setEdit] = useState<any>(null); const [busy, setBusy] = useState<string | null>(null); const [test, setTest] = useState<any>(null); const toast = useToast();
   const run = async (key: string, fn: () => Promise<any>, ok: (r: any) => string) => { setBusy(key); try { const r = await fn(); toast(ok(r)); st.reload(); } catch (e) { toast(errText(e), 'bad'); } finally { setBusy(null); } };
   const me = useMe();
+  const [q, setQ] = useState(''); const [kind, setKind] = useState('all'); const [limit, setLimit] = useState(40);
   return <>
     <div className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' }}>
       <p className="muted" style={{ maxWidth: 560, margin: 0 }}>Where the Opportunity Scout looks each week. It reads each call, saves a draft, and stops. Nothing is published until you approve it in the Opportunities tab.</p>
       <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
       <Button loading={busy === 'starter'} onClick={() => run('starter', () => api.post('/opportunity-sources/starter', {}), (r) => `${r.added} starter searches added`)}>Add starter searches</Button>
+      <Button loading={busy === 'sites'} onClick={() => run('sites', () => api.post('/opportunity-sources/sites', {}), (r) => `${r.added} websites added`)}>Add worldwide websites</Button>
       <Button loading={busy === 'run'} onClick={() => run('run', () => api.post('/opportunity-sources/run', {}), (r) => `${r.drafted} drafts saved from ${r.sources} sources`)}>Run now</Button>
       <Button variant="primary" onClick={() => setEdit({})}>Add source</Button></div></div>
     <div className="stack">
@@ -38,9 +40,14 @@ export function OpportunitySourcesPanel() {
         {d.draftsToReview > 0 && <div className="alert" role="status"><>{d.draftsToReview} draft{d.draftsToReview === 1 ? '' : 's'} found by the Scout {d.draftsToReview === 1 ? 'is' : 'are'} waiting in the Opportunities tab.</></div>}
         <Card>
           {d.items.length === 0 ? <p className="muted">No sources yet. Add the starter searches, or add a funder&apos;s feed or calls page.</p> :
+            <>
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+              <input aria-label="Search sources" placeholder="Search sources" value={q} onChange={(e) => { setQ(e.target.value); setLimit(40); }} style={{ maxWidth: 260 }} />
+              <select aria-label="Filter by type" value={kind} onChange={(e) => { setKind(e.target.value); setLimit(40); }}><option value="all">All types</option><option value="site">Websites</option><option value="query">Searches</option><option value="feed">Feeds</option><option value="page">Pages</option></select>
+            </div>
             <div className="table-wrap"><table><caption className="sr">Opportunity sources</caption>
               <thead><tr><th>Source</th><th>Type</th><th>Region</th><th>Last run</th><th><span className="sr">Actions</span></th></tr></thead>
-              <tbody>{d.items.map((s: any) => <tr key={s.id}>
+              <tbody>{d.items.filter((s: any) => (kind === 'all' || s.kind === kind) && (!q.trim() || `${s.name} ${s.url ?? ''} ${s.query ?? ''} ${s.region}`.toLowerCase().includes(q.trim().toLowerCase()))).slice(0, limit).map((s: any) => <tr key={s.id}>
                 <td><strong>{s.name}</strong><div className="small muted" style={{ overflowWrap: 'anywhere' }}>{s.kind === 'query' ? s.query : <a href={s.url} target="_blank" rel="noopener noreferrer">{s.url}<span className="sr"> (opens in a new tab)</span></a>}</div>
                   {s.kind === 'query' && <div className="small" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{ENGINES.map((e) => <a key={e.label} href={e.url(s.query)} target="_blank" rel="noopener noreferrer">{e.label}<span className="sr"> (opens in a new tab)</span></a>)}</div>}</td>
                 <td><Badge>{KIND[s.kind]}</Badge>{!s.active && <> <Badge tone="warn">Paused</Badge></>}</td><td>{s.region}</td>
@@ -50,7 +57,9 @@ export function OpportunitySourcesPanel() {
                   <Button size="sm" onClick={() => setEdit(s)}>Edit</Button>
                   <Button size="sm" variant="ghost" onClick={() => run(`p${s.id}`, () => api.patch(`/opportunity-sources/${s.id}`, { active: !s.active }), () => s.active ? 'Paused' : 'Resumed')}>{s.active ? 'Pause' : 'Resume'}</Button>
                   {me.can('opportunities', 'edit') && <Button size="sm" variant="ghost" onClick={() => run(`d${s.id}`, () => api.del(`/opportunity-sources/${s.id}`), () => 'Removed')}>Remove</Button>}
-                </div></td></tr>)}</tbody></table></div>}
+                </div></td></tr>)}</tbody></table></div>
+            {d.items.filter((s: any) => (kind === 'all' || s.kind === kind) && (!q.trim() || `${s.name} ${s.url ?? ''} ${s.query ?? ''} ${s.region}`.toLowerCase().includes(q.trim().toLowerCase()))).length > limit && <p><Button size="sm" onClick={() => setLimit(limit + 100)}>Show more</Button></p>}
+            </>}
         </Card>
         {d.found.length > 0 && <Card title={`Found by the Scout, waiting for review (${d.found.length})`}>
           <div className="table-wrap"><table><caption className="sr">Opportunities found by the Scout</caption>
@@ -80,7 +89,7 @@ function Form({ s, onClose, onDone }: { s: any; onClose: () => void; onDone: () 
     <div className="stack"><FormError message={err} />
       <Field label="Name" name="n" required>{(q) => <input {...q} maxLength={120} {...set('name')} />}</Field>
       <div className="grid two">
-        <Field label="Type" name="k" hint="Feed: RSS or Atom. Page: one calls page. Search: words to search for.">{(q) => <select {...q} {...set('kind')}><option value="feed">Feed</option><option value="page">Page</option><option value="query">Search</option></select>}</Field>
+        <Field label="Type" name="k" hint="Feed: RSS or Atom. Page: one calls page. Website: a home page, the Scout follows its call links. Search: words to search for.">{(q) => <select {...q} {...set('kind')}><option value="feed">Feed</option><option value="page">Page</option><option value="site">Website</option><option value="query">Search</option></select>}</Field>
         <Field label="Region" name="r">{(q) => <select {...q} {...set('region')}>{['Ghana', 'West Africa', 'Africa', 'Europe', 'North America', 'Asia', 'Global'].map((x) => <option key={x}>{x}</option>)}</select>}</Field></div>
       {v.kind === 'query' ? <Field label="Search words" name="q" required hint="Each run uses one search from the free allowance.">{(q) => <input {...q} maxLength={200} {...set('query')} />}</Field>
         : <Field label="Web address" name="u" required hint="Must start with https://">{(q) => <input {...q} type="url" {...set('url')} />}</Field>}
