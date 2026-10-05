@@ -1,4 +1,5 @@
 import { inArray } from 'drizzle-orm';
+import { TIER_RULE_KEYS, tierKey, type Tier } from '@/domain/model-tiers';
 import { env } from '@/lib/env';
 import { schema } from '@/db/client';
 
@@ -8,9 +9,9 @@ export const PROVIDERS = ['anthropic', 'openai', 'openai-compatible'] as const;
 export type Provider = (typeof PROVIDERS)[number];
 
 /** Choices saved on the System screen. They override the environment for provider, model and base URL. Keys always stay in the environment. */
-export type AiConfig = { provider?: string; claudeModel?: string; openaiModel?: string; openaiBaseUrl?: string };
+export type AiConfig = { provider?: string; claudeModel?: string; openaiModel?: string; openaiBaseUrl?: string; tiers?: Record<string, string> };
 let cfg: AiConfig = {}; let loadedAt = 0;
-export const AI_RULE_KEYS = ['ai.provider', 'ai.claude_model', 'ai.openai_model', 'ai.openai_base_url'] as const;
+export const AI_RULE_KEYS = ['ai.provider', 'ai.claude_model', 'ai.openai_model', 'ai.openai_base_url', ...TIER_RULE_KEYS] as const;
 export const setAiConfig = (c: AiConfig | null) => { cfg = c ?? {}; loadedAt = c ? Date.now() : 0; };
 /** Reads the saved choices, at most once every 30 seconds per server instance. A failed read keeps what was loaded before. */
 export async function refreshAiConfig(db: { select: any }, force = false) {
@@ -18,7 +19,7 @@ export async function refreshAiConfig(db: { select: any }, force = false) {
   try {
     const rows: { key: string; value: string }[] = await db.select().from(schema.rules).where(inArray(schema.rules.key, [...AI_RULE_KEYS]));
     const m = new Map(rows.map((r) => [r.key, r.value.trim()]));
-    cfg = { provider: m.get('ai.provider') || undefined, claudeModel: m.get('ai.claude_model') || undefined, openaiModel: m.get('ai.openai_model') || undefined, openaiBaseUrl: m.get('ai.openai_base_url') || undefined };
+    cfg = { provider: m.get('ai.provider') || undefined, claudeModel: m.get('ai.claude_model') || undefined, openaiModel: m.get('ai.openai_model') || undefined, openaiBaseUrl: m.get('ai.openai_base_url') || undefined, tiers: Object.fromEntries(TIER_RULE_KEYS.map((k) => [k, m.get(k) ?? '']).filter(([, v]) => v)) };
     loadedAt = Date.now();
   } catch { /* keep the previous values */ }
 }
@@ -63,3 +64,8 @@ const openaiTransport: Transport = async (system, user, signal, model) => {
 };
 
 export const transportFor = (p: Provider = activeProvider()): Transport => (p === 'anthropic' ? anthropicTransport : openaiTransport);
+
+/** The model the administrator chose for a tier, for the active provider's family. Null when none is set, so the provider default applies. */
+export function tierModel(tier: Tier, p: Provider = activeProvider()): string | null {
+  return cfg.tiers?.[tierKey(tier, p === 'anthropic' ? 'claude' : 'openai')] || null;
+}

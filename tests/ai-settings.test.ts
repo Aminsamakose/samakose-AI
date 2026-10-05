@@ -53,3 +53,21 @@ describe('AI provider settings screen', () => {
     const t = await api(admin).post('/settings/ai/test', {}); expect(t.data.ok).toBe(false); expect(t.data.message).toContain('OPENAI_API_KEY');
   });
 });
+
+describe('model routing by tier', () => {
+  it('maps agents to tiers, saves models per provider family, and routes a request to its tier model', async () => {
+    const { tierOf } = await import('@/domain/model-tiers');
+    expect([tierOf('enquiry'), tierOf('brief'), tierOf('diagnosis'), tierOf('prescription')]).toEqual(['luna', 'sol', 'astra', 'astra']);
+    const bad = await api(admin).put('/settings/ai', { provider: 'anthropic', tiers: { astra: { claude: 'bad model!' } } }); expect(bad.status).toBe(400);
+    const ok = await api(admin).put('/settings/ai', { provider: 'anthropic', tiers: { luna: { claude: 'claude-haiku-4-5' }, astra: { claude: 'claude-opus-5-5' } } });
+    expect(ok.status).toBe(200);
+    expect(ok.data.tiers.find((t: any) => t.tier === 'astra').claude).toBe('claude-opus-5-5');
+    // saving only the openai family later must not erase the claude choices
+    await api(admin).put('/settings/ai', { provider: 'anthropic', tiers: { sol: { openai: 'gpt-x' } } });
+    expect((await api(admin).get('/settings/ai')).data.tiers.find((t: any) => t.tier === 'luna').claude).toBe('claude-haiku-4-5');
+    const { setAiConfig, refreshAiConfig, tierModel } = await import('@/services/ai-providers');
+    setAiConfig(null); await refreshAiConfig(db() as any, true);
+    expect(tierModel('astra')).toBe('claude-opus-5-5'); expect(tierModel('sol')).toBeNull();
+    await db().delete(schema.rules).where(inArray(schema.rules.key, ['ai.tier.luna.claude', 'ai.tier.astra.claude', 'ai.tier.sol.openai'])); setAiConfig(null);
+  });
+});
