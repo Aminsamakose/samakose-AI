@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useState } from 'react';
 import { api, dateFmt, errText, ghs } from '@/lib/client/api';
 import { Async, Badge, Button, Card, Field, FormError, Modal, PageHead, Tile, useApi, useToast } from '@/components/ui';
@@ -16,7 +17,7 @@ export default function OpportunitiesAdmin() {
   const [edit, setEdit] = useState<any>(null); const [imp, setImp] = useState(false); const [rd, setRd] = useState(false); const toast = useToast();
   const act = async (id: string, verb: string, ok: string) => { try { await api.post(`/opportunities/${id}/${verb}`, {}); toast(ok); st.reload(); sum.reload(); } catch (e) { toast(errText(e), 'bad'); } };
   return <Guard resource="opportunities" action="create" title="Opportunities">{(me) => <>
-    <PageHead title="Opportunities" sub="Funding, partners, markets and programmes that ready businesses can reach. Each one states its own requirements. Nothing is shown to a business until you publish it." actions={<><Button onClick={() => setRd(true)}>Read a call</Button><Button onClick={() => setImp(true)}>Import</Button><Button variant="primary" onClick={() => setEdit({})}>Add opportunity</Button></>} />
+    <PageHead title="Opportunities" sub="Funding, partners, markets and programmes that ready businesses can reach. Each one states its own requirements. Nothing is shown to a business until you publish it." actions={<><Link className="btn" href="/admin/opportunity-sources">Scout sources</Link><Button onClick={() => setRd(true)}>Read a call</Button><Button onClick={() => setImp(true)}>Import</Button><Button variant="primary" onClick={() => setEdit({})}>Add opportunity</Button></>} />
     <div className="stack">
       <Async state={sum}>{(s) => <div className="grid">
         <Tile label="Open now" value={s.opportunitiesOpen} /><Tile label="Awaiting your decision" value={s.referrals.Consented ?? 0} hint="Owner has consented" tone={s.referrals.Consented ? 'warn' : undefined} />
@@ -27,7 +28,7 @@ export default function OpportunitiesAdmin() {
         <Async state={st} empty={(d) => !d.items.length}>{(d) => <div className="table-wrap"><table><caption className="sr">Opportunities</caption>
           <thead><tr><th>Opportunity</th><th>Type</th><th>Status</th><th>Closes</th><th>Source</th><th><span className="sr">Actions</span></th></tr></thead>
           <tbody>{d.items.map((o: any) => <tr key={o.id}>
-            <td><strong>{o.title}</strong><div className="small muted">{o.provider}</div></td><td>{o.type}</td><td><Badge tone={tone(o.status)}>{o.status}</Badge></td><td>{o.deadline ? dateFmt(o.deadline) : 'Rolling'}</td><td>{o.source}</td>
+            <td><strong>{o.title}</strong><div className="small muted">{o.provider}</div></td><td>{o.type}</td><td><Badge tone={tone(o.status)}>{o.status}</Badge></td><td>{o.deadline ? dateFmt(o.deadline) : 'Rolling'}</td><td>{o.source === 'scout' ? <Badge tone="info">Found by Scout</Badge> : o.source}</td>
             <td><div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
               <Button size="sm" onClick={() => setEdit(o)}>Edit</Button>
               {['Draft', 'Closed'].includes(o.status) && me.can('opportunities', 'approve') && <Button size="sm" variant="primary" onClick={() => act(o.id, 'publish', 'Published')}>{o.status === 'Closed' ? 'Reopen' : 'Publish'}</Button>}
