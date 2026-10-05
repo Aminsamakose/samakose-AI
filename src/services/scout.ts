@@ -15,13 +15,16 @@ import { AgentBlocked, NonRetryable, runAgent } from './ai';
 import { publicHttpsUrl } from './ai-providers';
 import { criteriaSchema } from './unlock';
 import { mockReading, validateReading, type ReaderOutput } from '@/domain/opportunity-agents';
-import { REGIONS, STARTER_QUERIES, htmlToText, looksLikeCall, normaliseUrl, pageTitle, parseFeed, robotsAllows, screenCandidate, titleKey, type Candidate } from '@/domain/scout';
+import { SITE_URLS } from '@/domain/scout-sites';
+import { REGIONS, STARTER_QUERIES, extractLinks, htmlToText, looksLikeCall, normaliseUrl, pageTitle, parseFeed, regionFromUrl, robotsAllows, screenCandidate, siteName, titleKey, type Candidate } from '@/domain/scout';
 
 const S = schema.opportunitySources, O = schema.opportunities, R = schema.scoutRuns;
 export const SCOUT_SOURCE = 'scout';
 const UA = 'BusinessDoctorScout/1.0 (+https://samakose-ai.vercel.app)';
 const WEEK_MS = 6 * 24 * 3600 * 1000;
-const PER_SOURCE = 8, MAX_BYTES = 1_000_000;
+const PER_SOURCE = 8, PER_SITE = 6, MAX_BYTES = 1_000_000, POOL = 3;
+/** Reader calls the Scout may make per week, so it can never use up the monthly AI cost cap. Set SCOUT_WEEKLY_READS to change. */
+const weeklyReads = () => { const n = Number(process.env.SCOUT_WEEKLY_READS ?? '150'); return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 150; };
 
 /* ------------------------------- fetching ------------------------------- */
 export type FetchResult = { status: number; text: string; type: string; url: string };
@@ -43,8 +46,13 @@ let fetcher: Fetcher = realFetch;
 /** Tests replace the network. Pass null to restore. */
 export const setScoutFetch = (f: Fetcher | null) => { fetcher = f ?? realFetch; };
 
+const robotsCache = new Map<string, string | null>();
 async function allowedByRobots(url: string) {
-  try { const u = new URL(url); const r = await fetcher(`${u.origin}/robots.txt`); if (r.status !== 200) return true; return robotsAllows(r.text, u.pathname + u.search); } catch { return true; }
+  try {
+    const u = new URL(url);
+    if (!robotsCache.has(u.origin)) { let t: string | null = null; try { const r = await fetcher(`${u.origin}/robots.txt`); t = r.status === 200 ? r.text : null; } catch { t = null; } robotsCache.set(u.origin, t); }
+    const t = robotsCache.get(u.origin); return t == null ? true : robotsAllows(t, u.pathname + u.search);
+  } catch { return true; }
 }
 
 /* -------------------------------- search -------------------------------- */
@@ -77,13 +85,18 @@ export async function candidatesFor(src: Pick<Src, 'kind' | 'url' | 'query' | 'n
   const r = await fetcher(src.url!);
   if (r.status !== 200) throw new Error(`The address answered ${r.status}`);
   if (src.kind === 'feed') { const items = parseFeed(r.text); if (!items.length) throw new Error('No items found. Check that this is an RSS or Atom feed'); return { items, searches: 0 }; }
+  if (src.kind === 'site') {
+    const links = extractLinks(r.text, r.url, PER_SITE * 2);
+    if (!links.length) throw new Error('No call links found. The site may need a browser to show its links');
+    return { items: links.map((l) => ({ url: l.url, title: l.title, text: '', published: null })), searches: 0 };
+  }
   return { items: [{ url: r.url, title: pageTitle(r.text) || src.name, text: htmlToText(r.text), published: null }], searches: 0 };
 }
 
 /* --------------------------------- run ---------------------------------- */
 export type RunResult = { runId: string; sources: number; candidates: number; drafted: number; skipped: Record<string, number>; failed: number; searches: number; note: string | null };
 
-async function readOne(c: Candidate, srcName: string, db: Ctx['db']): Promise<'drafted' | string> {
+async function readOne(c: Candidate, srcName: string, db: Ctx['db'], onRead: () => void = () => undefined): Promise<'drafted' | string> {
   const url = normaliseUrl(c.url);
   if (!publicHttpsUrl(url)) return 'Not a public https address';
   const [seen] = await db.select({ id: O.id }).from(O).where(and(eq(O.source, SCOUT_SOURCE), eq(O.sourceRef, url))).limit(1);
@@ -96,6 +109,7 @@ async function readOne(c: Candidate, srcName: string, db: Ctx['db']): Promise<'d
   const cand = { title: c.title, text, published: c.published };
   if (!looksLikeCall(cand)) return 'Not a call';
   let reading: ReaderOutput;
+  onRead();
   try {
     const res = await runAgent({ agent: 'opportunity_reader', caseId: null, requestedBy: null, context: { text: text.slice(0, 12_000) }, validate: (o) => validateReading(o, text.slice(0, 12_000)), mock: () => mockReading(text.slice(0, 12_000)) });
     reading = res.output as ReaderOutput;
@@ -133,26 +147,42 @@ export async function runScout(o: { db?: Ctx['db']; budgetMs?: number; sourceIds
     ? await db.select().from(S).where(inArray(S.id, o.sourceIds))
     : await db.select().from(S).where(and(eq(S.active, true), or(isNull(S.lastRunAt), lt(S.lastRunAt, new Date(Date.now() - WEEK_MS))))).orderBy(sql`${S.lastRunAt} asc nulls first`, asc(S.createdAt)).limit(60);
   const sc = await searchStatus(db);
-  let remaining = sc.remaining, sources = 0, candidates = 0, drafted = 0, failed = 0, searches = 0; const skipped: Record<string, number> = {}; let note: string | null = null;
+  robotsCache.clear();
+  const [{ n: used }] = await db.select({ n: sql<number>`count(*)::int` }).from(schema.aiRequests).where(and(eq(schema.aiRequests.agent, 'opportunity_reader'), isNull(schema.aiRequests.requestedBy), gte(schema.aiRequests.createdAt, new Date(Date.now() - 7 * 24 * 3600 * 1000))));
+  let reads = Math.max(0, weeklyReads() - used);
+  let remaining = sc.remaining, sources = 0, candidates = 0, drafted = 0, failed = 0, searches = 0; const skipped: Record<string, number> = {}; let note: string | null = null; let stop = false;
   const skip = (r: string) => { skipped[r] = (skipped[r] ?? 0) + 1; };
-  outer: for (const s of due) {
-    if (Date.now() - t0 > budget) { note = 'Time budget reached. The remaining sources run next time.'; break; }
-    if (s.kind === 'query' && remaining <= 0) { await db.update(S).set({ lastStatus: sc.configured ? 'Monthly free limit reached' : 'Search not set up' }).where(eq(S.id, s.id)); continue; }
+  const queue = [...due];
+  const one = async (s: (typeof due)[number]) => {
+    if (s.kind === 'query' && remaining <= 0) { await db.update(S).set({ lastStatus: sc.configured ? 'Monthly free limit reached' : 'Search not set up' }).where(eq(S.id, s.id)); return; }
     sources++;
     let found = 0, status = 'OK';
     try {
+      if (s.kind === 'query') remaining -= 1;
       const { items, searches: n } = await candidatesFor(s);
-      searches += n; remaining -= n;
-      for (const c of items.slice(0, PER_SOURCE)) {
-        if (Date.now() - t0 > budget) { note = 'Time budget reached. The remaining items run next time.'; break; }
+      searches += n;
+      for (const c of items.slice(0, s.kind === 'site' ? PER_SITE : PER_SOURCE)) {
+        if (stop) break;
+        if (Date.now() - t0 > budget) { note = 'Time budget reached. The remaining items run next time.'; stop = true; break; }
+        if (reads <= 0) { note = 'Weekly reading limit reached. The rest runs next week.'; status = 'Weekly reading limit reached'; stop = true; break; }
         candidates++;
         let r: string;
-        try { r = await readOne(c, s.name, db); } catch (e) { if (e instanceof AgentBlocked) { note = `Opportunity Reader is not available: ${e.message}`; status = 'Reader unavailable'; await db.update(S).set({ lastStatus: status }).where(eq(S.id, s.id)); break outer; } throw e; }
+        try { r = await readOne(c, s.name, db, () => { reads--; }); } catch (e) { if (e instanceof AgentBlocked) { note = `Opportunity Reader is not available: ${e.message}`; status = 'Reader unavailable'; stop = true; break; } throw e; }
         if (r === 'drafted') { drafted++; found++; } else skip(r);
       }
     } catch (e: any) { failed++; status = `Error: ${String(e?.message ?? e).slice(0, 160)}`; }
+    if (status === 'Reader unavailable' || status === 'Weekly reading limit reached') { await db.update(S).set({ lastStatus: status }).where(eq(S.id, s.id)); return; }
     await db.update(S).set({ lastRunAt: new Date(), lastStatus: status, lastFound: found, updatedAt: new Date() }).where(eq(S.id, s.id));
-  }
+  };
+  const worker = async () => {
+    for (;;) {
+      if (stop) return;
+      if (Date.now() - t0 > budget) { note = note ?? 'Time budget reached. The remaining sources run next time.'; stop = true; return; }
+      const s = queue.shift(); if (!s) return;
+      await one(s);
+    }
+  };
+  await Promise.all(Array.from({ length: POOL }, worker));
   const skippedN = Object.values(skipped).reduce((a, b) => a + b, 0);
   await db.update(R).set({ finishedAt: new Date(), sources, candidates, drafted, skipped: skippedN, failed, searches, note }).where(eq(R.id, run.id));
   if (drafted > 0) {
@@ -164,7 +194,7 @@ export async function runScout(o: { db?: Ctx['db']; budgetMs?: number; sourceIds
 }
 
 /* ------------------------------ management ------------------------------ */
-export type SourceInput = { name: string; kind: 'feed' | 'page' | 'query'; url?: string | null; query?: string | null; region?: string; active?: boolean };
+export type SourceInput = { name: string; kind: 'feed' | 'page' | 'query' | 'site'; url?: string | null; query?: string | null; region?: string; active?: boolean };
 function checkSource(b: SourceInput) {
   if (b.kind === 'query') { if (!b.query || b.query.trim().length < 3) throw unprocessable('Write the search words, at least three characters'); }
   else { if (!b.url || !publicHttpsUrl(b.url.trim())) throw unprocessable('The address must be a public https address'); }
@@ -208,6 +238,15 @@ export async function addStarter(ctx: Ctx) {
   if (fresh.length) await ctx.db.insert(S).values(fresh.map((q) => ({ name: q.name, kind: 'query', query: q.query, region: q.region, active: true, createdBy: ctx.user!.id })));
   await audit(ctx, 'scout.starter_added', 'opportunity_source', null, undefined, { added: fresh.length });
   return { added: fresh.length };
+}
+/** Adds the worldwide list of funder, ministry, procurement and accelerator websites. Safe to repeat: addresses already there are skipped. */
+export async function addSites(ctx: Ctx) {
+  allow(ctx, 'opportunities', 'create');
+  const have = new Set((await ctx.db.select({ u: S.url }).from(S).where(eq(S.kind, 'site'))).map((x) => normaliseUrl(x.u ?? '')));
+  const fresh = SITE_URLS.filter((u) => publicHttpsUrl(u) && !have.has(normaliseUrl(u)));
+  for (let i = 0; i < fresh.length; i += 100) await ctx.db.insert(S).values(fresh.slice(i, i + 100).map((u) => ({ name: siteName(u), kind: 'site', url: u, region: regionFromUrl(u), active: true, createdBy: ctx.user!.id })));
+  await audit(ctx, 'scout.sites_added', 'opportunity_source', null, undefined, { added: fresh.length });
+  return { added: fresh.length, total: SITE_URLS.length };
 }
 /** Fetch only. Shows what the Scout would see. Saves nothing and uses no search allowance for feeds and pages. */
 export async function testSource(ctx: Ctx, id: string) {

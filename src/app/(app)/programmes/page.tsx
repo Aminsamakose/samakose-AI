@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge, Button, DataTable, Modal, PageHead, type Col } from '@/components/ui';
 import { ghs, dateFmt } from '@/lib/client/api';
-import { ProgrammeForm, type Programme } from '@/components/portfolio/ProgrammeForms';
+import { ProgrammeForm, ProgrammeLogo, type Programme } from '@/components/portfolio/ProgrammeForms';
 import { usePerms, useTitle } from '@/components/portfolio/shared';
 
 export default function ProgrammesPage() {
@@ -13,7 +13,7 @@ export default function ProgrammesPage() {
   const [status, setStatus] = useState(''); const [open, setOpen] = useState(false);
   const funder = role === 'FUNDER';
   const cols: Col<Programme>[] = [
-    { key: 'name', label: 'Programme', sort: 'name', render: (r) => <>{r.name}</> },
+    { key: 'name', label: 'Programme', sort: 'name', render: (r) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}><ProgrammeLogo programme={r} size={28} />{r.name}</span> },
     { key: 'code', label: 'Code', sort: 'code', render: (r) => <span className="mono">{r.code}</span> },
     { key: 'funder', label: 'Funder' },
     { key: 'startDate', label: 'Dates', sort: 'start', render: (r) => <>{dateFmt(r.startDate)} to {dateFmt(r.endDate)}</> },

@@ -148,6 +148,14 @@ export const programmes = pgTable('programmes', {
   startDate: date('start_date'), endDate: date('end_date'),
   budgetGhs: numeric('budget_ghs', { precision: 14, scale: 2 }),
   status: text('status').notNull().default('Draft'),
+  /** The programme profile: what it is for, who it is for, where it runs, and who to contact. */
+  summary: text('summary'), objective: text('objective'), eligibility: text('eligibility'),
+  sectors: text('sectors').array().notNull().default(sql`'{}'::text[]`),
+  regions: text('regions').array().notNull().default(sql`'{}'::text[]`),
+  targetGroups: text('target_groups').array().notNull().default(sql`'{}'::text[]`),
+  targetBusinesses: integer('target_businesses'),
+  partners: text('partners'), contactName: text('contact_name'), contactEmail: text('contact_email'), website: text('website'),
+  logoMediaId: uuid('logo_media_id'),
   createdAt: created(), updatedAt: updated()
 });
 export const INDICATOR_METRICS = ['enrolled', 'scored', 'rescored', 'avg_score', 'avg_change', 'pct_improved'] as const;

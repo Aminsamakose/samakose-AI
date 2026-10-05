@@ -220,7 +220,7 @@ registerJob('invoice_scan', async () => {
  *  2. An approved business owner with no case after a few days: administrators and programme managers are told a case is owed.
  */
 /** Opportunity Scout. Runs daily; each source is read about once a week, within a time budget and the free search allowance. Saves Drafts only. */
-registerJob('scout_weekly', async () => { const r = await runScout({ budgetMs: 30_000 }); return { sources: r.sources, drafted: r.drafted, failed: r.failed }; });
+registerJob('scout_weekly', async () => { const r = await runScout({ budgetMs: 40_000 }); return { sources: r.sources, drafted: r.drafted, failed: r.failed }; });
 
 registerJob('recheck_scan', async () => tx(async (t) => {
   const ctx = systemCtx(t, 'scan');

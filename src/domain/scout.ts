@@ -82,7 +82,7 @@ export function robotsAllows(robots: string, path: string, agent = 'businessdoct
   return longest(allow) >= longest(disallow);
 }
 
-export const REGIONS = ['Ghana', 'West Africa', 'Africa', 'Europe', 'North America', 'Asia', 'Global'] as const;
+export const REGIONS = ['Ghana', 'West Africa', 'Africa', 'Europe', 'North America', 'Latin America', 'Asia', 'Middle East', 'Oceania', 'Global'] as const;
 /** Starter search queries. Safe to add because they carry no web address to get wrong. Each runs only within the free quota. */
 export const STARTER_QUERIES: { name: string; query: string; region: (typeof REGIONS)[number] }[] = [
   { name: 'Ghana agribusiness grants', query: 'call for proposals agribusiness grant Ghana SMEs', region: 'Ghana' },
@@ -106,3 +106,61 @@ export const STARTER_QUERIES: { name: string; query: string; region: (typeof REG
   { name: 'Platform: LinkedIn calls', query: 'site:linkedin.com call for applications grant Ghana SMEs', region: 'Ghana' },
   { name: 'Global cooperative funding', query: 'cooperatives funding call producer organisations Africa', region: 'Global' }
 ];
+
+/* ------------------------------ whole sites ------------------------------ */
+const CALL_CUE = /(call|grant|fund|tender|rfp|rfq|eoi|expression|opportunit|apply|application|competition|challenge|prize|award|fellowship|accelerat|incubat|funding|bid|procure|notice|proposal|programme|program|scholar|calendar|open)/i;
+const SKIP_EXT = /\.(pdf|docx?|xlsx?|pptx?|zip|png|jpe?g|gif|svg|webp|mp4|mp3|css|js)(\?|#|$)/i;
+const SKIP_PATH = /\/(login|signin|sign-in|register|account|cart|privacy|terms|cookie|contact|about|careers?|jobs?|vacanc|news|blog|press|events?|tag|category|author|wp-admin)(\/|$|\?)/i;
+
+/** Links on a page that look like they lead to a call. Same site first, de-duplicated, limited. Pure. */
+export function extractLinks(html: string, baseUrl: string, limit = 12): { url: string; title: string }[] {
+  let base: URL; try { base = new URL(baseUrl); } catch { return []; }
+  const out: { url: string; title: string; score: number }[] = []; const seen = new Set<string>();
+  const re = /<a\b[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')[^>]*>([\s\S]{0,300}?)<\/a>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) && out.length < 400) {
+    const href = decode((m[1] ?? m[2] ?? '').trim());
+    if (!href || /^(#|mailto:|tel:|javascript:|sms:)/i.test(href)) continue;
+    let u: URL; try { u = new URL(href, base); } catch { continue; }
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') continue;
+    if (SKIP_EXT.test(u.pathname + u.search) || SKIP_PATH.test(u.pathname)) continue;
+    if (u.pathname === '/' || u.pathname === base.pathname) continue;
+    u.hash = '';
+    const key = normaliseUrl(u.toString()); if (seen.has(key)) continue;
+    const title = decode(m[3].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim().slice(0, 200);
+    const text = `${title} ${u.pathname}`;
+    if (!CALL_CUE.test(text)) continue;
+    seen.add(key);
+    const sameSite = u.hostname.replace(/^www\./, '') === base.hostname.replace(/^www\./, '');
+    const score = (sameSite ? 2 : 0) + (/call|grant|tender|rfp|eoi|fund|opportunit|competition|apply/i.test(text) ? 2 : 0) + (title.length > 12 ? 1 : 0);
+    out.push({ url: u.toString(), title: title || u.pathname, score });
+  }
+  return out.sort((a, b) => b.score - a.score).slice(0, limit).map(({ url, title }) => ({ url, title }));
+}
+
+/** Best guess of the region from the web address. Falls back to Global. Pure. */
+export function regionFromUrl(url: string): (typeof REGIONS)[number] {
+  let h = ''; try { h = new URL(url).hostname.toLowerCase(); } catch { return 'Global'; }
+  const tld = h.split('.').pop() ?? '';
+  if (/(^|\.)gov\.gh$|\.gh$/.test(h)) return 'Ghana';
+  const westAfrica = ['ng', 'sn', 'ci', 'ml', 'bf', 'ne', 'tg', 'bj', 'sl', 'lr', 'gm', 'gn', 'cv'];
+  if (westAfrica.includes(tld)) return 'West Africa';
+  const africa = ['ke', 'tz', 'ug', 'rw', 'et', 'za', 'zm', 'zw', 'mw', 'mz', 'na', 'bw', 'ma', 'dz', 'tn', 'eg', 'cm', 'cd', 'ao', 'sd', 'ls', 'sz', 'mu', 'mg', 'ss', 'so', 'td', 'ga', 'cg'];
+  if (africa.includes(tld) || /(^|\.)(afdb|au|eac|afreximbank|comesa|ecowas|uemoa|bidc-ebid|boad)\.(org|int|com)$/.test(h) || /africa/.test(h)) return /ecowas|uemoa|boad|bidc/.test(h) ? 'West Africa' : 'Africa';
+  const europe = ['eu', 'de', 'fr', 'uk', 'nl', 'se', 'no', 'dk', 'fi', 'ie', 'es', 'it', 'be', 'ch', 'at', 'pl', 'pt', 'cz', 'lu', 'is', 'gr', 'hu', 'ro', 'bg', 'hr', 'sk', 'si', 'ee', 'lv', 'lt'];
+  if (europe.includes(tld) || /\.gov\.uk$/.test(h)) return 'Europe';
+  if (['us', 'ca', 'mil'].includes(tld) || /\.gov$/.test(h)) return 'North America';
+  const latam = ['br', 'mx', 'ar', 'cl', 'co', 'pe', 'uy', 'ec', 'bo', 'py', 've', 'cr', 'pa', 'gt', 'do'];
+  if (latam.includes(tld) || /iadb|caf\.com|cepal|cabei/.test(h)) return 'Latin America';
+  const asia = ['in', 'cn', 'jp', 'kr', 'sg', 'my', 'id', 'th', 'ph', 'vn', 'bd', 'pk', 'lk', 'np', 'hk', 'tw', 'kh', 'la', 'mm', 'mn', 'kz', 'uz'];
+  if (asia.includes(tld) || /adb\.org|aiib/.test(h)) return 'Asia';
+  const me = ['ae', 'sa', 'qa', 'kw', 'om', 'bh', 'jo', 'lb', 'il', 'tr', 'ir', 'iq'];
+  if (me.includes(tld)) return 'Middle East';
+  if (['au', 'nz', 'fj', 'pg'].includes(tld)) return 'Oceania';
+  return 'Global';
+}
+
+/** A readable source name from an address. Pure. */
+export function siteName(url: string): string {
+  try { const h = new URL(url).hostname.replace(/^www\./, ''); return h.slice(0, 110); } catch { return url.slice(0, 110); }
+}
