@@ -56,6 +56,12 @@ CREATE INDEX "programme_participant_cohort_idx" ON "programme_participants" USIN
 --> statement-breakpoint
 CREATE INDEX "programme_participant_status_idx" ON "programme_participants" USING btree ("status");
 --> statement-breakpoint
+ALTER TABLE "programme_workspaces" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+ALTER TABLE "programme_workspace_members" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+ALTER TABLE "programme_participants" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'samakose_app') THEN
