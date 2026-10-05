@@ -1111,6 +1111,31 @@ export const opportunities = pgTable('opportunities', {
   createdAt: created(), updatedAt: updated()
 }, (t) => [index('opp_status_idx').on(t.status, t.deadline), uniqueIndex('opp_source_uq').on(t.source, t.sourceRef).where(sql`${t.sourceRef} is not null`)]);
 
+/** Where the Opportunity Scout looks each week: a feed, a single page, or a search query. Found items become Draft opportunities for a person to review. */
+export const opportunitySources = pgTable('opportunity_sources', {
+  id: id(),
+  name: text('name').notNull(),
+  kind: text('kind').notNull(),
+  url: text('url'),
+  query: text('query'),
+  region: text('region').notNull().default('Global'),
+  active: boolean('active').notNull().default(true),
+  lastRunAt: timestamp('last_run_at', { withTimezone: true }),
+  lastStatus: text('last_status'),
+  lastFound: integer('last_found').notNull().default(0),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [index('ops_due_idx').on(t.active, t.lastRunAt)]);
+
+export const scoutRuns = pgTable('scout_runs', {
+  id: id(),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+  sources: integer('sources').notNull().default(0), candidates: integer('candidates').notNull().default(0), drafted: integer('drafted').notNull().default(0),
+  skipped: integer('skipped').notNull().default(0), failed: integer('failed').notNull().default(0), searches: integer('searches').notNull().default(0),
+  note: text('note')
+}, (t) => [index('scout_runs_started_idx').on(t.startedAt)]);
+
 /** One enterprise and one opportunity. The database refuses to move past Approved without the owner's consent and a person's approval. */
 export const opportunityReferrals = pgTable('opportunity_referrals', {
   id: id(),

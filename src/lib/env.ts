@@ -24,6 +24,11 @@ export const env = {
   get openaiKey() { return str('OPENAI_API_KEY').trim().replace(/^["']|["']$/g, '').trim(); },
   get openaiModel() { return str('OPENAI_MODEL', 'gpt-5'); },
   get openaiBaseUrl() { return str('OPENAI_BASE_URL', 'https://api.openai.com/v1').replace(/\/$/, ''); },
+  /** Opportunity Scout search. Provider is none, brave, tavily, serper or google. The monthly limit stops the Scout before a free allowance is used up. */
+  get scoutProvider() { return str('SCOUT_SEARCH_PROVIDER', 'none').trim().toLowerCase(); },
+  get scoutKey() { return str('SCOUT_SEARCH_KEY').trim().replace(/^["']|["']$/g, '').trim(); },
+  get scoutCx() { return str('SCOUT_SEARCH_CX').trim(); },
+  get scoutMonthlyLimit() { const n = Number(str('SCOUT_SEARCH_MONTHLY_LIMIT', '80')); return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 80; },
   get koboSecret() { return str('KOBO_WEBHOOK_SECRET'); },
   get koboServer() { return str('KOBO_SERVER', 'https://kf.kobotoolbox.org'); },
   get koboToken() { return str('KOBO_TOKEN'); },

@@ -4,6 +4,8 @@ import { empty, isoDate, optText, text, uuid } from '../schemas';
 import { CONSENT_SCOPES } from '@/domain/unlock';
 import { OPPORTUNITY_TYPES } from '@/db/schema';
 import * as unlock from '@/services/unlock';
+import * as scout from '@/services/scout';
+import { REGIONS } from '@/domain/scout';
 
 const U = 'UNLOCK';
 const kind = z.enum(OPPORTUNITY_TYPES);
@@ -41,3 +43,14 @@ defineRoute({ method: 'POST', path: '/referrals/:id/consent', tag: U, summary: '
 defineRoute({ method: 'POST', path: '/referrals/:id/approve', tag: U, summary: 'A person confirms the match. The match is checked again now', permission: ['referrals', 'approve'], body: z.object({ note: optText(400) }), handler: ({ ctx, params, body }) => unlock.approve(ctx, params.id, body.note) });
 defineRoute({ method: 'POST', path: '/referrals/:id/status', tag: U, summary: 'Move a referral to Referred, Applied, Shortlisted, Awarded or Declined', permission: ['referrals', 'edit'], body: z.object({ to: z.enum(['Referred', 'Applied', 'Shortlisted', 'Awarded', 'Declined']), note: optText(600), amountGhs: z.number().min(0).max(1_000_000_000).nullish() }), handler: ({ ctx, params, body }) => unlock.advance(ctx, params.id, body.to, body.note, body.amountGhs) });
 defineRoute({ method: 'POST', path: '/referrals/:id/withdraw', tag: U, summary: 'Step back from a referral. Nothing more is shared', permission: ['referrals', 'delete'], body: z.object({ note: optText(400) }), handler: ({ ctx, params, body }) => unlock.withdraw(ctx, params.id, body.note) });
+
+/* ----------------------------- opportunity scout ------------------------ */
+const srcBody = z.object({ name: text(2, 120), kind: z.enum(['feed', 'page', 'query']), url: z.string().trim().max(500).nullish(), query: z.string().trim().max(200).nullish(), region: z.enum(REGIONS).optional(), active: z.boolean().optional() });
+defineRoute({ method: 'GET', path: '/opportunity-sources', tag: U, summary: 'Where the Opportunity Scout looks, the free search allowance, and recent runs', permission: ['opportunities', 'create'], handler: ({ ctx }) => scout.listSources(ctx) });
+defineRoute({ method: 'POST', path: '/opportunity-sources', tag: U, summary: 'Add a feed, page or search query for the Scout', permission: ['opportunities', 'create'], body: srcBody, handler: async ({ ctx, body }) => status(201, await scout.addSource(ctx, body as any)) });
+defineRoute({ method: 'POST', path: '/opportunity-sources/starter', tag: U, summary: 'Add the starter search queries. Safe to repeat', permission: ['opportunities', 'create'], body: empty, handler: ({ ctx }) => scout.addStarter(ctx) });
+defineRoute({ method: 'POST', path: '/opportunity-sources/run', tag: U, summary: 'Run the Scout now on the sources that are due. Saves drafts only', permission: ['opportunities', 'create'], rateLimit: { key: 'scoutrun:{ip}', windowSec: 3600, limit: 6 }, body: empty, handler: ({ ctx }) => scout.runNow(ctx) });
+defineRoute({ method: 'PATCH', path: '/opportunity-sources/:id', tag: U, summary: 'Change or pause a source', permission: ['opportunities', 'edit'], body: srcBody.partial(), handler: ({ ctx, params, body }) => scout.updateSource(ctx, params.id, body as any) });
+defineRoute({ method: 'DELETE', path: '/opportunity-sources/:id', tag: U, summary: 'Remove a source', permission: ['opportunities', 'edit'], handler: ({ ctx, params }) => scout.removeSource(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/opportunity-sources/:id/test', tag: U, summary: 'See what the Scout would find at a feed or page. Saves nothing', permission: ['opportunities', 'create'], rateLimit: { key: 'scouttest:{ip}', windowSec: 3600, limit: 60 }, body: empty, handler: ({ ctx, params }) => scout.testSource(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/opportunity-sources/:id/run', tag: U, summary: 'Run the Scout now on one source. Saves drafts only', permission: ['opportunities', 'create'], rateLimit: { key: 'scoutrun1:{ip}', windowSec: 3600, limit: 20 }, body: empty, handler: ({ ctx, params }) => scout.runNow(ctx, params.id) });
