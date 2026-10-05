@@ -42,16 +42,34 @@ export function validateReading(o: any, source: string): string[] {
   return p;
 }
 
+const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+const monthNo = (m: string) => MONTHS.findIndex((x) => x.startsWith(m.toLowerCase().slice(0, 3))) + 1;
+const iso = (y: number, m: number, d: number) => (m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 2000 ? `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` : null);
+const CLOSING_CUE = /(deadline|closing date|clos(?:e|es|ing|ed)|apply (?:by|before|until)|applications? (?:due|by|before|until|must)|submit(?:ted)? (?:by|before)|due (?:on|by|date)|until|expires?|no later than|by)\W[^.\n]{0,50}$/i;
+/** The closing date, only when the text ties a date to a closing word. A date with no such cue (a publication date, say) is never taken as the deadline. Day-first for numeric dates, as in Ghana. */
+export function findDeadline(text: string): string | null {
+  const found: { at: number; date: string }[] = [];
+  const M = '(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)';
+  for (const m of text.matchAll(/\b(20\d{2})-(\d{2})-(\d{2})\b/g)) { const d = iso(+m[1], +m[2], +m[3]); if (d) found.push({ at: m.index!, date: d }); }
+  for (const m of text.matchAll(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?${M}\\.?,?\\s+(20\\d{2})\\b`, 'gi'))) { const d = iso(+m[3], monthNo(m[2]), +m[1]); if (d) found.push({ at: m.index!, date: d }); }
+  for (const m of text.matchAll(new RegExp(`\\b${M}\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?,?\\s+(20\\d{2})\\b`, 'gi'))) { const d = iso(+m[3], monthNo(m[1]), +m[2]); if (d) found.push({ at: m.index!, date: d }); }
+  for (const m of text.matchAll(/\b(\d{1,2})[\/.-](\d{1,2})[\/.-](20\d{2})\b/g)) { const d = iso(+m[3], +m[2], +m[1]); if (d) found.push({ at: m.index!, date: d }); }
+  const cued = found.filter((f) => CLOSING_CUE.test(text.slice(Math.max(0, f.at - 70), f.at)));
+  if (!cued.length) return null;
+  return cued.sort((a, b) => a.at - b.at)[0].date;
+}
+
+/** Wording that says the call is already over. */
+const CLOSED = [/\b(applications?|call|calls|submissions?|window|registration|competition|programme|program|funding|opportunity)\s+(?:is|are|has|have|was|were)?\s*(?:now\s+|already\s+|officially\s+)?(?:closed|ended|expired)\b/i, /\bno longer (?:accepting|open|available|taking)\b/i, /\b(?:deadline|closing date)\s+(?:has|have)?\s*(?:already\s+)?(?:passed|elapsed|expired)\b/i, /\bclosed (?:call|opportunity|for applications|to applications)\b/i, /^\s*\[?closed\]?\s*[:\-]/i, /\b(?:this|the) (?:call|opportunity|programme|program) (?:has )?(?:closed|ended)\b/i, /\bapplications? (?:have )?(?:closed|ended)\b/i];
+export const closedWording = (text: string) => CLOSED.some((r) => r.test(text));
+
 /** The built-in stand-in used when no live model is on. Simple, honest and checked by the same validator. */
 export function mockReading(source: string): ReaderOutput {
   // Lines that read as instructions to the reader are data, never followed and never mined for values.
   const lines = source.split('\n').map((l) => l.trim()).filter((l) => l && !/\b(ignore|disregard|forget)\b.*\b(instruction|rule|previous|above)s?\b|\bset the\b.*\b(score|amount|minimum)\b/i.test(l));
   const text = lines.join(' ').replace(/\s+/g, ' ');
   const amounts = [...text.matchAll(/(?:GH[S₵]|GHC|₵)\s?([\d][\d,]*)/gi)].map((m) => Number(m[1].replace(/,/g, ''))).filter((n) => n > 0);
-  const iso = /\b(20\d{2}-\d{2}-\d{2})\b/.exec(text)?.[1];
-  const long = /\b(\d{1,2})(?:st|nd|rd|th)?\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})\b/i.exec(text);
-  const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-  const deadline = iso ?? (long ? `${long[3]}-${String(months.indexOf(long[2].toLowerCase()) + 1).padStart(2, '0')}-${long[1].padStart(2, '0')}` : null);
+  const deadline = findDeadline(text);
   const type = /\bgrant\b/i.test(text) ? 'Grant' : /\bloan\b/i.test(text) ? 'Loan' : /\bequity|invest/i.test(text) ? 'Equity' : /\btender|procure/i.test(text) ? 'Procurement' : /\btrain|workshop/i.test(text) ? 'Training' : /\bprogramme|program\b/i.test(text) ? 'Programme' : 'Assistance';
   const regions = REGIONS.filter((r) => new RegExp(`\\b${r}\\b`, 'i').test(text)).filter((r) => !REGIONS.some((x) => x !== r && x.includes(r) && new RegExp(`\\b${x}\\b`, 'i').test(text)));
   const sectors = SECTORS.filter(([re]) => re.test(text)).map(([, s]) => s).filter((s) => text.toLowerCase().includes(s.toLowerCase()));

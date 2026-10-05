@@ -44,13 +44,22 @@ export const looksLikeCall = (c: { title: string; text: string }) => CALL_WORDS.
 const SCAM = [/\b(processing|registration|application|administrative|claim)\s+fee\b/i, /\bpay(ment)?\s+(a|the)?\s*(fee|deposit)\s+(to|before)\b/i, /\bwestern union|moneygram|gift card|bitcoin\b/i, /\blottery|you have (been )?won\b/i, /\bwhatsapp\s*(us|number|:)/i, /\bsend (your )?(bank|account|passport|ssn)\b/i];
 export const scamSignals = (text: string) => SCAM.filter((r) => r.test(text)).length;
 
-export type Screen = { ok: true } | { ok: false; reason: 'Expired' | 'Suspected scam wording' | 'Too little text' | 'Not a call' };
+import { closedWording } from './opportunity-agents';
+export type Screen = { ok: true } | { ok: false; reason: 'Expired' | 'Already closed' | 'Looks out of date' | 'Suspected scam wording' | 'Too little text' | 'Not a call' };
 /** Decides whether a read candidate may become a Draft. A rejection is counted, never silently dropped. */
-export function screenCandidate(c: { title: string; text: string }, reading: { deadline: string | null }, today = new Date()): Screen {
+export function screenCandidate(c: { title: string; text: string; published?: string | null }, reading: { deadline: string | null }, today = new Date()): Screen {
   if (c.text.trim().length < 80) return { ok: false, reason: 'Too little text' };
   if (!looksLikeCall(c)) return { ok: false, reason: 'Not a call' };
   if (scamSignals(`${c.title} ${c.text}`) > 0) return { ok: false, reason: 'Suspected scam wording' };
   if (reading.deadline && reading.deadline < today.toISOString().slice(0, 10)) return { ok: false, reason: 'Expired' };
+  if (closedWording(`${c.title}\n${c.text}`)) return { ok: false, reason: 'Already closed' };
+  if (!reading.deadline) {
+    // No closing date found: keep it only if nothing says it is old. The latest year mentioned must be this year or later, and a feed date must be recent.
+    const years = [...`${c.title} ${c.text}`.matchAll(/\b(20\d{2})\b/g)].map((m) => Number(m[1]));
+    if (years.length && Math.max(...years) < today.getUTCFullYear()) return { ok: false, reason: 'Looks out of date' };
+    const pub = c.published ? Date.parse(c.published) : NaN;
+    if (!Number.isNaN(pub) && today.getTime() - pub > 400 * 24 * 3600 * 1000) return { ok: false, reason: 'Looks out of date' };
+  }
   return { ok: true };
 }
 
@@ -87,5 +96,13 @@ export const STARTER_QUERIES: { name: string; query: string; region: (typeof REG
   { name: 'Europe climate agriculture', query: 'European funding call climate resilient agriculture Africa enterprises', region: 'Europe' },
   { name: 'North America Africa grants', query: 'foundation grant Africa enterprise development open application', region: 'North America' },
   { name: 'Global investment readiness', query: 'investment readiness programme open applications emerging markets SMEs', region: 'Global' },
+  { name: 'Platform: fundsforngos', query: 'site:fundsforngos.org Africa OR Ghana grants open', region: 'Global' },
+  { name: 'Platform: Opportunity Desk', query: 'site:opportunitydesk.org Africa funding grant', region: 'Africa' },
+  { name: 'Platform: ReliefWeb', query: 'site:reliefweb.int funding opportunities Ghana', region: 'Ghana' },
+  { name: 'Platform: EU Funding and Tenders', query: 'site:ec.europa.eu funding tenders call Africa SMEs', region: 'Europe' },
+  { name: 'Platform: Grants.gov', query: 'site:grants.gov Africa Ghana', region: 'North America' },
+  { name: 'Platform: UNGM', query: 'site:ungm.org Ghana notice', region: 'Global' },
+  { name: 'Platform: Devex', query: 'site:devex.com funding opportunity Ghana Africa', region: 'Global' },
+  { name: 'Platform: LinkedIn calls', query: 'site:linkedin.com call for applications grant Ghana SMEs', region: 'Ghana' },
   { name: 'Global cooperative funding', query: 'cooperatives funding call producer organisations Africa', region: 'Global' }
 ];
