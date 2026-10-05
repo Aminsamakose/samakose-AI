@@ -178,7 +178,7 @@ export async function setUserProgrammes(ctx: Ctx, id: string, ids: string[]) {
   allow(ctx, 'users', 'edit');
   const [row] = await ctx.db.select().from(u).where(eq(u.id, id)).limit(1);
   if (!row) throw notFound('User not found');
-  if (!['PROGRAMME_MANAGER', 'FUNDER'].includes(row.role)) throw unprocessable('Only programme managers and funders are assigned to programmes');
+  if (!['PROGRAMME_MANAGER', 'FUNDER', 'EXPERT'].includes(row.role)) throw unprocessable('Only programme managers, funders and experts are assigned to programmes');
   await setProgrammesRaw(ctx, id, ids);
   await audit(ctx, 'user.programmes_set', 'user', id, undefined, { programmeIds: ids });
   return { ok: true };
