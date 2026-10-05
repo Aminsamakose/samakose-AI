@@ -1,7 +1,9 @@
 import { Pool, type PoolClient } from 'pg';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from './schema';
+import * as baseSchema from './schema';
+import * as workspaceSchema from './programme-workspace-schema';
 
+const schema = { ...baseSchema, ...workspaceSchema };
 type Db = NodePgDatabase<typeof schema>;
 const g = globalThis as unknown as { __pool?: Pool; __db?: Db; __poolUrl?: string };
 
