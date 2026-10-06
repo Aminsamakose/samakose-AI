@@ -33,14 +33,14 @@ async function scope(ctx: Ctx, programmeId?: string | null, cohortId?: string | 
 
 export async function listNotifications(ctx: Ctx, status?: string) {
   const userId = need(ctx).user.id;
-  allow(ctx, 'programme_workspaces', 'read');
+  allow(ctx, 'notifications', 'read');
   const where = status ? and(eq(notifications.recipientUserId, userId), eq(notifications.status, status)) : eq(notifications.recipientUserId, userId);
   return ctx.db.select().from(notifications).where(where).orderBy(desc(notifications.createdAt));
 }
 
 export async function markNotificationRead(ctx: Ctx, id: string) {
   const userId = need(ctx).user.id;
-  allow(ctx, 'programme_workspaces', 'read');
+  allow(ctx, 'notifications', 'read');
   const [row] = await ctx.db.select().from(notifications).where(and(eq(notifications.id, id), eq(notifications.recipientUserId, userId))).limit(1);
   if (!row) throw notFound('Notification not found');
   await ctx.db.update(notifications).set({ status: 'READ', readAt: new Date(), updatedAt: new Date() }).where(eq(notifications.id, id));
@@ -51,10 +51,7 @@ export async function markNotificationRead(ctx: Ctx, id: string) {
 export async function createEvent(ctx: Ctx, input: { programmeId?: string | null; cohortId?: string | null; eventType: string; entityType: string; entityId?: string | null; payload?: unknown }) {
   allow(ctx, 'programme_workspaces', 'edit');
   await scope(ctx, input.programmeId, input.cohortId);
-  const [row] = await ctx.db.insert(events).values({
-    programmeId: input.programmeId ?? null, cohortId: input.cohortId ?? null, eventType: input.eventType,
-    entityType: input.entityType, entityId: input.entityId ?? null, payload: input.payload ?? {}, createdBy: need(ctx).user.id,
-  }).returning();
+  const [row] = await ctx.db.insert(events).values({ programmeId: input.programmeId ?? null, cohortId: input.cohortId ?? null, eventType: input.eventType, entityType: input.entityType, entityId: input.entityId ?? null, payload: input.payload ?? {}, createdBy: need(ctx).user.id }).returning();
   await audit(ctx, 'notification.event.created', 'notification_event', row.id, undefined, { eventType: row.eventType, programmeId: row.programmeId, cohortId: row.cohortId });
   return row;
 }
@@ -66,11 +63,7 @@ export async function sendNotification(ctx: Ctx, input: { recipientUserId: strin
   const channel = input.channel ?? 'IN_APP';
   const [pref] = await ctx.db.select().from(preferences).where(and(eq(preferences.userId, input.recipientUserId), input.programmeId ? eq(preferences.programmeId, input.programmeId) : isNull(preferences.programmeId), eq(preferences.channel, channel))).limit(1);
   if (pref?.enabled === 'false') return { skipped: true, reason: 'recipient_preference_disabled' };
-  const [notification] = await ctx.db.insert(notifications).values({
-    recipientUserId: input.recipientUserId, programmeId: input.programmeId ?? null, cohortId: input.cohortId ?? null,
-    channel, eventId: input.eventId ?? null, templateKey: input.templateKey ?? null, subject: input.subject ?? null,
-    body: input.body.trim(), status: 'PENDING', metadata: input.metadata ?? {},
-  }).returning();
+  const [notification] = await ctx.db.insert(notifications).values({ recipientUserId: input.recipientUserId, programmeId: input.programmeId ?? null, cohortId: input.cohortId ?? null, channel, eventId: input.eventId ?? null, templateKey: input.templateKey ?? null, subject: input.subject ?? null, body: input.body.trim(), status: 'PENDING', metadata: input.metadata ?? {} }).returning();
   const [delivery] = await ctx.db.insert(deliveries).values({ notificationId: notification.id, channel, status: channel === 'IN_APP' ? 'DELIVERED' : 'QUEUED', deliveredAt: channel === 'IN_APP' ? new Date() : null }).returning();
   if (channel === 'IN_APP') await ctx.db.update(notifications).set({ status: 'DELIVERED', sentAt: new Date(), updatedAt: new Date() }).where(eq(notifications.id, notification.id));
   await audit(ctx, 'notification.created', 'notification', notification.id, undefined, { recipientUserId: input.recipientUserId, channel, deliveryId: delivery.id });
@@ -84,8 +77,9 @@ export async function listProgrammeNotifications(ctx: Ctx, programmeId: string) 
 }
 
 export async function upsertPreference(ctx: Ctx, input: { userId: string; programmeId?: string | null; channel: 'IN_APP' | 'EMAIL' | 'SMS' | 'WHATSAPP'; enabled: boolean }) {
-  allow(ctx, 'programme_workspaces', 'edit');
+  allow(ctx, 'notifications', 'edit');
   await scope(ctx, input.programmeId, null);
+  if (input.userId !== need(ctx).user.id && !['ADMIN', 'PROGRAMME_MANAGER'].includes(need(ctx).user.role)) throw unprocessable('You may only change your own notification preferences');
   const existing = await ctx.db.select().from(preferences).where(and(eq(preferences.userId, input.userId), input.programmeId ? eq(preferences.programmeId, input.programmeId) : isNull(preferences.programmeId), eq(preferences.channel, input.channel))).limit(1);
   if (existing[0]) {
     const [row] = await ctx.db.update(preferences).set({ enabled: input.enabled ? 'true' : 'false', updatedAt: new Date() }).where(eq(preferences.id, existing[0].id)).returning();
