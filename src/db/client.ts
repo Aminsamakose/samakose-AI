@@ -56,7 +56,7 @@ export function db(): Db {
   return g.__db!;
 }
 
-export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0>;
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 export type DbOrTx = Db | Tx;
 
 /** Run work in one transaction. Everything inside commits or rolls back together. */
