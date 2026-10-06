@@ -52,9 +52,31 @@ export const notificationEvents = pgTable('notification_events', {
   createdAt: created(),
 }, (t) => [index('notification_event_scope_idx').on(t.programmeId, t.cohortId, t.eventType, t.createdAt)]);
 
+export const programmeNotifications = pgTable('programme_notifications', {
+  id: id(),
+  eventId: uuid('event_id').references(() => notificationEvents.id, { onDelete: 'set null' }),
+  programmeId: uuid('programme_id').references(() => programmes.id, { onDelete: 'cascade' }),
+  cohortId: uuid('cohort_id').references(() => cohorts.id, { onDelete: 'cascade' }),
+  recipientUserId: uuid('recipient_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  channel: text('channel').notNull().default('IN_APP'),
+  templateKey: text('template_key'),
+  subject: text('subject'),
+  body: text('body').notNull(),
+  status: text('status').notNull().default('PENDING'),
+  readAt: timestamp('read_at', { withTimezone: true }),
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  metadata: jsonb('metadata').notNull().default(sql`'{}'::jsonb`),
+  createdAt: created(), updatedAt: updated(),
+}, (t) => [
+  index('programme_notification_recipient_idx').on(t.recipientUserId, t.status, t.createdAt),
+  index('programme_notification_scope_idx').on(t.programmeId, t.cohortId, t.status),
+  check('programme_notification_channel_ck', sql`${t.channel} in ('IN_APP','EMAIL','SMS','WHATSAPP')`),
+  check('programme_notification_status_ck', sql`${t.status} in ('PENDING','SENT','DELIVERED','FAILED','READ','CANCELLED')`),
+]);
+
 export const notificationDeliveries = pgTable('notification_deliveries', {
   id: id(),
-  notificationId: uuid('notification_id').notNull().references(() => sql`public.notifications(id)`, { onDelete: 'cascade' }),
+  notificationId: uuid('notification_id').notNull().references(() => programmeNotifications.id, { onDelete: 'cascade' }),
   channel: text('channel').notNull(),
   status: text('status').notNull().default('QUEUED'),
   provider: text('provider'),
