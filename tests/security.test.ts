@@ -10,7 +10,7 @@ import { db, schema } from '@/db/client';
 const NIL = '00000000-0000-4000-8000-000000000000';
 const fill = (p: string) => p.replace(/:reference/g, 'nothing').replace(/:[a-zA-Z]+/g, NIL);
 // The route allows the role, but the service narrows it further by design (documented in ARCHITECTURE.md).
-const NARROWED = new Set(['POST /organisations/:id/opportunities/:opportunityId/suggest:OWNER', 'GET /referrals:OWNER', 'GET /unlock/summary:OWNER', 'PATCH /practitioners/:id:EXPERT', 'POST /practitioners/:id/submit:EXPERT', 'POST /practitioners/:id/submit:ADMIN', 'GET /practitioners/:id/conflicts:EXPERT', 'GET /practitioners/:id/performance:EXPERT', 'GET /practitioners/:id/performance:PROGRAMME_MANAGER', 'POST /invoices/:id/manual-payment:OWNER', 'POST /payments/:reference/mock-complete:OWNER', 'POST /kpis/:id/readings:OWNER', 'POST /programme-workspaces/:id/configurations/:version/approve:PROGRAMME_MANAGER']);
+const NARROWED = new Set(['POST /organisations/:id/opportunities/:opportunityId/suggest:OWNER', 'GET /referrals:OWNER', 'GET /unlock/summary:OWNER', 'PATCH /practitioners/:id:EXPERT', 'POST /practitioners/:id/submit:EXPERT', 'POST /practitioners/:id/submit:ADMIN', 'GET /practitioners/:id/conflicts:EXPERT', 'GET /practitioners/:id/performance:EXPERT', 'GET /practitioners/:id/performance:PROGRAMME_MANAGER', 'POST /invoices/:id/manual-payment:OWNER', 'POST /payments/:reference/mock-complete:OWNER', 'POST /kpis/:id/readings:OWNER', 'POST /programme-workspaces/:id/configurations/:version/approve:PROGRAMME_MANAGER', 'POST /cohorts/:id/configurations/:version/approve:PROGRAMME_MANAGER', 'POST /cohorts/:id/configurations/:version/reject:PROGRAMME_MANAGER']);
 
 let sessions: Record<Role, Session>;
 beforeAll(async () => {
@@ -25,7 +25,6 @@ describe('every endpoint enforces its permission for every role', () => {
   const guarded = routes.filter((r) => r.permission && r.auth !== 'public' && r.auth !== 'webhook');
   it('has a permission on every session route that touches business data', () => {
     const open = routes.filter((r) => !r.permission && r.auth !== 'public' && r.auth !== 'webhook').map((r) => `${r.method} ${r.path}`);
-    // Open to any signed-in user by design: own profile, own optional answers and next step (/me), own notifications, search (scoped inside), job status (owner-checked), password and MFA
     for (const p of open) expect(p).toMatch(/\/auth\/|\/me\/|\/notifications|\/search|\/jobs\/:id|\/users\/\:id\/photo/);
   });
   for (const r of guarded) {
@@ -84,7 +83,7 @@ describe('tenancy: no one reaches records outside their scope', () => {
     expect((await api(A.one.owner).post(`/cases/${t}/evidence`, { description: 'sneaky evidence' })).status).toBe(404);
     expect((await api(A.one.coach).post(`/cases/${t}/sessions`, { scheduledAt: new Date(Date.now() + 1e8).toISOString() })).status).toBe(404);
     expect((await api(A.one.owner).post(`/cases/${t}/kpis`, { name: 'Nope' })).status).toBe(404);
-    expect((await api(A.one.owner).post(`/cases/${A.one.case.id}/kpis`, { name: 'Nope' })).status).toBe(403); // advisers set indicators
+    expect((await api(A.one.owner).post(`/cases/${A.one.case.id}/kpis`, { name: 'Nope' })).status).toBe(403);
   });
   it('uploads bind to the caller’s organisation', async () => {
     const f = new FormData(); f.set('file', new File(['%PDF-1.4 x'], 'b.pdf')); f.set('orgId', A.two.org.id);
@@ -126,7 +125,7 @@ describe('injection and abuse resistance', () => {
       expect((await api(admin).get(`/organisations?q=${encodeURIComponent(q)}`)).status).toBe(200);
       expect((await api(admin).get(`/search?q=${encodeURIComponent(q + 'xx')}`)).status).toBe(200);
     }
-    expect((await api(admin).get('/organisations?q=%25')).data.total).toBe(0); // % is literal, not a wildcard
+    expect((await api(admin).get('/organisations?q=%25')).data.total).toBe(0);
     expect(Number((await db().select().from(schema.users).limit(1)).length)).toBe(1);
   });
   it('stores markup as text and never as anything the API interprets', async () => {
