@@ -11,4 +11,5 @@ import './cohort-configurations';
 import './delivery-operations';
 import './delivery-coordination';
 import './programme-calendar';
+import './provider-assignments';
 export { routes } from '../framework';
