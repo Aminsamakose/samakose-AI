@@ -1,4 +1,4 @@
-import { boolean, check, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid, index } from 'drizzle-orm/pg-core';
+import { check, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid, index } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { cohorts, users } from './schema';
 import { programmeParticipants } from './programme-workspace-schema';
