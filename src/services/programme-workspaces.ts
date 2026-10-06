@@ -6,6 +6,7 @@ import { conflict, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { assertOrg, assertProgramme } from '@/domain/scope';
 import { assertProgrammeTransition, type ProgrammeLifecycle, type ProviderSource } from '@/domain/programme-operating-model';
 import { canManageWorkspace, canDeliverInWorkspace, type WorkspaceRole } from '@/domain/programme-workspace';
+import { assertCapacity, getParticipantCapacity, getRoleCapacity, readWorkspaceEntitlements } from '@/domain/programme-entitlements';
 import { allow, need } from './common';
 
 const w = schema.programmeWorkspaces;
@@ -14,25 +15,16 @@ const pt = schema.programmeParticipants;
 const p = schema.programmes;
 const u = schema.users;
 
-function parseEntitlements(configuration: unknown): Array<{ key: string; limit: number | boolean | string }> {
-  if (!configuration || typeof configuration !== 'object' || Array.isArray(configuration)) return [];
-  const value = (configuration as Record<string, unknown>).entitlements;
-  if (!Array.isArray(value)) return [];
-  return value.filter((x): x is { key: string; limit: number | boolean | string } => {
-    if (!x || typeof x !== 'object') return false;
-    const r = x as Record<string, unknown>;
-    return typeof r.key === 'string' && (typeof r.limit === 'number' || typeof r.limit === 'boolean' || typeof r.limit === 'string');
-  });
-}
-
 async function getWorkspace(ctx: Ctx, workspaceId: string) {
   const [row] = await ctx.db.select().from(w).where(eq(w.id, workspaceId)).limit(1);
   if (!row) throw notFound('Programme workspace not found');
   return row;
 }
 
-async function getMembership(ctx: Ctx, workspaceId: string, userId: string) {
-  const [row] = await ctx.db.select().from(m).where(and(eq(m.workspaceId, workspaceId), eq(m.userId, userId), eq(m.active, true))).limit(1);
+async function getMembership(ctx: Ctx, workspaceId: string, userId: string, role?: WorkspaceRole) {
+  const conditions = [eq(m.workspaceId, workspaceId), eq(m.userId, userId), eq(m.active, true)];
+  if (role) conditions.push(eq(m.role, role));
+  const [row] = await ctx.db.select().from(m).where(and(...conditions)).limit(1);
   return row ?? null;
 }
 
@@ -138,12 +130,24 @@ export async function listMembers(ctx: Ctx, workspaceId: string) {
 
 export async function addMember(ctx: Ctx, workspaceId: string, input: { userId: string; role: WorkspaceRole }) {
   allow(ctx, 'programme_workspaces', 'edit');
-  await assertWorkspaceManager(ctx, workspaceId);
+  const { workspace } = await assertWorkspaceManager(ctx, workspaceId);
   if (!canDeliverInWorkspace(input.role)) throw unprocessable('Unsupported workspace role');
   const [user] = await ctx.db.select({ id: u.id }).from(u).where(eq(u.id, input.userId)).limit(1);
   if (!user) throw notFound('User not found');
-  const existing = await getMembership(ctx, workspaceId, input.userId);
-  if (existing && existing.role === input.role) throw conflict('User is already an active member with this role');
+
+  const entitlements = readWorkspaceEntitlements(workspace.configuration);
+  const roleCapacity = getRoleCapacity(entitlements, input.role);
+  const [{ n: activeRoleUsage }] = await ctx.db.select({ n: count() }).from(m).where(and(eq(m.workspaceId, workspaceId), eq(m.role, input.role), eq(m.active, true)));
+  assertCapacity(roleCapacity, Number(activeRoleUsage), `${input.role} team`);
+
+  const [existing] = await ctx.db.select().from(m).where(and(eq(m.workspaceId, workspaceId), eq(m.userId, input.userId), eq(m.role, input.role))).limit(1);
+  if (existing) {
+    if (existing.active) throw conflict('User is already an active member with this role');
+    const [reactivated] = await ctx.db.update(m).set({ active: true }).where(and(eq(m.workspaceId, workspaceId), eq(m.userId, input.userId), eq(m.role, input.role))).returning();
+    await audit(ctx, 'programme_workspace.member_activated', 'programme_workspace_member', `${workspaceId}:${input.userId}:${input.role}`, existing, reactivated);
+    return reactivated;
+  }
+
   const [row] = await ctx.db.insert(m).values({ workspaceId, userId: input.userId, role: input.role }).returning();
   await audit(ctx, 'programme_workspace.member_added', 'programme_workspace_member', `${workspaceId}:${input.userId}:${input.role}`, undefined, { workspaceId, userId: input.userId, role: input.role });
   return row;
@@ -156,6 +160,16 @@ export async function setMemberActive(ctx: Ctx, workspaceId: string, userId: str
   if (!row) throw notFound('Workspace membership not found');
   await audit(ctx, active ? 'programme_workspace.member_activated' : 'programme_workspace.member_deactivated', 'programme_workspace_member', `${workspaceId}:${userId}:${role}`);
   return row;
+}
+
+export async function getTeamEntitlementUsage(ctx: Ctx, workspaceId: string) {
+  allow(ctx, 'programme_workspaces', 'read');
+  const { workspace } = await assertWorkspaceAccess(ctx, workspaceId);
+  const entitlements = readWorkspaceEntitlements(workspace.configuration);
+  const members = await ctx.db.select({ role: m.role, active: m.active }).from(m).where(eq(m.workspaceId, workspaceId));
+  const usage = Object.fromEntries(WORKSPACE_ROLES.map((role) => [role, members.filter((row) => row.role === role && row.active).length]));
+  const limits = Object.fromEntries(WORKSPACE_ROLES.map((role) => [role, getRoleCapacity(entitlements, role)]));
+  return { workspaceId, usage, limits, entitlements };
 }
 
 export async function listParticipants(ctx: Ctx, workspaceId: string) {
@@ -172,11 +186,11 @@ export async function addParticipant(ctx: Ctx, workspaceId: string, input: { org
   if (!programme) throw notFound('Programme not found');
   const existing = await ctx.db.select({ id: pt.id }).from(pt).where(and(eq(pt.programmeId, workspace.programmeId), eq(pt.organisationId, input.organisationId))).limit(1);
   if (existing.length) throw conflict('This organisation is already a participant in the programme');
-  const entitlements = parseEntitlements(workspace.configuration);
-  const capacity = entitlements.find((x) => x.key === 'participant_capacity');
-  if (capacity && typeof capacity.limit === 'number') {
+  const entitlements = readWorkspaceEntitlements(workspace.configuration);
+  const capacity = getParticipantCapacity(entitlements);
+  if (capacity !== null) {
     const [{ n }] = await ctx.db.select({ n: count() }).from(pt).where(eq(pt.workspaceId, workspaceId));
-    if (Number(n) >= capacity.limit) throw conflict(`Participant capacity reached (${capacity.limit})`);
+    assertCapacity(capacity, Number(n), 'Participant');
   }
   const status = input.status ?? 'APPLICATION';
   if (!['APPLICATION','ELIGIBILITY','SELECTED','INVITED','CONSENTED','ONBOARDED','COHORT_ASSIGNED','ACTIVE','COMPLETING','COMPLETED','WITHDRAWN','REJECTED'].includes(status)) throw unprocessable('Invalid participant status');
