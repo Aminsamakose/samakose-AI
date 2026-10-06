@@ -31,32 +31,42 @@ export function isConnectFailure(e: unknown): boolean {
 export function pool(): Pool {
   const url = databaseUrl();
   if (!g.__pool || g.__poolUrl !== url) {
-    g.__pool?.end().catch(() => undefined);
-    g.__pool = new Pool({ connectionString: url, max: Number(process.env.DB_POOL_MAX ?? 10) });
+    /* Hosted poolers occasionally time out while authenticating a fresh connection (seen in production as EAUTHTIMEOUT).
+       So: give up on a stuck connection after 10 s instead of waiting forever, keep fewer connections per serverless
+       instance, drop idle ones before the pooler does, and retry the connection once. A retry here is safe because no
+       statement has run yet when a connection fails. */
+    const p = new Pool({ connectionString: url, max: Number(process.env.DB_POOL_MAX ?? 5), idleTimeoutMillis: 20_000, connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS ?? 10_000), statement_timeout: 30_000 });
+    p.on('error', () => { /* an idle connection dropped by the pooler; the pool replaces it on next use */ });
+    const connect = p.connect.bind(p) as (...a: any[]) => any;
+    (p as any).connect = (...args: any[]) => {
+      if (typeof args[0] === 'function') {
+        const cb = args[0] as (err: unknown, client?: unknown, done?: unknown) => void;
+        return connect((err: unknown, client: unknown, done: unknown) => err && isConnectFailure(err) ? connect(cb) : cb(err, client, done));
+      }
+      return connect().catch((e: unknown) => isConnectFailure(e) ? connect() : Promise.reject(e));
+    };
+    g.__pool = p;
     g.__poolUrl = url;
+    g.__db = drizzle(g.__pool, { schema });
   }
   return g.__pool;
 }
 
-export const schema = schema;
-export function db() { return drizzle(pool(), { schema }); }
-export type AppDb = Db;
-export type AppTx = Parameters<Parameters<Db['transaction']>[0]>[0];
-
-export async function withDb<T>(fn: (db: Db) => Promise<T>): Promise<T> {
-  return fn(db());
+export function db(): Db {
+  pool();
+  return g.__db!;
 }
 
-export async function withTransaction<T>(fn: (tx: AppTx) => Promise<T>): Promise<T> {
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+export type DbOrTx = Db | Tx;
+
+/** Run work in one transaction. Everything inside commits or rolls back together. */
+export async function tx<T>(fn: (t: Tx) => Promise<T>): Promise<T> {
   return db().transaction(fn);
 }
 
-export async function pingDatabase(): Promise<boolean> {
-  try {
-    await pool().query('select 1');
-    return true;
-  } catch (e) {
-    if (isConnectFailure(e)) return false;
-    throw e;
-  }
+export async function closeDb() {
+  if (g.__pool) { await g.__pool.end(); g.__pool = undefined; g.__db = undefined; }
 }
+export type { PoolClient };
+export { schema };
