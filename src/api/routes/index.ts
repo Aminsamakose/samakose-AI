@@ -9,4 +9,5 @@ import './programme-finance';
 import './programme-workspaces';
 import './cohort-configurations';
 import './delivery-operations';
+import './delivery-coordination';
 export { routes } from '../framework';
