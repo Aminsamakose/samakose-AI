@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, text, timestamp, uuid, index, uniqueIndex, pgTable, check } from 'drizzle-orm/pg-core';
+import { boolean, integer, jsonb, text, timestamp, uuid, index, pgTable, check, primaryKey } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { programmes, organisations, users, cohorts, frameworkVersions } from './schema';
 
@@ -35,7 +35,7 @@ export const programmeWorkspaceMembers = pgTable('programme_workspace_members', 
   active: boolean('active').notNull().default(true),
   joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  uniqueIndex('programme_workspace_member_uq').on(t.workspaceId, t.userId, t.role),
+  primaryKey({ columns: [t.workspaceId, t.userId, t.role], name: 'programme_workspace_member_pk' }),
   index('programme_workspace_member_user_idx').on(t.userId),
   check('programme_workspace_member_role_ck', sql`${t.role} in ('PROGRAMME_MANAGER','ASSESSOR','EXPERT','COACH','REVIEWER','FINANCE','MEL')`),
 ]);
@@ -59,7 +59,6 @@ export const programmeParticipants = pgTable('programme_participants', {
   createdAt: created(),
   updatedAt: updated(),
 }, (t) => [
-  uniqueIndex('programme_participant_programme_org_uq').on(t.programmeId, t.organisationId),
   index('programme_participant_workspace_idx').on(t.workspaceId),
   index('programme_participant_cohort_idx').on(t.cohortId),
   index('programme_participant_status_idx').on(t.status),
