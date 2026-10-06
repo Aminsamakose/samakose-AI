@@ -12,6 +12,7 @@ const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSch
 type Db = NodePgDatabase<typeof schema>;
 const g = globalThis as unknown as { __pool?: Pool; __db?: Db; __poolUrl?: string };
 
+/** Forgives the usual paste mistakes: spaces, line breaks, surrounding quotes, or a leading "DATABASE_URL=". */
 export function cleanDatabaseUrl(raw: string): string {
   return raw.trim().replace(/^DATABASE_URL\s*=\s*/i, '').trim().replace(/^['"]+|['"]+$/g, '').trim();
 }
@@ -24,6 +25,7 @@ export function databaseUrl(): string {
   return clean;
 }
 
+/** Connection-level failures only (never a failed statement): auth timeout, dropped connection, connect timeout. */
 export function isConnectFailure(e: unknown): boolean {
   const x = e as { code?: string; message?: string } | null;
   const msg = String(x?.message ?? '');
@@ -58,6 +60,7 @@ export function db(): Db {
 export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 export type DbOrTx = Db | Tx;
 
+/** Run work in one transaction. Everything inside commits or rolls back together. */
 export async function tx<T>(fn: (t: Tx) => Promise<T>): Promise<T> {
   return db().transaction(fn);
 }
