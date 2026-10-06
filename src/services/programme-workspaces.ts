@@ -38,7 +38,7 @@ async function assertWorkspaceAccess(ctx: Ctx, workspaceId: string) {
   return { workspace, membership };
 }
 
-async function assertWorkspaceManager(ctx: Ctx, workspaceId: string) {
+export async function assertWorkspaceManager(ctx: Ctx, workspaceId: string) {
   const { workspace, membership } = await assertWorkspaceAccess(ctx, workspaceId);
   const user = need(ctx).user;
   if (user.role === 'ADMIN') return { workspace, membership };
@@ -134,12 +134,10 @@ export async function addMember(ctx: Ctx, workspaceId: string, input: { userId: 
   if (!canDeliverInWorkspace(input.role)) throw unprocessable('Unsupported workspace role');
   const [user] = await ctx.db.select({ id: u.id }).from(u).where(eq(u.id, input.userId)).limit(1);
   if (!user) throw notFound('User not found');
-
   const entitlements = readWorkspaceEntitlements(workspace.configuration);
   const roleCapacity = getRoleCapacity(entitlements, input.role);
   const [{ n: activeRoleUsage }] = await ctx.db.select({ n: count() }).from(m).where(and(eq(m.workspaceId, workspaceId), eq(m.role, input.role), eq(m.active, true)));
   assertCapacity(roleCapacity, Number(activeRoleUsage), `${input.role} team`);
-
   const [existing] = await ctx.db.select().from(m).where(and(eq(m.workspaceId, workspaceId), eq(m.userId, input.userId), eq(m.role, input.role))).limit(1);
   if (existing) {
     if (existing.active) throw conflict('User is already an active member with this role');
@@ -147,7 +145,6 @@ export async function addMember(ctx: Ctx, workspaceId: string, input: { userId: 
     await audit(ctx, 'programme_workspace.member_activated', 'programme_workspace_member', `${workspaceId}:${input.userId}:${input.role}`, existing, reactivated);
     return reactivated;
   }
-
   const [row] = await ctx.db.insert(m).values({ workspaceId, userId: input.userId, role: input.role }).returning();
   await audit(ctx, 'programme_workspace.member_added', 'programme_workspace_member', `${workspaceId}:${input.userId}:${input.role}`, undefined, { workspaceId, userId: input.userId, role: input.role });
   return row;
