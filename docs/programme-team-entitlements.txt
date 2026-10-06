@@ -1,1 +1,0 @@
-Programme Team & Entitlements implementation slice.
