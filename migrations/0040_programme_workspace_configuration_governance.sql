@@ -30,4 +30,9 @@ CREATE INDEX "programme_workspace_configuration_status_idx" ON "programme_worksp
 
 ALTER TABLE "programme_workspace_configurations" ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE "programme_workspace_configurations" OWNER TO "samakose_app";
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'samakose_app') THEN
+    ALTER TABLE "programme_workspace_configurations" OWNER TO "samakose_app";
+  END IF;
+END $$;
