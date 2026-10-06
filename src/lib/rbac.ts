@@ -26,7 +26,7 @@ const ADMIN: Grants = {
   content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D],
   frameworks: [R, C, E, A], agents: [R, C, E, A], consent: [R, C, E, A], role_mapping: [R, C, E, A],
   feedback: [R, E, X], practitioners: [R, E, A], ratings: [R], opportunities: [R, C, E, A], referrals: [R, C, E, A, D],
-  messages: [R], escalations: [R], programme_workspaces: [R, C, E, D]
+  messages: [R], escalations: [R], programme_workspaces: [R, C, E, D, S]
 };
 export const PERMISSIONS: Record<Role, Grants> = {
   ADMIN,
@@ -36,7 +36,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
   },
   PROGRAMME_MANAGER: {
     frameworks: [R], users: [R], organisations: [R, C, E, X], programmes: [R, E, X], cohorts: [R, C, E, X], cases: [R, C, E, X, S], diagnostics: [R], scores: [R],
-    diagnoses: [R], prescriptions: [R], actions: [R, X], kpis: [R], sessions: [R], reports: [R, X], contracts: [R], dashboard: [R, X], practitioners: [R], ratings: [R, C], opportunities: [R, C, E, A], referrals: [R, C, E, A, D], messages: [R], escalations: [R], programme_workspaces: [R, C, E]
+    diagnoses: [R], prescriptions: [R], actions: [R, X], kpis: [R], sessions: [R], reports: [R, X], contracts: [R], dashboard: [R, X], practitioners: [R], ratings: [R, C], opportunities: [R, C, E, A], referrals: [R, C, E, A, D], messages: [R], escalations: [R], programme_workspaces: [R, C, E, S]
   },
   EXPERT: {
     frameworks: [R], users: [R], organisations: [R, C, E], cases: [R, C, E], diagnostics: [R, C], evidence: [R, C, E, V], documents: [R, C], scores: [R],
