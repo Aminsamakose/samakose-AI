@@ -5,8 +5,9 @@ import * as workspaceSchema from './programme-workspace-schema';
 import * as workspaceConfigurationSchema from './programme-workspace-configuration-schema';
 import * as cohortConfigurationSchema from './cohort-configuration-schema';
 import * as deliveryOperationsSchema from './delivery-operations-schema';
+import * as deliveryCoordinationSchema from './delivery-coordination-schema';
 
-const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema, ...deliveryOperationsSchema };
+const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema, ...deliveryOperationsSchema, ...deliveryCoordinationSchema };
 type Db = NodePgDatabase<typeof schema>;
 const g = globalThis as unknown as { __pool?: Pool; __db?: Db; __poolUrl?: string };
 
@@ -55,7 +56,7 @@ export function db(): Db {
   return g.__db!;
 }
 
-export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0>;
 export type DbOrTx = Db | Tx;
 
 /** Run work in one transaction. Everything inside commits or rolls back together. */
