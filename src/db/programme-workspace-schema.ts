@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, text, timestamp, uuid, index, pgTable, check, primaryKey } from 'drizzle-orm/pg-core';
+import { boolean, integer, jsonb, text, timestamp, uuid, index, uniqueIndex, pgTable, check, primaryKey } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { programmes, organisations, users, cohorts, frameworkVersions } from './schema';
 
@@ -59,6 +59,7 @@ export const programmeParticipants = pgTable('programme_participants', {
   createdAt: created(),
   updatedAt: updated(),
 }, (t) => [
+  uniqueIndex('programme_participant_programme_org_uq').on(t.programmeId, t.organisationId),
   index('programme_participant_workspace_idx').on(t.workspaceId),
   index('programme_participant_cohort_idx').on(t.cohortId),
   index('programme_participant_status_idx').on(t.status),
