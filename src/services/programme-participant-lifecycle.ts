@@ -4,7 +4,7 @@ import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { notFound, unprocessable } from '@/lib/errors';
 import { need } from '@/services/common';
-import { assertWorkspaceManager } from '@/services/programme-workspaces-internal';
+import { assertWorkspaceManager } from '@/services/programme-workspaces';
 
 const pt = schema.programmeParticipants;
 const w = schema.programmeWorkspaces;
@@ -51,7 +51,6 @@ async function assertCohort(ctx: Ctx, workspaceId: string, cohortId: string) {
 }
 
 export async function getParticipant(ctx: Ctx, workspaceId: string, participantId: string) {
-  await participant(ctx, workspaceId, participantId);
   return participant(ctx, workspaceId, participantId);
 }
 
