@@ -1,15 +1,11 @@
-import { and, desc, eq, max } from 'drizzle-orm';
+import { and, desc, eq, max, ne } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { forbidden, notFound, unprocessable } from '@/lib/errors';
 import { need } from './common';
 import { assertWorkspaceManager } from './programme-workspaces';
-import {
-  assertConfigurationTransition,
-  validateConfigurationForSubmission,
-  type ProgrammeWorkspaceConfigurationInput,
-} from '@/domain/programme-workspace-configuration';
+import { assertConfigurationTransition, validateConfigurationForSubmission, type ProgrammeWorkspaceConfigurationInput } from '@/domain/programme-workspace-configuration';
 import type { ProgrammeWorkspaceConfigurationStatus } from '@/db/programme-workspace-configuration-schema';
 
 const c = schema.programmeWorkspaceConfigurations;
@@ -25,6 +21,16 @@ async function getConfiguration(ctx: Ctx, workspaceId: string, version?: number)
   return row;
 }
 
+async function getReadableWorkspace(ctx: Ctx, workspaceId: string) {
+  const [workspace] = await ctx.db.select().from(w).where(eq(w.id, workspaceId)).limit(1);
+  if (!workspace) throw notFound('Programme workspace not found');
+  const user = need(ctx).user;
+  if (['ADMIN', 'EXECUTIVE'].includes(user.role) || user.programmeIds.includes(workspace.programmeId)) return workspace;
+  const [membership] = await ctx.db.select({ userId: m.userId }).from(m).where(and(eq(m.workspaceId, workspaceId), eq(m.userId, user.id), eq(m.active, true))).limit(1);
+  if (!membership) throw notFound('Programme workspace not found');
+  return workspace;
+}
+
 async function assertApprover(ctx: Ctx, workspaceId: string) {
   const user = need(ctx).user;
   if (['ADMIN', 'EXECUTIVE'].includes(user.role)) return;
@@ -38,9 +44,9 @@ export async function listConfigurations(ctx: Ctx, workspaceId: string) {
 }
 
 export async function getCurrentConfiguration(ctx: Ctx, workspaceId: string) {
-  const { workspace } = await assertWorkspaceManager(ctx, workspaceId);
-  const current = await getConfiguration(ctx, workspaceId, workspace.configurationVersion);
-  return { workspaceId, configurationVersion: workspace.configurationVersion, configuration: current };
+  const workspace = await getReadableWorkspace(ctx, workspaceId);
+  const current = await getConfiguration(ctx, workspaceId, workspace.configurationVersion).catch(() => null);
+  return { workspaceId, configurationVersion: workspace.configurationVersion, configuration: current, governanceStatus: current?.status ?? 'UNVERSIONED' };
 }
 
 export async function createConfigurationDraft(ctx: Ctx, workspaceId: string, input: ProgrammeWorkspaceConfigurationInput) {
@@ -87,9 +93,7 @@ export async function submitConfiguration(ctx: Ctx, workspaceId: string, version
   });
   if (errors.length) throw unprocessable(`Configuration is not ready for approval: ${errors.join('; ')}`);
   const [row] = await ctx.db.update(c).set({ status: 'SUBMITTED', rejectionReason: null, updatedAt: new Date() }).where(eq(c.id, draft.id)).returning();
-  if (workspace.status === 'APPROVED') {
-    await ctx.db.update(w).set({ status: 'CONFIGURING', updatedAt: new Date() }).where(eq(w.id, workspaceId));
-  }
+  if (workspace.status === 'APPROVED') await ctx.db.update(w).set({ status: 'CONFIGURING', updatedAt: new Date() }).where(eq(w.id, workspaceId));
   await audit(ctx, 'programme_workspace.configuration_submitted', 'programme_workspace_configuration', draft.id, draft, row);
   return row;
 }
@@ -98,15 +102,16 @@ export async function approveConfiguration(ctx: Ctx, workspaceId: string, versio
   await assertApprover(ctx, workspaceId);
   const draft = await getConfiguration(ctx, workspaceId, version);
   assertConfigurationTransition(draft.status as ProgrammeWorkspaceConfigurationStatus, 'APPROVED');
-  const [row] = await ctx.db.update(c).set({ status: 'APPROVED', approvedBy: need(ctx).user.id, approvedAt: new Date(), rejectionReason: null, updatedAt: new Date() }).where(eq(c.id, draft.id)).returning();
-  await ctx.db.update(c).set({ status: 'SUPERSEDED', updatedAt: new Date() }).where(and(eq(c.workspaceId, workspaceId), eq(c.status, 'APPROVED')));
+  const approvedAt = new Date();
+  const [row] = await ctx.db.update(c).set({ status: 'APPROVED', approvedBy: need(ctx).user.id, approvedAt, rejectionReason: null, updatedAt: approvedAt }).where(eq(c.id, draft.id)).returning();
+  await ctx.db.update(c).set({ status: 'SUPERSEDED', updatedAt: approvedAt }).where(and(eq(c.workspaceId, workspaceId), eq(c.status, 'APPROVED'), ne(c.id, row.id)));
   await ctx.db.update(w).set({
     configuration: row.configuration,
     configurationVersion: row.version,
     frameworkVersionId: row.frameworkVersionId,
     participantConsentRequired: row.participantConsentRequired,
     funderReportingEnabled: row.funderReportingEnabled,
-    updatedAt: new Date(),
+    updatedAt: approvedAt,
   }).where(eq(w.id, workspaceId));
   await audit(ctx, 'programme_workspace.configuration_approved', 'programme_workspace_configuration', row.id, draft, row);
   return row;
