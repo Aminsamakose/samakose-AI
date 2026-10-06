@@ -2,7 +2,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
-import { conflict, notFound, unprocessable } from '@/lib/errors';
+import { conflict, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme } from '@/domain/scope';
 import { allow, need } from './common';
 
@@ -11,7 +11,7 @@ const cohorts = schema.cohorts;
 
 function assertApprover(ctx: Ctx) {
   const role = need(ctx).user.role;
-  if (!['ADMIN', 'REVIEWER'].includes(role)) throw new Error('Only an authorised reviewer or administrator can approve cohort delivery configuration');
+  if (!['ADMIN', 'REVIEWER'].includes(role)) throw forbidden('Only an authorised reviewer or administrator can approve cohort delivery configuration');
 }
 
 async function getCohort(ctx: Ctx, cohortId: string) {
