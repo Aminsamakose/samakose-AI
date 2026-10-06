@@ -1,1 +1,0 @@
-Delivery Operations implementation is ready for CI and staging qualification. See docs/programme-delivery-operations.md.
