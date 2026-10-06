@@ -45,7 +45,7 @@ async function assertCohort(ctx: Ctx, workspaceId: string, cohortId: string) {
   const [row] = await ctx.db.select().from(c).where(and(eq(c.id, cohortId), eq(c.programmeId, ws.programmeId))).limit(1);
   if (!row) throw notFound('Cohort not found for this programme');
   if (row.status === 'Closed') throw unprocessable('Cannot assign a participant to a closed cohort');
-  const [{ n }] = await ctx.db.select({ n: count() }).from(pt).where(and(eq(pt.cohortId, cohortId), eq(pt.status, 'COHORT_ASSIGNED')));
+  const [{ n }] = await ctx.db.select({ n: count() }).from(pt).where(eq(pt.cohortId, cohortId));
   if (Number(n) >= row.capacity) throw unprocessable('Cohort capacity has been reached');
   return { ws, cohort: row };
 }
@@ -77,7 +77,8 @@ export async function recordConsent(ctx: Ctx, workspaceId: string, participantId
 export async function onboard(ctx: Ctx, workspaceId: string, participantId: string) {
   const { workspace } = await assertWorkspaceManager(ctx, workspaceId);
   const before = await participant(ctx, workspaceId, participantId);
-  if (before.status !== 'CONSENTED') throw unprocessable('Only consented participants can be onboarded');
+  const consentSatisfied = before.status === 'CONSENTED' || (before.status === 'INVITED' && !workspace.participantConsentRequired);
+  if (!consentSatisfied) throw unprocessable('Only consented participants can be onboarded');
   const now = new Date();
   const [row] = await ctx.db.update(pt).set({ status: 'ONBOARDED', onboardedAt: now, updatedAt: now }).where(eq(pt.id, participantId)).returning();
   await audit(ctx, 'programme_participant.onboarded', 'programme_participant', participantId, before, { onboardedAt: now, programmeId: workspace.programmeId });
