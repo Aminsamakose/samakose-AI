@@ -46,6 +46,7 @@
     {"idx":41,"version":"7","when":1792020000000,"tag":"0041_cohort_configurations","breakpoints":true},
     {"idx":42,"version":"7","when":1792021000000,"tag":"0042_delivery_operations","breakpoints":true},
     {"idx":43,"version":"7","when":1792022000000,"tag":"0045_programme_calendar_scheduling","breakpoints":true},
-    {"idx":44,"version":"7","when":1792023000000,"tag":"0046_provider_assignment_capacity","breakpoints":true}
+    {"idx":44,"version":"7","when":1792023000000,"tag":"0046_provider_assignment_capacity","breakpoints":true},
+    {"idx":45,"version":"7","when":1792024000000,"tag":"0047_monitoring_performance","breakpoints":true}
   ]
 }

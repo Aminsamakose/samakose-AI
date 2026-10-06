@@ -10,7 +10,7 @@ export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
   'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments',
-  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping', 'team', 'feedback', 'practitioners', 'ratings', 'opportunities', 'referrals', 'messages', 'escalations', 'programme_workspaces'
+  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping', 'team', 'feedback', 'practitioners', 'ratings', 'opportunities', 'referrals', 'messages', 'escalations', 'programme_workspaces', 'monitoring'
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -26,26 +26,26 @@ const ADMIN: Grants = {
   content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D],
   frameworks: [R, C, E, A], agents: [R, C, E, A], consent: [R, C, E, A], role_mapping: [R, C, E, A],
   feedback: [R, E, X], practitioners: [R, E, A], ratings: [R], opportunities: [R, C, E, A], referrals: [R, C, E, A, D],
-  messages: [R], escalations: [R], programme_workspaces: [R, C, E, D, S]
+  messages: [R], escalations: [R], programme_workspaces: [R, C, E, D, S], monitoring: [R, C, E, A, X]
 };
 export const PERMISSIONS: Record<Role, Grants> = {
   ADMIN,
   EXECUTIVE: {
     agents: [R], consent: [R], role_mapping: [R], feedback: [R], frameworks: [R], organisations: [R, X], programmes: [R, X], cohorts: [R], cases: [R, X], scores: [R], diagnoses: [R], prescriptions: [R], actions: [R],
-    kpis: [R], reports: [R, X], contracts: [R], invoices: [R, X], payments: [R], dashboard: [R, X], practitioners: [R], ratings: [R], opportunities: [R], referrals: [R], programme_workspaces: [R]
+    kpis: [R], reports: [R, X], contracts: [R], invoices: [R, X], payments: [R], dashboard: [R, X], practitioners: [R], ratings: [R], opportunities: [R], referrals: [R], programme_workspaces: [R], monitoring: [R]
   },
   PROGRAMME_MANAGER: {
     frameworks: [R], users: [R], organisations: [R, C, E, X], programmes: [R, E, X], cohorts: [R, C, E, X], cases: [R, C, E, X, S], diagnostics: [R], scores: [R],
-    diagnoses: [R], prescriptions: [R], actions: [R, X], kpis: [R], sessions: [R], reports: [R, X], contracts: [R], dashboard: [R, X], practitioners: [R], ratings: [R, C], opportunities: [R, C, E, A], referrals: [R, C, E, A, D], messages: [R], escalations: [R], programme_workspaces: [R, C, E, S]
+    diagnoses: [R], prescriptions: [R], actions: [R, X], kpis: [R], sessions: [R], reports: [R, X], contracts: [R], dashboard: [R, X], practitioners: [R], ratings: [R, C], opportunities: [R, C, E, A], referrals: [R, C, E, A, D], messages: [R], escalations: [R], programme_workspaces: [R, C, E, S], monitoring: [R, C, E, A, X]
   },
   EXPERT: {
     frameworks: [R], users: [R], organisations: [R, C, E], cases: [R, C, E], diagnostics: [R, C], evidence: [R, C, E, V], documents: [R, C], scores: [R],
     diagnoses: [R, C, E, O], prescriptions: [R, C, E, O], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E],
-    reports: [R, C], dashboard: [R], practitioners: [R, E], opportunities: [R], referrals: [R, C], messages: [R, C], programme_workspaces: [R]
+    reports: [R, C], dashboard: [R], practitioners: [R, E], opportunities: [R], referrals: [R, C], messages: [R, C], programme_workspaces: [R], monitoring: [R]
   },
   REVIEWER: {
     frameworks: [R], cases: [R, T], evidence: [R], documents: [R], scores: [R], diagnoses: [R], prescriptions: [R, A], actions: [R], kpis: [R], risks: [R],
-    reports: [R, A], dashboard: [R], ratings: [R, C], programme_workspaces: [R]
+    reports: [R, A], dashboard: [R], ratings: [R, C], programme_workspaces: [R], monitoring: [R, E, A]
   },
   FINANCE: {
     organisations: [R], plans: [R, C, E], contracts: [R, C, E, X], invoices: [R, C, E, X], payments: [R, C, X], dashboard: [R], programme_workspaces: [R]
@@ -56,7 +56,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
     team: [R, C, E, D]
   },
   RESPONDENT: { dashboard: [R] },
-  FUNDER: { programmes: [R], cohorts: [R], reports: [R], dashboard: [R, X], programme_workspaces: [R] },
+  FUNDER: { programmes: [R], cohorts: [R], reports: [R], dashboard: [R, X], programme_workspaces: [R], monitoring: [R, X] },
   CONTENT_EDITOR: { content: [R, C, E], site_settings: [R], media: [R, C], dashboard: [R] },
   SITE_MANAGER: { content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D], inquiries: [R, E], dashboard: [R] }
 };
