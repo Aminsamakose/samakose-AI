@@ -1,1 +1,0 @@
-Implementation complete on feature branch; qualification is gated by CI before merge.
