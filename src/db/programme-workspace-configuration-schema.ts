@@ -1,7 +1,7 @@
 import { boolean, integer, jsonb, text, timestamp, uuid, index, uniqueIndex, pgTable, check } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { programmeWorkspaces } from './programme-workspace-schema';
-import { users, frameworkVersions } from './schema';
+import { users } from './schema';
 
 const created = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const updated = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow();
@@ -21,7 +21,10 @@ export const programmeWorkspaceConfigurations = pgTable('programme_workspace_con
   deliveryModel: jsonb('delivery_model').notNull().default(sql`'{}'::jsonb`),
   reporting: jsonb('reporting').notNull().default(sql`'{}'::jsonb`),
   entitlements: jsonb('entitlements').notNull().default(sql`'[]'::jsonb`),
-  frameworkVersionId: uuid('framework_version_id').references(() => frameworkVersions.id),
+  // framework_version_id is intentionally kept as a scalar UUID here. The legacy
+  // framework_versions table is migration-defined but is not represented in the
+  // current Drizzle schema barrel. The authoritative database FK remains in 0040.
+  frameworkVersionId: uuid('framework_version_id'),
   participantConsentRequired: boolean('participant_consent_required').notNull().default(true),
   funderReportingEnabled: boolean('funder_reporting_enabled').notNull().default(false),
   changeReason: text('change_reason'),
