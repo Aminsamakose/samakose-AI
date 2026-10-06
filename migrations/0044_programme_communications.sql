@@ -1,5 +1,7 @@
 -- 0044: Programme communications and notifications.
 -- Staging-gated; no production migration is implied by this file.
+-- The platform already has a legacy `notifications` table. This layer deliberately
+-- uses a separate table so existing notification consumers remain compatible.
 
 create table if not exists public.notification_templates (
   id uuid primary key default gen_random_uuid(),
@@ -43,7 +45,7 @@ create table if not exists public.notification_events (
 );
 create index if not exists notification_event_scope_idx on public.notification_events(programme_id, cohort_id, event_type, created_at);
 
-create table if not exists public.notifications (
+create table if not exists public.programme_notifications (
   id uuid primary key default gen_random_uuid(),
   event_id uuid references public.notification_events(id) on delete set null,
   programme_id uuid references public.programmes(id) on delete cascade,
@@ -59,15 +61,15 @@ create table if not exists public.notifications (
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint notification_channel_ck check (channel in ('IN_APP','EMAIL','SMS','WHATSAPP')),
-  constraint notification_status_ck check (status in ('PENDING','SENT','DELIVERED','FAILED','READ','CANCELLED'))
+  constraint programme_notification_channel_ck check (channel in ('IN_APP','EMAIL','SMS','WHATSAPP')),
+  constraint programme_notification_status_ck check (status in ('PENDING','SENT','DELIVERED','FAILED','READ','CANCELLED'))
 );
-create index if not exists notification_recipient_idx on public.notifications(recipient_user_id, status, created_at);
-create index if not exists notification_scope_idx on public.notifications(programme_id, cohort_id, status);
+create index if not exists programme_notification_recipient_idx on public.programme_notifications(recipient_user_id, status, created_at);
+create index if not exists programme_notification_scope_idx on public.programme_notifications(programme_id, cohort_id, status);
 
 create table if not exists public.notification_deliveries (
   id uuid primary key default gen_random_uuid(),
-  notification_id uuid not null references public.notifications(id) on delete cascade,
+  notification_id uuid not null references public.programme_notifications(id) on delete cascade,
   channel text not null,
   status text not null default 'QUEUED',
   provider text,
@@ -87,7 +89,7 @@ create index if not exists notification_delivery_idx on public.notification_deli
 alter table public.notification_templates enable row level security;
 alter table public.notification_preferences enable row level security;
 alter table public.notification_events enable row level security;
-alter table public.notifications enable row level security;
+alter table public.programme_notifications enable row level security;
 alter table public.notification_deliveries enable row level security;
 
 -- Application authorization/scoping is enforced by the service layer. No broad client policies are added.
