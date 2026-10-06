@@ -2,8 +2,9 @@ import { Pool, type PoolClient } from 'pg';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as baseSchema from './schema';
 import * as workspaceSchema from './programme-workspace-schema';
+import * as workspaceConfigurationSchema from './programme-workspace-configuration-schema';
 
-const schema = { ...baseSchema, ...workspaceSchema };
+const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSchema };
 type Db = NodePgDatabase<typeof schema>;
 const g = globalThis as unknown as { __pool?: Pool; __db?: Db; __poolUrl?: string };
 
@@ -38,7 +39,7 @@ export function pool(): Pool {
     p.on('error', () => { /* an idle connection dropped by the pooler; the pool replaces it on next use */ });
     const connect = p.connect.bind(p) as (...a: any[]) => any;
     (p as any).connect = (...args: any[]) => {
-      if (typeof args[0] === 'function') { /* pool.query() takes this route */
+      if (typeof args[0] === 'function') {
         const cb = args[0] as (err: unknown, client?: unknown, done?: unknown) => void;
         return connect((err: unknown, client: unknown, done: unknown) => err && isConnectFailure(err) ? connect(cb) : cb(err, client, done));
       }
