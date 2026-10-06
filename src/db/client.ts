@@ -3,8 +3,9 @@ import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as baseSchema from './schema';
 import * as workspaceSchema from './programme-workspace-schema';
 import * as workspaceConfigurationSchema from './programme-workspace-configuration-schema';
+import * as cohortConfigurationSchema from './cohort-configuration-schema';
 
-const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSchema };
+const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema };
 type Db = NodePgDatabase<typeof schema>;
 const g = globalThis as unknown as { __pool?: Pool; __db?: Db; __poolUrl?: string };
 
@@ -31,12 +32,8 @@ export function isConnectFailure(e: unknown): boolean {
 export function pool(): Pool {
   const url = databaseUrl();
   if (!g.__pool || g.__poolUrl !== url) {
-    /* Hosted poolers occasionally time out while authenticating a fresh connection (seen in production as EAUTHTIMEOUT).
-       So: give up on a stuck connection after 10 s instead of waiting forever, keep fewer connections per serverless
-       instance, drop idle ones before the pooler does, and retry the connection once. A retry here is safe because no
-       statement has run yet when a connection fails. */
     const p = new Pool({ connectionString: url, max: Number(process.env.DB_POOL_MAX ?? 5), idleTimeoutMillis: 20_000, connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS ?? 10_000), statement_timeout: 30_000 });
-    p.on('error', () => { /* an idle connection dropped by the pooler; the pool replaces it on next use */ });
+    p.on('error', () => {});
     const connect = p.connect.bind(p) as (...a: any[]) => any;
     (p as any).connect = (...args: any[]) => {
       if (typeof args[0] === 'function') {
