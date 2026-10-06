@@ -5,7 +5,7 @@ import { audit } from '@/lib/audit';
 import { conflict, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { assertOrg, assertProgramme } from '@/domain/scope';
 import { assertProgrammeTransition, type ProgrammeLifecycle, type ProviderSource } from '@/domain/programme-operating-model';
-import { canManageWorkspace, canDeliverInWorkspace, type WorkspaceRole } from '@/domain/programme-workspace';
+import { WORKSPACE_ROLES, canManageWorkspace, canDeliverInWorkspace, type WorkspaceRole } from '@/domain/programme-workspace';
 import { assertCapacity, getParticipantCapacity, getRoleCapacity, readWorkspaceEntitlements } from '@/domain/programme-entitlements';
 import { allow, need } from './common';
 
