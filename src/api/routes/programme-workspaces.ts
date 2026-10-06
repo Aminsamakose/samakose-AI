@@ -1,0 +1,21 @@
+import { z } from 'zod';
+import { defineRoute, status } from '../framework';
+import * as ws from '@/services/programme-workspaces';
+import { WORKSPACE_ROLES } from '@/domain/programme-workspace';
+
+const W = 'Programme workspace';
+const provider = z.enum(['SAMAKOSE_NETWORK', 'BRING_YOUR_OWN', 'HYBRID']);
+const lifecycle = z.enum(['DRAFT','COMMERCIAL_REVIEW','INVOICED','PAYMENT_PENDING','APPROVED','CONFIGURING','READY','ACTIVE','PAUSED','COMPLETING','COMPLETED','CLOSED','ARCHIVED']);
+const workspaceRole = z.enum(WORKSPACE_ROLES);
+const config = z.record(z.string(), z.unknown());
+
+defineRoute({ method: 'GET', path: '/programme-workspaces', tag: W, summary: 'List programme workspaces available to the signed-in user', permission: ['programme_workspaces', 'read'], handler: ({ ctx }) => ws.listWorkspaces(ctx) });
+defineRoute({ method: 'GET', path: '/programmes/:id/workspace', tag: W, summary: 'Get the programme workspace', permission: ['programme_workspaces', 'read'], handler: ({ ctx, params }) => ws.getWorkspaceByProgramme(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/programmes/:id/workspace', tag: W, summary: 'Create the single workspace for a programme', permission: ['programme_workspaces', 'create'], body: z.object({ name: z.string().trim().min(2).max(160).optional(), providerSource: provider.optional(), frameworkVersionId: z.string().uuid().nullish(), participantConsentRequired: z.boolean().optional(), funderReportingEnabled: z.boolean().optional(), configuration: config.optional() }), handler: async ({ ctx, params, body }) => status(201, await ws.createWorkspace(ctx, params.id, body)) });
+defineRoute({ method: 'PATCH', path: '/programme-workspaces/:id', tag: W, summary: 'Update workspace configuration or lifecycle', permission: ['programme_workspaces', 'edit'], body: z.object({ name: z.string().trim().min(2).max(160).optional(), status: lifecycle.optional(), providerSource: provider.optional(), frameworkVersionId: z.string().uuid().nullish(), participantConsentRequired: z.boolean().optional(), funderReportingEnabled: z.boolean().optional(), configuration: config.optional() }), handler: ({ ctx, params, body }) => ws.updateWorkspace(ctx, params.id, body) });
+defineRoute({ method: 'GET', path: '/programme-workspaces/:id/members', tag: W, summary: 'List workspace team members', permission: ['programme_workspaces', 'read'], handler: ({ ctx, params }) => ws.listMembers(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/programme-workspaces/:id/members', tag: W, summary: 'Add a programme-scoped team member', permission: ['programme_workspaces', 'edit'], body: z.object({ userId: z.string().uuid(), role: workspaceRole }), handler: async ({ ctx, params, body }) => status(201, await ws.addMember(ctx, params.id, body)) });
+defineRoute({ method: 'PATCH', path: '/programme-workspaces/:id/members/:userId/:role', tag: W, summary: 'Activate or deactivate a workspace membership', permission: ['programme_workspaces', 'edit'], body: z.object({ active: z.boolean() }), handler: ({ ctx, params, body }) => ws.setMemberActive(ctx, params.id, params.userId, params.role as any, body.active) });
+defineRoute({ method: 'GET', path: '/programme-workspaces/:id/participants', tag: W, summary: 'List programme participants', permission: ['programme_workspaces', 'read'], handler: ({ ctx, params }) => ws.listParticipants(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/programme-workspaces/:id/participants', tag: W, summary: 'Add an organisation to the programme participant lifecycle', permission: ['programme_workspaces', 'edit'], body: z.object({ organisationId: z.string().uuid(), cohortId: z.string().uuid().nullish(), status: z.string().optional(), metadata: config.optional() }), handler: async ({ ctx, params, body }) => status(201, await ws.addParticipant(ctx, params.id, body)) });
+defineRoute({ method: 'POST', path: '/programme-workspaces/:id/participants/:participantId/transition', tag: W, summary: 'Move a participant through the governed programme lifecycle', permission: ['programme_workspaces', 'edit'], body: z.object({ status: z.string() }), handler: ({ ctx, params, body }) => ws.transitionParticipant(ctx, params.id, params.participantId, body.status) });
