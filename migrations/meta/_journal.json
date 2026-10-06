@@ -44,6 +44,7 @@
     {"idx":39,"version":"7","when":1792019624084,"tag":"0039_programme_workspace_member_primary_key","breakpoints":true},
     {"idx":40,"version":"7","when":1792019624085,"tag":"0040_programme_workspace_configuration_governance","breakpoints":true},
     {"idx":41,"version":"7","when":1792020000000,"tag":"0041_cohort_configurations","breakpoints":true},
-    {"idx":42,"version":"7","when":1792021000000,"tag":"0042_delivery_operations","breakpoints":true}
+    {"idx":42,"version":"7","when":1792021000000,"tag":"0042_delivery_operations","breakpoints":true},
+    {"idx":43,"version":"7","when":1792022000000,"tag":"0045_programme_calendar_scheduling","breakpoints":true}
   ]
 }
