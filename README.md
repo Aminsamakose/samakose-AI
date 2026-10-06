@@ -49,3 +49,7 @@ Vercel's disk is temporary and its functions are short-lived, so three things di
 3. **Background jobs.** Jobs started by a request keep the function alive until they finish (up to 60 seconds). `vercel.json` also calls `/api/internal/cron` once a day, which suits the Hobby plan. On Pro, change the schedule to `*/5 * * * *` so retries, overdue scans and emails run promptly. Set `CRON_SECRET`; Vercel sends it as a bearer token.
 
 Also set `DATABASE_URL` (pooler), `DB_POOL_MAX=5`, `APP_URL`, `SESSION_SECRET`, `NODE_ENV=production`, `TRUST_PROXY=1` and the AI, Paystack and email variables. Run migrations from your machine or CI before the first deploy (`npm run db:migrate`); the build does not run them.
+
+
+### Programme Operating System progress
+Monitoring and provider performance is governed as a measurement layer over Programme Workspace delivery, assignments, attendance and coordination records.
