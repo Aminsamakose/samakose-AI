@@ -29,7 +29,10 @@ export default function ProgrammeCommandCentrePage(){
     fetch(`${API}/programme-workspaces/${id}/participants`,{credentials:'include'})
    ]);
    if(!w.ok||!s.ok||!p.ok)throw new Error('Unable to load this Programme Workspace. Check the workspace ID and your access.');
-   setWorkspace(await w.json());setSummary(await s.json());setParticipants(await p.json());
+   const workspaces=await w.json();
+   const selected=(Array.isArray(workspaces)?workspaces:workspaces.items??[]).find((item:any)=>item.id===id);
+   if(!selected)throw new Error('Programme Workspace not found in your accessible workspaces.');
+   setWorkspace(selected);setSummary(await s.json());setParticipants(await p.json());
   }catch(e){setError(e instanceof Error?e.message:'Unable to load the workspace.');setWorkspace(null);setSummary(null);setParticipants([])}
   finally{setLoading(false)}
  }
