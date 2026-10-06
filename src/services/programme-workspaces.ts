@@ -1,4 +1,4 @@
-import { and, count, eq, inArray } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -40,6 +40,7 @@ async function assertWorkspaceAccess(ctx: Ctx, workspaceId: string) {
   const workspace = await getWorkspace(ctx, workspaceId);
   const user = need(ctx).user;
   if (['ADMIN', 'EXECUTIVE'].includes(user.role)) return { workspace, membership: null };
+  if (user.programmeIds.includes(workspace.programmeId)) return { workspace, membership: null };
   const membership = await getMembership(ctx, workspaceId, user.id);
   if (!membership || !canDeliverInWorkspace(membership.role as WorkspaceRole)) throw notFound('Programme workspace not found');
   return { workspace, membership };
@@ -48,26 +49,32 @@ async function assertWorkspaceAccess(ctx: Ctx, workspaceId: string) {
 async function assertWorkspaceManager(ctx: Ctx, workspaceId: string) {
   const { workspace, membership } = await assertWorkspaceAccess(ctx, workspaceId);
   const user = need(ctx).user;
-  if (user.role !== 'ADMIN' && (!membership || !canManageWorkspace(membership.role as WorkspaceRole))) throw forbidden('Only the programme manager can manage this workspace');
+  if (user.role === 'ADMIN') return { workspace, membership };
+  if (!membership || !canManageWorkspace(membership.role as WorkspaceRole)) throw forbidden('Only the programme manager can manage this workspace');
   return { workspace, membership };
 }
 
 export async function listWorkspaces(ctx: Ctx) {
   allow(ctx, 'programme_workspaces', 'read');
   const user = need(ctx).user;
-  const rows = ['ADMIN', 'EXECUTIVE'].includes(user.role)
-    ? await ctx.db.select().from(w).orderBy(w.createdAt)
-    : await ctx.db.select({ workspace: w }).from(w).innerJoin(m, eq(m.workspaceId, w.id)).where(and(eq(m.userId, user.id), eq(m.active, true))).orderBy(w.createdAt);
-  return rows.map((r: any) => r.workspace ?? r);
+  if (['ADMIN', 'EXECUTIVE'].includes(user.role)) return ctx.db.select().from(w).orderBy(w.createdAt);
+  const byProgramme = user.programmeIds.length
+    ? await ctx.db.select().from(w).where((x) => undefined as any)
+    : [];
+  const assigned = user.programmeIds.length
+    ? await ctx.db.select().from(w).where((await import('drizzle-orm')).inArray(w.programmeId, user.programmeIds)).orderBy(w.createdAt)
+    : [];
+  const memberRows = await ctx.db.select({ workspace: w }).from(w).innerJoin(m, eq(m.workspaceId, w.id)).where(and(eq(m.userId, user.id), eq(m.active, true))).orderBy(w.createdAt);
+  const seen = new Set<string>();
+  return [...assigned, ...memberRows.map((r: any) => r.workspace)].filter((row) => !seen.has(row.id) && !!seen.add(row.id));
 }
 
 export async function getWorkspaceByProgramme(ctx: Ctx, programmeId: string) {
   allow(ctx, 'programme_workspaces', 'read');
-  const programme = await assertProgramme(ctx, programmeId);
   const user = need(ctx).user;
   const [workspace] = await ctx.db.select().from(w).where(eq(w.programmeId, programmeId)).limit(1);
   if (!workspace) throw notFound('Programme workspace not found');
-  if (!['ADMIN', 'EXECUTIVE'].includes(user.role)) {
+  if (!['ADMIN', 'EXECUTIVE'].includes(user.role) && !user.programmeIds.includes(programmeId)) {
     const membership = await getMembership(ctx, workspace.id, user.id);
     if (!membership) throw notFound('Programme workspace not found');
   }
@@ -112,12 +119,11 @@ export async function updateWorkspace(ctx: Ctx, workspaceId: string, input: {
   allow(ctx, 'programme_workspaces', 'edit');
   const { workspace } = await assertWorkspaceManager(ctx, workspaceId);
   if (input.status && input.status !== workspace.status) assertProgrammeTransition(workspace.status as ProgrammeLifecycle, input.status);
-  const configurationChanged = input.configuration !== undefined;
   const patch: Record<string, unknown> = { updatedAt: new Date() };
   for (const key of ['name', 'status', 'providerSource', 'frameworkVersionId', 'participantConsentRequired', 'funderReportingEnabled'] as const) {
     if (input[key] !== undefined) patch[key] = input[key];
   }
-  if (configurationChanged) {
+  if (input.configuration !== undefined) {
     patch.configuration = input.configuration;
     patch.configurationVersion = workspace.configurationVersion + 1;
   }
@@ -135,7 +141,7 @@ export async function listMembers(ctx: Ctx, workspaceId: string) {
 
 export async function addMember(ctx: Ctx, workspaceId: string, input: { userId: string; role: WorkspaceRole }) {
   allow(ctx, 'programme_workspaces', 'edit');
-  const { workspace } = await assertWorkspaceManager(ctx, workspaceId);
+  await assertWorkspaceManager(ctx, workspaceId);
   if (!canDeliverInWorkspace(input.role)) throw unprocessable('Unsupported workspace role');
   const [user] = await ctx.db.select({ id: u.id }).from(u).where(eq(u.id, input.userId)).limit(1);
   if (!user) throw notFound('User not found');
@@ -183,18 +189,10 @@ export async function addParticipant(ctx: Ctx, workspaceId: string, input: { org
 }
 
 const PARTICIPANT_MOVES: Record<string, string[]> = {
-  APPLICATION: ['ELIGIBILITY', 'REJECTED'],
-  ELIGIBILITY: ['SELECTED', 'REJECTED'],
-  SELECTED: ['INVITED', 'REJECTED'],
-  INVITED: ['CONSENTED', 'WITHDRAWN', 'REJECTED'],
-  CONSENTED: ['ONBOARDED', 'WITHDRAWN'],
-  ONBOARDED: ['COHORT_ASSIGNED', 'WITHDRAWN'],
-  COHORT_ASSIGNED: ['ACTIVE', 'WITHDRAWN'],
-  ACTIVE: ['COMPLETING', 'WITHDRAWN'],
-  COMPLETING: ['COMPLETED', 'WITHDRAWN'],
-  COMPLETED: [],
-  WITHDRAWN: [],
-  REJECTED: [],
+  APPLICATION: ['ELIGIBILITY', 'REJECTED'], ELIGIBILITY: ['SELECTED', 'REJECTED'], SELECTED: ['INVITED', 'REJECTED'],
+  INVITED: ['CONSENTED', 'WITHDRAWN', 'REJECTED'], CONSENTED: ['ONBOARDED', 'WITHDRAWN'], ONBOARDED: ['COHORT_ASSIGNED', 'WITHDRAWN'],
+  COHORT_ASSIGNED: ['ACTIVE', 'WITHDRAWN'], ACTIVE: ['COMPLETING', 'WITHDRAWN'], COMPLETING: ['COMPLETED', 'WITHDRAWN'],
+  COMPLETED: [], WITHDRAWN: [], REJECTED: [],
 };
 
 export async function transitionParticipant(ctx: Ctx, workspaceId: string, participantId: string, status: string) {
