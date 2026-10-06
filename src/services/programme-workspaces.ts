@@ -1,4 +1,4 @@
-import { and, count, eq } from 'drizzle-orm';
+import { and, count, eq, inArray } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -58,15 +58,12 @@ export async function listWorkspaces(ctx: Ctx) {
   allow(ctx, 'programme_workspaces', 'read');
   const user = need(ctx).user;
   if (['ADMIN', 'EXECUTIVE'].includes(user.role)) return ctx.db.select().from(w).orderBy(w.createdAt);
-  const byProgramme = user.programmeIds.length
-    ? await ctx.db.select().from(w).where((x) => undefined as any)
-    : [];
   const assigned = user.programmeIds.length
-    ? await ctx.db.select().from(w).where((await import('drizzle-orm')).inArray(w.programmeId, user.programmeIds)).orderBy(w.createdAt)
+    ? await ctx.db.select().from(w).where(inArray(w.programmeId, user.programmeIds)).orderBy(w.createdAt)
     : [];
   const memberRows = await ctx.db.select({ workspace: w }).from(w).innerJoin(m, eq(m.workspaceId, w.id)).where(and(eq(m.userId, user.id), eq(m.active, true))).orderBy(w.createdAt);
   const seen = new Set<string>();
-  return [...assigned, ...memberRows.map((r: any) => r.workspace)].filter((row) => !seen.has(row.id) && !!seen.add(row.id));
+  return [...assigned, ...memberRows.map((r) => r.workspace)].filter((row) => !seen.has(row.id) && !!seen.add(row.id));
 }
 
 export async function getWorkspaceByProgramme(ctx: Ctx, programmeId: string) {
