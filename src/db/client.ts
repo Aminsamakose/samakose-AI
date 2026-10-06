@@ -4,8 +4,9 @@ import * as baseSchema from './schema';
 import * as workspaceSchema from './programme-workspace-schema';
 import * as workspaceConfigurationSchema from './programme-workspace-configuration-schema';
 import * as cohortConfigurationSchema from './cohort-configuration-schema';
+import * as deliveryOperationsSchema from './delivery-operations-schema';
 
-const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema };
+const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema, ...deliveryOperationsSchema };
 type Db = NodePgDatabase<typeof schema>;
 const g = globalThis as unknown as { __pool?: Pool; __db?: Db; __poolUrl?: string };
 

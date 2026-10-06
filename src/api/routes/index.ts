@@ -8,4 +8,5 @@ import './indicators';
 import './programme-finance';
 import './programme-workspaces';
 import './cohort-configurations';
+import './delivery-operations';
 export { routes } from '../framework';
