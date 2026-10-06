@@ -7,4 +7,5 @@ import './delivery';
 import './indicators';
 import './programme-finance';
 import './programme-workspaces';
+import './cohort-configurations';
 export { routes } from '../framework';
