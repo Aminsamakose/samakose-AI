@@ -7,8 +7,9 @@ import * as cohortConfigurationSchema from './cohort-configuration-schema';
 import * as deliveryOperationsSchema from './delivery-operations-schema';
 import * as deliveryCoordinationSchema from './delivery-coordination-schema';
 import * as programmeCalendarSchema from './programme-calendar-schema';
+import * as providerAssignmentSchema from './provider-assignment-schema';
 
-const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema, ...deliveryOperationsSchema, ...deliveryCoordinationSchema, ...programmeCalendarSchema };
+const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema, ...deliveryOperationsSchema, ...deliveryCoordinationSchema, ...programmeCalendarSchema, ...providerAssignmentSchema };
 type Db = NodePgDatabase<typeof schema>;
 const g = globalThis as unknown as { __pool?: Pool; __db?: Db; __poolUrl?: string };
 
