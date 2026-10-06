@@ -6,4 +6,5 @@ import './unlock';
 import './delivery';
 import './indicators';
 import './programme-finance';
+import './programme-workspaces';
 export { routes } from '../framework';
