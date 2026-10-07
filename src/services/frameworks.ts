@@ -145,12 +145,39 @@ export async function listFrameworks(ctx: Ctx) {
     };
   });
 }
+export async function structuredArchitecture(db: Db, versionId: string) {
+  const dimensions = await db.select().from(schema.frameworkDimensions)
+    .where(eq(schema.frameworkDimensions.frameworkVersionId, versionId))
+    .orderBy(asc(schema.frameworkDimensions.sortOrder));
+  const subDimensions = dimensions.length
+    ? await db.select().from(schema.frameworkSubDimensions)
+        .where(sql`${schema.frameworkSubDimensions.dimensionId} in (${sql.join(dimensions.map((d) => sql`${d.id}`), sql`,`)})`)
+        .orderBy(asc(schema.frameworkSubDimensions.sortOrder))
+    : [];
+  const questions = await db.select().from(schema.frameworkQuestions)
+    .where(eq(schema.frameworkQuestions.frameworkVersionId, versionId))
+    .orderBy(asc(schema.frameworkQuestions.sortOrder), asc(schema.frameworkQuestions.code));
+  const evidence = questions.length
+    ? await db.select().from(schema.frameworkEvidenceRequirements)
+        .where(sql`${schema.frameworkEvidenceRequirements.questionId} in (${sql.join(questions.map((q) => sql`${q.id}`), sql`,`)})`)
+    : [];
+  const scoringRules = await db.select().from(schema.frameworkScoringRules)
+    .where(eq(schema.frameworkScoringRules.frameworkVersionId, versionId))
+    .orderBy(asc(schema.frameworkScoringRules.priority));
+  const readinessRules = await db.select().from(schema.frameworkReadinessRules)
+    .where(eq(schema.frameworkReadinessRules.frameworkVersionId, versionId))
+    .orderBy(asc(schema.frameworkReadinessRules.priority));
+  const sources = await db.select().from(schema.frameworkSourceRecords)
+    .where(eq(schema.frameworkSourceRecords.frameworkVersionId, versionId));
+  return { dimensions, subDimensions, questions, evidence, scoringRules, readinessRules, sources };
+}
+
 export async function getVersion(ctx: Ctx, id: string) {
   allow(ctx, 'frameworks', 'read');
   const v = await versionById(ctx.db, id);
   if (!v) throw notFound('Framework version not found');
   const [f] = await ctx.db.select().from(schema.frameworks).where(eq(schema.frameworks.id, v.frameworkId));
-  return { ...v, framework: { code: f.code, name: f.name, isDefault: f.isDefault } };
+  const structured = await structuredArchitecture(ctx.db, id);\n  return { ...v, framework: { code: f.code, name: f.name, isDefault: f.isDefault }, structured };
 }
 
 /* ------------------------------------- writing ------------------------------------- */
