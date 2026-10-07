@@ -1,6 +1,6 @@
 import { boolean, integer, jsonb, pgTable, text, timestamp, uuid, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { frameworks, frameworkVersions, users } from './schema';
+import { frameworkVersions, users } from './schema';
 
 /**
  * Normalized Business Doctor framework architecture.
@@ -11,8 +11,6 @@ import { frameworks, frameworkVersions, users } from './schema';
  */
 
 export const FRAMEWORK_STATUSES = ['Draft', 'Published', 'Retired'] as const;
-export const FRAMEWORK_COMPONENT_STATUSES = ['Draft', 'Published', 'Retired'] as const;
-
 export const frameworkDimensions = pgTable('framework_dimensions', {
   id: uuid('id').primaryKey().defaultRandom(),
   frameworkVersionId: uuid('framework_version_id').notNull().references(() => frameworkVersions.id, { onDelete: 'cascade' }),
