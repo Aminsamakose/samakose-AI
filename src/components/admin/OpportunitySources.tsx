@@ -81,7 +81,7 @@ function Form({ s, onClose, onDone }: { s: any; onClose: () => void; onDone: () 
       <Field label="Name" name="n" required>{(q) => <input {...q} maxLength={120} {...set('name')} />}</Field>
       <div className="grid two">
         <Field label="Type" name="k" hint="Feed: RSS or Atom. Page: one calls page. Search: words to search for.">{(q) => <select {...q} {...set('kind')}><option value="feed">Feed</option><option value="page">Page</option><option value="query">Search</option></select>}</Field>
-        <Field label="Region" name="r">{(q) => <select {...q} {...set('region')}>{['Ghana', 'West Africa', 'Africa', 'Europe', 'North America', 'Asia', 'Global'].map((x) => <option key={x}>{x}</option>)}</select>}</Field></div>
+        <Field label="Region" name="r">{(q) => <select {...q} {...set('region')}>{['Ghana', 'West Africa', 'Africa', 'Europe', 'North America', 'Latin America', 'Asia', 'Middle East', 'Oceania', 'Global'].map((x) => <option key={x}>{x}</option>)}</select>}</Field></div>
       {v.kind === 'query' ? <Field label="Search words" name="q" required hint="Each run uses one search from the free allowance.">{(q) => <input {...q} maxLength={200} {...set('query')} />}</Field>
         : <Field label="Web address" name="u" required hint="Must start with https://">{(q) => <input {...q} type="url" {...set('url')} />}</Field>}
       <div className="form-actions row" style={{ gap: 8 }}><Button variant="primary" loading={busy} onClick={go}>Save</Button><Button onClick={onClose}>Cancel</Button></div></div>

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { api, ensureReference, makeOrg, makeUser, uniq, type Session } from './helpers';
 import { db, schema } from '@/db/client';
+import { STARTER_QUERIES, REGIONS } from '@/domain/scout';
 import { findDeadline, closedWording } from '@/domain/opportunity-agents';
 import { htmlToText, looksLikeCall, normaliseUrl, parseFeed, robotsAllows, scamSignals, screenCandidate, titleKey } from '@/domain/scout';
 import { setScoutFetch } from '@/services/scout';
@@ -14,6 +15,14 @@ const RSS = `<?xml version="1.0"?><rss><channel>
 <item><title>Farmers grant call 2019</title><link>https://funder.example.org/calls/farmers-2019</link><description>Open call for farmers: grants of GHS 4,000 for smallholder agriculture programmes, apply through the 2019 programme portal in your district office.</description></item>
 <item><title>Staff picnic photos</title><link>https://funder.example.org/news/picnic</link><description>Pictures from the office picnic last weekend with lots of lovely food.</description></item>
 </channel></rss>`;
+
+describe('starter sources', () => {
+  it('are unique, valid, and cover every region', () => {
+    expect(new Set(STARTER_QUERIES.map((q) => q.name)).size).toBe(STARTER_QUERIES.length);
+    for (const q of STARTER_QUERIES) { expect(q.query.length).toBeGreaterThanOrEqual(3); expect(q.query.length).toBeLessThanOrEqual(200); expect(q.name.length).toBeLessThanOrEqual(120); }
+    for (const r of REGIONS) expect(STARTER_QUERIES.some((q) => q.region === r), r).toBe(true);
+  });
+});
 
 describe('closing dates and closed calls', () => {
   it('reads closing dates in common formats, only when tied to a closing word', () => {
