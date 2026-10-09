@@ -20,6 +20,13 @@ describe('framework versions', () => {
     const b = list.find((f) => f.code === 'SME360');
     expect(b.versions.some((v: any) => v.status === 'Published')).toBe(true);
     for (const code of ['AGRIFOOD360', 'ESO360']) expect(list.find((f) => f.code === code).versions.some((v: any) => v.status === 'Published')).toBe(false);
+
+    const published = b.versions.find((v: any) => v.status === 'Published');
+    const details = await api(admin).get(`/settings/frameworks/versions/${published.id}`);
+    expect(details.status).toBe(200);
+    expect(details.data.structuredAvailable).toBe(true);
+    expect(details.data.structured.dimensions.map((d: any) => d.name).sort()).toEqual([...details.data.dimensions].sort());
+    expect(details.data.structured.questions).toHaveLength(details.data.questions.length);
   });
 
   it('lets only an administrator approve, and others at most read', async () => {
@@ -28,6 +35,10 @@ describe('framework versions', () => {
     expect((await api(consultant).post('/settings/frameworks/SME360/versions', { fromBank: true })).status).toBe(403);
     const d = await api(admin).post('/settings/frameworks/SME360/versions', { fromBank: true });
     expect(d.status).toBe(201);
+    const draftRows = await db().select().from(schema.frameworkQuestions).where(eq(schema.frameworkQuestions.frameworkVersionId, d.data.id));
+    const draftDimensions = await db().select().from(schema.frameworkDimensions).where(eq(schema.frameworkDimensions.frameworkVersionId, d.data.id));
+    expect(draftDimensions).toHaveLength(d.data.dimensions.length);
+    expect(draftRows).toHaveLength(d.data.questions.length);
     expect((await api(reviewer).post(`/settings/frameworks/versions/${d.data.id}/publish`, { note: 'try it on' })).status).toBe(403);
     expect((await api(admin).del(`/settings/frameworks/versions/${d.data.id}`)).status).toBe(200);
   });
