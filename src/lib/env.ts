@@ -50,5 +50,44 @@ export const env = {
   get s3SecretKey() { return str('S3_SECRET_ACCESS_KEY'); },
   get s3PathStyle() { return str('S3_FORCE_PATH_STYLE', '1') !== '0'; },
   /** Vercel rejects request bodies over 4.5 MB, so the default limit is lower there. */
-  get maxUploadBytes() { return Number(str('MAX_UPLOAD_MB', process.env.VERCEL ? '4' : '10')) * 1024 * 1024; }
+  get maxUploadBytes() { return Number(str('MAX_UPLOAD_MB', process.env.VERCEL ? '4' : '10')) * 1024 * 1024; },
+
+  /* ---------- Third-party integration credentials (secrets; never stored in the database, never returned to the client) ---------- */
+  // Zoom Server-to-Server OAuth app (Zoom Marketplace -> Build App -> Server-to-Server OAuth).
+  get zoomAccountId() { return str('ZOOM_ACCOUNT_ID').trim(); },
+  get zoomClientId() { return str('ZOOM_CLIENT_ID').trim(); },
+  get zoomClientSecret() { return str('ZOOM_CLIENT_SECRET').trim(); },
+  // Microsoft Teams / Graph app registration (Azure AD -> App registrations). Needs OnlineMeetings.ReadWrite application permission, admin-consented.
+  get teamsTenantId() { return str('MS_TEAMS_TENANT_ID').trim(); },
+  get teamsClientId() { return str('MS_TEAMS_CLIENT_ID').trim(); },
+  get teamsClientSecret() { return str('MS_TEAMS_CLIENT_SECRET').trim(); },
+  get teamsOrganizerUserId() { return str('MS_TEAMS_ORGANIZER_USER_ID').trim(); },
+  // WhatsApp Business Cloud API (Meta for Developers -> WhatsApp -> API Setup).
+  get whatsappPhoneNumberId() { return str('WHATSAPP_PHONE_NUMBER_ID').trim(); },
+  get whatsappBusinessAccountId() { return str('WHATSAPP_BUSINESS_ACCOUNT_ID').trim(); },
+  get whatsappAccessToken() { return str('WHATSAPP_ACCESS_TOKEN').trim(); },
+  // SMS: provider is none, twilio, or arkesel (Arkesel is a Ghana-based gateway, a common fit for local delivery).
+  get smsProvider() { return str('SMS_PROVIDER', 'none').trim().toLowerCase(); },
+  get twilioAccountSid() { return str('TWILIO_ACCOUNT_SID').trim(); },
+  get twilioAuthToken() { return str('TWILIO_AUTH_TOKEN').trim(); },
+  get twilioFromNumber() { return str('TWILIO_FROM_NUMBER').trim(); },
+  get arkeselApiKey() { return str('ARKESEL_API_KEY').trim(); },
+  get arkeselSenderId() { return str('ARKESEL_SENDER_ID', 'Samakose').trim(); },
+  // E-signature: DocuSign (eSignature REST API, JWT or authorization-code grant).
+  get docusignIntegrationKey() { return str('DOCUSIGN_INTEGRATION_KEY').trim(); },
+  get docusignClientSecret() { return str('DOCUSIGN_CLIENT_SECRET').trim(); },
+  get docusignAccountId() { return str('DOCUSIGN_ACCOUNT_ID').trim(); },
+  get docusignUserId() { return str('DOCUSIGN_USER_ID').trim(); },
+  get docusignBaseUrl() { return str('DOCUSIGN_BASE_URL', 'https://demo.docusign.net/restapi').replace(/\/$/, ''); },
+  get docusignAccessToken() { return str('DOCUSIGN_ACCESS_TOKEN').trim(); },
+  // Accounting sync: provider is none, quickbooks, or xero.
+  get accountingProvider() { return str('ACCOUNTING_PROVIDER', 'none').trim().toLowerCase(); },
+  get quickbooksClientId() { return str('QUICKBOOKS_CLIENT_ID').trim(); },
+  get quickbooksClientSecret() { return str('QUICKBOOKS_CLIENT_SECRET').trim(); },
+  get quickbooksRealmId() { return str('QUICKBOOKS_REALM_ID').trim(); },
+  get quickbooksRefreshToken() { return str('QUICKBOOKS_REFRESH_TOKEN').trim(); },
+  get xeroClientId() { return str('XERO_CLIENT_ID').trim(); },
+  get xeroClientSecret() { return str('XERO_CLIENT_SECRET').trim(); },
+  get xeroTenantId() { return str('XERO_TENANT_ID').trim(); },
+  get xeroRefreshToken() { return str('XERO_REFRESH_TOKEN').trim(); }
 };
