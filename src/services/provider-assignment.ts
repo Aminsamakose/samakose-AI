@@ -5,6 +5,8 @@ import { audit } from '@/lib/audit';
 import { conflict, fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme } from '@/domain/scope';
 import { allow, lockCapacityScope, need } from './common';
+import { resolveVideoProvider } from './integrations';
+import { createVideoMeeting } from './meetings';
 
 const workspaces = schema.programmeWorkspaces;
 const members = schema.programmeWorkspaceMembers;
@@ -133,7 +135,7 @@ export async function createAssignment(ctx: Ctx, workspaceId: string, input: { p
   return row;
 }
 
-export async function updateAssignmentStatus(ctx: Ctx, id: string, status: AssignmentStatus, reason?: string | null) {
+export async function updateAssignmentStatus(ctx: Ctx, id: string, status: AssignmentStatus, reason?: string | null, opts?: { scheduleKickoffMeeting?: boolean }) {
   allow(ctx, 'programme_workspaces', 'edit');
   const row = await getAssignment(ctx, id);
   const allowed: Record<AssignmentStatus, AssignmentStatus[]> = {
@@ -144,8 +146,27 @@ export async function updateAssignmentStatus(ctx: Ctx, id: string, status: Assig
   if (status === 'DECLINED' && (reason ?? '').trim().length < 5) throw fieldError({ reason: 'Give a reason for declining the provider assignment' });
   if (status === 'ENDED' && (reason ?? '').trim().length < 5) throw fieldError({ reason: 'Give a reason for ending the provider assignment' });
   const now = new Date();
-  await ctx.db.update(assignments).set({ status, reason: reason?.trim() || row.reason, endsAt: status === 'ENDED' || status === 'DECLINED' ? row.endsAt ?? now : row.endsAt, updatedAt: now }).where(eq(assignments.id, id));
-  await audit(ctx, 'provider.assignment.status', 'provider_assignment', id, { status: row.status }, { status, reason: reason ?? null }, row.workspaceId);
+  let metadata = row.metadata as Record<string, unknown>;
+  // A newly activated engagement often needs a first real conversation between the provider and
+  // the workspace. When asked to, create one for real through the administrator's configured
+  // video provider -- rather than leave the coordinator to paste a link in by hand -- and record
+  // it in metadata (this table carries no dedicated meeting column).
+  if (status === 'ACTIVE' && row.status !== 'ACTIVE' && opts?.scheduleKickoffMeeting && !(metadata as { kickoffMeetingUrl?: string })?.kickoffMeetingUrl) {
+    const provider = await resolveVideoProvider(ctx);
+    if (provider) {
+      const provUser = await ctx.db.select({ name: users.name }).from(users).where(eq(users.id, row.providerUserId)).limit(1);
+      const start = new Date(Date.now() + 24 * 60 * 60 * 1000); // default: tomorrow, same time, 30 minutes
+      const end = new Date(start.getTime() + 30 * 60 * 1000);
+      try {
+        const meeting = await createVideoMeeting(provider, { title: `Provider kickoff: ${provUser[0]?.name ?? 'provider'}`, startsAt: start, endsAt: end });
+        metadata = { ...metadata, videoProvider: provider, kickoffMeetingUrl: meeting.joinUrl, kickoffExternalMeetingId: meeting.externalId };
+      } catch (e) {
+        metadata = { ...metadata, kickoffMeetingError: String((e as Error).message ?? e) };
+      }
+    }
+  }
+  await ctx.db.update(assignments).set({ status, reason: reason?.trim() || row.reason, endsAt: status === 'ENDED' || status === 'DECLINED' ? row.endsAt ?? now : row.endsAt, metadata, updatedAt: now }).where(eq(assignments.id, id));
+  await audit(ctx, 'provider.assignment.status', 'provider_assignment', id, { status: row.status }, { status, reason: reason ?? null, kickoffMeetingUrl: (metadata as { kickoffMeetingUrl?: string })?.kickoffMeetingUrl ?? null }, row.workspaceId);
   return getAssignment(ctx, id);
 }
 

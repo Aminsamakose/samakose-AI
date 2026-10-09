@@ -89,5 +89,12 @@ export const env = {
   get xeroClientId() { return str('XERO_CLIENT_ID').trim(); },
   get xeroClientSecret() { return str('XERO_CLIENT_SECRET').trim(); },
   get xeroTenantId() { return str('XERO_TENANT_ID').trim(); },
-  get xeroRefreshToken() { return str('XERO_REFRESH_TOKEN').trim(); }
+  get xeroRefreshToken() { return str('XERO_REFRESH_TOKEN').trim(); },
+  // Google Calendar / Google Meet: a one-time OAuth2 consent (authorization-code grant, access_type=offline,
+  // scope https://www.googleapis.com/auth/calendar) done once by the administrator against a Google Cloud
+  // OAuth client, pasted here as a long-lived refresh token -- same pattern as the QuickBooks/Xero setup
+  // above. Reuses GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET already defined for sign-in, since a Google Cloud
+  // OAuth client can be used for both purposes.
+  get googleCalendarRefreshToken() { return str('GOOGLE_CALENDAR_REFRESH_TOKEN').trim(); },
+  get googleCalendarId() { return str('GOOGLE_CALENDAR_ID', 'primary').trim(); },
 };

@@ -323,6 +323,13 @@
       "when": 1792023000000,
       "tag": "0046_provider_assignment_capacity",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1792024000000,
+      "tag": "0047_calendar_zoom_provider",
+      "breakpoints": true
     }
   ]
 }

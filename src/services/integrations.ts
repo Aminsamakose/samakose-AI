@@ -23,8 +23,9 @@ import { audit } from '@/lib/audit';
 import { fieldError } from '@/lib/errors';
 import { env } from '@/lib/env';
 import { allow, need } from './common';
+import { getZoomAccessToken, getGoogleCalendarAccessToken } from './meetings';
 
-export type IntegrationId = 'zoom' | 'teams' | 'whatsapp' | 'sms' | 'esignature' | 'accounting';
+export type IntegrationId = 'zoom' | 'google_meet' | 'video' | 'teams' | 'whatsapp' | 'sms' | 'esignature' | 'accounting';
 
 type EnvVarRef = { name: string; secret: boolean };
 interface Descriptor {
@@ -42,7 +43,10 @@ interface Descriptor {
 }
 
 const RULE_KEY = (id: IntegrationId) => `integrations.${id}.provider`;
-export const INTEGRATION_RULE_KEYS = (['sms', 'accounting'] as IntegrationId[]).map(RULE_KEY);
+export const INTEGRATION_RULE_KEYS = (['sms', 'accounting', 'video'] as IntegrationId[]).map(RULE_KEY);
+/** The administrator's chosen default video provider for Calendar/provider-assignment/delivery-coordination
+ * meeting creation. Read by programme-calendar.ts, provider-assignment.ts and delivery-operations.ts. */
+export const VIDEO_PROVIDER_RULE_KEY = RULE_KEY('video');
 
 async function fetchJson(url: string, init: RequestInit, timeoutMs = 15_000) {
   const res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
@@ -59,15 +63,41 @@ const DESCRIPTORS: Descriptor[] = [
     configured: () => !!(env.zoomAccountId && env.zoomClientId && env.zoomClientSecret),
     async test() {
       if (!(env.zoomAccountId && env.zoomClientId && env.zoomClientSecret)) return { ok: false, message: 'Zoom is not configured. Set ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET.' };
-      const basic = Buffer.from(`${env.zoomClientId}:${env.zoomClientSecret}`).toString('base64');
-      const tok = await fetchJson(`https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${encodeURIComponent(env.zoomAccountId)}`, { method: 'POST', headers: { authorization: `Basic ${basic}` } });
-      if (!tok.ok) return { ok: false, message: `Zoom rejected the Server-to-Server OAuth credentials (HTTP ${tok.status}). Check the account ID, client ID and secret.` };
-      const accessToken = (tok.json as { access_token?: string })?.access_token;
-      if (!accessToken) return { ok: false, message: 'Zoom returned no access token.' };
+      let accessToken: string;
+      try { accessToken = await getZoomAccessToken(); } catch (e) { return { ok: false, message: String((e as Error).message ?? e) }; }
       const me = await fetchJson('https://api.zoom.us/v2/users/me', { headers: { authorization: `Bearer ${accessToken}` } });
       if (!me.ok) return { ok: false, message: `Connected to Zoom but could not read the account (HTTP ${me.status}).` };
       const email = (me.json as { email?: string })?.email;
-      return { ok: true, message: `Connected to Zoom${email ? ` as ${email}` : ''}.` };
+      return { ok: true, message: `Connected to Zoom${email ? ` as ${email}` : ''}. Live meeting creation is available for Calendar, provider assignment and delivery coordination.` };
+    },
+  },
+  {
+    id: 'google_meet', label: 'Google Meet', category: 'Virtual delivery', providerChoiceKey: null, providerOptions: null,
+    docsHint: 'Google Cloud Console -> APIs & Services -> OAuth consent + Calendar API enabled, then complete the authorization-code flow once (access_type=offline, scope https://www.googleapis.com/auth/calendar) to obtain a refresh token. Reuses GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET already used for sign-in.',
+    envVars: [{ name: 'GOOGLE_CLIENT_ID', secret: false }, { name: 'GOOGLE_CLIENT_SECRET', secret: true }, { name: 'GOOGLE_CALENDAR_REFRESH_TOKEN', secret: true }, { name: 'GOOGLE_CALENDAR_ID', secret: false }],
+    configured: () => !!(env.googleClientId && env.googleClientSecret && env.googleCalendarRefreshToken),
+    async test() {
+      if (!(env.googleClientId && env.googleClientSecret && env.googleCalendarRefreshToken)) return { ok: false, message: 'Google Meet is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_CALENDAR_REFRESH_TOKEN.' };
+      let accessToken: string;
+      try { accessToken = await getGoogleCalendarAccessToken(); } catch (e) { return { ok: false, message: String((e as Error).message ?? e) }; }
+      const cal = await fetchJson(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(env.googleCalendarId)}`, { headers: { authorization: `Bearer ${accessToken}` } });
+      if (!cal.ok) return { ok: false, message: `Connected to Google but could not read GOOGLE_CALENDAR_ID (HTTP ${cal.status}). Check the calendar id and that the consented account has access to it.` };
+      const summary = (cal.json as { summary?: string })?.summary;
+      return { ok: true, message: `Connected to Google Calendar${summary ? ` ("${summary}")` : ''}. Live Meet-link creation is available for Calendar, provider assignment and delivery coordination.` };
+    },
+  },
+  {
+    id: 'video', label: 'Default video provider', category: 'Virtual delivery', providerChoiceKey: RULE_KEY('video'), providerOptions: ['zoom', 'google_meet'],
+    docsHint: 'Choose which configured provider Calendar, provider assignment and delivery coordination use to create real meeting links. Configure Zoom and/or Google Meet above first.',
+    envVars: [],
+    configured: (choice) => choice === 'zoom' ? !!(env.zoomAccountId && env.zoomClientId && env.zoomClientSecret)
+      : choice === 'google_meet' ? !!(env.googleClientId && env.googleClientSecret && env.googleCalendarRefreshToken) : false,
+    async test(choice) {
+      if (!choice) return { ok: false, message: 'Choose a default video provider (Zoom or Google Meet) first.' };
+      const d = choice === 'zoom' ? byId.get('zoom') : choice === 'google_meet' ? byId.get('google_meet') : null;
+      if (!d) return { ok: false, message: 'Unknown video provider.' };
+      const r = await d.test(null);
+      return { ok: r.ok, message: r.ok ? `Default video provider is ${choice === 'zoom' ? 'Zoom' : 'Google Meet'}. ${r.message}` : r.message };
     },
   },
   {
@@ -229,4 +259,20 @@ export async function testIntegration(ctx: Ctx, id: IntegrationId) {
     await audit(ctx, 'settings.integration_tested', 'settings', null, undefined, { integration: id, ok: false });
     return { ok: false, message: `Could not reach ${d.label}: ${String((e as Error).message ?? e).slice(0, 200)}`, tookMs: Date.now() - started };
   }
+}
+
+/**
+ * The administrator's configured default video provider, for internal use by Calendar,
+ * provider-assignment and delivery-coordination when they need to create a real meeting link.
+ * Not an admin-settings read (no `integrations:read` gate) -- any caller already authorized for
+ * the calendar/delivery action it supports is entitled to know which provider is in effect.
+ * Returns null when no provider is chosen, or the chosen one isn't actually configured.
+ */
+export async function resolveVideoProvider(ctx: Ctx): Promise<'zoom' | 'google_meet' | null> {
+  const [row] = await ctx.db.select().from(schema.rules).where(eq(schema.rules.key, VIDEO_PROVIDER_RULE_KEY)).limit(1);
+  const choice = row?.value;
+  if (choice !== 'zoom' && choice !== 'google_meet') return null;
+  const d = byId.get(choice);
+  if (!d || !d.configured(null)) return null;
+  return choice;
 }
