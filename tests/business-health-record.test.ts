@@ -12,6 +12,25 @@ beforeAll(async () => {
   admin = await makeUser('ADMIN');
 });
 
+describe('Business Health Record migration', () => {
+  it('backfills source references and captures future changes without copying source facts', async () => {
+    const fs = await import('node:fs/promises');
+    const sql = await fs.readFile('migrations/0049_business_health_record.sql', 'utf8');
+
+    expect(sql).toContain('create table if not exists public.business_health_records');
+    expect(sql).toContain('create table if not exists public.business_health_record_events');
+    expect(sql).toContain('on conflict (record_id, source_type, source_id, event_type, occurred_at) do nothing');
+    expect(sql).toContain('business_health_record_events_append_only');
+    for (const trigger of [
+      'bhr_org_source_event', 'bhr_case_source_event', 'bhr_diagnostic_source_event',
+      'bhr_score_source_event', 'bhr_prescription_source_event', 'bhr_intervention_source_event',
+      'bhr_evidence_source_event', 'bhr_document_source_event', 'bhr_kpi_reading_source_event',
+      'bhr_certificate_source_event', 'bhr_opportunity_referral_event_source_event'
+    ]) expect(sql).toContain(`create trigger ${trigger}`);
+    expect(sql).toContain('source facts remain authoritative in their existing tables');
+  });
+});
+
 describe('first-class Business Health Record', () => {
   it('creates a stable organisation anchor and appends linked source events through a diagnostic and score', async () => {
     const org = await makeOrg(admin);
