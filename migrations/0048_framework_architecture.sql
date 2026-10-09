@@ -106,9 +106,8 @@ create table if not exists public.framework_source_records (
 create index if not exists framework_source_version_idx on public.framework_source_records(framework_version_id);
 create index if not exists framework_source_component_idx on public.framework_source_records(component_type, component_code);
 
-
--- Backfill structured records from every legacy JSON snapshot before installing the
--- immutability triggers. Legacy snapshots remain the compatibility contract for scoring.
+-- Backfill normalized records from legacy snapshots before immutability triggers are installed.
+-- The existing JSON snapshot remains in place for old diagnostics and deterministic scoring.
 insert into public.framework_dimensions
   (framework_version_id, code, name, weight, sort_order)
 select v.id, 'DIM_' || lpad(d.ordinality::text, 3, '0'), d.name, 1, (d.ordinality - 1)::integer
@@ -122,7 +121,9 @@ select dim.id, coalesce(nullif(s.item->>'code', ''), 'SUB_' || lpad(s.ordinality
        coalesce(nullif(s.item->>'name', ''), s.item->>'code', 'Unnamed sub-dimension'),
        null, 1, (s.ordinality - 1)::integer
 from public.framework_versions v
-cross join lateral jsonb_array_elements(coalesce(v.meta->'subDimensions', '[]'::jsonb)) with ordinality as s(item, ordinality)
+cross join lateral jsonb_array_elements(
+  case when jsonb_typeof(v.meta->'subDimensions') = 'array' then v.meta->'subDimensions' else '[]'::jsonb end
+) with ordinality as s(item, ordinality)
 join public.framework_dimensions dim
   on dim.framework_version_id = v.id and dim.name = s.item->>'dimension'
 on conflict (dimension_id, code) do nothing;
@@ -137,8 +138,12 @@ select v.id, dim.id, sub.id, q.item->>'code', q.item->>'text',
        coalesce(q.item->>'criticality', 'Standard'),
        (q.ordinality - 1)::integer,
        q.item->>'applies', q.item->>'riskTag', q.item->>'consistencyGroup',
-       coalesce(q.item->'anchors', '[]'::jsonb),
-       array(select jsonb_array_elements_text(coalesce(q.item->'readiness', '[]'::jsonb))),
+       case when jsonb_typeof(q.item->'anchors') = 'array' then q.item->'anchors' else '[]'::jsonb end,
+       array(
+         select jsonb_array_elements_text(
+           case when jsonb_typeof(q.item->'readiness') = 'array' then q.item->'readiness' else '[]'::jsonb end
+         )
+       ),
        case when v.status in ('Published', 'Retired') then v.status else 'Draft' end,
        v.created_by
 from public.framework_versions v
@@ -152,7 +157,9 @@ on conflict (framework_version_id, code) do nothing;
 insert into public.framework_evidence_requirements
   (question_id, requirement, method, examples, minimum_evidence_class, required)
 select fq.id, evidence.item->>'requirement', evidence.item->>'method',
-       array(select jsonb_array_elements_text(coalesce(evidence.item->'examples', '[]'::jsonb))),
+       array(select jsonb_array_elements_text(
+         case when jsonb_typeof(evidence.item->'examples') = 'array' then evidence.item->'examples' else '[]'::jsonb end
+       )),
        'Self-reported', false
 from public.framework_versions v
 cross join lateral jsonb_array_elements(v.questions) as q(item)
@@ -166,9 +173,9 @@ insert into public.framework_scoring_rules
   (framework_version_id, code, rule_type, expression, parameters, priority)
 select v.id, r.key, 'LEGACY_OVERRIDE', r.value::text,
        jsonb_build_object('compatibilitySource', 'framework_versions.rules', 'value', r.value),
-       row_number() over (partition by v.id order by r.key)::integer - 1
+       (row_number() over (partition by v.id order by r.key) - 1)::integer
 from public.framework_versions v
-cross join lateral jsonb_each(coalesce(v.rules, '{}'::jsonb)) as r(key, value)
+cross join lateral jsonb_each(case when jsonb_typeof(v.rules) = 'object' then v.rules else '{}'::jsonb end) as r(key, value)
 on conflict (framework_version_id, code) do nothing;
 
 insert into public.framework_readiness_rules
@@ -178,102 +185,36 @@ select v.id, coalesce(nullif(r.item->>'code', ''), 'READY_' || lpad(r.ordinality
        r.item->>'purpose',
        coalesce(nullif(r.item->>'purpose', ''), nullif(r.item->>'name', ''), 'Not specified'),
        case when nullif(r.item->>'unlocks', '') is null then '{}'::text[]
-            else regexp_split_to_array(r.item->>'unlocks', '\\s*[,;]\\s*') end,
+            else array(
+              select btrim(part) from regexp_split_to_table(r.item->>'unlocks', '[,;]') as part
+              where btrim(part) <> ''
+            ) end,
        (r.ordinality - 1)::integer
 from public.framework_versions v
-cross join lateral jsonb_array_elements(coalesce(v.meta->'readiness', '[]'::jsonb)) with ordinality as r(item, ordinality)
+cross join lateral jsonb_array_elements(
+  case when jsonb_typeof(v.meta->'readiness') = 'array' then v.meta->'readiness' else '[]'::jsonb end
+) with ordinality as r(item, ordinality)
 on conflict (framework_version_id, code) do nothing;
 
 insert into public.framework_source_records
   (framework_version_id, component_type, component_code, source, rationale, adaptation,
    approval_status, approved_by, approved_at)
 select v.id,
-       coalesce(nullif(s.item->>'component', ''), 'General'),
-       null,
+       coalesce(nullif(s.item->>'component', ''), 'General'), null,
        coalesce(nullif(s.item->>'source', ''), 'Not recorded'),
        coalesce(nullif(s.item->>'rationale', ''), 'Not recorded'),
        coalesce(nullif(s.item->>'adaptation', ''), 'Not recorded'),
        case when s.item->>'approval' in ('Proposed','Approved','Rejected') then s.item->>'approval' else 'Proposed' end,
-       case when s.item->>'approvedBy' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}
--- Resolve the owning version for child tables that only carry a parent FK.
-create or replace function public.framework_version_is_published(p_version uuid)
-returns boolean language sql stable as $$
-  select exists (
-    select 1 from public.framework_versions v
-    where v.id = p_version and v.status in ('Published', 'Retired')
-  );
-$$;
-
-create or replace function public.reject_published_framework_change()
-returns trigger language plpgsql as $$
-declare
-  v_version uuid;
-  v_parent_id uuid;
-begin
-  if tg_table_name = 'framework_sub_dimensions' then
-    v_parent_id := case when tg_op = 'DELETE' then old.dimension_id else new.dimension_id end;
-    select d.framework_version_id into v_version
-      from public.framework_dimensions d where d.id = v_parent_id;
-  elsif tg_table_name = 'framework_evidence_requirements' then
-    v_parent_id := case when tg_op = 'DELETE' then old.question_id else new.question_id end;
-    select q.framework_version_id into v_version
-      from public.framework_questions q where q.id = v_parent_id;
-  else
-    v_version := case when tg_op = 'DELETE' then old.framework_version_id else new.framework_version_id end;
-  end if;
-
-  if public.framework_version_is_published(v_version) then
-    raise exception 'Published framework content is immutable; create a new framework version.';
-  end if;
-
-  if tg_op = 'DELETE' then return old; end if;
-  return new;
-end $$;
-
-drop trigger if exists framework_dimensions_immutable on public.framework_dimensions;
-create trigger framework_dimensions_immutable before insert or update or delete on public.framework_dimensions
-for each row execute function public.reject_published_framework_change();
-
-drop trigger if exists framework_sub_dimensions_immutable on public.framework_sub_dimensions;
-create trigger framework_sub_dimensions_immutable before insert or update or delete on public.framework_sub_dimensions
-for each row execute function public.reject_published_framework_change();
-
-drop trigger if exists framework_questions_immutable on public.framework_questions;
-create trigger framework_questions_immutable before insert or update or delete on public.framework_questions
-for each row execute function public.reject_published_framework_change();
-
-drop trigger if exists framework_evidence_immutable on public.framework_evidence_requirements;
-create trigger framework_evidence_immutable before insert or update or delete on public.framework_evidence_requirements
-for each row execute function public.reject_published_framework_change();
-
-drop trigger if exists framework_scoring_rules_immutable on public.framework_scoring_rules;
-create trigger framework_scoring_rules_immutable before insert or update or delete on public.framework_scoring_rules
-for each row execute function public.reject_published_framework_change();
-
-drop trigger if exists framework_readiness_rules_immutable on public.framework_readiness_rules;
-create trigger framework_readiness_rules_immutable before insert or update or delete on public.framework_readiness_rules
-for each row execute function public.reject_published_framework_change();
-
-drop trigger if exists framework_sources_immutable on public.framework_source_records;
-create trigger framework_sources_immutable before insert or update or delete on public.framework_source_records
-for each row execute function public.reject_published_framework_change();
-
-alter table public.framework_dimensions enable row level security;
-alter table public.framework_sub_dimensions enable row level security;
-alter table public.framework_questions enable row level security;
-alter table public.framework_evidence_requirements enable row level security;
-alter table public.framework_scoring_rules enable row level security;
-alter table public.framework_readiness_rules enable row level security;
-alter table public.framework_source_records enable row level security;
-
+       case when s.item->>'approvedBy' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
             then (s.item->>'approvedBy')::uuid else null end,
        case when s.item->>'approvedAt' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T'
             then (s.item->>'approvedAt')::timestamptz else null end
 from public.framework_versions v
-cross join lateral jsonb_array_elements(coalesce(v.sources, '[]'::jsonb)) as s(item);
+cross join lateral jsonb_array_elements(
+  case when jsonb_typeof(v.sources) = 'array' then v.sources else '[]'::jsonb end
+) as s(item);
 
--- Published and retired framework versions are immutable at database level.
--- Resolve the owning version for child tables that only carry a parent FK.
+-- Published and retired versions are immutable. Draft content can be rebuilt before sign-off.
 create or replace function public.framework_version_is_published(p_version uuid)
 returns boolean language sql stable as $$
   select exists (
@@ -303,7 +244,6 @@ begin
   if public.framework_version_is_published(v_version) then
     raise exception 'Published framework content is immutable; create a new framework version.';
   end if;
-
   if tg_op = 'DELETE' then return old; end if;
   return new;
 end $$;
