@@ -177,7 +177,13 @@ export async function getVersion(ctx: Ctx, id: string) {
   const v = await versionById(ctx.db, id);
   if (!v) throw notFound('Framework version not found');
   const [f] = await ctx.db.select().from(schema.frameworks).where(eq(schema.frameworks.id, v.frameworkId));
-  const structured = await structuredArchitecture(ctx.db, id);\n  return { ...v, framework: { code: f.code, name: f.name, isDefault: f.isDefault }, structured };
+  let structured: Awaited<ReturnType<typeof structuredArchitecture>> | null = null;
+  try { structured = await structuredArchitecture(ctx.db, id); } catch (error) {
+    // A rolling deployment may start before migration 0048 is applied.
+    const e = error as { code?: string; cause?: { code?: string } };
+    if (e.code !== '42P01' && e.cause?.code !== '42P01') throw error;
+  }
+  return { ...v, framework: { code: f.code, name: f.name, isDefault: f.isDefault }, structured, structuredAvailable: structured !== null };
 }
 
 /* ------------------------------------- writing ------------------------------------- */
