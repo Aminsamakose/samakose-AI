@@ -330,6 +330,13 @@
       "when": 1792024000000,
       "tag": "0048_framework_architecture",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1792025000000,
+      "tag": "0049_business_health_record",
+      "breakpoints": true
     }
   ]
 }
