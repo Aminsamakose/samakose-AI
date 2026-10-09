@@ -144,7 +144,7 @@ select v.id, dim.id, sub.id, q.item->>'code', q.item->>'text',
            case when jsonb_typeof(q.item->'readiness') = 'array' then q.item->'readiness' else '[]'::jsonb end
          )
        ),
-       case when v.status in ('Published', 'Retired') then v.status else 'Draft' end,
+       case when v.status = 'Draft' then 'Draft' else 'Published' end,
        v.created_by
 from public.framework_versions v
 cross join lateral jsonb_array_elements(v.questions) with ordinality as q(item, ordinality)
