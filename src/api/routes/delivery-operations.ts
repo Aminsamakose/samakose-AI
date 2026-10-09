@@ -23,6 +23,9 @@ const sessionInput = z.object({
   meetingUrl: z.string().url().nullish(),
   capacity: z.number().int().positive().nullish(),
   notes: z.string().trim().max(5000).nullish(),
+  // When no meetingUrl is given, a REMOTE/HYBRID session reaches for the administrator's
+  // configured video provider and creates a real meeting, unless this is set.
+  skipLiveMeeting: z.boolean().optional(),
   metadata: z.unknown().optional(),
 });
 const activityStatus = z.object({ status: z.enum(['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']) });

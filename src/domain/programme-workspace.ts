@@ -1,3 +1,4 @@
+import { badRequest, conflict } from '@/lib/errors';
 import type { ProgrammeLifecycle, ProviderSource } from './programme-operating-model';
 
 export const WORKSPACE_ROLES = [
@@ -57,19 +58,19 @@ export function canAccessWorkspace(membership: WorkspaceMembership): boolean {
 
 export function assertWorkspaceOperational(workspace: ProgrammeWorkspace): void {
   if (workspace.status === 'CLOSED' || workspace.status === 'ARCHIVED') {
-    throw new Error(`Programme workspace is not operational: ${workspace.status}`);
+    throw conflict(`Programme workspace is not operational: ${workspace.status}`);
   }
 }
 
 export function assertWorkspaceReadyForDelivery(workspace: ProgrammeWorkspace): void {
   if (!['READY', 'ACTIVE', 'COMPLETING'].includes(workspace.status)) {
-    throw new Error(`Programme workspace is not ready for delivery: ${workspace.status}`);
+    throw conflict(`Programme workspace is not ready for delivery: ${workspace.status}`);
   }
 }
 
 export function assertWorkspaceConfigurationVersion(version: number): void {
   if (!Number.isInteger(version) || version < 1) {
-    throw new Error('Workspace configuration version must be a positive integer');
+    throw badRequest('Workspace configuration version must be a positive integer');
   }
 }
 

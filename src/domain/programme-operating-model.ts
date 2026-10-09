@@ -1,3 +1,5 @@
+import { conflict, unprocessable } from '@/lib/errors';
+
 export const PROGRAMME_LIFECYCLE = [
   'DRAFT',
   'COMMERCIAL_REVIEW',
@@ -121,7 +123,9 @@ export function assertProgrammeTransition(
   to: ProgrammeLifecycle,
 ): void {
   if (!canTransitionProgramme(from, to)) {
-    throw new Error(`Invalid programme lifecycle transition: ${from} -> ${to}`);
+    // An ApiError so the dispatcher reports this as a client-caused 409, not a 500:
+    // an invalid status transition is routine bad input, not a server fault.
+    throw conflict(`Invalid programme lifecycle transition: ${from} -> ${to}`);
   }
 }
 
@@ -143,13 +147,13 @@ export function assertWithinEntitlement(
 ): void {
   const entitlement = entitlements.find((item) => item.key === key);
   if (!entitlement) {
-    throw new Error(`Programme entitlement is not configured: ${key}`);
+    throw unprocessable(`Programme entitlement is not configured: ${key}`);
   }
   if (typeof entitlement.limit !== 'number') {
     return;
   }
   if (requestedUsage > entitlement.limit) {
-    throw new Error(
+    throw conflict(
       `Programme entitlement exceeded: ${key} (${requestedUsage}/${entitlement.limit})`,
     );
   }

@@ -7,7 +7,7 @@ import { assertOrg, assertProgramme } from '@/domain/scope';
 import { assertProgrammeTransition, type ProgrammeLifecycle, type ProviderSource } from '@/domain/programme-operating-model';
 import { WORKSPACE_ROLES, canManageWorkspace, canDeliverInWorkspace, type WorkspaceRole } from '@/domain/programme-workspace';
 import { assertCapacity, getParticipantCapacity, getRoleCapacity, readWorkspaceEntitlements } from '@/domain/programme-entitlements';
-import { allow, need } from './common';
+import { allow, lockCapacityScope, need } from './common';
 
 const w = schema.programmeWorkspaces;
 const m = schema.programmeWorkspaceMembers;
@@ -28,7 +28,7 @@ async function getMembership(ctx: Ctx, workspaceId: string, userId: string, role
   return row ?? null;
 }
 
-async function assertWorkspaceAccess(ctx: Ctx, workspaceId: string) {
+export async function assertWorkspaceAccess(ctx: Ctx, workspaceId: string) {
   const workspace = await getWorkspace(ctx, workspaceId);
   const user = need(ctx).user;
   if (['ADMIN', 'EXECUTIVE'].includes(user.role)) return { workspace, membership: null };
@@ -134,6 +134,10 @@ export async function addMember(ctx: Ctx, workspaceId: string, input: { userId: 
   if (!canDeliverInWorkspace(input.role)) throw unprocessable('Unsupported workspace role');
   const [user] = await ctx.db.select({ id: u.id }).from(u).where(eq(u.id, input.userId)).limit(1);
   if (!user) throw notFound('User not found');
+  // See lockCapacityScope in ./common: without this, two concurrent adds for the same
+  // workspace+role could both read the same usage count and both pass a cap meant to let
+  // only one through.
+  await lockCapacityScope(ctx, `workspace-role:${workspaceId}:${input.role}`);
   const entitlements = readWorkspaceEntitlements(workspace.configuration);
   const roleCapacity = getRoleCapacity(entitlements, input.role);
   const [{ n: activeRoleUsage }] = await ctx.db.select({ n: count() }).from(m).where(and(eq(m.workspaceId, workspaceId), eq(m.role, input.role), eq(m.active, true)));
@@ -186,6 +190,9 @@ export async function addParticipant(ctx: Ctx, workspaceId: string, input: { org
   const entitlements = readWorkspaceEntitlements(workspace.configuration);
   const capacity = getParticipantCapacity(entitlements);
   if (capacity !== null) {
+    // See lockCapacityScope in ./common: without this, two concurrent adds for the same
+    // workspace could both read the same participant count and both pass the cap.
+    await lockCapacityScope(ctx, `workspace-participants:${workspaceId}`);
     const [{ n }] = await ctx.db.select({ n: count() }).from(pt).where(eq(pt.workspaceId, workspaceId));
     assertCapacity(capacity, Number(n), 'Participant');
   }

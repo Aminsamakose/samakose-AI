@@ -5,6 +5,35 @@ import { audit } from '@/lib/audit';
 import { conflict, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme } from '@/domain/scope';
 import { allow, need } from './common';
+import { resolveVideoProvider } from './integrations';
+import { createVideoMeeting, cancelVideoMeeting, type VideoProvider } from './meetings';
+
+/** Maps the meetings.ts provider id to the calendar_events provider enum value it is stored under. */
+const CALENDAR_PROVIDER_FOR_VIDEO: Record<VideoProvider, 'ZOOM' | 'GOOGLE'> = { zoom: 'ZOOM', google_meet: 'GOOGLE' };
+
+/**
+ * Creates a real, live meeting through whichever video provider the administrator has configured
+ * (Settings -> Integrations -> Default video provider), unless the caller already supplied a
+ * meeting URL by hand or asked to skip it. Failures here are reported, never silently swallowed
+ * into a fake-looking success -- but they also never block the calendar event itself from being
+ * created, since a session can still happen with a manually-shared link added afterwards.
+ */
+type LiveMeetingAttempt =
+  | { ok: true; meeting: { joinUrl: string; externalId: string }; provider: VideoProvider }
+  | { ok: false; error: string; provider: VideoProvider };
+
+async function tryCreateLiveMeeting(ctx: Ctx, input: { title: string; description?: string | null; startsAt: Date; endsAt: Date; timezone?: string }): Promise<LiveMeetingAttempt | null> {
+  const provider = await resolveVideoProvider(ctx);
+  if (!provider) return null;
+  try {
+    const meeting = await createVideoMeeting(provider, { title: input.title, description: input.description ?? null, startsAt: input.startsAt, endsAt: input.endsAt, timezone: input.timezone });
+    return { ok: true, meeting, provider };
+  } catch (e) {
+    // Honest failure: no meeting URL is fabricated. The calendar event is still created, with
+    // sync_error-style context recorded via the audit log the caller already writes.
+    return { ok: false, error: String((e as Error).message ?? e), provider };
+  }
+}
 
 const connections = schema.calendarConnections;
 const events = schema.calendarEvents;
@@ -64,7 +93,7 @@ export async function listEvents(ctx: Ctx, cohortId: string) {
   return ctx.db.select().from(events).where(eq(events.cohortId, cohortId)).orderBy(asc(events.startsAt));
 }
 
-export async function createEvent(ctx: Ctx, cohortId: string, input: { title: string; description?: string | null; startsAt: string; endsAt: string; timezone?: string; location?: string | null; meetingUrl?: string | null; sessionId?: string | null; connectionId?: string | null; provider?: 'GOOGLE' | 'MICROSOFT' | 'ICS' | 'INTERNAL'; metadata?: unknown }) {
+export async function createEvent(ctx: Ctx, cohortId: string, input: { title: string; description?: string | null; startsAt: string; endsAt: string; timezone?: string; location?: string | null; meetingUrl?: string | null; sessionId?: string | null; connectionId?: string | null; provider?: 'GOOGLE' | 'MICROSOFT' | 'ICS' | 'INTERNAL' | 'ZOOM'; skipLiveMeeting?: boolean; metadata?: unknown }) {
   allow(ctx, 'programme_workspaces', 'edit');
   await getCohort(ctx, cohortId);
   if (!input.title.trim()) throw unprocessable('Calendar event title is required');
@@ -80,12 +109,28 @@ export async function createEvent(ctx: Ctx, cohortId: string, input: { title: st
     if (!connection || connection.userId !== need(ctx).user.id) throw unprocessable('Calendar connection is not available to the current user');
     if (connection.status !== 'CONNECTED') throw conflict('Calendar connection is not connected');
   }
-  const [row] = await ctx.db.insert(events).values({ cohortId, sessionId: input.sessionId ?? null, connectionId: input.connectionId ?? null, provider: input.provider ?? 'INTERNAL', title: input.title.trim(), description: input.description ?? null, startsAt, endsAt, timezone: input.timezone ?? 'UTC', location: input.location ?? null, meetingUrl: input.meetingUrl ?? null, metadata: input.metadata ?? {}, createdBy: need(ctx).user.id }).returning();
-  await audit(ctx, 'calendar.event.created', 'calendar_event', row.id, undefined, { cohortId, sessionId: row.sessionId, provider: row.provider });
+  let meetingUrl = input.meetingUrl ?? null;
+  let provider = input.provider ?? 'INTERNAL';
+  let syncError: string | null = null;
+  let metadata = (input.metadata as Record<string, unknown> | undefined) ?? {};
+  // Only reach for a real, administrator-configured video provider when the caller hasn't already
+  // supplied a link and hasn't opted out (e.g. an in-person session recorded on the calendar).
+  if (!meetingUrl && !input.skipLiveMeeting) {
+    const live = await tryCreateLiveMeeting(ctx, { title: input.title.trim(), description: input.description, startsAt, endsAt, timezone: input.timezone });
+    if (live?.ok) {
+      meetingUrl = live.meeting.joinUrl;
+      provider = CALENDAR_PROVIDER_FOR_VIDEO[live.provider];
+      metadata = { ...metadata, videoProvider: live.provider, externalMeetingId: live.meeting.externalId };
+    } else if (live && !live.ok) {
+      syncError = live.error;
+    }
+  }
+  const [row] = await ctx.db.insert(events).values({ cohortId, sessionId: input.sessionId ?? null, connectionId: input.connectionId ?? null, provider, title: input.title.trim(), description: input.description ?? null, startsAt, endsAt, timezone: input.timezone ?? 'UTC', location: input.location ?? null, meetingUrl, status: syncError ? 'SYNC_ERROR' : 'SCHEDULED', syncError, metadata, createdBy: need(ctx).user.id }).returning();
+  await audit(ctx, 'calendar.event.created', 'calendar_event', row.id, undefined, { cohortId, sessionId: row.sessionId, provider: row.provider, liveMeetingCreated: !!meetingUrl && provider !== 'INTERNAL', syncError });
   return row;
 }
 
-export async function scheduleSession(ctx: Ctx, sessionId: string, input: { connectionId?: string | null; provider?: 'GOOGLE' | 'MICROSOFT' | 'ICS' | 'INTERNAL'; timezone?: string }) {
+export async function scheduleSession(ctx: Ctx, sessionId: string, input: { connectionId?: string | null; provider?: 'GOOGLE' | 'MICROSOFT' | 'ICS' | 'INTERNAL' | 'ZOOM'; timezone?: string; skipLiveMeeting?: boolean }) {
   allow(ctx, 'programme_workspaces', 'edit');
   const { session, activity } = await getSession(ctx, sessionId);
   const existing = await ctx.db.select().from(events).where(eq(events.sessionId, sessionId)).limit(1);
@@ -97,11 +142,19 @@ export async function scheduleSession(ctx: Ctx, sessionId: string, input: { conn
     endsAt: session.endsAt.toISOString(),
     timezone: input.timezone ?? 'UTC',
     location: session.location,
+    // A manually-typed meetingUrl already on the session (set via delivery-operations.ts) is
+    // honored as-is; otherwise createEvent reaches for a live-created meeting on its own.
     meetingUrl: session.meetingUrl,
     sessionId,
     connectionId: input.connectionId ?? null,
-    provider: input.provider ?? 'INTERNAL',
+    provider: input.provider,
+    skipLiveMeeting: input.skipLiveMeeting,
   });
+  // The session's own meetingUrl column is the one delivery-coordination/provider views read, so
+  // keep it in sync when a live meeting was just created for this calendar event.
+  if (event.meetingUrl && event.meetingUrl !== session.meetingUrl) {
+    await ctx.db.update(sessions).set({ meetingUrl: event.meetingUrl, updatedAt: new Date() }).where(eq(sessions.id, sessionId));
+  }
   return event;
 }
 
@@ -111,6 +164,12 @@ export async function cancelEvent(ctx: Ctx, id: string) {
   if (!row) throw notFound('Calendar event not found');
   await getCohort(ctx, row.cohortId);
   if (row.status === 'CANCELLED') return { ok: true };
+  const meta = row.metadata as { videoProvider?: 'zoom' | 'google_meet'; externalMeetingId?: string } | null;
+  if (meta?.videoProvider && meta?.externalMeetingId) {
+    // Best-effort: cancelling the live meeting must never block cancelling the calendar record,
+    // which is the source of truth participants and providers actually see.
+    try { await cancelVideoMeeting(meta.videoProvider, meta.externalMeetingId); } catch { /* already gone, or provider unreachable -- the calendar event is cancelled regardless */ }
+  }
   await ctx.db.update(events).set({ status: 'CANCELLED', updatedAt: new Date() }).where(eq(events.id, id));
   await audit(ctx, 'calendar.event.cancelled', 'calendar_event', id, { status: row.status }, { status: 'CANCELLED' });
   return { ok: true };

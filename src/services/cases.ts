@@ -8,7 +8,7 @@ import { CASE_TRANSITIONS, canTransitionCase } from '@/domain/logic';
 import { notifyUsers } from '@/domain/notify';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
 import { place, completeForCase } from './assignments';
-import { advanceCase, allow, caseFacts, latestScore, need, respondList } from './common';
+import { advanceCase, allow, caseFacts, latestScore, lockCapacityScope, need, respondList } from './common';
 import { platformForOrgType } from '@/domain/routing';
 import { CASE_STATES, type CaseState } from '@/db/schema';
 
@@ -78,8 +78,15 @@ export async function createCase(ctx: Ctx, b: { orgId: string; programmeId?: str
     programmeId = co.programmeId;
     if (co.status === 'Closed') throw fieldError({ cohortId: 'This cohort is closed' });
     if (co.status === 'Draft') throw fieldError({ cohortId: 'This cohort is still a draft. Open it before enrolling businesses' });
+    // Same cohort-capacity scope as programme-participant-lifecycle's assertCohort and
+    // programmes' updateCohort, so none of these three check-then-act paths can race each other.
+    // Re-read capacity after the lock too: `co` was selected before we held it, so a concurrent
+    // updateCohort could have changed capacity in between, and comparing against the stale value
+    // would defeat the lock entirely.
+    await lockCapacityScope(ctx, `cohort:${co.id}`);
+    const [fresh] = await ctx.db.select({ capacity: schema.cohorts.capacity }).from(schema.cohorts).where(eq(schema.cohorts.id, co.id)).limit(1);
     const n = Number((await ctx.db.select({ n: countOf }).from(c).where(and(eq(c.cohortId, co.id), sql`${c.status} <> 'GRADUATED'`)))[0].n);
-    if (n >= co.capacity) throw conflict('This cohort is full');
+    if (n >= (fresh?.capacity ?? co.capacity)) throw conflict('This cohort is full');
   }
   if (programmeId) {
     const [pr] = await ctx.db.select().from(schema.programmes).where(eq(schema.programmes.id, programmeId)).limit(1);
