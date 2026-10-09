@@ -20,7 +20,13 @@ type CaseRec = {
   approvals: { id: string; at: string; type: string; decision: string; reason: string | null }[];
   reports: { id: string; code: string; title: string; status: string; releasedAt: string | null }[];
 };
-type Rec = { organisation: { id: string; code: string; name: string; type: string }; cases: CaseRec[] };
+type TimelineEvent = { id: string; eventType: string; sourceType: string; sourceId: string; caseId: string | null; summary: string; occurredAt: string; details: Record<string, unknown> };
+type Rec = {
+  organisation: { id: string; code: string; name: string; type: string };
+  record: { id: string; status: string; version: number; latestCaseId: string | null; firstAssessedAt: string | null; lastActivityAt: string; createdAt: string; updatedAt: string };
+  cases: CaseRec[];
+  timeline: TimelineEvent[];
+};
 
 const sign = (n: number) => (n > 0 ? `+${n}` : String(n));
 
@@ -59,7 +65,25 @@ export default function RecordPage() {
   useTitle(st.data ? `${st.data.organisation.name}: Business Health Record` : 'Business Health Record');
   return <Async state={st}>{(r) => <div className="stack">
     <PageHead crumbs={<Link href={`/organisations/${r.organisation.id}`}>{r.organisation.name}</Link>} title="Business Health Record" sub={<><span className="mono">{r.organisation.code}</span> · {typeLabel(r.organisation.type)}</>} />
-    <p className="muted small">Read-only history of every case for this organisation. Each score shows the framework version it was produced under, so a change can be traced to the business or to the framework.</p>
+    <p className="muted small">Longitudinal business record. Source facts remain in their original diagnostic, scoring, intervention, evidence, certification and opportunity records; this page links their history together.</p>
+    <Card title="Record identity">
+      <div className="grid grid-3">
+        <div><div className="muted small">Record status</div><Badge>{r.record.status}</Badge></div>
+        <div><div className="muted small">Record revision</div><strong>{r.record.version}</strong></div>
+        <div><div className="muted small">Last activity</div><strong>{dateFmt(r.record.lastActivityAt)}</strong></div>
+        <div><div className="muted small">First assessment</div><strong>{r.record.firstAssessedAt ? dateFmt(r.record.firstAssessedAt) : 'Not assessed yet'}</strong></div>
+        <div><div className="muted small">Cases in your view</div><strong>{r.cases.length}</strong></div>
+        <div><div className="muted small">Record reference</div><span className="mono">{r.record.id.slice(0, 12)}</span></div>
+      </div>
+    </Card>
+    {r.timeline.length > 0 && <Card title={`Longitudinal history (${r.timeline.length} events)`}>
+      <ol className="small stack">
+        {r.timeline.map((e) => <li key={e.id}>
+          <span className="muted">{dateFmt(e.occurredAt)}</span> · {e.summary}
+          {e.caseId && <> · <Link href={`/cases/${e.caseId}`}>Open case</Link></>}
+        </li>)}
+      </ol>
+    </Card>}
     {r.cases.length > 0 && <Card title="Health trend"><TrendChart cases={r.cases} /></Card>}
     {r.cases.length === 0 ? <Empty title="No cases in your view" hint="Cases you are allowed to see appear here." /> : r.cases.map((c) => <CaseBlock key={c.id} c={c} />)}
   </div>}</Async>;
