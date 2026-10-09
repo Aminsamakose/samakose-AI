@@ -28,7 +28,7 @@ async function getMembership(ctx: Ctx, workspaceId: string, userId: string, role
   return row ?? null;
 }
 
-async function assertWorkspaceAccess(ctx: Ctx, workspaceId: string) {
+export async function assertWorkspaceAccess(ctx: Ctx, workspaceId: string) {
   const workspace = await getWorkspace(ctx, workspaceId);
   const user = need(ctx).user;
   if (['ADMIN', 'EXECUTIVE'].includes(user.role)) return { workspace, membership: null };

@@ -4,7 +4,7 @@ import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { notFound, unprocessable } from '@/lib/errors';
 import { lockCapacityScope, need } from '@/services/common';
-import { assertWorkspaceManager } from '@/services/programme-workspaces';
+import { assertWorkspaceAccess, assertWorkspaceManager } from '@/services/programme-workspaces';
 
 const pt = schema.programmeParticipants;
 const w = schema.programmeWorkspaces;
@@ -54,6 +54,10 @@ async function assertCohort(ctx: Ctx, workspaceId: string, cohortId: string) {
 }
 
 export async function getParticipant(ctx: Ctx, workspaceId: string, participantId: string) {
+  // Every sibling mutation here (assignCohort, recordConsent, ...) scopes through the workspace
+  // first; this read-only lookup must too, or any role holding the bare `programme_workspaces:read`
+  // permission could read another programme's participant by guessing/enumerating IDs.
+  await assertWorkspaceAccess(ctx, workspaceId);
   return participant(ctx, workspaceId, participantId);
 }
 

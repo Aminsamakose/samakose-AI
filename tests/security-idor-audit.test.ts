@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { api, ensureReference, makeUser, uniq, type Session } from './helpers';
+import { api, ensureReference, makeOrg, makeUser, uniq, type Session } from './helpers';
 
 /**
  * Exploit-style cross-tenant access attempts against delivery coordination,
@@ -61,5 +61,27 @@ describe('cross-tenant IDOR: programme manager B must never reach programme A da
     // Sanity: pmB's own session, used directly, must carry pmB's own role server-side, not whatever the client claims.
     const whoami = await api(pmB).get('/me');
     if (whoami.status === 200) expect(whoami.data.role).toBe('PROGRAMME_MANAGER');
+  });
+});
+
+describe('cross-tenant IDOR: single-participant lookup must not leak across programmes', () => {
+  it('programme manager B cannot read a participant from programme A by guessing its id, even though they hold a valid programme_workspaces:read permission', async () => {
+    const progA = (await api(admin).post('/programmes', { name: `IDOR-participant A ${uniq()}` })).data;
+    const progB = (await api(admin).post('/programmes', { name: `IDOR-participant B ${uniq()}` })).data;
+    const wsA = (await api(admin).post(`/programmes/${progA.id}/workspace`, {})).data;
+    const wsB = (await api(admin).post(`/programmes/${progB.id}/workspace`, {})).data;
+
+    const pmA2 = await makeUser('PROGRAMME_MANAGER', { programmeIds: [progA.id] });
+    const pmB2 = await makeUser('PROGRAMME_MANAGER', { programmeIds: [progB.id] });
+
+    const org = await makeOrg(admin);
+    const participantA = (await api(admin).post(`/programme-workspaces/${wsA.id}/participants`, { organisationId: org.id })).data;
+
+    // Owner can read their own participant.
+    expect((await api(pmA2).get(`/programme-workspaces/${wsA.id}/participants/${participantA.id}`)).status).toBe(200);
+    // B cannot read A's participant through A's own workspace id.
+    expect((await api(pmB2).get(`/programme-workspaces/${wsA.id}/participants/${participantA.id}`)).status).toBe(404);
+    // B cannot read A's participant by pairing the real participant id with B's own workspace id either.
+    expect((await api(pmB2).get(`/programme-workspaces/${wsB.id}/participants/${participantA.id}`)).status).toBe(404);
   });
 });
