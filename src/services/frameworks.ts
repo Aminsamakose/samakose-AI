@@ -362,14 +362,33 @@ export async function publishVersion(ctx: Ctx, id: string, note: string) {
 export async function ensureBaseline(db: Db) {
   const [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.isDefault, true)).limit(1);
   if (!f) return;
-  const [have] = await db.select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions).where(and(eq(schema.frameworkVersions.frameworkId, f.id), eq(schema.frameworkVersions.status, 'Published'))).limit(1);
+  const [have] = await db.select({ id: schema.frameworkVersions.id })
+    .from(schema.frameworkVersions)
+    .where(and(eq(schema.frameworkVersions.frameworkId, f.id), eq(schema.frameworkVersions.status, 'Published')))
+    .limit(1);
   if (have) return;
+
   const bank = await bankSnapshot(db);
   if (!bank.questions.length) return;
+  const [{ n }] = await db.select({
+    n: sql<number>`coalesce(max(${schema.frameworkVersions.version}), 0)::int`
+  }).from(schema.frameworkVersions).where(eq(schema.frameworkVersions.frameworkId, f.id));
   const now = new Date();
-  await db.insert(schema.frameworkVersions).values({
-    frameworkId: f.id, version: 1, status: 'Published', questions: bank.questions, dimensions: bank.dimensions,
-    sources: [{ component: 'Question bank and weights', source: 'Samakose working question bank', rationale: 'Baseline for a new installation', adaptation: 'None', approval: 'Approved' }],
-    note: 'Baseline created from the question bank', approvedAt: now, publishedAt: now
-  }).onConflictDoNothing();
+  const [draft] = await db.insert(schema.frameworkVersions).values({
+    frameworkId: f.id, version: Number(n) + 1, status: 'Draft',
+    questions: bank.questions, dimensions: bank.dimensions,
+    sources: [{
+      component: 'Question bank and weights',
+      source: 'Samakose working question bank',
+      rationale: 'Baseline created from the working question bank on a new installation',
+      adaptation: 'None', approval: 'Approved'
+    }],
+    note: 'Baseline created from the question bank', createdBy: null
+  }).onConflictDoNothing().returning();
+  if (!draft) return;
+
+  await syncStructuredDraft(db, draft);
+  await db.update(schema.frameworkVersions).set({
+    status: 'Published', approvedAt: now, publishedAt: now
+  }).where(eq(schema.frameworkVersions.id, draft.id));
 }
