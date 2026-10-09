@@ -2,50 +2,327 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    {"idx":0,"version":"7","when":1790703975330,"tag":"0000_init","breakpoints":true},
-    {"idx":1,"version":"7","when":1790703976334,"tag":"0001_hardening","breakpoints":true},
-    {"idx":2,"version":"7","when":1790704341039,"tag":"0002_audit_case","breakpoints":true},
-    {"idx":3,"version":"7","when":1790704341995,"tag":"0003_workflow_guards","breakpoints":true},
-    {"idx":4,"version":"7","when":1790704342500,"tag":"0004_lock_data_api","breakpoints":true},
-    {"idx":5,"version":"7","when":1790877738462,"tag":"0005_public_inquiries","breakpoints":true},
-    {"idx":6,"version":"7","when":1790879138480,"tag":"0006_self_registration","breakpoints":true},
-    {"idx":7,"version":"7","when":1790882020739,"tag":"0007_google_signin_profile","breakpoints":true},
-    {"idx":8,"version":"7","when":1790884517726,"tag":"0008_content_cms","breakpoints":true},
-    {"idx":9,"version":"7","when":1790885274548,"tag":"0009_media_library","breakpoints":true},
-    {"idx":10,"version":"7","when":1790886881934,"tag":"0010_email_templates","breakpoints":true},
-    {"idx":11,"version":"7","when":1790903221626,"tag":"0011_framework_versions","breakpoints":true},
-    {"idx":12,"version":"7","when":1790944975356,"tag":"0012_expert_role","breakpoints":true},
-    {"idx":13,"version":"7","when":1790951587051,"tag":"0013_bank_v2","breakpoints":true},
-    {"idx":14,"version":"7","when":1790967409464,"tag":"0014_cleanup","breakpoints":true},
-    {"idx":15,"version":"7","when":1790970187049,"tag":"0015_agent_registry","breakpoints":true},
-    {"idx":16,"version":"7","when":1790972116357,"tag":"0016_certificates","breakpoints":true},
-    {"idx":17,"version":"7","when":1790973824083,"tag":"0017_certificate_verification","breakpoints":true},
-    {"idx":18,"version":"7","when":1791060224083,"tag":"0018_app_role_owns_new_tables","breakpoints":true},
-    {"idx":19,"version":"7","when":1791146624083,"tag":"0019_registration_routing_phase1","breakpoints":true},
-    {"idx":20,"version":"7","when":1791233024083,"tag":"0020_ghana_districts","breakpoints":true},
-    {"idx":21,"version":"7","when":1791319424083,"tag":"0021_phase2_invites","breakpoints":true},
-    {"idx":22,"version":"7","when":1791405824083,"tag":"0022_phase2_rounds","breakpoints":true},
-    {"idx":23,"version":"7","when":1791492224083,"tag":"0023_phase_a_feedback","breakpoints":true},
-    {"idx":24,"version":"7","when":1791578624083,"tag":"0024_phase_a_assessment_mode","breakpoints":true},
-    {"idx":25,"version":"7","when":1791665024083,"tag":"0025_phase_a_colleague_uploads","breakpoints":true},
-    {"idx":26,"version":"7","when":1791751424083,"tag":"0026_mfa_recovery_codes","breakpoints":true},
-    {"idx":27,"version":"7","when":1791837824083,"tag":"0027_intervention_library_v2","breakpoints":true},
-    {"idx":28,"version":"7","when":1791924224083,"tag":"0028_practitioner_network","breakpoints":true},
-    {"idx":29,"version":"7","when":1792010624083,"tag":"0029_unlock_engine","breakpoints":true},
-    {"idx":30,"version":"7","when":1792011624083,"tag":"0030_delivery_sla_messaging","breakpoints":true},
-    {"idx":31,"version":"7","when":1792012624083,"tag":"0031_programme_indicators","breakpoints":true},
-    {"idx":32,"version":"7","when":1792013624083,"tag":"0032_contract_lifecycle","breakpoints":true},
-    {"idx":33,"version":"7","when":1792014624083,"tag":"0033_org_registry","breakpoints":true},
-    {"idx":34,"version":"7","when":1792015624083,"tag":"0034_programme_budget_logframe","breakpoints":true},
-    {"idx":35,"version":"7","when":1792016624083,"tag":"0035_scan_hardening","breakpoints":true},
-    {"idx":36,"version":"7","when":1792017624083,"tag":"0036_model_tiers","breakpoints":true},
-    {"idx":37,"version":"7","when":1792018624083,"tag":"0037_opportunity_scout","breakpoints":true},
-    {"idx":38,"version":"7","when":1792019624083,"tag":"0038_programme_workspace_persistence","breakpoints":true},
-    {"idx":39,"version":"7","when":1792019624084,"tag":"0039_programme_workspace_member_primary_key","breakpoints":true},
-    {"idx":40,"version":"7","when":1792019624085,"tag":"0040_programme_workspace_configuration_governance","breakpoints":true},
-    {"idx":41,"version":"7","when":1792020000000,"tag":"0041_cohort_configurations","breakpoints":true},
-    {"idx":42,"version":"7","when":1792021000000,"tag":"0042_delivery_operations","breakpoints":true},
-    {"idx":43,"version":"7","when":1792022000000,"tag":"0045_programme_calendar_scheduling","breakpoints":true},
-    {"idx":44,"version":"7","when":1792023000000,"tag":"0046_provider_assignment_capacity","breakpoints":true}
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790703975330,
+      "tag": "0000_init",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790703976334,
+      "tag": "0001_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790704341039,
+      "tag": "0002_audit_case",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790704341995,
+      "tag": "0003_workflow_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790704342500,
+      "tag": "0004_lock_data_api",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790877738462,
+      "tag": "0005_public_inquiries",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790879138480,
+      "tag": "0006_self_registration",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790882020739,
+      "tag": "0007_google_signin_profile",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790884517726,
+      "tag": "0008_content_cms",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790885274548,
+      "tag": "0009_media_library",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790886881934,
+      "tag": "0010_email_templates",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790903221626,
+      "tag": "0011_framework_versions",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790944975356,
+      "tag": "0012_expert_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790951587051,
+      "tag": "0013_bank_v2",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790967409464,
+      "tag": "0014_cleanup",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790970187049,
+      "tag": "0015_agent_registry",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790972116357,
+      "tag": "0016_certificates",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790973824083,
+      "tag": "0017_certificate_verification",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791060224083,
+      "tag": "0018_app_role_owns_new_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791146624083,
+      "tag": "0019_registration_routing_phase1",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791233024083,
+      "tag": "0020_ghana_districts",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791319424083,
+      "tag": "0021_phase2_invites",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791405824083,
+      "tag": "0022_phase2_rounds",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791492224083,
+      "tag": "0023_phase_a_feedback",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791578624083,
+      "tag": "0024_phase_a_assessment_mode",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791665024083,
+      "tag": "0025_phase_a_colleague_uploads",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791751424083,
+      "tag": "0026_mfa_recovery_codes",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791837824083,
+      "tag": "0027_intervention_library_v2",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791924224083,
+      "tag": "0028_practitioner_network",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792010624083,
+      "tag": "0029_unlock_engine",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792011624083,
+      "tag": "0030_delivery_sla_messaging",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792012624083,
+      "tag": "0031_programme_indicators",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792013624083,
+      "tag": "0032_contract_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792014624083,
+      "tag": "0033_org_registry",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792015624083,
+      "tag": "0034_programme_budget_logframe",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1792016624083,
+      "tag": "0035_scan_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1792017624083,
+      "tag": "0036_model_tiers",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1792018624083,
+      "tag": "0037_opportunity_scout",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1792019624083,
+      "tag": "0038_programme_workspace_persistence",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1792019624084,
+      "tag": "0039_programme_workspace_member_primary_key",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1792019624085,
+      "tag": "0040_programme_workspace_configuration_governance",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1792020000000,
+      "tag": "0041_cohort_configurations",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1792021000000,
+      "tag": "0042_delivery_operations",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1792021500000,
+      "tag": "0043_delivery_coordination",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1792022000000,
+      "tag": "0045_programme_calendar_scheduling",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1792023000000,
+      "tag": "0046_provider_assignment_capacity",
+      "breakpoints": true
+    }
   ]
 }
