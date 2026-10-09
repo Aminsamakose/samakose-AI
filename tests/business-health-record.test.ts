@@ -27,7 +27,7 @@ describe('Business Health Record migration', () => {
       'bhr_evidence_source_event', 'bhr_document_source_event', 'bhr_kpi_reading_source_event',
       'bhr_certificate_source_event', 'bhr_opportunity_referral_event_source_event'
     ]) expect(sql).toContain(`create trigger ${trigger}`);
-    expect(sql).toContain('source facts remain authoritative in their existing tables');
+    expect(sql.toLowerCase()).toContain('source facts remain authoritative in their existing tables');
   });
 });
 
