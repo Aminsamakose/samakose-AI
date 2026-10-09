@@ -1,4 +1,5 @@
 import type { WorkspaceRole } from './programme-workspace';
+import { conflict } from '@/lib/errors';
 
 export type EntitlementValue = number | boolean | string;
 
@@ -56,6 +57,9 @@ export function isFeatureEnabled(entitlements: WorkspaceEntitlement[], key: stri
 
 export function assertCapacity(capacity: number | null, usage: number, label: string): void {
   if (capacity !== null && usage >= capacity) {
-    throw new Error(`${label} capacity reached (${capacity})`);
+    // ApiError, not a plain Error: hitting an entitlement cap is routine, expected
+    // behaviour under normal use, not a server fault -- the dispatcher must report it
+    // as a 409, not an opaque 500.
+    throw conflict(`${label} capacity reached (${capacity})`);
   }
 }

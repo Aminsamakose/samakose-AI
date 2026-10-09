@@ -20,6 +20,21 @@ export function allow(ctx: Ctx, resource: Resource, action: Parameters<typeof ca
   if (!ctx.user || !can(ctx.user.role, resource, action)) throw forbidden();
 }
 
+/**
+ * Serialize a count-then-write capacity check against a named scope (e.g. one workspace's
+ * participant slots, or one provider's active-assignment load). Without this, two concurrent
+ * requests can both read the same "current usage" count before either commits its write, and
+ * both pass a check meant to let only one through (classic check-then-act race). A
+ * transaction-scoped Postgres advisory lock keyed on `scope` blocks the second caller until the
+ * first transaction commits or rolls back, so the count it then reads is accurate. Call this
+ * from inside the same transaction as the capacity check and the write; the lock releases
+ * automatically at commit/rollback. `scope` should uniquely identify the thing being capacity-
+ * limited (e.g. `workspace:${id}:role:${role}`).
+ */
+export async function lockCapacityScope(ctx: Ctx, scope: string) {
+  await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${scope}, 0))`);
+}
+
 /** Rules in force: defaults overlaid with the values administrators saved. */
 export async function loadRules(db: Ctx['db']): Promise<Rules> {
   const rows = await db.select().from(schema.rules);
