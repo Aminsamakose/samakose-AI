@@ -4,7 +4,7 @@ import { schema } from '@/db/client';
 import type { AuthedCtx, Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { can, type Resource } from '@/lib/rbac';
-import { forbidden, unauthorized } from '@/lib/errors';
+import { conflict, forbidden, unauthorized } from '@/lib/errors';
 import { DEFAULT_RULES, canTransitionCase, CASE_TRANSITIONS, type Facts, type Rules } from '@/domain/logic';
 import { toCsv } from '@/lib/csv';
 import { csvResponse } from '@/api/framework';
@@ -66,7 +66,7 @@ export async function caseFacts(ctx: Ctx, caseId: string, confirmed = false): Pr
 export async function advanceCase(ctx: Ctx, caseId: string): Promise<CaseState> {
   for (let i = 0; i < 12; i++) {
     const [c] = await ctx.db.select().from(schema.cases).where(eq(schema.cases.id, caseId)).for('update').limit(1);
-    if (!c) throw new Error('case vanished');
+    if (!c) throw conflict('This case was deleted by another user');
     const facts = await caseFacts(ctx, caseId);
     const next = CASE_TRANSITIONS.find((t) => t.from === c.status && !t.manual && canTransitionCase(t.from, t.to, facts).ok);
     if (!next) return c.status;

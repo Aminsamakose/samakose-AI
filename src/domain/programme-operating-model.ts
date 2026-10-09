@@ -1,4 +1,4 @@
-import { conflict } from '@/lib/errors';
+import { conflict, unprocessable } from '@/lib/errors';
 
 export const PROGRAMME_LIFECYCLE = [
   'DRAFT',
@@ -147,13 +147,13 @@ export function assertWithinEntitlement(
 ): void {
   const entitlement = entitlements.find((item) => item.key === key);
   if (!entitlement) {
-    throw new Error(`Programme entitlement is not configured: ${key}`);
+    throw unprocessable(`Programme entitlement is not configured: ${key}`);
   }
   if (typeof entitlement.limit !== 'number') {
     return;
   }
   if (requestedUsage > entitlement.limit) {
-    throw new Error(
+    throw conflict(
       `Programme entitlement exceeded: ${key} (${requestedUsage}/${entitlement.limit})`,
     );
   }

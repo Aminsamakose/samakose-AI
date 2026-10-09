@@ -8,7 +8,7 @@ import { CASE_TRANSITIONS, canTransitionCase } from '@/domain/logic';
 import { notifyUsers } from '@/domain/notify';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
 import { place, completeForCase } from './assignments';
-import { advanceCase, allow, caseFacts, latestScore, need, respondList } from './common';
+import { advanceCase, allow, caseFacts, latestScore, lockCapacityScope, need, respondList } from './common';
 import { platformForOrgType } from '@/domain/routing';
 import { CASE_STATES, type CaseState } from '@/db/schema';
 
@@ -78,6 +78,9 @@ export async function createCase(ctx: Ctx, b: { orgId: string; programmeId?: str
     programmeId = co.programmeId;
     if (co.status === 'Closed') throw fieldError({ cohortId: 'This cohort is closed' });
     if (co.status === 'Draft') throw fieldError({ cohortId: 'This cohort is still a draft. Open it before enrolling businesses' });
+    // Same cohort-capacity scope as programme-participant-lifecycle's assertCohort and
+    // programmes' updateCohort, so none of these three check-then-act paths can race each other.
+    await lockCapacityScope(ctx, `cohort:${co.id}`);
     const n = Number((await ctx.db.select({ n: countOf }).from(c).where(and(eq(c.cohortId, co.id), sql`${c.status} <> 'GRADUATED'`)))[0].n);
     if (n >= co.capacity) throw conflict('This cohort is full');
   }
