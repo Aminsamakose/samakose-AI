@@ -226,22 +226,40 @@ $$;
 create or replace function public.reject_published_framework_change()
 returns trigger language plpgsql as $$
 declare
-  v_version uuid;
-  v_parent_id uuid;
+  v_old_version uuid;
+  v_new_version uuid;
+  v_old_parent uuid;
+  v_new_parent uuid;
 begin
   if tg_table_name = 'framework_sub_dimensions' then
-    v_parent_id := case when tg_op = 'DELETE' then old.dimension_id else new.dimension_id end;
-    select d.framework_version_id into v_version
-      from public.framework_dimensions d where d.id = v_parent_id;
+    if tg_op <> 'INSERT' then
+      v_old_parent := old.dimension_id;
+      select d.framework_version_id into v_old_version
+        from public.framework_dimensions d where d.id = v_old_parent;
+    end if;
+    if tg_op <> 'DELETE' then
+      v_new_parent := new.dimension_id;
+      select d.framework_version_id into v_new_version
+        from public.framework_dimensions d where d.id = v_new_parent;
+    end if;
   elsif tg_table_name = 'framework_evidence_requirements' then
-    v_parent_id := case when tg_op = 'DELETE' then old.question_id else new.question_id end;
-    select q.framework_version_id into v_version
-      from public.framework_questions q where q.id = v_parent_id;
+    if tg_op <> 'INSERT' then
+      v_old_parent := old.question_id;
+      select q.framework_version_id into v_old_version
+        from public.framework_questions q where q.id = v_old_parent;
+    end if;
+    if tg_op <> 'DELETE' then
+      v_new_parent := new.question_id;
+      select q.framework_version_id into v_new_version
+        from public.framework_questions q where q.id = v_new_parent;
+    end if;
   else
-    v_version := case when tg_op = 'DELETE' then old.framework_version_id else new.framework_version_id end;
+    if tg_op <> 'INSERT' then v_old_version := old.framework_version_id; end if;
+    if tg_op <> 'DELETE' then v_new_version := new.framework_version_id; end if;
   end if;
 
-  if public.framework_version_is_published(v_version) then
+  if public.framework_version_is_published(v_old_version)
+     or public.framework_version_is_published(v_new_version) then
     raise exception 'Published framework content is immutable; create a new framework version.';
   end if;
   if tg_op = 'DELETE' then return old; end if;
