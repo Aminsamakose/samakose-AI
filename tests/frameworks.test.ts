@@ -27,6 +27,7 @@ describe('framework versions', () => {
     expect(details.data.structuredAvailable).toBe(true);
     expect(details.data.structured.dimensions.map((d: any) => d.name).sort()).toEqual([...details.data.dimensions].sort());
     expect(details.data.structured.questions).toHaveLength(details.data.questions.length);
+    expect(details.data.structured.questions.every((q: any) => q.status === 'Published')).toBe(true);
   });
 
   it('lets only an administrator approve, and others at most read', async () => {
@@ -39,6 +40,7 @@ describe('framework versions', () => {
     const draftDimensions = await db().select().from(schema.frameworkDimensions).where(eq(schema.frameworkDimensions.frameworkVersionId, d.data.id));
     expect(draftDimensions).toHaveLength(d.data.dimensions.length);
     expect(draftRows).toHaveLength(d.data.questions.length);
+    expect(draftRows.every((q) => q.status === 'Draft')).toBe(true);
     expect((await api(reviewer).post(`/settings/frameworks/versions/${d.data.id}/publish`, { note: 'try it on' })).status).toBe(403);
     expect((await api(admin).del(`/settings/frameworks/versions/${d.data.id}`)).status).toBe(200);
   });
