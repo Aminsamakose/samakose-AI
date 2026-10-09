@@ -283,3 +283,18 @@ alter table public.framework_evidence_requirements enable row level security;
 alter table public.framework_scoring_rules enable row level security;
 alter table public.framework_readiness_rules enable row level security;
 alter table public.framework_source_records enable row level security;
+
+-- Keep application ownership consistent with migration 0018 on environments that use samakose_app.
+-- Local/test environments without this role are intentionally left unchanged.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'samakose_app') THEN
+    ALTER TABLE public.framework_dimensions OWNER TO samakose_app;
+    ALTER TABLE public.framework_sub_dimensions OWNER TO samakose_app;
+    ALTER TABLE public.framework_questions OWNER TO samakose_app;
+    ALTER TABLE public.framework_evidence_requirements OWNER TO samakose_app;
+    ALTER TABLE public.framework_scoring_rules OWNER TO samakose_app;
+    ALTER TABLE public.framework_readiness_rules OWNER TO samakose_app;
+    ALTER TABLE public.framework_source_records OWNER TO samakose_app;
+  END IF;
+END $$;
