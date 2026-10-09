@@ -103,7 +103,21 @@ export async function setCapacity(ctx: Ctx, workspaceId: string, input: { provid
   return ctx.db.select().from(capacities).where(and(eq(capacities.workspaceId, workspaceId), eq(capacities.providerUserId, input.providerUserId), eq(capacities.providerRole, input.providerRole))).limit(1).then((r) => r[0]);
 }
 
+/**
+ * Serialize capacity checks for one provider/role/workspace combination.
+ * Without this, two concurrent requests can both read the same "active assignments" count
+ * before either commits its insert, and both pass a check that should only let one through
+ * (classic check-then-act race). A transaction-scoped advisory lock blocks the second caller
+ * until the first transaction commits or rolls back, so the count it then reads is accurate.
+ * Safe to call from inside the same transaction as the insert; the lock releases automatically
+ * at commit/rollback.
+ */
+async function lockProviderCapacity(ctx: Ctx, workspaceId: string, providerUserId: string, providerRole: ProviderRole) {
+  await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workspaceId + ':' + providerUserId + ':' + providerRole}, 0))`);
+}
+
 async function assertCapacity(ctx: Ctx, workspaceId: string, providerUserId: string, providerRole: ProviderRole) {
+  await lockProviderCapacity(ctx, workspaceId, providerUserId, providerRole);
   const { profile } = await ensureProvider(ctx, workspaceId, providerUserId, providerRole);
   const l = await load(ctx, workspaceId, providerUserId, providerRole);
   const max = l.capacity?.maxActiveAssignments ?? profile.maxActive;
