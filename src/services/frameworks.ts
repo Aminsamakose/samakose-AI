@@ -353,6 +353,9 @@ export async function publishVersion(ctx: Ctx, id: string, note: string) {
   const [prev] = await ctx.db.select().from(schema.frameworkVersions).where(and(eq(schema.frameworkVersions.frameworkId, v.frameworkId), eq(schema.frameworkVersions.status, 'Published'))).limit(1);
   if (prev) await ctx.db.update(schema.frameworkVersions).set({ status: 'Retired' }).where(eq(schema.frameworkVersions.id, prev.id));
   const now = new Date();
+  // Mark question records published while the parent is still a mutable draft.
+  await ctx.db.update(schema.frameworkQuestions).set({ status: 'Published' })
+    .where(eq(schema.frameworkQuestions.frameworkVersionId, id));
   await ctx.db.update(schema.frameworkVersions).set({ status: 'Published', approvedBy: u.id, approvedAt: now, publishedAt: now, note: note.trim() }).where(eq(schema.frameworkVersions.id, id));
   await audit(ctx, 'framework.published', 'framework_version', id, { status: 'Draft', previous: prev ? prev.version : null }, { status: 'Published', framework: f.code, version: v.version, approvedBy: u.email, note: note.trim() });
   return { id, version: v.version, framework: f.code };
@@ -388,6 +391,8 @@ export async function ensureBaseline(db: Db) {
   if (!draft) return;
 
   await syncStructuredDraft(db, draft);
+  await db.update(schema.frameworkQuestions).set({ status: 'Published' })
+    .where(eq(schema.frameworkQuestions.frameworkVersionId, draft.id));
   await db.update(schema.frameworkVersions).set({
     status: 'Published', approvedAt: now, publishedAt: now
   }).where(eq(schema.frameworkVersions.id, draft.id));
