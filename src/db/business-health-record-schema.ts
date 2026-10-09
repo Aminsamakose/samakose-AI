@@ -1,5 +1,6 @@
 import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
-import { cases, organisations, users } from './schema';
+import { sql } from 'drizzle-orm';
+import { cases, organisations } from './schema';
 
 /**
  * A stable, one-per-organisation anchor for the longitudinal Business Health Record.
@@ -14,7 +15,7 @@ export const businessHealthRecords = pgTable('business_health_records', {
   latestCaseId: uuid('latest_case_id').references(() => cases.id, { onDelete: 'set null' }),
   firstAssessedAt: timestamp('first_assessed_at', { withTimezone: true }),
   lastActivityAt: timestamp('last_activity_at', { withTimezone: true }).notNull().defaultNow(),
-  createdBy: uuid('created_by').references(() => users.id),
+  createdBy: uuid('created_by'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -36,9 +37,9 @@ export const businessHealthRecordEvents = pgTable('business_health_record_events
   sourceType: text('source_type').notNull(),
   sourceId: uuid('source_id').notNull(),
   summary: text('summary').notNull(),
-  actorUserId: uuid('actor_user_id').references(() => users.id),
+  actorUserId: uuid('actor_user_id'),
   occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
-  details: jsonb('details').$type<Record<string, unknown>>().notNull().default({}),
+  details: jsonb('details').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index('bhr_event_record_time_idx').on(t.recordId, t.occurredAt),
