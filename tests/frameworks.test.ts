@@ -57,11 +57,30 @@ describe('framework versions', () => {
     expect((await api(admin).del(`/settings/frameworks/versions/${id}`)).status).toBe(200);
   });
 
-  it('keeps published versions immutable in the database itself', async () => {
+  it('keeps published versions and normalized child records immutable in the database itself', async () => {
     const b = await baseline();
     const pub = b.versions.find((v: any) => v.status === 'Published');
     await expect(db().update(schema.frameworkVersions).set({ questions: [] }).where(eq(schema.frameworkVersions.id, pub.id))).rejects.toThrow();
     await expect(db().delete(schema.frameworkVersions).where(eq(schema.frameworkVersions.id, pub.id))).rejects.toThrow();
+
+    const [dimension] = await db().select().from(schema.frameworkDimensions)
+      .where(eq(schema.frameworkDimensions.frameworkVersionId, pub.id)).limit(1);
+    const [question] = await db().select().from(schema.frameworkQuestions)
+      .where(eq(schema.frameworkQuestions.frameworkVersionId, pub.id)).limit(1);
+    expect(dimension).toBeTruthy();
+    expect(question).toBeTruthy();
+
+    await expect(db().insert(schema.frameworkDimensions).values({
+      frameworkVersionId: pub.id, code: 'MUTATION_TEST', name: 'Should be blocked', weight: 1, sortOrder: 999
+    })).rejects.toThrow(/Published framework content is immutable/);
+    await expect(db().insert(schema.frameworkSubDimensions).values({
+      dimensionId: dimension.id, code: 'MUTATION_TEST', name: 'Should be blocked', weight: 1, sortOrder: 999
+    })).rejects.toThrow(/Published framework content is immutable/);
+    await expect(db().insert(schema.frameworkEvidenceRequirements).values({
+      questionId: question.id, requirement: 'Should be blocked', method: 'manual'
+    })).rejects.toThrow(/Published framework content is immutable/);
+    await expect(db().update(schema.frameworkQuestions).set({ text: 'A changed published question' })
+      .where(eq(schema.frameworkQuestions.id, question.id))).rejects.toThrow(/Published framework content is immutable/);
   });
 
   it('ties a score to the version it was produced under, and editing the bank cannot rewrite it', async () => {
