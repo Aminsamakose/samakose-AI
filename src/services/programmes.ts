@@ -6,7 +6,7 @@ import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme, programmeScope } from '@/domain/scope';
 import { emitEvent } from '@/domain/events';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
-import { allow, loadRules, need, respondList } from './common';
+import { allow, loadRules, lockCapacityScope, need, respondList } from './common';
 
 const p = schema.programmes, ch = schema.cohorts;
 const PROG_MOVES: Record<string, string[]> = { Draft: ['Active', 'Cancelled'], Active: ['Completed', 'Cancelled'], Completed: [], Cancelled: [] };
@@ -89,6 +89,9 @@ export async function updateCohort(ctx: Ctx, id: string, b: { name?: string; sta
   datesOk(b.startDate ?? before.startDate, b.endDate ?? before.endDate);
   if (b.status && b.status !== before.status && !COHORT_MOVES[before.status]?.includes(b.status)) throw unprocessable(`A ${before.status} cohort cannot become ${b.status}`);
   if (b.capacity !== undefined) {
+    // Same cohort-capacity scope as cases.createCase and the participant-lifecycle cohort
+    // assignment, so an admin lowering capacity can't race a concurrent enrollment.
+    await lockCapacityScope(ctx, `cohort:${id}`);
     const n = Number((await ctx.db.select({ n: countOf }).from(schema.cases).where(eq(schema.cases.cohortId, id)))[0].n);
     if (b.capacity < n) throw conflict(`${n} businesses are already enrolled, so capacity cannot go below ${n}`);
   }

@@ -4,7 +4,7 @@ import { schema } from '@/db/client';
 import type { AuthedCtx, Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { can, type Resource } from '@/lib/rbac';
-import { forbidden, unauthorized } from '@/lib/errors';
+import { conflict, forbidden, unauthorized } from '@/lib/errors';
 import { DEFAULT_RULES, canTransitionCase, CASE_TRANSITIONS, type Facts, type Rules } from '@/domain/logic';
 import { toCsv } from '@/lib/csv';
 import { csvResponse } from '@/api/framework';
@@ -18,6 +18,21 @@ export function need(ctx: Ctx): AuthedCtx {
 }
 export function allow(ctx: Ctx, resource: Resource, action: Parameters<typeof can>[2]) {
   if (!ctx.user || !can(ctx.user.role, resource, action)) throw forbidden();
+}
+
+/**
+ * Serialize a count-then-write capacity check against a named scope (e.g. one workspace's
+ * participant slots, or one provider's active-assignment load). Without this, two concurrent
+ * requests can both read the same "current usage" count before either commits its write, and
+ * both pass a check meant to let only one through (classic check-then-act race). A
+ * transaction-scoped Postgres advisory lock keyed on `scope` blocks the second caller until the
+ * first transaction commits or rolls back, so the count it then reads is accurate. Call this
+ * from inside the same transaction as the capacity check and the write; the lock releases
+ * automatically at commit/rollback. `scope` should uniquely identify the thing being capacity-
+ * limited (e.g. `workspace:${id}:role:${role}`).
+ */
+export async function lockCapacityScope(ctx: Ctx, scope: string) {
+  await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${scope}, 0))`);
 }
 
 /** Rules in force: defaults overlaid with the values administrators saved. */
@@ -51,7 +66,7 @@ export async function caseFacts(ctx: Ctx, caseId: string, confirmed = false): Pr
 export async function advanceCase(ctx: Ctx, caseId: string): Promise<CaseState> {
   for (let i = 0; i < 12; i++) {
     const [c] = await ctx.db.select().from(schema.cases).where(eq(schema.cases.id, caseId)).for('update').limit(1);
-    if (!c) throw new Error('case vanished');
+    if (!c) throw conflict('This case was deleted by another user');
     const facts = await caseFacts(ctx, caseId);
     const next = CASE_TRANSITIONS.find((t) => t.from === c.status && !t.manual && canTransitionCase(t.from, t.to, facts).ok);
     if (!next) return c.status;

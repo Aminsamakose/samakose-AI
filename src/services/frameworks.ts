@@ -4,7 +4,7 @@
  * Published versions never change (a database trigger enforces it), so history is explained by the version it points at.
  * Specialised frameworks (AgriFood360, ESO360) cannot be published until every source in their evidence trail is approved.
  */
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -145,12 +145,137 @@ export async function listFrameworks(ctx: Ctx) {
     };
   });
 }
+export async function structuredArchitecture(db: Db, versionId: string) {
+  const dimensions = await db.select().from(schema.frameworkDimensions)
+    .where(eq(schema.frameworkDimensions.frameworkVersionId, versionId))
+    .orderBy(asc(schema.frameworkDimensions.sortOrder));
+  const subDimensions = dimensions.length
+    ? await db.select().from(schema.frameworkSubDimensions)
+        .where(sql`${schema.frameworkSubDimensions.dimensionId} in (${sql.join(dimensions.map((d) => sql`${d.id}`), sql`,`)})`)
+        .orderBy(asc(schema.frameworkSubDimensions.sortOrder))
+    : [];
+  const questions = await db.select().from(schema.frameworkQuestions)
+    .where(eq(schema.frameworkQuestions.frameworkVersionId, versionId))
+    .orderBy(asc(schema.frameworkQuestions.sortOrder), asc(schema.frameworkQuestions.code));
+  const evidence = questions.length
+    ? await db.select().from(schema.frameworkEvidenceRequirements)
+        .where(sql`${schema.frameworkEvidenceRequirements.questionId} in (${sql.join(questions.map((q) => sql`${q.id}`), sql`,`)})`)
+    : [];
+  const scoringRules = await db.select().from(schema.frameworkScoringRules)
+    .where(eq(schema.frameworkScoringRules.frameworkVersionId, versionId))
+    .orderBy(asc(schema.frameworkScoringRules.priority));
+  const readinessRules = await db.select().from(schema.frameworkReadinessRules)
+    .where(eq(schema.frameworkReadinessRules.frameworkVersionId, versionId))
+    .orderBy(asc(schema.frameworkReadinessRules.priority));
+  const sources = await db.select().from(schema.frameworkSourceRecords)
+    .where(eq(schema.frameworkSourceRecords.frameworkVersionId, versionId));
+  return { dimensions, subDimensions, questions, evidence, scoringRules, readinessRules, sources };
+}
+
+
+/**
+ * Maintain a normalized representation of a draft while retaining framework_versions
+ * as the compatibility snapshot consumed by existing diagnostics and scoring.
+ * Only draft versions may be rebuilt; publication freezes both representations.
+ */
+export async function syncStructuredDraft(db: Db, version: VersionRow): Promise<void> {
+  if (version.status !== 'Draft') throw unprocessable('Only framework drafts can update normalized framework content');
+
+  const oldQuestions = await db.select({ id: schema.frameworkQuestions.id })
+    .from(schema.frameworkQuestions).where(eq(schema.frameworkQuestions.frameworkVersionId, version.id));
+  if (oldQuestions.length) {
+    await db.delete(schema.frameworkEvidenceRequirements)
+      .where(inArray(schema.frameworkEvidenceRequirements.questionId, oldQuestions.map((q) => q.id)));
+  }
+  await db.delete(schema.frameworkQuestions).where(eq(schema.frameworkQuestions.frameworkVersionId, version.id));
+
+  const oldDimensions = await db.select({ id: schema.frameworkDimensions.id })
+    .from(schema.frameworkDimensions).where(eq(schema.frameworkDimensions.frameworkVersionId, version.id));
+  if (oldDimensions.length) {
+    await db.delete(schema.frameworkSubDimensions)
+      .where(inArray(schema.frameworkSubDimensions.dimensionId, oldDimensions.map((d) => d.id)));
+  }
+  await db.delete(schema.frameworkDimensions).where(eq(schema.frameworkDimensions.frameworkVersionId, version.id));
+  await db.delete(schema.frameworkScoringRules).where(eq(schema.frameworkScoringRules.frameworkVersionId, version.id));
+  await db.delete(schema.frameworkReadinessRules).where(eq(schema.frameworkReadinessRules.frameworkVersionId, version.id));
+  await db.delete(schema.frameworkSourceRecords).where(eq(schema.frameworkSourceRecords.frameworkVersionId, version.id));
+
+  const dimensionIds = new Map<string, string>();
+  for (const [index, name] of version.dimensions.entries()) {
+    const [row] = await db.insert(schema.frameworkDimensions).values({
+      frameworkVersionId: version.id, code: `DIM_${String(index + 1).padStart(3, '0')}`,
+      name, weight: 1, sortOrder: index
+    }).returning({ id: schema.frameworkDimensions.id });
+    dimensionIds.set(name, row.id);
+  }
+
+  const subDimensionIds = new Map<string, string>();
+  for (const [index, sub] of (version.meta?.subDimensions ?? []).entries()) {
+    const dimensionId = dimensionIds.get(sub.dimension);
+    if (!dimensionId) continue;
+    const [row] = await db.insert(schema.frameworkSubDimensions).values({
+      dimensionId, code: sub.code, name: sub.name, description: null, weight: 1, sortOrder: index
+    }).returning({ id: schema.frameworkSubDimensions.id });
+    subDimensionIds.set(`${sub.dimension}::${sub.code}`, row.id);
+  }
+
+  for (const [index, question] of version.questions.entries()) {
+    const dimensionId = dimensionIds.get(question.dimension);
+    if (!dimensionId) throw unprocessable(`Question ${question.code} references a missing dimension`);
+    const [row] = await db.insert(schema.frameworkQuestions).values({
+      frameworkVersionId: version.id, dimensionId,
+      subDimensionId: question.subDimension ? subDimensionIds.get(`${question.dimension}::${question.subDimension}`) ?? null : null,
+      code: question.code, text: question.text, responseType: question.responseType ?? 'ANCHORED',
+      weight: question.weight, criticality: question.criticality ?? 'Standard', sortOrder: index,
+      appliesWhen: question.applies ?? null, riskTag: question.riskTag ?? null,
+      consistencyGroup: question.consistencyGroup ?? null, anchors: question.anchors ?? [],
+      readinessCodes: question.readiness ?? [], status: 'Draft', createdBy: version.createdBy ?? null
+    }).returning({ id: schema.frameworkQuestions.id });
+    if (question.evidence) {
+      await db.insert(schema.frameworkEvidenceRequirements).values({
+        questionId: row.id, requirement: question.evidence.requirement, method: question.evidence.method,
+        examples: question.evidence.examples ?? [], minimumEvidenceClass: 'Self-reported', required: false
+      });
+    }
+  }
+
+  for (const [index, [code, value]] of Object.entries(version.rules ?? {}).entries()) {
+    await db.insert(schema.frameworkScoringRules).values({
+      frameworkVersionId: version.id, code, ruleType: 'LEGACY_OVERRIDE', expression: String(value),
+      parameters: { compatibilitySource: 'framework_versions.rules', value }, priority: index
+    });
+  }
+  for (const [index, rule] of (version.meta?.readiness ?? []).entries()) {
+    await db.insert(schema.frameworkReadinessRules).values({
+      frameworkVersionId: version.id, code: rule.code, name: rule.name, purpose: rule.purpose ?? null,
+      expression: rule.purpose ?? rule.name, unlocks: (rule.unlocks ?? '').split(/[,;]+/).map((s) => s.trim()).filter(Boolean),
+      priority: index
+    });
+  }
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  for (const source of version.sources) {
+    const approvedAt = source.approvedAt ? new Date(source.approvedAt) : null;
+    await db.insert(schema.frameworkSourceRecords).values({
+      frameworkVersionId: version.id, componentType: source.component, componentCode: null,
+      source: source.source, rationale: source.rationale, adaptation: source.adaptation,
+      approvalStatus: source.approval, approvedBy: source.approvedBy && uuidPattern.test(source.approvedBy) ? source.approvedBy : null,
+      approvedAt: approvedAt && !Number.isNaN(approvedAt.getTime()) ? approvedAt : null
+    });
+  }
+}
+
 export async function getVersion(ctx: Ctx, id: string) {
   allow(ctx, 'frameworks', 'read');
   const v = await versionById(ctx.db, id);
   if (!v) throw notFound('Framework version not found');
   const [f] = await ctx.db.select().from(schema.frameworks).where(eq(schema.frameworks.id, v.frameworkId));
-  return { ...v, framework: { code: f.code, name: f.name, isDefault: f.isDefault } };
+  let structured: Awaited<ReturnType<typeof structuredArchitecture>> | null = null;
+  try { structured = await structuredArchitecture(ctx.db, id); } catch (error) {
+    // A rolling deployment may start before migration 0048 is applied.
+    const e = error as { code?: string; cause?: { code?: string } };
+    if (e.code !== '42P01' && e.cause?.code !== '42P01') throw error;
+  }
+  return { ...v, framework: { code: f.code, name: f.name, isDefault: f.isDefault }, structured, structuredAvailable: structured !== null };
 }
 
 /* ------------------------------------- writing ------------------------------------- */
@@ -177,6 +302,7 @@ export async function createDraft(ctx: Ctx, code: string, b: DraftInput) {
     frameworkId: f.id, version: Number(n) + 1, status: 'Draft', questions: content.questions, dimensions: content.dimensions,
     rules: b.rules ?? null, sources, meta: b.meta ?? null, note: b.note ?? null, createdBy: u.id
   }).returning();
+  await syncStructuredDraft(ctx.db, row);
   await audit(ctx, 'framework.draft_created', 'framework_version', row.id, undefined, { framework: code, version: row.version, questions: content.questions.length });
   return row;
 }
@@ -195,6 +321,7 @@ export async function updateDraft(ctx: Ctx, id: string, b: Omit<DraftInput, 'fro
   const canApprove = !!ctx.user && can(ctx.user.role, 'frameworks', 'approve');
   const sources = b.sources ? mergeSources(v.sources, b.sources, canApprove, u.id) : v.sources;
   await ctx.db.update(schema.frameworkVersions).set({ ...next, sources }).where(eq(schema.frameworkVersions.id, id));
+  await syncStructuredDraft(ctx.db, { ...v, ...next, sources });
   await audit(ctx, 'framework.draft_updated', 'framework_version', id, { questions: v.questions.length, sources: v.sources.length }, { questions: next.questions.length, sources: sources.length });
   return { ok: true };
 }
@@ -226,6 +353,9 @@ export async function publishVersion(ctx: Ctx, id: string, note: string) {
   const [prev] = await ctx.db.select().from(schema.frameworkVersions).where(and(eq(schema.frameworkVersions.frameworkId, v.frameworkId), eq(schema.frameworkVersions.status, 'Published'))).limit(1);
   if (prev) await ctx.db.update(schema.frameworkVersions).set({ status: 'Retired' }).where(eq(schema.frameworkVersions.id, prev.id));
   const now = new Date();
+  // Mark question records published while the parent is still a mutable draft.
+  await ctx.db.update(schema.frameworkQuestions).set({ status: 'Published' })
+    .where(eq(schema.frameworkQuestions.frameworkVersionId, id));
   await ctx.db.update(schema.frameworkVersions).set({ status: 'Published', approvedBy: u.id, approvedAt: now, publishedAt: now, note: note.trim() }).where(eq(schema.frameworkVersions.id, id));
   await audit(ctx, 'framework.published', 'framework_version', id, { status: 'Draft', previous: prev ? prev.version : null }, { status: 'Published', framework: f.code, version: v.version, approvedBy: u.email, note: note.trim() });
   return { id, version: v.version, framework: f.code };
@@ -235,14 +365,35 @@ export async function publishVersion(ctx: Ctx, id: string, note: string) {
 export async function ensureBaseline(db: Db) {
   const [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.isDefault, true)).limit(1);
   if (!f) return;
-  const [have] = await db.select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions).where(and(eq(schema.frameworkVersions.frameworkId, f.id), eq(schema.frameworkVersions.status, 'Published'))).limit(1);
+  const [have] = await db.select({ id: schema.frameworkVersions.id })
+    .from(schema.frameworkVersions)
+    .where(and(eq(schema.frameworkVersions.frameworkId, f.id), eq(schema.frameworkVersions.status, 'Published')))
+    .limit(1);
   if (have) return;
+
   const bank = await bankSnapshot(db);
   if (!bank.questions.length) return;
+  const [{ n }] = await db.select({
+    n: sql<number>`coalesce(max(${schema.frameworkVersions.version}), 0)::int`
+  }).from(schema.frameworkVersions).where(eq(schema.frameworkVersions.frameworkId, f.id));
   const now = new Date();
-  await db.insert(schema.frameworkVersions).values({
-    frameworkId: f.id, version: 1, status: 'Published', questions: bank.questions, dimensions: bank.dimensions,
-    sources: [{ component: 'Question bank and weights', source: 'Samakose working question bank', rationale: 'Baseline for a new installation', adaptation: 'None', approval: 'Approved' }],
-    note: 'Baseline created from the question bank', approvedAt: now, publishedAt: now
-  }).onConflictDoNothing();
+  const [draft] = await db.insert(schema.frameworkVersions).values({
+    frameworkId: f.id, version: Number(n) + 1, status: 'Draft',
+    questions: bank.questions, dimensions: bank.dimensions,
+    sources: [{
+      component: 'Question bank and weights',
+      source: 'Samakose working question bank',
+      rationale: 'Baseline created from the working question bank on a new installation',
+      adaptation: 'None', approval: 'Approved'
+    }],
+    note: 'Baseline created from the question bank', createdBy: null
+  }).onConflictDoNothing().returning();
+  if (!draft) return;
+
+  await syncStructuredDraft(db, draft);
+  await db.update(schema.frameworkQuestions).set({ status: 'Published' })
+    .where(eq(schema.frameworkQuestions.frameworkVersionId, draft.id));
+  await db.update(schema.frameworkVersions).set({
+    status: 'Published', approvedAt: now, publishedAt: now
+  }).where(eq(schema.frameworkVersions.id, draft.id));
 }

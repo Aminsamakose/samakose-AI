@@ -3,7 +3,7 @@ import { defineRoute, status } from '../framework';
 import * as calendar from '@/services/programme-calendar';
 
 const W = 'Programme workspace';
-const provider = z.enum(['GOOGLE', 'MICROSOFT', 'ICS', 'INTERNAL']);
+const provider = z.enum(['GOOGLE', 'MICROSOFT', 'ICS', 'INTERNAL', 'ZOOM']);
 
 const connectionInput = z.object({
   provider,
@@ -22,14 +22,18 @@ const eventInput = z.object({
   meetingUrl: z.string().url().nullish(),
   sessionId: z.string().uuid().nullish(),
   connectionId: z.string().uuid().nullish(),
-  provider,
+  provider: provider.optional(),
+  // When no meetingUrl is given and this is left false (the default), createEvent reaches for the
+  // administrator's configured video provider (Zoom or Google Meet) and creates a real meeting.
+  skipLiveMeeting: z.boolean().optional(),
   metadata: z.unknown().optional(),
 });
 
 const scheduleInput = z.object({
   connectionId: z.string().uuid().nullish(),
-  provider,
+  provider: provider.optional(),
   timezone: z.string().trim().min(1).max(100).optional(),
+  skipLiveMeeting: z.boolean().optional(),
 });
 
 defineRoute({ method: 'GET', path: '/calendar/connections', tag: W, summary: 'List current user calendar connections', permission: ['programme_workspaces', 'read'], handler: ({ ctx }) => calendar.listConnections(ctx) });
