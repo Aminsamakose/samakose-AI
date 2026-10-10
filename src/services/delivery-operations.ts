@@ -5,6 +5,8 @@ import { audit } from '@/lib/audit';
 import { conflict, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme } from '@/domain/scope';
 import { allow, need } from './common';
+import { resolveVideoProvider } from './integrations';
+import { createVideoMeeting } from './meetings';
 
 const activities = schema.deliveryActivities;
 const sessions = schema.deliverySessions;
@@ -80,19 +82,39 @@ export async function listSessions(ctx: Ctx, cohortId: string) {
 export async function createSession(ctx: Ctx, activityId: string, input: {
   facilitatorUserId?: string | null; mode?: 'IN_PERSON' | 'REMOTE' | 'HYBRID' | 'SELF_PACED';
   startsAt: string; endsAt: string; location?: string | null; meetingUrl?: string | null;
-  capacity?: number | null; notes?: string | null; metadata?: unknown;
+  capacity?: number | null; notes?: string | null; skipLiveMeeting?: boolean; metadata?: unknown;
 }) {
   allow(ctx, 'programme_workspaces', 'edit');
   const activity = await getActivity(ctx, activityId);
   if (activity.status === 'CANCELLED') throw unprocessable('A cancelled activity cannot receive a session');
   const startsAt = new Date(input.startsAt); const endsAt = new Date(input.endsAt);
   if (!(endsAt > startsAt)) throw unprocessable('Session end time must be after start time');
+  const mode = input.mode ?? 'HYBRID';
+  let meetingUrl = input.meetingUrl ?? null;
+  let metadata = (input.metadata as Record<string, unknown> | undefined) ?? {};
+  // A remote/hybrid delivery session needs somewhere to join. If the coordinator didn't paste a
+  // link by hand, reach for the administrator's configured video provider (Settings ->
+  // Integrations -> Default video provider) and create a real meeting -- never a placeholder URL.
+  if (!meetingUrl && !input.skipLiveMeeting && (mode === 'REMOTE' || mode === 'HYBRID')) {
+    const provider = await resolveVideoProvider(ctx);
+    if (provider) {
+      try {
+        const meeting = await createVideoMeeting(provider, { title: activity.name, description: activity.description, startsAt, endsAt });
+        meetingUrl = meeting.joinUrl;
+        metadata = { ...metadata, videoProvider: provider, externalMeetingId: meeting.externalId };
+      } catch (e) {
+        // Honest failure: the session is still created (facilitators can add a link manually),
+        // but the attempt and its reason are recorded rather than silently dropped.
+        metadata = { ...metadata, videoMeetingError: String((e as Error).message ?? e) };
+      }
+    }
+  }
   const [row] = await ctx.db.insert(sessions).values({
-    activityId, facilitatorUserId: input.facilitatorUserId ?? null, mode: input.mode ?? 'HYBRID',
-    startsAt, endsAt, location: input.location ?? null, meetingUrl: input.meetingUrl ?? null,
-    capacity: input.capacity ?? null, notes: input.notes ?? null, metadata: input.metadata ?? {}, createdBy: need(ctx).user.id,
+    activityId, facilitatorUserId: input.facilitatorUserId ?? null, mode,
+    startsAt, endsAt, location: input.location ?? null, meetingUrl,
+    capacity: input.capacity ?? null, notes: input.notes ?? null, metadata, createdBy: need(ctx).user.id,
   }).returning();
-  await audit(ctx, 'delivery.session.created', 'delivery_session', row.id, undefined, { activityId, startsAt: row.startsAt });
+  await audit(ctx, 'delivery.session.created', 'delivery_session', row.id, undefined, { activityId, startsAt: row.startsAt, liveMeetingCreated: !!meetingUrl && !input.meetingUrl });
   return row;
 }
 

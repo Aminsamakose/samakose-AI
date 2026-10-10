@@ -328,6 +328,13 @@
       "idx": 46,
       "version": "7",
       "when": 1792024000000,
+      "tag": "0047_calendar_zoom_provider",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1792025000000,
       "tag": "0048_framework_architecture",
       "breakpoints": true
     }
