@@ -67,6 +67,23 @@ export async function createZoomMeeting(req: MeetingRequest): Promise<MeetingRes
   return { joinUrl: d.join_url, externalId: String(d.id), provider: 'zoom', raw: d };
 }
 
+/** Updates an existing Zoom meeting's time/duration in place, keeping the same join URL and meeting ID. */
+export async function updateZoomMeeting(externalId: string, req: MeetingRequest): Promise<void> {
+  const accessToken = await getZoomAccessToken();
+  const durationMinutes = Math.max(1, Math.round((req.endsAt.getTime() - req.startsAt.getTime()) / 60_000));
+  const body = { topic: req.title.slice(0, 200), start_time: req.startsAt.toISOString(), duration: durationMinutes, timezone: 'UTC', agenda: req.description?.slice(0, 2000) ?? undefined };
+  const r = await fetchJson(`https://api.zoom.us/v2/meetings/${encodeURIComponent(externalId)}`, {
+    method: 'PATCH',
+    headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  // Zoom's PATCH returns 204 with no body on success. A 404 means the meeting is already gone on
+  // Zoom's side (deleted manually, or expired) -- the caller treats that the same as "needs a fresh
+  // meeting", never as a crash, mirroring the cancel path's best-effort handling.
+  if (!r.ok && r.status !== 404) throw new MeetingProviderError(`Zoom could not reschedule the meeting (HTTP ${r.status}): ${String((r.json as { message?: string } | null)?.message ?? r.text).slice(0, 300)}`);
+  if (r.status === 404) throw new MeetingProviderError('Zoom meeting no longer exists; a new meeting must be created.');
+}
+
 export async function cancelZoomMeeting(externalId: string): Promise<void> {
   const accessToken = await getZoomAccessToken();
   await fetchJson(`https://api.zoom.us/v2/meetings/${encodeURIComponent(externalId)}`, { method: 'DELETE', headers: { authorization: `Bearer ${accessToken}` } });
@@ -119,6 +136,25 @@ export async function createGoogleMeetEvent(req: MeetingRequest): Promise<Meetin
   return { joinUrl, externalId: d.id, provider: 'google_meet', raw: d };
 }
 
+/** Updates an existing Google Calendar event's time in place, preserving its conferenceData/Meet link. */
+export async function updateGoogleMeetEvent(externalId: string, req: MeetingRequest): Promise<void> {
+  const accessToken = await getGoogleCalendarAccessToken();
+  const calendarId = encodeURIComponent(env.googleCalendarId);
+  const body = {
+    summary: req.title.slice(0, 200),
+    description: req.description ?? undefined,
+    start: { dateTime: req.startsAt.toISOString(), timeZone: req.timezone ?? 'UTC' },
+    end: { dateTime: req.endsAt.toISOString(), timeZone: req.timezone ?? 'UTC' },
+  };
+  const r = await fetchJson(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${encodeURIComponent(externalId)}?conferenceDataVersion=1`, {
+    method: 'PATCH',
+    headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (r.status === 404 || r.status === 410) throw new MeetingProviderError('Google Calendar event no longer exists; a new meeting must be created.');
+  if (!r.ok) throw new MeetingProviderError(`Google Calendar could not reschedule the event (HTTP ${r.status}): ${String((r.json as { error?: { message?: string } } | null)?.error?.message ?? r.text).slice(0, 300)}`);
+}
+
 export async function cancelGoogleMeetEvent(externalId: string): Promise<void> {
   const accessToken = await getGoogleCalendarAccessToken();
   const calendarId = encodeURIComponent(env.googleCalendarId);
@@ -136,6 +172,15 @@ export async function createVideoMeeting(provider: VideoProvider, req: MeetingRe
 export async function cancelVideoMeeting(provider: VideoProvider, externalId: string): Promise<void> {
   if (provider === 'zoom') return cancelZoomMeeting(externalId);
   if (provider === 'google_meet') return cancelGoogleMeetEvent(externalId);
+}
+
+/** Reschedules an existing meeting in place (same join URL, same external ID). Throws MeetingProviderError
+ * if the provider rejects it or the meeting no longer exists on the provider's side -- the caller is
+ * expected to fall back to creating a fresh meeting in that case, not to leave the session unscheduled. */
+export async function updateVideoMeeting(provider: VideoProvider, externalId: string, req: MeetingRequest): Promise<void> {
+  if (provider === 'zoom') return updateZoomMeeting(externalId, req);
+  if (provider === 'google_meet') return updateGoogleMeetEvent(externalId, req);
+  throw new MeetingProviderError(`Unknown video provider: ${String(provider)}`);
 }
 
 export function isVideoProviderConfigured(provider: VideoProvider): boolean {

@@ -51,7 +51,16 @@ describe('findings from the synthetic validation run', () => {
     const c1 = await api(admin).post('/cases', { orgId: o1.id, programmeId: p.id, cohortId: co.id }); expect(c1.status, JSON.stringify(c1.error)).toBe(201);
     expect((await api(admin).post('/cases', { orgId: o2.id, programmeId: p.id, cohortId: co.id })).status).toBe(409);
     await db().update(schema.cases).set({ status: 'GRADUATED' }).where(eq(schema.cases.id, c1.data.id));
-    expect((await api(admin).post('/cases', { orgId: o2.id, programmeId: p.id, cohortId: co.id })).status).toBe(201);
+    const c2 = await api(admin).post('/cases', { orgId: o2.id, programmeId: p.id, cohortId: co.id });
+    expect(c2.status).toBe(201);
+    // The close-out gate refuses Completed while a case is still mid-delivery, or with no released
+    // report documenting what was delivered -- so graduate the second case and release a report first.
+    const blocked = await api(admin).patch(`/programmes/${p.id}`, { status: 'Completed' });
+    expect(blocked.status).toBe(422);
+    await db().update(schema.cases).set({ status: 'GRADUATED' }).where(eq(schema.cases.id, c2.data.id));
+    const stillBlocked = await api(admin).patch(`/programmes/${p.id}`, { status: 'Completed' });
+    expect(stillBlocked.status).toBe(422);
+    await db().insert(schema.reports).values({ caseId: c1.data.id, status: 'Released', title: 'Close-out', content: [], releasedAt: new Date() });
     await api(admin).patch(`/programmes/${p.id}`, { status: 'Completed' });
     expect((await db().select().from(schema.cohorts).where(eq(schema.cohorts.id, co.id)))[0].status).toBe('Closed');
     const log = await db().select().from(schema.auditLog).where(eq(schema.auditLog.entityId, co.id));
