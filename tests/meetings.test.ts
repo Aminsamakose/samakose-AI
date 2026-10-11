@@ -43,7 +43,7 @@ function stubZoomFetch(opts: { joinUrl?: string; meetingId?: number; tokenFails?
   return calls;
 }
 
-function stubGoogleFetch(opts: { joinUrl?: string; eventId?: string; tokenFails?: boolean; createFails?: boolean } = {}) {
+function stubGoogleFetch(opts: { joinUrl?: string; eventId?: string; tokenFails?: boolean; createFails?: boolean; updateFails?: boolean; cancelFails?: boolean; meetingGone?: boolean } = {}) {
   const calls: string[] = [];
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     calls.push(url);
@@ -59,7 +59,15 @@ function stubGoogleFetch(opts: { joinUrl?: string; eventId?: string; tokenFails?
       void init;
       return new Response(JSON.stringify({ id: opts.eventId ?? 'evt_abc123', hangoutLink: opts.joinUrl ?? 'https://meet.google.com/abc-defg-hij' }), { status: 200 });
     }
-    if (url.includes('/events/')) return new Response(null, { status: 204 });
+    if (url.includes('/events/') && init?.method === 'PATCH') {
+      if (opts.meetingGone) return new Response(JSON.stringify({ error: { message: 'Not Found' } }), { status: 404 });
+      if (opts.updateFails) return new Response(JSON.stringify({ error: { message: 'Google rejected the update' } }), { status: 400 });
+      return new Response(JSON.stringify({ id: opts.eventId ?? 'evt_abc123', hangoutLink: opts.joinUrl ?? 'https://meet.google.com/abc-defg-hij' }), { status: 200 });
+    }
+    if (url.includes('/events/')) {
+      if (opts.cancelFails) return new Response(JSON.stringify({ error: { message: 'Google is unreachable' } }), { status: 500 });
+      return new Response(null, { status: 204 });
+    }
     throw new Error(`Unexpected fetch in Google stub: ${url}`);
   }));
   return calls;
@@ -330,6 +338,98 @@ describe('programme-calendar: scheduling a delivery session creates a real meeti
       startsAt: new Date(Date.now() + 9000_000).toISOString(), endsAt: new Date(Date.now() + 10000_000).toISOString(),
     });
     expect(moved.status).toBe(409);
+  });
+
+  // Every reschedule test above exercises Zoom only -- updateGoogleMeetEvent had zero coverage of
+  // its own despite sharing the exact same rescheduleEvent dispatch path. Mirror the three Zoom
+  // reschedule cases for Google Meet so a regression specific to the Google PATCH call (wrong
+  // query param, wrong gone-status handling, etc.) would actually be caught.
+  it('rescheduleEvent moves a live Google Meet event in place, keeping the same hangout link', async () => {
+    await setGoogleEnv();
+    await chooseVideoProvider('google_meet');
+    stubGoogleFetch({ joinUrl: 'https://meet.google.com/aaa-bbbb-ccc' });
+
+    const prog = (await api(admin).post('/programmes', { name: `Reschedule ${uniq()}` })).data;
+    const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: `Cohort ${uniq()}`, capacity: 20 })).data;
+    const event = await api(admin).post(`/cohorts/${cohort.id}/calendar-events`, {
+      title: 'Google Meet session', startsAt: new Date(Date.now() + 3600_000).toISOString(), endsAt: new Date(Date.now() + 2 * 3600_000).toISOString(),
+    });
+    expect(event.status).toBe(201);
+    expect(event.data.meetingUrl).toBe('https://meet.google.com/aaa-bbbb-ccc');
+
+    const newStart = new Date(Date.now() + 5 * 3600_000), newEnd = new Date(Date.now() + 6 * 3600_000);
+    const moved = await api(admin).post(`/calendar-events/${event.data.id}/reschedule`, { startsAt: newStart.toISOString(), endsAt: newEnd.toISOString() });
+    expect(moved.status, JSON.stringify(moved.error)).toBe(200);
+    expect(moved.data.meetingUrl).toBe('https://meet.google.com/aaa-bbbb-ccc');
+    expect(moved.data.status).toBe('SCHEDULED');
+    expect(moved.data.syncError).toBeNull();
+    expect(new Date(moved.data.startsAt).getTime()).toBe(newStart.getTime());
+
+    const [row] = await db().select().from(schema.calendarEvents).where(eq(schema.calendarEvents.id, event.data.id));
+    expect(row.meetingUrl).toBe('https://meet.google.com/aaa-bbbb-ccc');
+  });
+
+  it('rescheduleEvent falls back to a fresh Google Meet event when the provider reports the old one is gone', async () => {
+    await setGoogleEnv();
+    await chooseVideoProvider('google_meet');
+    stubGoogleFetch({ joinUrl: 'https://meet.google.com/ddd-eeee-fff' });
+
+    const prog = (await api(admin).post('/programmes', { name: `Reschedule ${uniq()}` })).data;
+    const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: `Cohort ${uniq()}`, capacity: 20 })).data;
+    const event = await api(admin).post(`/cohorts/${cohort.id}/calendar-events`, {
+      title: 'Google Meet session', startsAt: new Date(Date.now() + 3600_000).toISOString(), endsAt: new Date(Date.now() + 2 * 3600_000).toISOString(),
+    });
+    expect(event.status).toBe(201);
+    expect(event.data.meetingUrl).toBe('https://meet.google.com/ddd-eeee-fff');
+
+    stubGoogleFetch({ meetingGone: true, joinUrl: 'https://meet.google.com/ggg-hhhh-iii' });
+    const newStart = new Date(Date.now() + 5 * 3600_000), newEnd = new Date(Date.now() + 6 * 3600_000);
+    const moved = await api(admin).post(`/calendar-events/${event.data.id}/reschedule`, { startsAt: newStart.toISOString(), endsAt: newEnd.toISOString() });
+    expect(moved.status, JSON.stringify(moved.error)).toBe(200);
+    expect(moved.data.meetingUrl).toBe('https://meet.google.com/ggg-hhhh-iii');
+    expect(moved.data.status).toBe('SCHEDULED');
+    expect(moved.data.syncError).toBeNull();
+  });
+
+  it('rescheduleEvent records a sync error for Google Meet too when no replacement event can be created either', async () => {
+    await setGoogleEnv();
+    await chooseVideoProvider('google_meet');
+    stubGoogleFetch({ joinUrl: 'https://meet.google.com/jjj-kkkk-lll' });
+
+    const prog = (await api(admin).post('/programmes', { name: `Reschedule ${uniq()}` })).data;
+    const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: `Cohort ${uniq()}`, capacity: 20 })).data;
+    const event = await api(admin).post(`/cohorts/${cohort.id}/calendar-events`, {
+      title: 'Google Meet session', startsAt: new Date(Date.now() + 3600_000).toISOString(), endsAt: new Date(Date.now() + 2 * 3600_000).toISOString(),
+    });
+    expect(event.status).toBe(201);
+
+    stubGoogleFetch({ meetingGone: true, createFails: true });
+    const newStart = new Date(Date.now() + 5 * 3600_000), newEnd = new Date(Date.now() + 6 * 3600_000);
+    const moved = await api(admin).post(`/calendar-events/${event.data.id}/reschedule`, { startsAt: newStart.toISOString(), endsAt: newEnd.toISOString() });
+    expect(moved.status, JSON.stringify(moved.error)).toBe(200);
+    expect(moved.data.status).toBe('SYNC_ERROR');
+    expect(moved.data.syncError).toContain('Could not move the existing meeting');
+    expect(new Date(moved.data.startsAt).getTime()).toBe(newStart.getTime());
+  });
+
+  it('cancelling a Google Meet calendar event still succeeds when the provider cancel call itself fails', async () => {
+    await setGoogleEnv();
+    await chooseVideoProvider('google_meet');
+    stubGoogleFetch({ joinUrl: 'https://meet.google.com/mmm-nnnn-ooo' });
+
+    const prog = (await api(admin).post('/programmes', { name: `Calendar ${uniq()}` })).data;
+    const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: `Cohort ${uniq()}`, capacity: 20 })).data;
+    const event = await api(admin).post(`/cohorts/${cohort.id}/calendar-events`, {
+      title: 'Google Meet session', startsAt: new Date(Date.now() + 3600_000).toISOString(), endsAt: new Date(Date.now() + 2 * 3600_000).toISOString(),
+    });
+    expect(event.status).toBe(201);
+
+    stubGoogleFetch({ cancelFails: true });
+    const cancel = await api(admin).post(`/calendar-events/${event.data.id}/cancel`, {});
+    expect(cancel.status, JSON.stringify(cancel.error)).toBe(200);
+    expect(cancel.data.ok).toBe(true);
+    const [row] = await db().select().from(schema.calendarEvents).where(eq(schema.calendarEvents.id, event.data.id));
+    expect(row.status).toBe('CANCELLED');
   });
 
   it('skipLiveMeeting opts out of creating a real meeting even with a provider configured', async () => {

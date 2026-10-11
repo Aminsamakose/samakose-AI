@@ -3,7 +3,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { api, auditActions, ensureReference, makeOrg, makeUser, uniq, type Session } from './helpers';
 import { db, tx, schema } from '@/db/client';
 import { systemCtx } from '@/services/common';
-import { isStalled, outcomeOverdue, reminderDue } from '@/domain/sla';
+import { isActionOverdue, isStalled, outcomeOverdue, reminderDue } from '@/domain/sla';
 import { purgeExpired } from '@/services/messages';
 import { remindSessions, scanEscalations } from '@/services/sla';
 
@@ -30,6 +30,16 @@ describe('domain: service levels', () => {
     expect(outcomeOverdue(new Date(now.getTime() - 23 * HOUR), now, 24)).toBe(false);
     expect(isStalled(new Date(now.getTime() - 14 * DAY), now, 14)).toBe(true);
     expect(isStalled(new Date(now.getTime() - 13 * DAY), now, 14)).toBe(false);
+  });
+  it('isActionOverdue matches the SQL-side actionOverdueSql rule: not Done, and past its due date', () => {
+    // src/domain/job-handlers.ts independently re-derived this condition three times in JS
+    // (the ai_brief and ai_report contexts, twice) before isActionOverdue existed -- the same
+    // silent-drift risk actionOverdueSql closed for SQL callers, just in JS form.
+    expect(isActionOverdue('Open', '2026-10-01', '2026-10-05')).toBe(true);
+    expect(isActionOverdue('In Progress', '2026-10-04', '2026-10-05')).toBe(true);
+    expect(isActionOverdue('Done', '2026-10-01', '2026-10-05')).toBe(false);
+    expect(isActionOverdue('Open', '2026-10-05', '2026-10-05')).toBe(false);
+    expect(isActionOverdue('Open', '2026-10-06', '2026-10-05')).toBe(false);
   });
 });
 

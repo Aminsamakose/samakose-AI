@@ -12,6 +12,7 @@ import { AgentBlocked, NonRetryable, runAgent } from '@/services/ai';
 import { scanUnacknowledged } from '@/services/assignments';
 import { latestDiagnosis, latestScore, loadRules, systemCtx } from '@/services/common';
 import { validateDiagnosis, validatePrescription } from './logic';
+import { actionOverdueSql, isActionOverdue } from './sla';
 import { mockBrief, mockDiagnosis, mockPrescription, mockReport, type BriefContext, type DiagnosisContext, type PrescriptionContext, type ReportContext } from './mockai';
 import { koboPull } from '@/services/kobo';
 import { runScout } from '@/services/scout';
@@ -109,7 +110,7 @@ registerJob('ai_brief', async ({ sessionId, caseId }, job) => {
   const readings = kpis.length ? await db().select().from(schema.kpiReadings).where(inArray(schema.kpiReadings.kpiId, kpis.map((k) => k.id))).orderBy(schema.kpiReadings.readingDate) : [];
   const context: BriefContext = {
     org: org.name, status: cs.status, overall: score ? Number(score.overall) : null, maturity: score?.maturity ?? null,
-    open_actions: acts.filter((a) => a.status !== 'Done').map((a) => a.text), overdue_actions: acts.filter((a) => a.status !== 'Done' && a.dueDate < today).map((a) => a.text),
+    open_actions: acts.filter((a) => a.status !== 'Done').map((a) => a.text), overdue_actions: acts.filter((a) => isActionOverdue(a.status, a.dueDate, today)).map((a) => a.text),
     done_actions: acts.filter((a) => a.status === 'Done').length, last_session: last?.notes ?? null,
     kpis: kpis.map((k) => ({ name: k.name, latest: Number([...readings].reverse().find((r) => r.kpiId === k.id)?.value ?? NaN) || null, target: k.target === null ? null : Number(k.target) }))
   };
@@ -137,7 +138,7 @@ registerJob('ai_report', async ({ caseId }, job) => {
   const context: ReportContext = {
     org: org.name, overall: Number(score.overall), maturity: score.maturity, confidence_class: score.confidenceClass, dimensions: score.dimensions,
     previous_overall: hist[1] ? Number(hist[1].overall) : null, evidence_share: score.evidenceShare,
-    actions: { total: acts.length, done: acts.filter((a) => a.status === 'Done').length, overdue: acts.filter((a) => a.status !== 'Done' && a.dueDate < today).length },
+    actions: { total: acts.length, done: acts.filter((a) => a.status === 'Done').length, overdue: acts.filter((a) => isActionOverdue(a.status, a.dueDate, today)).length },
     kpis: kpis.map((k) => { const last = [...readings].reverse().find((r) => r.kpiId === k.id); return { name: k.name, unit: k.unit, baseline: k.baseline === null ? null : Number(k.baseline), latest: last ? Number(last.value) : null, target: k.target === null ? null : Number(k.target) }; }),
     root_causes: dgn?.status === 'Reviewed' ? dgn.rootCauses.map((r) => r.cause) : []
   };
@@ -179,7 +180,7 @@ registerJob('send_emails', async () => {
 registerJob('overdue_scan', async () => {
   return tx(async (t) => {
     const ctx = systemCtx(t, 'scan');
-    const rows = await t.select().from(schema.actions).where(and(sql`${schema.actions.status} <> 'Done'`, sql`${schema.actions.dueDate} < current_date`, sql`${schema.actions.overdueNotifiedAt} is null`)).for('update', { skipLocked: true }).limit(500);
+    const rows = await t.select().from(schema.actions).where(and(actionOverdueSql(), sql`${schema.actions.overdueNotifiedAt} is null`)).for('update', { skipLocked: true }).limit(500);
     for (const a of rows) {
       await t.update(schema.actions).set({ overdueNotifiedAt: new Date() }).where(eq(schema.actions.id, a.id));
       await emitEvent(ctx, 'ActionOverdue', { caseId: a.caseId, payload: { text: a.text, code: a.code } });
