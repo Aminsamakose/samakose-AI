@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 /** A fetch stub that answers Zoom's OAuth-token and meeting-create endpoints, and nothing else. */
-function stubZoomFetch(opts: { joinUrl?: string; meetingId?: number; tokenFails?: boolean; createFails?: boolean } = {}) {
+function stubZoomFetch(opts: { joinUrl?: string; meetingId?: number; tokenFails?: boolean; createFails?: boolean; updateFails?: boolean; cancelFails?: boolean; meetingGone?: boolean } = {}) {
   const calls: string[] = [];
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     calls.push(url);
@@ -29,7 +29,15 @@ function stubZoomFetch(opts: { joinUrl?: string; meetingId?: number; tokenFails?
       const body = JSON.parse(String(init?.body ?? '{}'));
       return new Response(JSON.stringify({ id: opts.meetingId ?? 987654321, join_url: opts.joinUrl ?? 'https://zoom.us/j/987654321', topic: body.topic }), { status: 201 });
     }
-    if (url.includes('api.zoom.us/v2/meetings/')) return new Response(null, { status: 204 });
+    if (url.includes('api.zoom.us/v2/meetings/') && init?.method === 'PATCH') {
+      if (opts.meetingGone) return new Response(null, { status: 404 });
+      if (opts.updateFails) return new Response(JSON.stringify({ message: 'Zoom rejected the update' }), { status: 400 });
+      return new Response(null, { status: 204 });
+    }
+    if (url.includes('api.zoom.us/v2/meetings/')) {
+      if (opts.cancelFails) return new Response(JSON.stringify({ message: 'Zoom is unreachable' }), { status: 500 });
+      return new Response(null, { status: 204 });
+    }
     throw new Error(`Unexpected fetch in Zoom stub: ${url}`);
   }));
   return calls;
@@ -205,6 +213,123 @@ describe('programme-calendar: scheduling a delivery session creates a real meeti
     const cancel = await api(admin).post(`/calendar-events/${event.data.id}/cancel`, {});
     expect(cancel.status).toBe(200);
     expect(cancel.data.ok).toBe(true);
+  });
+
+  it('cancelling a calendar event still succeeds when the provider cancel call itself fails', async () => {
+    // Previously untested: cancelEvent's try/catch around the live-meeting cancel. If Zoom is
+    // unreachable or rejects the delete, the calendar record must still be marked CANCELLED --
+    // the provider cancellation is best-effort, never a precondition for cancelling the record of
+    // truth that participants actually see.
+    await setZoomEnv();
+    await chooseVideoProvider('zoom');
+    stubZoomFetch({ joinUrl: 'https://zoom.us/j/222333555' });
+
+    const prog = (await api(admin).post('/programmes', { name: `Calendar ${uniq()}` })).data;
+    const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: `Cohort ${uniq()}`, capacity: 20 })).data;
+    const event = await api(admin).post(`/cohorts/${cohort.id}/calendar-events`, {
+      title: 'Zoom session', startsAt: new Date(Date.now() + 3600_000).toISOString(), endsAt: new Date(Date.now() + 2 * 3600_000).toISOString(),
+    });
+    expect(event.status).toBe(201);
+    expect(event.data.provider).toBe('ZOOM');
+
+    // Switch the stub so the cancel call itself now fails.
+    stubZoomFetch({ cancelFails: true });
+    const cancel = await api(admin).post(`/calendar-events/${event.data.id}/cancel`, {});
+    expect(cancel.status, JSON.stringify(cancel.error)).toBe(200);
+    expect(cancel.data.ok).toBe(true);
+    const [row] = await db().select().from(schema.calendarEvents).where(eq(schema.calendarEvents.id, event.data.id));
+    expect(row.status).toBe('CANCELLED');
+  });
+
+  it('rescheduleEvent moves a live Zoom meeting in place, keeping the same join link', async () => {
+    await setZoomEnv();
+    await chooseVideoProvider('zoom');
+    stubZoomFetch({ joinUrl: 'https://zoom.us/j/444555666' });
+
+    const prog = (await api(admin).post('/programmes', { name: `Reschedule ${uniq()}` })).data;
+    const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: `Cohort ${uniq()}`, capacity: 20 })).data;
+    const event = await api(admin).post(`/cohorts/${cohort.id}/calendar-events`, {
+      title: 'Zoom session', startsAt: new Date(Date.now() + 3600_000).toISOString(), endsAt: new Date(Date.now() + 2 * 3600_000).toISOString(),
+    });
+    expect(event.status).toBe(201);
+    expect(event.data.meetingUrl).toBe('https://zoom.us/j/444555666');
+
+    const newStart = new Date(Date.now() + 5 * 3600_000), newEnd = new Date(Date.now() + 6 * 3600_000);
+    const moved = await api(admin).post(`/calendar-events/${event.data.id}/reschedule`, { startsAt: newStart.toISOString(), endsAt: newEnd.toISOString() });
+    expect(moved.status, JSON.stringify(moved.error)).toBe(200);
+    // Same join link, same external meeting -- the provider moved the existing meeting, it did not replace it.
+    expect(moved.data.meetingUrl).toBe('https://zoom.us/j/444555666');
+    expect(moved.data.status).toBe('SCHEDULED');
+    expect(moved.data.syncError).toBeNull();
+    expect(new Date(moved.data.startsAt).getTime()).toBe(newStart.getTime());
+
+    const [row] = await db().select().from(schema.calendarEvents).where(eq(schema.calendarEvents.id, event.data.id));
+    expect(row.meetingUrl).toBe('https://zoom.us/j/444555666');
+    expect(new Date(row.startsAt).getTime()).toBe(newStart.getTime());
+  });
+
+  it('rescheduleEvent falls back to creating a fresh meeting when the provider reports the old one is gone', async () => {
+    await setZoomEnv();
+    await chooseVideoProvider('zoom');
+    stubZoomFetch({ joinUrl: 'https://zoom.us/j/777000111' });
+
+    const prog = (await api(admin).post('/programmes', { name: `Reschedule ${uniq()}` })).data;
+    const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: `Cohort ${uniq()}`, capacity: 20 })).data;
+    const event = await api(admin).post(`/cohorts/${cohort.id}/calendar-events`, {
+      title: 'Zoom session', startsAt: new Date(Date.now() + 3600_000).toISOString(), endsAt: new Date(Date.now() + 2 * 3600_000).toISOString(),
+    });
+    expect(event.status).toBe(201);
+    expect(event.data.meetingUrl).toBe('https://zoom.us/j/777000111');
+
+    // The old meeting is gone on Zoom's side (deleted manually); a fresh one is created with a new join link.
+    stubZoomFetch({ meetingGone: true, joinUrl: 'https://zoom.us/j/999888777' });
+    const newStart = new Date(Date.now() + 5 * 3600_000), newEnd = new Date(Date.now() + 6 * 3600_000);
+    const moved = await api(admin).post(`/calendar-events/${event.data.id}/reschedule`, { startsAt: newStart.toISOString(), endsAt: newEnd.toISOString() });
+    expect(moved.status, JSON.stringify(moved.error)).toBe(200);
+    expect(moved.data.meetingUrl).toBe('https://zoom.us/j/999888777');
+    expect(moved.data.status).toBe('SCHEDULED');
+    expect(moved.data.syncError).toBeNull();
+  });
+
+  it('rescheduleEvent records a sync error, but still moves the time, when no replacement meeting can be created either', async () => {
+    await setZoomEnv();
+    await chooseVideoProvider('zoom');
+    stubZoomFetch({ joinUrl: 'https://zoom.us/j/333222111' });
+
+    const prog = (await api(admin).post('/programmes', { name: `Reschedule ${uniq()}` })).data;
+    const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: `Cohort ${uniq()}`, capacity: 20 })).data;
+    const event = await api(admin).post(`/cohorts/${cohort.id}/calendar-events`, {
+      title: 'Zoom session', startsAt: new Date(Date.now() + 3600_000).toISOString(), endsAt: new Date(Date.now() + 2 * 3600_000).toISOString(),
+    });
+    expect(event.status).toBe(201);
+
+    // Both the move and the fallback creation fail.
+    stubZoomFetch({ meetingGone: true, createFails: true });
+    const newStart = new Date(Date.now() + 5 * 3600_000), newEnd = new Date(Date.now() + 6 * 3600_000);
+    const moved = await api(admin).post(`/calendar-events/${event.data.id}/reschedule`, { startsAt: newStart.toISOString(), endsAt: newEnd.toISOString() });
+    expect(moved.status, JSON.stringify(moved.error)).toBe(200);
+    expect(moved.data.status).toBe('SYNC_ERROR');
+    expect(moved.data.syncError).toContain('Could not move the existing meeting');
+    expect(new Date(moved.data.startsAt).getTime()).toBe(newStart.getTime());
+  });
+
+  it('rescheduleEvent rejects moving a cancelled event, and end must come after start', async () => {
+    const prog = (await api(admin).post('/programmes', { name: `Reschedule ${uniq()}` })).data;
+    const cohort = (await api(admin).post(`/programmes/${prog.id}/cohorts`, { name: `Cohort ${uniq()}`, capacity: 20 })).data;
+    const event = (await api(admin).post(`/cohorts/${cohort.id}/calendar-events`, {
+      title: 'Plain event', skipLiveMeeting: true, startsAt: new Date(Date.now() + 3600_000).toISOString(), endsAt: new Date(Date.now() + 2 * 3600_000).toISOString(),
+    })).data;
+
+    const backwards = await api(admin).post(`/calendar-events/${event.id}/reschedule`, {
+      startsAt: new Date(Date.now() + 7200_000).toISOString(), endsAt: new Date(Date.now() + 3600_000).toISOString(),
+    });
+    expect(backwards.status).toBe(422);
+
+    await api(admin).post(`/calendar-events/${event.id}/cancel`, {});
+    const moved = await api(admin).post(`/calendar-events/${event.id}/reschedule`, {
+      startsAt: new Date(Date.now() + 9000_000).toISOString(), endsAt: new Date(Date.now() + 10000_000).toISOString(),
+    });
+    expect(moved.status).toBe(409);
   });
 
   it('skipLiveMeeting opts out of creating a real meeting even with a provider configured', async () => {

@@ -6,7 +6,7 @@ import { conflict, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme } from '@/domain/scope';
 import { allow, need } from './common';
 import { resolveVideoProvider } from './integrations';
-import { createVideoMeeting, cancelVideoMeeting, type VideoProvider } from './meetings';
+import { createVideoMeeting, cancelVideoMeeting, updateVideoMeeting, type VideoProvider } from './meetings';
 
 /** Maps the meetings.ts provider id to the calendar_events provider enum value it is stored under. */
 const CALENDAR_PROVIDER_FOR_VIDEO: Record<VideoProvider, 'ZOOM' | 'GOOGLE'> = { zoom: 'ZOOM', google_meet: 'GOOGLE' };
@@ -156,6 +156,61 @@ export async function scheduleSession(ctx: Ctx, sessionId: string, input: { conn
     await ctx.db.update(sessions).set({ meetingUrl: event.meetingUrl, updatedAt: new Date() }).where(eq(sessions.id, sessionId));
   }
   return event;
+}
+
+/**
+ * Moves an existing calendar event to a new time. Previously there was no path for this at all:
+ * changing a session's time left any live-created Zoom/Google meeting silently orphaned at its old
+ * slot. This tries to update the provider meeting in place first (same join link, same meeting ID,
+ * nothing for participants to re-share); only if the provider reports the meeting is gone does it
+ * fall back to creating a fresh one, exactly like the original creation path's honest-failure handling.
+ */
+export async function rescheduleEvent(ctx: Ctx, id: string, input: { startsAt: string; endsAt: string; timezone?: string }) {
+  allow(ctx, 'programme_workspaces', 'edit');
+  const [row] = await ctx.db.select().from(events).where(eq(events.id, id)).limit(1);
+  if (!row) throw notFound('Calendar event not found');
+  await getCohort(ctx, row.cohortId);
+  if (row.status === 'CANCELLED') throw conflict('Cannot reschedule a cancelled calendar event');
+  const startsAt = new Date(input.startsAt);
+  const endsAt = new Date(input.endsAt);
+  if (!(endsAt > startsAt)) throw unprocessable('Calendar event must end after it starts');
+
+  let meetingUrl = row.meetingUrl;
+  let provider = row.provider;
+  let metadata = (row.metadata as Record<string, unknown> | null) ?? {};
+  let syncError: string | null = null;
+  const meta = row.metadata as { videoProvider?: VideoProvider; externalMeetingId?: string } | null;
+
+  if (meta?.videoProvider && meta?.externalMeetingId) {
+    try {
+      await updateVideoMeeting(meta.videoProvider, meta.externalMeetingId, { title: row.title, description: row.description, startsAt, endsAt, timezone: input.timezone ?? row.timezone });
+      // Same meeting, same join link -- meetingUrl/provider/metadata are unchanged.
+    } catch {
+      // The provider meeting is gone (deleted manually, expired) or unreachable: fall back to
+      // creating a fresh one rather than leaving the session with a dead link.
+      const live = await tryCreateLiveMeeting(ctx, { title: row.title, description: row.description, startsAt, endsAt, timezone: input.timezone ?? row.timezone });
+      if (live?.ok) {
+        meetingUrl = live.meeting.joinUrl;
+        provider = CALENDAR_PROVIDER_FOR_VIDEO[live.provider];
+        metadata = { ...metadata, videoProvider: live.provider, externalMeetingId: live.meeting.externalId };
+      } else if (live && !live.ok) {
+        syncError = `Could not move the existing meeting, and could not create a replacement: ${live.error}`;
+      } else {
+        syncError = 'Could not move the existing meeting, and no video provider is configured for a replacement.';
+      }
+    }
+  }
+
+  const [updated] = await ctx.db.update(events).set({
+    startsAt, endsAt, timezone: input.timezone ?? row.timezone, meetingUrl, provider, metadata,
+    status: syncError ? 'SYNC_ERROR' : 'SCHEDULED', syncError, updatedAt: new Date(),
+  }).where(eq(events.id, id)).returning();
+
+  if (row.sessionId) {
+    await ctx.db.update(sessions).set({ startsAt, endsAt, meetingUrl: meetingUrl ?? undefined, updatedAt: new Date() }).where(eq(sessions.id, row.sessionId));
+  }
+  await audit(ctx, 'calendar.event.rescheduled', 'calendar_event', id, { startsAt: row.startsAt, endsAt: row.endsAt }, { startsAt, endsAt, syncError });
+  return updated;
 }
 
 export async function cancelEvent(ctx: Ctx, id: string) {

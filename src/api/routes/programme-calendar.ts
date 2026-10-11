@@ -29,6 +29,12 @@ const eventInput = z.object({
   metadata: z.unknown().optional(),
 });
 
+const rescheduleInput = z.object({
+  startsAt: z.string().datetime(),
+  endsAt: z.string().datetime(),
+  timezone: z.string().trim().min(1).max(100).optional(),
+});
+
 const scheduleInput = z.object({
   connectionId: z.string().uuid().nullish(),
   provider: provider.optional(),
@@ -43,3 +49,4 @@ defineRoute({ method: 'GET', path: '/cohorts/:id/calendar-events', tag: W, summa
 defineRoute({ method: 'POST', path: '/cohorts/:id/calendar-events', tag: W, summary: 'Create a calendar event', permission: ['programme_workspaces', 'edit'], body: eventInput, handler: async ({ ctx, params, body }) => status(201, await calendar.createEvent(ctx, params.id, body)) });
 defineRoute({ method: 'POST', path: '/delivery-sessions/:id/calendar', tag: W, summary: 'Schedule a delivery session on the calendar', permission: ['programme_workspaces', 'edit'], body: scheduleInput, handler: async ({ ctx, params, body }) => status(201, await calendar.scheduleSession(ctx, params.id, body)) });
 defineRoute({ method: 'POST', path: '/calendar-events/:id/cancel', tag: W, summary: 'Cancel a calendar event', permission: ['programme_workspaces', 'edit'], handler: ({ ctx, params }) => calendar.cancelEvent(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/calendar-events/:id/reschedule', tag: W, summary: 'Move a calendar event (and its live meeting) to a new time', permission: ['programme_workspaces', 'edit'], body: rescheduleInput, handler: ({ ctx, params, body }) => calendar.rescheduleEvent(ctx, params.id, body) });
