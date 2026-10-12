@@ -9,7 +9,7 @@ import type { Role } from '@/db/schema';
 export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export' | 'override' | 'assign' | 'verify' | 'certify';
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
-  'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments', 'discounts', 'revenue_share', 'payouts',
+  'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments', 'discounts', 'revenue_share', 'payouts', 'approvals',
   'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping', 'team', 'feedback', 'practitioners', 'ratings', 'opportunities', 'referrals', 'messages', 'escalations', 'programme_workspaces'
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
@@ -22,7 +22,7 @@ const ADMIN: Grants = {
   cases: [R, C, E, X, S, T], diagnostics: [R, C], evidence: [R, C, E, D], documents: [R, C], scores: [R], diagnoses: [R, C],
   prescriptions: [R, C], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E], reports: [R, C, X],
   plans: [R, C, E, D], contracts: [R, C, E, X], invoices: [R, C, E, D, X], payments: [R, C, X], discounts: [R, C, E, A],
-  revenue_share: [R, C, E, A], payouts: [R, C, E, A],
+  revenue_share: [R, C, E, A], payouts: [R, C, E, A], approvals: [R, C, A],
   audit: [R, X], settings: [R, C, E, D], dashboard: [R, X], integrations: [R, C, E], inquiries: [R, E, X],
   content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D],
   frameworks: [R, C, E, A], agents: [R, C, E, A], consent: [R, C, E, A], role_mapping: [R, C, E, A],
@@ -33,7 +33,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
   ADMIN,
   EXECUTIVE: {
     agents: [R], consent: [R], role_mapping: [R], feedback: [R], frameworks: [R], organisations: [R, X], programmes: [R, X], cohorts: [R], cases: [R, X], scores: [R], diagnoses: [R], prescriptions: [R], actions: [R],
-    kpis: [R], reports: [R, X], contracts: [R], invoices: [R, X], payments: [R], discounts: [R, A], revenue_share: [R, A], payouts: [R, A], dashboard: [R, X], practitioners: [R], ratings: [R], opportunities: [R], referrals: [R], programme_workspaces: [R]
+    kpis: [R], reports: [R, X], contracts: [R], invoices: [R, X], payments: [R], discounts: [R, A], revenue_share: [R, A], payouts: [R, A], approvals: [R, A], dashboard: [R, X], practitioners: [R], ratings: [R], opportunities: [R], referrals: [R], programme_workspaces: [R]
   },
   PROGRAMME_MANAGER: {
     frameworks: [R], users: [R], organisations: [R, C, E, X], programmes: [R, E, X], cohorts: [R, C, E, X], cases: [R, C, E, X, S], diagnostics: [R], scores: [R],
@@ -54,7 +54,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
   },
   FINANCE: {
     organisations: [R], plans: [R, C, E], contracts: [R, C, E, X], invoices: [R, C, E, X], payments: [R, C, X], discounts: [R, C, E],
-    revenue_share: [R, C, E], payouts: [R, C, E], dashboard: [R], programme_workspaces: [R]
+    revenue_share: [R, C, E], payouts: [R, C, E], approvals: [R, C, A], dashboard: [R], programme_workspaces: [R]
   },
   OWNER: {
     organisations: [R, E], cases: [R], diagnostics: [R, C], evidence: [R, C, D], documents: [R, C], scores: [R], prescriptions: [R],
