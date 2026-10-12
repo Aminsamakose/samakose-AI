@@ -12,6 +12,7 @@ import { hmacHex, randomToken, safeEqual } from '@/lib/crypto';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
 import { allow, need, respondList, today } from './common';
 import { contractScope } from './contracts';
+import { postLedgerEntries } from './ledger';
 
 const con = schema.contracts, inv = schema.invoices, pay = schema.payments, pl = schema.plans, o = schema.organisations;
 const CONTRACT_MOVES: Record<string, string[]> = { Draft: ['Active', 'Cancelled'], Active: ['Expired', 'Cancelled'], Expired: [], Cancelled: [] };
@@ -144,6 +145,16 @@ export async function updateInvoice(ctx: Ctx, id: string, b: { status?: 'Sent' |
   await ctx.db.update(inv).set(patch).where(eq(inv.id, id));
   await audit(ctx, patch.status === 'Sent' ? 'invoice.sent' : patch.status === 'Void' ? 'invoice.voided' : 'invoice.updated', 'invoice', id, { status: before.status, amount: before.amountGhs, due: before.dueDate }, b);
   if (patch.status === 'Sent') {
+    await postLedgerEntries(ctx, { referenceType: 'INVOICE', referenceId: id, description: `Invoice ${before.code} issued`,
+      lines: [{ accountCode: 'RECEIVABLE', debitGhs: Number(before.amountGhs) }, { accountCode: 'REVENUE', creditGhs: Number(before.amountGhs) }] });
+  }
+  if (patch.status === 'Void' && before.status !== 'Draft') {
+    // A reversal of the Sent/Overdue posting above. A Paid invoice cannot reach here (updateInvoice already
+    // refuses to void an invoice with a succeeded payment), so this only ever reverses an unpaid receivable.
+    await postLedgerEntries(ctx, { referenceType: 'INVOICE', referenceId: id, description: `Invoice ${before.code} voided`,
+      lines: [{ accountCode: 'REVENUE', debitGhs: Number(before.amountGhs) }, { accountCode: 'RECEIVABLE', creditGhs: Number(before.amountGhs) }] });
+  }
+  if (patch.status === 'Sent') {
     const owners = await ctx.db.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.orgId, before.orgId), eq(schema.users.role, 'OWNER'), eq(schema.users.active, true)));
     await notifyUsers(ctx, owners.map((x) => x.id), { kind: 'InvoiceSent', title: `Invoice ${before.code} for GHS ${before.amountGhs}`, body: `Due ${patch.dueDate ?? before.dueDate}`, link: '/finance/invoices', email: true });
   }
@@ -176,6 +187,8 @@ export async function settle(ctx: Ctx, paymentId: string, payload: unknown) {
   }
   await ctx.db.update(pay).set({ status: 'Succeeded', providerPayload: (payload ?? null) as any, updatedAt: new Date() }).where(eq(pay.id, p.id));
   await ctx.db.update(inv).set({ status: 'Paid', paidAt: new Date(), updatedAt: new Date() }).where(eq(inv.id, i.id));
+  await postLedgerEntries(ctx, { referenceType: 'PAYMENT', referenceId: p.id, description: `Payment ${p.reference} for invoice ${i.code}`,
+    lines: [{ accountCode: p.provider === 'manual' ? 'CASH' : 'PAYSTACK_CLEARING', debitGhs: Number(p.amountGhs) }, { accountCode: 'RECEIVABLE', creditGhs: Number(p.amountGhs) }] });
   await audit(ctx, 'payment.succeeded', 'payment', p.id, { invoice: i.status }, { invoice: 'Paid', reference: p.reference, amount: p.amountGhs });
   await emitEvent(ctx, 'PaymentReceived', { orgId: i.orgId, payload: { invoice: i.code, amount: p.amountGhs } });
   const owners = await ctx.db.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.orgId, i.orgId), eq(schema.users.role, 'OWNER')));
