@@ -10,6 +10,8 @@ const isCond = (q: Q) => !!q.applies && q.applies.trim().toLowerCase() !== 'all'
 type Diag = { id: string; code: string; status: string; source: string; completion: string | number; validationNotes: string | null; version: number; createdAt: string };
 type Doc = { id: string; code: string; filename: string };
 type Ans = { value: string; evidence: string; ref: string; note: string; na?: boolean };
+const UPLOAD_EXT = ['pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx', 'csv', 'txt'];
+const UPLOAD_MAX_MB = 10;
 type Gate = { ok: boolean; problems: string[]; completion: number };
 type Done = { version: number; overall: number; maturity: string; confidenceClass: string; caseStatus: string };
 type DraftAnswer = { value?: number; notApplicable?: boolean; evidence?: string; ref?: string | null; note?: string | null };
@@ -27,13 +29,14 @@ export default function TabDiagnostic({ caseId, caseData, role, reload }: TabPro
   const hist = useApi<Diag[]>(`/cases/${caseId}/diagnostics`);
   const docs = useApi<Doc[]>(ready && can('documents', 'read') ? `/documents?caseId=${caseId}` : null);
   const canSubmit = can('diagnostics', 'create');
+  const canUpload = ready && can('documents', 'create');
   const draft = useApi<Draft>(canSubmit ? `/cases/${caseId}/diagnostics/draft` : null);
   const stateOk = CASE_STATE_ORDER.indexOf(caseData.status) >= CASE_STATE_ORDER.indexOf('PROFILED');
   const latestValidated = (hist.data ?? []).find((d) => d.status === 'Validated');
   const draftReady = !canSubmit || !!draft.data || (!draft.loading && !!draft.error);
   return <div className="stack">
     {canSubmit && draftReady && <Async state={qs} empty={(q) => q.length === 0}>{(questions) => (
-      <Form caseId={caseId} questions={questions} role={role} docs={docs.data ?? []} stateOk={stateOk} status={caseData.status} draft={draft.data ?? { answers: {}, updatedAt: null }}
+      <Form caseId={caseId} questions={questions} role={role} docs={docs.data ?? []} canUpload={canUpload} onDocsChanged={docs.reload} stateOk={stateOk} status={caseData.status} draft={draft.data ?? { answers: {}, updatedAt: null }}
         nextVersion={(hist.data ?? []).filter((d) => d.status === 'Validated').length ? Math.max(...(hist.data ?? []).filter((d) => d.status === 'Validated').map((d) => d.version)) + 1 : 1}
         canPrefill={can('scores', 'read') && role !== 'OWNER' && !!latestValidated}
         onSaved={() => { hist.reload(); reload(); draft.reload(); }} />
@@ -69,13 +72,46 @@ function draftToAns(answers: Record<string, DraftAnswer>, classes: string[]): Re
   return out;
 }
 
-function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, canPrefill, draft, onSaved }: {
-  caseId: string; questions: Q[]; role: string; docs: Doc[]; stateOk: boolean; status: string; nextVersion: number; canPrefill: boolean; draft: Draft; onSaved: () => void;
+/** Upload a document right from the question that needs it, instead of sending the person to the Evidence tab first. */
+function QuestionUpload({ caseId, questionCode, onUploaded }: { caseId: string; questionCode: string; onUploaded: (d: Doc) => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setErr(null);
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+    if (!UPLOAD_EXT.includes(ext)) { setErr(`This file type is not accepted. Use ${UPLOAD_EXT.join(', ')}`); if (input.current) input.current.value = ''; return; }
+    if (file.size > UPLOAD_MAX_MB * 1048576) { setErr(`Files can be at most ${UPLOAD_MAX_MB} MB`); if (input.current) input.current.value = ''; return; }
+    setBusy(true);
+    try {
+      const fd = new FormData(); fd.append('file', file); fd.append('caseId', caseId);
+      const r = await api.upload<Doc>('/documents', fd);
+      onUploaded(r);
+    } catch (x) { setErr(x instanceof ApiFail && x.fields?.file ? x.fields.file : errText(x)); }
+    finally { setBusy(false); if (input.current) input.current.value = ''; }
+  };
+  return <div className="stack" style={{ gap: 2, marginTop: 4 }}>
+    <label className="row" style={{ gap: 6 }}>
+      <input ref={input} type="file" accept={UPLOAD_EXT.map((x) => '.' + x).join(',')} disabled={busy} onChange={pick} aria-label={`Upload a document for ${questionCode}`} />
+      {busy && <span className="small muted">Uploading…</span>}
+    </label>
+    {err && <span className="err" role="alert" style={{ color: 'var(--bad)', fontSize: '.86rem' }}>{err}</span>}
+  </div>;
+}
+
+function Form({ caseId, questions, role, docs, canUpload, onDocsChanged, stateOk, status, nextVersion, canPrefill, draft, onSaved }: {
+  caseId: string; questions: Q[]; role: string; docs: Doc[]; canUpload: boolean; onDocsChanged: () => void; stateOk: boolean; status: string; nextVersion: number; canPrefill: boolean; draft: Draft; onSaved: () => void;
 }) {
   const toast = useToast();
   const classes = role === 'OWNER' ? OWNER_CLASSES : ALL_CLASSES;
   const [ans, setAns] = useState<Record<string, Ans>>(() => draftToAns(draft.answers, classes));
   const [errs, setErrs] = useState<Record<string, string>>({});
+  // Documents uploaded directly from this form this session, merged ahead of the server list so a freshly
+  // uploaded file is selectable immediately without waiting on the parent's own /documents reload.
+  const [justUploaded, setJustUploaded] = useState<Doc[]>([]);
+  const allDocs = useMemo(() => { const known = new Set(docs.map((d) => d.id)); return [...justUploaded.filter((d) => !known.has(d.id)), ...docs]; }, [docs, justUploaded]);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedAt, setSavedAt] = useState<string | null>(draft.updatedAt);
   const [resumeDismissed, setResumeDismissed] = useState(false);
@@ -214,8 +250,10 @@ function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, can
               <select id={`ev-${q.code}`} value={a.evidence} onChange={(e) => patch(q.code, { evidence: e.target.value, ref: '' })}>{classes.map((c) => <option key={c}>{c}</option>)}</select></div>
             {a.evidence === 'Document-supported' && <div className="field"><label htmlFor={`ref-${q.code}`}>Supporting document</label>
               <select id={`ref-${q.code}`} value={a.ref} onChange={(e) => patch(q.code, { ref: e.target.value })} aria-invalid={err ? true : undefined}>
-                <option value="">{docs.length ? 'Choose a document' : 'No documents uploaded for this case'}</option>{docs.map((d) => <option key={d.id} value={d.code}>{d.filename} ({d.code})</option>)}</select>
-              {docs.length === 0 && <span className="hint">Upload documents in the Evidence tab first.</span>}</div>}
+                <option value="">{allDocs.length ? 'Choose a document' : 'No documents uploaded for this case'}</option>{allDocs.map((d) => <option key={d.id} value={d.code}>{d.filename} ({d.code})</option>)}</select>
+              {canUpload && <QuestionUpload caseId={caseId} questionCode={q.code}
+                onUploaded={(d) => { setJustUploaded((xs) => [d, ...xs]); patch(q.code, { ref: d.code }); onDocsChanged(); }} />}
+              {!canUpload && allDocs.length === 0 && <span className="hint">Upload documents in the Evidence tab first.</span>}</div>}
             <div className="field"><label htmlFor={`note-${q.code}`}>Note (optional)</label><input id={`note-${q.code}`} maxLength={500} value={a.note} onChange={(e) => patch(q.code, { note: e.target.value })} /></div>
           </div>}
           {err && <span className="err" id={eid} role="alert" style={{ color: 'var(--bad)', fontWeight: 600, fontSize: '.86rem' }}>{q.code}: {err}</span>}
