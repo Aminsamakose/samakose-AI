@@ -19,6 +19,8 @@ export default function TabEvidence({ caseId, role, reload }: TabProps) {
   const canDocs = ready && can('documents', 'read');
   const docs = useApi<Doc[]>(canDocs ? `/documents?caseId=${caseId}` : null);
   const canEdit = can('evidence', 'edit');
+  const canDelete = can('evidence', 'delete');
+  const showActions = canEdit || canDelete;
   const docById = new Map((docs.data ?? []).map((d) => [d.id, d]));
   const refresh = () => { ev.reload(); docs.reload(); reload(); };
 
@@ -33,7 +35,7 @@ export default function TabEvidence({ caseId, role, reload }: TabProps) {
       <Async state={ev} empty={(d) => d.length === 0}>{(rows) => (
         <div className="table-wrap"><table>
           <caption className="sr">Evidence items</caption>
-          <thead><tr><th>Ref</th><th>Type</th><th>Description</th><th>Source</th><th>Added</th>{canEdit && <th>Actions</th>}</tr></thead>
+          <thead><tr><th>Ref</th><th>Type</th><th>Description</th><th>Source</th><th>Added</th>{showActions && <th>Actions</th>}</tr></thead>
           <tbody>{rows.map((r) => {
             const d = r.documentId ? docById.get(r.documentId) : null;
             return <tr key={r.id}>
@@ -42,7 +44,7 @@ export default function TabEvidence({ caseId, role, reload }: TabProps) {
               <td>{r.description}</td>
               <td>{r.documentId ? <a href={`/api/v1/documents/${r.documentId}/download`}>{d ? d.filename : 'Download document'}</a> : null}{r.documentId && r.link ? <br /> : null}{r.link ? <a href={r.link} target="_blank" rel="noopener noreferrer">Open link<span className="sr"> (opens in a new tab)</span></a> : null}{!r.documentId && !r.link && (r.responseId ? <span className="muted">Diagnostic answer</span> : '-')}</td>
               <td>{dateFmt(r.createdAt)}</td>
-              {canEdit && <td><RowActions ev={r} role={role} onDone={refresh} /></td>}
+              {showActions && <td><RowActions ev={r} role={role} canEdit={canEdit} canDelete={canDelete} onDone={refresh} /></td>}
             </tr>;
           })}</tbody>
         </table></div>
@@ -64,16 +66,19 @@ export default function TabEvidence({ caseId, role, reload }: TabProps) {
   </div>;
 }
 
-function RowActions({ ev, role, onDone }: { ev: Ev; role: string; onDone: () => void }) {
+function RowActions({ ev, role, canEdit, canDelete, onDone }: { ev: Ev; role: string; canEdit: boolean; canDelete: boolean; onDone: () => void }) {
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const set = async (cls: string, msg: string) => { await api.patch(`/evidence/${ev.id}`, { class: cls }); toast(msg); onDone(); };
   const allowed = CLASSES.filter((c) => c !== ev.class && (c !== 'Verified' || role === 'EXPERT'));
   const f = useForm({ cls: allowed[0] ?? '' }, (v) => api.patch(`/evidence/${ev.id}`, { class: v.cls }), { success: 'Evidence type changed and the case rescored', onDone: () => { setOpen(false); onDone(); } });
+  const removeEvidence = async () => { await api.del(`/evidence/${ev.id}`); toast(`${ev.code} deleted`); onDone(); };
   return <div className="row">
-    {role === 'EXPERT' && ev.class !== 'Verified' && <ConfirmButton size="sm" label="Verify" variant="primary" message={`Mark ${ev.code} as verified? You are confirming you have checked it. The score is recalculated.`} onConfirm={() => set('Verified', `${ev.code} verified`)} />}
-    {ev.class !== 'Missing' && <ConfirmButton size="sm" label="Reject" variant="danger" message={`Reject ${ev.code}? It will be recorded as Missing, which carries the lowest weight, and the score is recalculated.`} onConfirm={() => set('Missing', `${ev.code} rejected`)} />}
-    <Button size="sm" onClick={() => setOpen(true)}>Change type</Button>
+    {canEdit && role === 'EXPERT' && ev.class !== 'Verified' && <ConfirmButton size="sm" label="Verify" variant="primary" message={`Mark ${ev.code} as verified? You are confirming you have checked it. The score is recalculated.`} onConfirm={() => set('Verified', `${ev.code} verified`)} />}
+    {canEdit && ev.class !== 'Missing' && <ConfirmButton size="sm" label="Reject" variant="danger" message={`Reject ${ev.code}? It will be recorded as Missing, which carries the lowest weight, and the score is recalculated.`} onConfirm={() => set('Missing', `${ev.code} rejected`)} />}
+    {canEdit && <Button size="sm" onClick={() => setOpen(true)}>Change type</Button>}
+    {canDelete && ev.class !== 'Verified' && <ConfirmButton size="sm" label="Delete" variant="danger" message={`Delete ${ev.code}? This removes it permanently and recalculates the score if it was backing an answer. This cannot be undone.`} onConfirm={removeEvidence} />}
+    {canDelete && ev.class === 'Verified' && <span className="small muted" title="Verified evidence cannot be deleted. Ask your consultant to reclassify it first.">Verified — cannot delete</span>}
     <Modal open={open} onClose={() => setOpen(false)} title={`Change type of ${ev.code}`}>
       <form className="stack" onSubmit={f.onSubmit} noValidate>
         <FormError message={f.formError} />

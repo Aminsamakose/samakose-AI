@@ -23,6 +23,28 @@ const OWNER_CLASSES = ['Self-reported', 'Document-supported', 'Unverified', 'Mis
 const SCALE = ['0', '1', '2', '3', '4'];
 const blank = (): Ans => ({ value: '', evidence: 'Self-reported', ref: '', note: '' });
 
+/**
+ * Per-question status, derived only from the answer state that mirrors the persisted draft
+ * (seeded from the server on load via draftToAns, kept in sync by the same autosave that writes
+ * it) -- never from anything that exists only transiently in the UI (e.g. an open dropdown).
+ * A Document-supported answer isn't done until its reference is actually attached.
+ */
+type QStatus = 'unanswered' | 'answered' | 'evidence-required' | 'evidence-complete';
+function questionStatus(a: Ans): QStatus {
+  if (a.na) return 'answered';
+  if (a.value === '') return 'unanswered';
+  if (a.evidence === 'Document-supported') return a.ref ? 'evidence-complete' : 'evidence-required';
+  return 'answered';
+}
+const STATUS_LABEL: Record<QStatus, string> = {
+  unanswered: 'Unanswered', answered: 'Answered', 'evidence-required': 'Answered — Evidence Required', 'evidence-complete': 'Answered — Evidence Complete'
+};
+const STATUS_TONE: Record<QStatus, string> = { unanswered: 'bad', answered: 'ok', 'evidence-required': 'warn', 'evidence-complete': 'ok' };
+/** Icon and text together carry the status; color alone never does. */
+function StatusBadge({ status }: { status: QStatus }) {
+  return <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>;
+}
+
 export default function TabDiagnostic({ caseId, caseData, role, reload }: TabProps) {
   const { can, ready } = useMe();
   const qs = useApi<Q[]>(`/questions?caseId=${caseId}`);
@@ -232,8 +254,9 @@ function Form({ caseId, questions, role, docs, canUpload, onDocsChanged, stateOk
     {groups.map(([dim, list]) => <Card key={dim} title={dim} actions={<span className="small muted">{list.filter(isDone).length} of {list.length} answered</span>}>
       <div className="stack" style={{ gap: 18 }}>{list.map((q) => {
         const a = get(q.code); const err = errs[q.code]; const eid = `err-${q.code}`;
+        const qStatus = questionStatus(a);
         return <fieldset key={q.code} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }} aria-describedby={err ? eid : undefined}>
-          <legend style={{ fontWeight: 600 }}><span className="mono muted">{q.code}</span> {q.text}{q.criticality === 'Gate' && <> <Badge tone="warn">Gate</Badge></>}</legend>
+          <legend style={{ fontWeight: 600 }}><span className="mono muted">{q.code}</span> {q.text}{q.criticality === 'Gate' && <> <Badge tone="warn">Gate</Badge></>} <StatusBadge status={qStatus} /></legend>
           {isCond(q) && <p className="small muted" style={{ margin: '2px 0 0' }}>Applies to: {q.applies}</p>}
           <div className="row" role="radiogroup" style={{ marginTop: 6 }}>
             {SCALE.map((s) => <label key={s} className="row" style={{ gap: 4 }}><input type="radio" name={`v-${q.code}`} value={s} checked={a.value === s && !a.na} disabled={!!a.na} onChange={() => patch(q.code, { value: s })} aria-invalid={err ? true : undefined} /><span className="num">{s}</span></label>)}
