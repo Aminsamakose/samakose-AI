@@ -8,6 +8,17 @@ export const DIMENSIONS = ['Finance', 'Market and sales', 'Operations', 'People 
 
 export type Rules = Record<string, string | number>;
 export const DEFAULT_RULES: Rules = {
+  // Approval Matrix thresholds (Master Directive §9, generalized four-eyes/COI routing — see
+  // src/services/approvals.ts). Percentage bands apply to discount rules and revenue-share
+  // agreements; the GHS bands apply to professional payouts. Below the first band is
+  // Standard approval (the feature's own creator-role four-eyes check); at or above the
+  // first band, Senior; at or above the second, Executive.
+  'approval.discount.senior_pct': 10,
+  'approval.discount.executive_pct': 25,
+  'approval.revenue_share.senior_pct': 10,
+  'approval.revenue_share.executive_pct': 25,
+  'approval.payout.senior_ghs': 1000,
+  'approval.payout.executive_ghs': 10000,
   'evidence.multiplier.Verified': 1,
   'evidence.multiplier.Document-supported': 0.95,
   'evidence.multiplier.Self-reported': 0.8,
