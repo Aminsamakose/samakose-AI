@@ -11,7 +11,8 @@ import { sql } from 'drizzle-orm';
 export const CODE_PREFIXES = {
   org: 'SME', prog: 'PRG', cohort: 'COH', case: 'CASE', diag: 'DIAG', ev: 'EVD', doc: 'DOC', dgn: 'DGN',
   rx: 'RX', iv: 'INT', act: 'ACT', risk: 'RISK', kpi: 'KPI', sess: 'SES', rep: 'REP', ai: 'AI',
-  plan: 'PLN', con: 'CON', inv: 'INV', pay: 'PAY', usr: 'USR'
+  plan: 'PLN', con: 'CON', inv: 'INV', pay: 'PAY', usr: 'USR',
+  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD'
 } as const;
 export type CodeKey = keyof typeof CODE_PREFIXES;
 
@@ -37,6 +38,10 @@ export const seq_con = pgSequence('seq_con');
 export const seq_inv = pgSequence('seq_inv');
 export const seq_pay = pgSequence('seq_pay');
 export const seq_usr = pgSequence('seq_usr');
+export const seq_rsa = pgSequence('seq_rsa');
+export const seq_rsc = pgSequence('seq_rsc');
+export const seq_pyo = pgSequence('seq_pyo');
+export const seq_rfd = pgSequence('seq_rfd');
 
 const codeCol = (k: CodeKey) =>
   text('code').notNull().unique().default(
@@ -585,6 +590,315 @@ export const webhookEvents = pgTable('webhook_events', {
   payload: jsonb('payload'),
   createdAt: created()
 }, (t) => [uniqueIndex('webhook_uq').on(t.provider, t.eventId)]);
+
+/* ------------------------------------------------------------------ */
+/* Professional economy & finance (Master Directive §31-54). Additive */
+/* only in this pass: these tables carry no write path yet from any   */
+/* service or API route. See the "Finance & Professional Economy      */
+/* Design" document for the lifecycles, calculation rules and rollout */
+/* order this schema is built for.                                    */
+/* ------------------------------------------------------------------ */
+
+export const REVENUE_SHARE_MODELS = ['PERCENTAGE', 'FIXED', 'TIERED', 'HYBRID'] as const;
+export const REVENUE_SHARE_BASES = ['SHARE_ON_LIST_PRICE', 'SHARE_ON_NET_PRICE', 'SHARE_ON_COLLECTED_AMOUNT'] as const;
+export const REVENUE_SHARE_STATUSES = ['Draft', 'Pending approval', 'Approved', 'Active', 'Suspended', 'Expired', 'Cancelled'] as const;
+export const ALLOCATEE_ROLES = ['SAMAKOSE', 'LEAD', 'SPECIALIST', 'COACH', 'REVIEWER'] as const;
+
+/** A revenue-split arrangement for one assignment under one contract. Never applied retroactively: it governs
+ *  calculations created after it becomes Active, never calculations that already exist. */
+export const revenueShareAgreements = pgTable('revenue_share_agreements', {
+  id: id(), code: codeCol('rsa'),
+  contractId: uuid('contract_id').notNull().references(() => contracts.id),
+  assignmentId: uuid('assignment_id').notNull().references(() => caseAssignments.id),
+  professionalId: uuid('professional_id').notNull().references(() => users.id),
+  model: text('model').notNull(), // PERCENTAGE | FIXED | TIERED | HYBRID
+  basis: text('basis').notNull(), // SHARE_ON_LIST_PRICE | SHARE_ON_NET_PRICE | SHARE_ON_COLLECTED_AMOUNT
+  percentage: numeric('percentage', { precision: 5, scale: 2 }),
+  fixedAmountGhs: numeric('fixed_amount_ghs', { precision: 12, scale: 2 }),
+  tierRules: jsonb('tier_rules').$type<{ upToGhs: number | null; percentage: number }[]>(),
+  status: text('status').notNull().default('Draft'),
+  proposedBy: uuid('proposed_by').references(() => users.id),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  effectiveFrom: date('effective_from'), effectiveTo: date('effective_to'),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [
+  index('rsa_contract_idx').on(t.contractId), index('rsa_assignment_idx').on(t.assignmentId),
+  index('rsa_professional_idx').on(t.professionalId)
+]);
+
+/** How one agreement's share is split across the people who earn from it. Must sum to 100% (enforced by trigger). */
+export const revenueShareAllocations = pgTable('revenue_share_allocations', {
+  id: id(),
+  agreementId: uuid('agreement_id').notNull().references(() => revenueShareAgreements.id),
+  allocateeRole: text('allocatee_role').notNull(), // SAMAKOSE | LEAD | SPECIALIST | COACH | REVIEWER
+  professionalId: uuid('professional_id').references(() => users.id), // null for SAMAKOSE
+  percentOfShare: numeric('percent_of_share', { precision: 5, scale: 2 }).notNull(),
+  createdAt: created()
+}, (t) => [index('rsal_agreement_idx').on(t.agreementId)]);
+
+/** The immutable snapshot taken at financial activation (Directive §34). Never recalculated in place: a
+ *  correction is a new row referencing supersedesId, exactly like diagnostics.supersedesId. */
+export const revenueShareCalculations = pgTable('revenue_share_calculations', {
+  id: id(), code: codeCol('rsc'),
+  agreementId: uuid('agreement_id').notNull().references(() => revenueShareAgreements.id),
+  invoiceId: uuid('invoice_id').references(() => invoices.id),
+  paymentId: uuid('payment_id').references(() => payments.id),
+  grossAmountGhs: numeric('gross_amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  discountAmountGhs: numeric('discount_amount_ghs', { precision: 12, scale: 2 }).notNull().default('0'),
+  netAmountGhs: numeric('net_amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  basisUsed: text('basis_used').notNull(),
+  calculationVersion: integer('calculation_version').notNull().default(1),
+  professionalAmountGhs: numeric('professional_amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  samakoseAmountGhs: numeric('samakose_amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  currency: text('currency').notNull().default('GHS'),
+  supersedesId: uuid('supersedes_id'),
+  computedBy: uuid('computed_by'), // a user id, or an AI agent identifier
+  approvedBy: uuid('approved_by').references(() => users.id),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  createdAt: created()
+}, (t) => [index('rscalc_agreement_idx').on(t.agreementId), index('rscalc_invoice_idx').on(t.invoiceId)]);
+
+export const PAYOUT_STATUSES = ['Earned', 'Reviewed', 'Approved', 'Payable', 'Payment initiated', 'Paid', 'Reconciled'] as const;
+
+/** One professional's earnings on one calculation, tracked Earned -> Reconciled (Directive §47). */
+export const professionalPayouts = pgTable('professional_payouts', {
+  id: id(), code: codeCol('pyo'),
+  professionalId: uuid('professional_id').notNull().references(() => users.id),
+  calculationId: uuid('calculation_id').notNull().references(() => revenueShareCalculations.id),
+  assignmentId: uuid('assignment_id').notNull().references(() => caseAssignments.id),
+  contractId: uuid('contract_id').notNull().references(() => contracts.id),
+  amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  currency: text('currency').notNull().default('GHS'),
+  status: text('status').notNull().default('Earned'),
+  payoutMethod: text('payout_method'),
+  paymentReference: text('payment_reference'),
+  reviewedBy: uuid('reviewed_by').references(() => users.id),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  paidAt: timestamp('paid_at', { withTimezone: true }),
+  reconciledAt: timestamp('reconciled_at', { withTimezone: true }),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [
+  index('pyo_professional_idx').on(t.professionalId, t.status),
+  index('pyo_calculation_idx').on(t.calculationId)
+]);
+
+/** A hold that blocks Payable -> Payment initiated. AI may flag a candidate; only a human creates or lifts one. */
+export const payoutHolds = pgTable('payout_holds', {
+  id: id(),
+  payoutId: uuid('payout_id').notNull().references(() => professionalPayouts.id),
+  reason: text('reason').notNull(),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: created(),
+  resolvedBy: uuid('resolved_by').references(() => users.id),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  resolutionNote: text('resolution_note')
+}, (t) => [index('ph_payout_idx').on(t.payoutId)]);
+
+/** A correction, reversal, or refund-driven clawback against an already-earned payout. Never a silent edit. */
+export const payoutAdjustments = pgTable('payout_adjustments', {
+  id: id(),
+  payoutId: uuid('payout_id').notNull().references(() => professionalPayouts.id),
+  type: text('type').notNull(), // CORRECTION | REVERSAL | REFUND_CLAWBACK
+  amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  reason: text('reason').notNull(),
+  createdBy: uuid('created_by').references(() => users.id),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  ledgerEntryId: uuid('ledger_entry_id'),
+  createdAt: created()
+}, (t) => [index('pa_payout_idx').on(t.payoutId)]);
+
+export const FINANCIAL_ACCOUNT_TYPES = ['ASSET', 'LIABILITY', 'REVENUE', 'EXPENSE', 'EQUITY'] as const;
+
+/** A small fixed chart of accounts. Rows are reference data, not transactions. */
+export const financialAccounts = pgTable('financial_accounts', {
+  id: id(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  type: text('type').notNull(), // ASSET | LIABILITY | REVENUE | EXPENSE | EQUITY
+  createdAt: created()
+});
+
+export const FINANCIAL_PERIOD_STATUSES = ['Open', 'Closing', 'Closed', 'Locked'] as const;
+
+/** OPEN -> CLOSING -> CLOSED -> LOCKED. Once Closed, postLedgerEntry() refuses any entry dated into it. */
+export const financialPeriods = pgTable('financial_periods', {
+  id: id(),
+  label: text('label').notNull().unique(),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date').notNull(),
+  status: text('status').notNull().default('Open'),
+  closedBy: uuid('closed_by').references(() => users.id),
+  closedAt: timestamp('closed_at', { withTimezone: true })
+});
+
+/** Double-entry, append-only (Directive §40). The ONLY writer is postLedgerEntry() in the finance service;
+ *  nothing else should INSERT here, and the database role never gets UPDATE/DELETE on this table. */
+export const financialLedgerEntries = pgTable('financial_ledger_entries', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  accountId: uuid('account_id').notNull().references(() => financialAccounts.id),
+  debitGhs: numeric('debit_ghs', { precision: 12, scale: 2 }).notNull().default('0'),
+  creditGhs: numeric('credit_ghs', { precision: 12, scale: 2 }).notNull().default('0'),
+  currency: text('currency').notNull().default('GHS'),
+  referenceType: text('reference_type').notNull(), // INVOICE | PAYMENT | REVENUE_SHARE | PAYOUT | REFUND | ADJUSTMENT
+  referenceId: uuid('reference_id').notNull(),
+  description: text('description'),
+  periodId: uuid('period_id').notNull().references(() => financialPeriods.id),
+  createdBy: uuid('created_by'), // a user id, or an AI agent identifier
+  createdAt: created()
+}, (t) => [
+  index('fle_account_idx').on(t.accountId), index('fle_reference_idx').on(t.referenceType, t.referenceId),
+  index('fle_period_idx').on(t.periodId)
+]);
+
+/** A price reduction rule, applied automatically by its conditions or redeemed through a promo code. */
+export const discountRules = pgTable('discount_rules', {
+  id: id(),
+  kind: text('kind').notNull(), // PERCENTAGE | FIXED | PROMOTIONAL_PRICE
+  value: numeric('value', { precision: 12, scale: 2 }).notNull(),
+  conditions: jsonb('conditions').$type<{
+    planId?: string; horizonDays?: number; programmeId?: string; cohortId?: string; partnerOrgId?: string;
+    orgId?: string; segment?: string; firstPurchaseOnly?: boolean; campaign?: string;
+    startDate?: string; endDate?: string;
+  }>(),
+  active: boolean('active').notNull().default(true),
+  createdBy: uuid('created_by').references(() => users.id),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  createdAt: created(), updatedAt: updated()
+});
+
+export const promoCampaigns = pgTable('promo_campaigns', {
+  id: id(),
+  name: text('name').notNull(),
+  discountRuleId: uuid('discount_rule_id').notNull().references(() => discountRules.id),
+  startDate: date('start_date'), endDate: date('end_date'),
+  active: boolean('active').notNull().default(true),
+  createdAt: created()
+});
+
+/** A redeemable code. Generated with a cryptographically random generator, never sequential. */
+export const promoCodes = pgTable('promo_codes', {
+  id: id(),
+  campaignId: uuid('campaign_id').notNull().references(() => promoCampaigns.id),
+  code: text('code').notNull().unique(),
+  maxRedemptions: integer('max_redemptions'),
+  perCustomerLimit: integer('per_customer_limit'),
+  minPurchaseGhs: numeric('min_purchase_ghs', { precision: 12, scale: 2 }),
+  maxDiscountGhs: numeric('max_discount_ghs', { precision: 12, scale: 2 }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  active: boolean('active').notNull().default(true),
+  createdAt: created()
+}, (t) => [index('pc_campaign_idx').on(t.campaignId)]);
+
+/** One successful redemption. Unique per (promoCodeId, customerId) when the code is single-use-per-customer,
+ *  enforced server-side inside the same transaction that discounts the invoice (prevents a double-redeem race). */
+export const promoRedemptions = pgTable('promo_redemptions', {
+  id: id(),
+  promoCodeId: uuid('promo_code_id').notNull().references(() => promoCodes.id),
+  invoiceId: uuid('invoice_id').notNull().references(() => invoices.id),
+  customerId: uuid('customer_id').notNull().references(() => users.id),
+  discountAppliedGhs: numeric('discount_applied_ghs', { precision: 12, scale: 2 }).notNull(),
+  redeemedAt: timestamp('redeemed_at', { withTimezone: true }).notNull().defaultNow()
+}, (t) => [uniqueIndex('pr_code_customer_uq').on(t.promoCodeId, t.customerId)]);
+
+/** A configurable tax/VAT/withholding rule. Replaces the single flat org-wide rate in billing.ts with
+ *  versioned, jurisdiction-aware rules, without assuming any specific rate is applicable. */
+export const taxRules = pgTable('tax_rules', {
+  id: id(),
+  type: text('type').notNull(), // VAT | WITHHOLDING | OTHER
+  rate: numeric('rate', { precision: 5, scale: 2 }).notNull(),
+  jurisdiction: text('jurisdiction').notNull(),
+  inclusiveOfPrice: boolean('inclusive_of_price').notNull().default(false),
+  ruleVersion: integer('rule_version').notNull().default(1),
+  effectiveFrom: date('effective_from').notNull(),
+  effectiveTo: date('effective_to'),
+  createdAt: created()
+}, (t) => [index('tr_type_jurisdiction_idx').on(t.type, t.jurisdiction)]);
+
+export const taxLines = pgTable('tax_lines', {
+  id: id(),
+  invoiceId: uuid('invoice_id').references(() => invoices.id),
+  payoutId: uuid('payout_id').references(() => professionalPayouts.id),
+  taxRuleId: uuid('tax_rule_id').notNull().references(() => taxRules.id),
+  baseAmountGhs: numeric('base_amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  ruleVersion: integer('rule_version').notNull(),
+  createdAt: created()
+}, (t) => [index('tl_invoice_idx').on(t.invoiceId), index('tl_payout_idx').on(t.payoutId)]);
+
+export const REFUND_STATUSES = ['Requested', 'Approved', 'Processed', 'Rejected'] as const;
+
+/** Replaces an implicit payment.status = refunded flip with a first-class, approvable record. */
+export const refunds = pgTable('refunds', {
+  id: id(), code: codeCol('rfd'),
+  paymentId: uuid('payment_id').notNull().references(() => payments.id),
+  invoiceId: uuid('invoice_id').notNull().references(() => invoices.id),
+  amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  reason: text('reason').notNull(),
+  status: text('status').notNull().default('Requested'),
+  requestedBy: uuid('requested_by').references(() => users.id),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  processedAt: timestamp('processed_at', { withTimezone: true }),
+  ledgerEntryId: uuid('ledger_entry_id'),
+  createdAt: created()
+}, (t) => [index('rf_payment_idx').on(t.paymentId)]);
+
+export const chargebacks = pgTable('chargebacks', {
+  id: id(),
+  paymentId: uuid('payment_id').notNull().references(() => payments.id),
+  amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  provider: text('provider').notNull(),
+  providerReference: text('provider_reference'),
+  status: text('status').notNull().default('Received'),
+  receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true })
+}, (t) => [index('cb_payment_idx').on(t.paymentId)]);
+
+export const APPROVAL_ACTION_TYPES = [
+  'DISCOUNT_EXCEPTION', 'REVENUE_SHARE_OVERRIDE', 'PAYOUT', 'REFUND', 'LEDGER_ADJUSTMENT', 'CONTRACT'
+] as const;
+
+/** A request for a high-risk commercial/financial action to be approved. requestedBy and the decider are
+ *  always different people: enforced in the decision service, never only in the UI. */
+export const approvalRequests = pgTable('approval_requests', {
+  id: id(),
+  actionType: text('action_type').notNull(),
+  referenceId: uuid('reference_id').notNull(),
+  requestedBy: uuid('requested_by').notNull().references(() => users.id),
+  amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }), // for threshold-based routing
+  requiredApproverRole: text('required_approver_role'),
+  status: text('status').notNull().default('Pending'),
+  createdAt: created()
+}, (t) => [index('ar_action_idx').on(t.actionType, t.referenceId), index('ar_status_idx').on(t.status)]);
+
+export const approvalDecisions = pgTable('approval_decisions', {
+  id: id(),
+  requestId: uuid('request_id').notNull().references(() => approvalRequests.id),
+  decision: text('decision').notNull(), // Approved | Rejected
+  decidedBy: uuid('decided_by').notNull().references(() => users.id),
+  decidedAt: timestamp('decided_at', { withTimezone: true }).notNull().defaultNow(),
+  reason: text('reason'),
+  beforeValue: jsonb('before_value'),
+  afterValue: jsonb('after_value')
+}, (t) => [index('ad_request_idx').on(t.requestId)]);
+
+export const CONFLICT_CONTEXT_TYPES = [
+  'REVENUE_SHARE_APPROVAL', 'PAYOUT_APPROVAL', 'REVIEW', 'COMMERCIAL_EXCEPTION'
+] as const;
+
+/** Evaluates whether a user's combination of roles on one case creates a prohibited conflict for a specific
+ *  action. Distinct from practitionerConflicts, which declares a business a practitioner must not serve. */
+export const conflictChecks = pgTable('conflict_checks', {
+  id: id(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  contextType: text('context_type').notNull(),
+  referenceId: uuid('reference_id').notNull(),
+  result: text('result').notNull(), // CLEAR | BLOCKED
+  reason: text('reason'),
+  checkedAt: timestamp('checked_at', { withTimezone: true }).notNull().defaultNow()
+}, (t) => [index('cc_user_idx').on(t.userId), index('cc_reference_idx').on(t.contextType, t.referenceId)]);
 
 /* --------------------- platform: events, audit, jobs ------------------ */
 export const events = pgTable('events', {
