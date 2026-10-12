@@ -22,6 +22,7 @@ export const CHART_OF_ACCOUNTS: { code: string; name: string; type: 'ASSET' | 'L
   { code: 'PAYSTACK_CLEARING', name: 'Paystack Clearing', type: 'ASSET' },
   { code: 'REVENUE', name: 'Service Revenue', type: 'REVENUE' },
   { code: 'PAYABLE', name: 'Accounts Payable', type: 'LIABILITY' },
+  { code: 'PROFESSIONAL_PAYABLE', name: 'Professional Payable', type: 'LIABILITY' },
   { code: 'TAX_PAYABLE', name: 'Tax Payable', type: 'LIABILITY' },
   { code: 'DISCOUNT_CONTRA', name: 'Discounts Given', type: 'REVENUE' }
 ];
