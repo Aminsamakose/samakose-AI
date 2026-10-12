@@ -17,6 +17,8 @@ export const DEFAULT_RULES: Rules = {
   'approval.discount.executive_pct': 25,
   'approval.revenue_share.senior_pct': 10,
   'approval.revenue_share.executive_pct': 25,
+  'approval.refund.senior_pct': 10,
+  'approval.refund.executive_pct': 25,
   'approval.payout.senior_ghs': 1000,
   'approval.payout.executive_ghs': 10000,
   'evidence.multiplier.Verified': 1,

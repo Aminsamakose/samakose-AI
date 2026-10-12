@@ -1,5 +1,5 @@
 import {
-  pgTable, pgSequence, pgEnum, uuid, text, integer, numeric, boolean, timestamp, date, jsonb, bigserial,
+  pgTable, pgSequence, pgEnum, uuid, text, integer, numeric, boolean, timestamp, date, jsonb, bigserial, bigint,
   index, uniqueIndex, primaryKey
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
@@ -706,7 +706,9 @@ export const payoutAdjustments = pgTable('payout_adjustments', {
   reason: text('reason').notNull(),
   createdBy: uuid('created_by').references(() => users.id),
   approvedBy: uuid('approved_by').references(() => users.id),
-  ledgerEntryId: uuid('ledger_entry_id'),
+  // bigint, not uuid: financial_ledger_entries.id is a bigserial. Fixed in migration 0052 -
+  // migration 0051 originally typed this uuid, which could never actually reference that table.
+  ledgerEntryId: bigint('ledger_entry_id', { mode: 'number' }).references(() => financialLedgerEntries.id),
   createdAt: created()
 }, (t) => [index('pa_payout_idx').on(t.payoutId)]);
 
@@ -841,7 +843,8 @@ export const refunds = pgTable('refunds', {
   requestedBy: uuid('requested_by').references(() => users.id),
   approvedBy: uuid('approved_by').references(() => users.id),
   processedAt: timestamp('processed_at', { withTimezone: true }),
-  ledgerEntryId: uuid('ledger_entry_id'),
+  // bigint, not uuid: see the matching comment on payoutAdjustments.ledgerEntryId - migration 0052.
+  ledgerEntryId: bigint('ledger_entry_id', { mode: 'number' }).references(() => financialLedgerEntries.id),
   createdAt: created()
 }, (t) => [index('rf_payment_idx').on(t.paymentId)]);
 

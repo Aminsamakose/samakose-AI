@@ -27,8 +27,13 @@ describe('Approval Matrix thresholds', () => {
     expect(await requiredApproverRole(fakeCtx, 'PAYOUT', 15000)).toBe('EXECUTIVE');
   });
   it('an action type with no configured threshold always routes to Standard', async () => {
-    expect(await requiredApproverRole(fakeCtx, 'REFUND', 999999)).toBe('Standard');
+    expect(await requiredApproverRole(fakeCtx, 'LEDGER_ADJUSTMENT', 999999)).toBe('Standard');
     expect(await requiredApproverRole(fakeCtx, 'CONTRACT', undefined)).toBe('Standard');
+  });
+  it('a refund is routed by its percentage of invoice, like a discount', async () => {
+    expect(await requiredApproverRole(fakeCtx, 'REFUND', 5)).toBe('Standard');
+    expect(await requiredApproverRole(fakeCtx, 'REFUND', 10)).toBe('FINANCE');
+    expect(await requiredApproverRole(fakeCtx, 'REFUND', 25)).toBe('EXECUTIVE');
   });
   it('a missing metric routes to Standard even for a thresholded action type', async () => {
     expect(await requiredApproverRole(fakeCtx, 'PAYOUT', undefined)).toBe('Standard');

@@ -63,7 +63,7 @@ export async function postLedgerEntries(ctx: Ctx, args: { referenceType: string;
   const totalDebit = args.lines.reduce((s, l) => s + (l.debitGhs ?? 0), 0);
   const totalCredit = args.lines.reduce((s, l) => s + (l.creditGhs ?? 0), 0);
   if (Math.abs(totalDebit - totalCredit) > 0.005) throw new ApiError(500, 'internal', `Ledger entry does not balance: debit ${totalDebit.toFixed(2)} vs credit ${totalCredit.toFixed(2)}`);
-  if (!args.lines.length) return;
+  if (!args.lines.length) return [];
   const period = await ensureCurrentPeriod(ctx);
   if (period.status === 'Closed' || period.status === 'Locked') throw new ApiError(409, 'period_closed', 'The current financial period is closed');
   const createdBy = ctx.user?.id ?? null;
@@ -78,5 +78,5 @@ export async function postLedgerEntries(ctx: Ctx, args: { referenceType: string;
     periodId: period.id,
     createdBy
   })));
-  await ctx.db.insert(fle).values(rows);
+  return ctx.db.insert(fle).values(rows).returning({ id: fle.id });
 }
