@@ -5,6 +5,8 @@ import { email, isoDate, money, name, optText, text, uuid, empty } from '../sche
 import * as fin from '@/services/finance';
 import * as rs from '@/services/revenue-share';
 import * as apr from '@/services/approvals';
+import * as tax from '@/services/tax';
+import * as rfd from '@/services/refunds';
 import * as contracts from '@/services/contracts';
 import * as kobo from '@/services/kobo';
 import * as dash from '@/services/dashboards';
@@ -71,6 +73,24 @@ defineRoute({ method: 'POST', path: '/payout-holds/:id/resolve', tag: F, summary
 defineRoute({ method: 'POST', path: '/payouts/:id/initiate', tag: F, summary: 'Initiate payment for a Payable payout (refused if an unresolved hold exists)', permission: ['payouts', 'edit'], body: z.object({ payoutMethod: text(2, 40) }), handler: ({ ctx, params, body }) => rs.initiatePayment(ctx, params.id, body.payoutMethod) });
 defineRoute({ method: 'POST', path: '/payouts/:id/paid', tag: F, summary: 'Mark a payout paid (posts the ledger entry)', permission: ['payouts', 'edit'], body: z.object({ paymentReference: optText(120) }), handler: ({ ctx, params, body }) => rs.markPaid(ctx, params.id, body.paymentReference ?? undefined) });
 defineRoute({ method: 'POST', path: '/payouts/:id/reconcile', tag: F, summary: 'Reconcile a paid payout against the provider transaction', permission: ['payouts', 'edit'], body: empty, handler: ({ ctx, params }) => rs.reconcilePayout(ctx, params.id) });
+
+/* ------------------------------ tax rules ------------------------------- */
+defineRoute({ method: 'GET', path: '/tax-rules', tag: F, summary: 'Tax/VAT/withholding rules, versioned by type and jurisdiction', permission: ['tax_rules', 'read'], handler: ({ ctx }) => tax.listTaxRules(ctx) });
+defineRoute({ method: 'POST', path: '/tax-rules', tag: F, summary: 'Open a new versioned tax rule for a (type, jurisdiction)', permission: ['tax_rules', 'create'], body: z.object({ type: z.enum(tax.TAX_RULE_TYPES), rate: z.number().min(0).max(100), jurisdiction: text(1, 40), inclusiveOfPrice: z.boolean().optional(), effectiveFrom: isoDate, effectiveTo: isoDate.nullish() }), handler: async ({ ctx, body }) => status(201, await tax.createTaxRule(ctx, body as any)) });
+defineRoute({ method: 'PATCH', path: '/tax-rules/:id/close', tag: F, summary: "Close a tax rule's effective range", permission: ['tax_rules', 'edit'], body: z.object({ effectiveTo: isoDate }), handler: ({ ctx, params, body }) => tax.closeTaxRule(ctx, params.id, body.effectiveTo) });
+defineRoute({ method: 'POST', path: '/tax-lines', tag: F, summary: 'Compute and apply tax for one invoice or payout against the rule in force today', permission: ['tax_rules', 'create'], body: z.object({ invoiceId: uuid.optional(), payoutId: uuid.optional(), type: z.enum(tax.TAX_RULE_TYPES), jurisdiction: text(1, 40), baseAmountGhs: money }), handler: async ({ ctx, body }) => { const line = await tax.applyTax(ctx, body as any); return line ? status(201, line) : line; } });
+
+/* --------------------------- refunds & chargebacks ----------------------- */
+defineRoute({ method: 'GET', path: '/refunds', tag: F, summary: 'Refunds, optionally filtered by status/invoice', permission: ['refunds', 'read'], query: z.object({ status: z.string().max(20).optional(), invoiceId: uuid.optional() }), handler: ({ ctx, query }) => rfd.listRefunds(ctx, query) });
+defineRoute({ method: 'POST', path: '/refunds', tag: F, summary: 'Request a refund on a succeeded payment', permission: ['refunds', 'create'], body: z.object({ paymentId: uuid, amountGhs: money, reason: text(3, 500) }), handler: async ({ ctx, body }) => status(201, await rfd.requestRefund(ctx, body)) });
+defineRoute({ method: 'POST', path: '/refunds/:id/approve', tag: F, summary: 'Approve a requested refund (four-eyes, routed by the Approval Matrix)', permission: ['refunds', 'approve'], body: empty, handler: ({ ctx, params }) => rfd.approveRefund(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/refunds/:id/reject', tag: F, summary: 'Reject a requested refund', permission: ['refunds', 'approve'], body: z.object({ reason: optText(500) }), handler: ({ ctx, params, body }) => rfd.rejectRefund(ctx, params.id, body.reason ?? undefined) });
+defineRoute({ method: 'POST', path: '/refunds/:id/process', tag: F, summary: 'Process an approved refund (posts the ledger entry; may open a payout clawback)', permission: ['refunds', 'approve'], body: empty, handler: ({ ctx, params }) => rfd.processRefund(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/payout-adjustments/:id/approve-clawback', tag: F, summary: 'Approve a refund-driven payout clawback (posts the reversing ledger entry)', permission: ['payouts', 'approve'], body: empty, handler: ({ ctx, params }) => rfd.approveClawback(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/chargebacks', tag: F, summary: 'Chargebacks, optionally filtered by status', permission: ['refunds', 'read'], query: z.object({ status: z.string().max(20).optional() }), handler: ({ ctx, query }) => rfd.listChargebacks(ctx, query) });
+defineRoute({ method: 'POST', path: '/chargebacks', tag: F, summary: 'Record a chargeback notification from the payment provider', permission: ['refunds', 'create'], body: z.object({ paymentId: uuid, amountGhs: money, provider: text(2, 40), providerReference: optText(120) }), handler: async ({ ctx, body }) => status(201, await rfd.recordChargeback(ctx, { ...body, providerReference: body.providerReference ?? undefined })) });
+defineRoute({ method: 'POST', path: '/chargebacks/:id/resolve', tag: F, summary: 'Resolve a chargeback as Won (funds recovered) or Lost', permission: ['refunds', 'approve'], body: z.object({ outcome: z.enum(['Won', 'Lost']) }), handler: ({ ctx, params, body }) => rfd.resolveChargeback(ctx, params.id, body.outcome) });
+
 defineRoute({ method: 'POST', path: '/webhooks/paystack', tag: 'Integrations', summary: 'Paystack event receiver (HMAC-SHA512 signature)', auth: 'webhook', handler: ({ ctx, req, rawBody }) => fin.paystackWebhook(ctx, rawBody, req.headers.get('x-paystack-signature')) });
 defineRoute({ method: 'POST', path: '/integrations/kobo/webhook', tag: 'Integrations', summary: 'KoboToolbox REST service receiver (shared secret header)', auth: 'webhook', rateLimit: { key: 'kobo:ip:{ip}', limit: 600, windowSec: 60 },
   handler: async ({ ctx, req, rawBody }) => { let b: unknown; try { b = JSON.parse(rawBody); } catch { b = null; } return kobo.koboWebhook(ctx, req.headers.get('x-kobo-secret'), b); } });

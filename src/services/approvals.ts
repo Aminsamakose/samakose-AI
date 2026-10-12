@@ -34,13 +34,14 @@ export type ConflictContextType = (typeof CONFLICT_CONTEXT_TYPES)[number];
 const THRESHOLD_RULE_KEYS: Partial<Record<ApprovalActionType, { senior: string; executive: string; unit: 'pct' | 'ghs' }>> = {
   DISCOUNT_EXCEPTION: { senior: 'approval.discount.senior_pct', executive: 'approval.discount.executive_pct', unit: 'pct' },
   REVENUE_SHARE_OVERRIDE: { senior: 'approval.revenue_share.senior_pct', executive: 'approval.revenue_share.executive_pct', unit: 'pct' },
-  PAYOUT: { senior: 'approval.payout.senior_ghs', executive: 'approval.payout.executive_ghs', unit: 'ghs' }
+  PAYOUT: { senior: 'approval.payout.senior_ghs', executive: 'approval.payout.executive_ghs', unit: 'ghs' },
+  REFUND: { senior: 'approval.refund.senior_pct', executive: 'approval.refund.executive_pct', unit: 'pct' }
 };
 
 /**
  * Computes the approver role required by the Approval Matrix for one action, given its metric
- * (a percentage 0-100 for discount/revenue-share actions, or a GHS amount for payouts). Actions
- * with no configured threshold (REFUND, LEDGER_ADJUSTMENT, CONTRACT) always route to Standard,
+ * (a percentage 0-100 for discount/revenue-share/refund actions, or a GHS amount for payouts).
+ * Actions with no configured threshold (LEDGER_ADJUSTMENT, CONTRACT) always route to Standard,
  * i.e. any role already permitted to approve the underlying resource.
  */
 export async function requiredApproverRole(ctx: Ctx, actionType: ApprovalActionType, metric: number | null | undefined): Promise<Role | 'Standard'> {
