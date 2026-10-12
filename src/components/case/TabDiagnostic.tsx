@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiFail, dateTime, errText } from '@/lib/client/api';
 import { Async, Badge, Button, Card, Empty, Modal, useApi, useToast } from '@/components/ui';
 import type { TabProps } from './types';
@@ -12,6 +12,9 @@ type Doc = { id: string; code: string; filename: string };
 type Ans = { value: string; evidence: string; ref: string; note: string; na?: boolean };
 type Gate = { ok: boolean; problems: string[]; completion: number };
 type Done = { version: number; overall: number; maturity: string; confidenceClass: string; caseStatus: string };
+type DraftAnswer = { value?: number; notApplicable?: boolean; evidence?: string; ref?: string | null; note?: string | null };
+type Draft = { answers: Record<string, DraftAnswer>; updatedAt: string | null };
+const AUTOSAVE_DEBOUNCE_MS = 1500;
 
 const ALL_CLASSES = ['Self-reported', 'Document-supported', 'Verified', 'Unverified', 'Missing'];
 const OWNER_CLASSES = ['Self-reported', 'Document-supported', 'Unverified', 'Missing'];
@@ -24,14 +27,16 @@ export default function TabDiagnostic({ caseId, caseData, role, reload }: TabPro
   const hist = useApi<Diag[]>(`/cases/${caseId}/diagnostics`);
   const docs = useApi<Doc[]>(ready && can('documents', 'read') ? `/documents?caseId=${caseId}` : null);
   const canSubmit = can('diagnostics', 'create');
+  const draft = useApi<Draft>(canSubmit ? `/cases/${caseId}/diagnostics/draft` : null);
   const stateOk = CASE_STATE_ORDER.indexOf(caseData.status) >= CASE_STATE_ORDER.indexOf('PROFILED');
   const latestValidated = (hist.data ?? []).find((d) => d.status === 'Validated');
+  const draftReady = !canSubmit || !!draft.data || (!draft.loading && !!draft.error);
   return <div className="stack">
-    {canSubmit && <Async state={qs} empty={(q) => q.length === 0}>{(questions) => (
-      <Form caseId={caseId} questions={questions} role={role} docs={docs.data ?? []} stateOk={stateOk} status={caseData.status}
+    {canSubmit && draftReady && <Async state={qs} empty={(q) => q.length === 0}>{(questions) => (
+      <Form caseId={caseId} questions={questions} role={role} docs={docs.data ?? []} stateOk={stateOk} status={caseData.status} draft={draft.data ?? { answers: {}, updatedAt: null }}
         nextVersion={(hist.data ?? []).filter((d) => d.status === 'Validated').length ? Math.max(...(hist.data ?? []).filter((d) => d.status === 'Validated').map((d) => d.version)) + 1 : 1}
         canPrefill={can('scores', 'read') && role !== 'OWNER' && !!latestValidated}
-        onSaved={() => { hist.reload(); reload(); }} />
+        onSaved={() => { hist.reload(); reload(); draft.reload(); }} />
     )}</Async>}
     <Card title="Previous versions">
       <Async state={hist} empty={(d) => d.length === 0}>{(rows) => (
@@ -53,13 +58,29 @@ export default function TabDiagnostic({ caseId, caseData, role, reload }: TabPro
   </div>;
 }
 
-function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, canPrefill, onSaved }: {
-  caseId: string; questions: Q[]; role: string; docs: Doc[]; stateOk: boolean; status: string; nextVersion: number; canPrefill: boolean; onSaved: () => void;
+/** Server AnswerInput -> the form's own Ans shape (always a string value, never a bare number). */
+function draftToAns(answers: Record<string, DraftAnswer>, classes: string[]): Record<string, Ans> {
+  const out: Record<string, Ans> = {};
+  for (const [code, a] of Object.entries(answers)) {
+    if (a.notApplicable) { out[code] = { ...blank(), na: true, note: a.note ?? '' }; continue; }
+    if (a.value === undefined) continue;
+    out[code] = { value: String(a.value), evidence: a.evidence && classes.includes(a.evidence) ? a.evidence : 'Self-reported', ref: a.ref ?? '', note: a.note ?? '' };
+  }
+  return out;
+}
+
+function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, canPrefill, draft, onSaved }: {
+  caseId: string; questions: Q[]; role: string; docs: Doc[]; stateOk: boolean; status: string; nextVersion: number; canPrefill: boolean; draft: Draft; onSaved: () => void;
 }) {
   const toast = useToast();
   const classes = role === 'OWNER' ? OWNER_CLASSES : ALL_CLASSES;
-  const [ans, setAns] = useState<Record<string, Ans>>({});
+  const [ans, setAns] = useState<Record<string, Ans>>(() => draftToAns(draft.answers, classes));
   const [errs, setErrs] = useState<Record<string, string>>({});
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [savedAt, setSavedAt] = useState<string | null>(draft.updatedAt);
+  const [resumeDismissed, setResumeDismissed] = useState(false);
+  const skipNextAutosave = useRef(Object.keys(draft.answers).length === 0);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [gate, setGate] = useState<Gate | null>(null);
   const [blocked, setBlocked] = useState<{ problems: string[]; completion?: number } | null>(null);
   const [done, setDone] = useState<Done | null>(null);
@@ -102,6 +123,26 @@ function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, can
     return out;
   };
 
+  // Debounced autosave: fires on every answer change, skipped once right after loading the draft itself.
+  useEffect(() => {
+    if (skipNextAutosave.current) { skipNextAutosave.current = false; return; }
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      setSaveState('saving');
+      api.put<{ savedAt: string }>(`/cases/${caseId}/diagnostics/draft`, { answers: payload() })
+        .then((r) => { setSaveState('saved'); setSavedAt(r.savedAt); })
+        .catch(() => setSaveState('error'));
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ans, caseId]);
+  const retrySave = () => {
+    setSaveState('saving');
+    api.put<{ savedAt: string }>(`/cases/${caseId}/diagnostics/draft`, { answers: payload() })
+      .then((r) => { setSaveState('saved'); setSavedAt(r.savedAt); })
+      .catch(() => setSaveState('error'));
+  };
+
   const check = async () => {
     setDone(null); if (!validate()) return;
     setBusy('check');
@@ -114,7 +155,7 @@ function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, can
       const r = await api.post<{ accepted: boolean; version: number; score: { overall: number; maturity: string; confidenceClass: string }; caseStatus: string }>(`/cases/${caseId}/diagnostics`, { answers: payload(), uuid: uuid.current });
       setDone({ version: r.version, overall: r.score.overall, maturity: r.score.maturity, confidenceClass: r.score.confidenceClass, caseStatus: r.caseStatus });
       toast(`Diagnostic v${r.version} submitted and scored`);
-      uuid.current = crypto.randomUUID(); setGate(null); setBlocked(null); setConfirm(false); onSaved();
+      uuid.current = crypto.randomUUID(); setGate(null); setBlocked(null); setConfirm(false); setSaveState('idle'); setSavedAt(null); onSaved();
     } catch (e) {
       setConfirm(false);
       if (e instanceof ApiFail && e.code === 'data_quality') { const d = e.fields as any; setBlocked({ problems: Array.isArray(d?.problems) ? d.problems : [e.message], completion: d?.completion }); }
@@ -133,9 +174,21 @@ function Form({ caseId, questions, role, docs, stateOk, status, nextVersion, can
   };
 
   return <div className="stack">
-    <Card title={`Diagnostic questionnaire (this will be version ${nextVersion})`} actions={canPrefill ? <Button size="sm" onClick={prefill}>Start from latest answers</Button> : undefined}>
+    <Card title={`Diagnostic questionnaire (this will be version ${nextVersion})`}
+      actions={<div className="row" style={{ gap: 10 }}>
+        <span className="small muted" role="status" aria-live="polite">
+          {saveState === 'saving' && 'Saving…'}
+          {saveState === 'saved' && `Saved${savedAt ? ` ${dateTime(savedAt)}` : ''}`}
+          {saveState === 'error' && <span className="row" style={{ gap: 4, color: 'var(--bad)' }}>Unable to save <Button size="sm" variant="ghost" type="button" onClick={retrySave}>Retry</Button></span>}
+        </span>
+        {canPrefill && <Button size="sm" onClick={prefill}>Start from latest answers</Button>}
+      </div>}>
       <p className="muted">Rate each statement from 0 (not in place) to 4 (fully in place). For every answer, say how well it is evidenced. Answers backed by verified or document evidence count for more in the score.</p>
       {!stateOk && <div className="alert warn" role="status">The business profile must be complete before a diagnostic can be taken. The case is currently {status}.</div>}
+      {!resumeDismissed && Object.keys(draft.answers).length > 0 && <div className="alert info" role="status">
+        Resumed your in-progress diagnostic ({Math.round(completion * 100)}% complete{draft.updatedAt ? `, last saved ${dateTime(draft.updatedAt)}` : ''}).
+        <Button size="sm" variant="ghost" type="button" onClick={() => setResumeDismissed(true)} style={{ marginLeft: 8 }}>Dismiss</Button>
+      </div>}
       <div className="row small" role="status" aria-live="polite"><strong>{answered} of {questions.length} answered</strong><span className="muted">({Math.round(completion * 100)}% complete)</span></div>
       <div className="bar-track" aria-hidden style={{ marginTop: 4 }}><div className="bar-fill" style={{ width: `${completion * 100}%` }} /></div>
       {note && <div className="alert info" role="status" style={{ marginTop: 10 }}>{note}</div>}
