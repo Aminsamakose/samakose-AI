@@ -13,10 +13,10 @@ beforeAll(async () => {
 });
 
 describe('evidence deletion', () => {
-  it('has the delete action in the matrix only for whoever may already edit evidence', () => {
+  it('has the delete action in the matrix for staff who may already edit evidence, plus the case owner', () => {
     expect(can('ADMIN', 'evidence', 'delete')).toBe(true);
     expect(can('EXPERT', 'evidence', 'delete')).toBe(true);
-    expect(can('OWNER', 'evidence', 'delete')).toBe(false);
+    expect(can('OWNER', 'evidence', 'delete')).toBe(true);
     expect(can('REVIEWER', 'evidence', 'delete')).toBe(false);
   });
 
@@ -34,9 +34,22 @@ describe('evidence deletion', () => {
     expect((await api(stranger).del(`/evidence/${add.data.id}`)).status).toBe(404);
   });
 
-  it('refuses an owner (cannot edit or delete evidence, only submit it)', async () => {
+  it('lets the owner delete unverified evidence on their own case', async () => {
     const add = await api(lead).post(`/cases/${caseId}/evidence`, { description: 'Owner-visible note', class: 'Self-reported' });
-    expect((await api(owner).del(`/evidence/${add.data.id}`)).status).toBe(403);
+    const del = await api(owner).del(`/evidence/${add.data.id}`);
+    expect(del.status).toBe(200);
+    const list = await api(lead).get(`/cases/${caseId}/evidence`);
+    expect(list.data.find((e: any) => e.id === add.data.id)).toBeUndefined();
+  });
+
+  it('refuses the owner on verified evidence, same as everyone else', async () => {
+    const add = await api(lead).post(`/cases/${caseId}/evidence`, { description: 'Verified bank statement for owner check', class: 'Self-reported' });
+    const ver = await api(lead).patch(`/evidence/${add.data.id}`, { class: 'Verified' });
+    expect(ver.status).toBe(200);
+    const del = await api(owner).del(`/evidence/${add.data.id}`);
+    expect(del.status).toBe(400);
+    const list = await api(lead).get(`/cases/${caseId}/evidence`);
+    expect(list.data.find((e: any) => e.id === add.data.id)).toBeDefined();
   });
 
   it('refuses to delete a 404 and a verified item, keeping it as a correction via reclassification instead', async () => {
