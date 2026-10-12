@@ -3,6 +3,7 @@ import { defineRoute, status, routes } from '../framework';
 import { listQuery } from '../list';
 import { email, isoDate, money, name, optText, text, uuid, empty } from '../schemas';
 import * as fin from '@/services/finance';
+import * as discounts from '@/services/discounts';
 import * as contracts from '@/services/contracts';
 import * as kobo from '@/services/kobo';
 import * as dash from '@/services/dashboards';
@@ -43,6 +44,14 @@ defineRoute({ method: 'POST', path: '/invoices/:id/manual-payment', tag: F, summ
 defineRoute({ method: 'GET', path: '/payments', tag: F, summary: 'Payments', permission: ['payments', 'read'], query: listQuery.extend({ status: z.string().optional(), invoiceId: z.string().optional() }), handler: ({ ctx, query }) => fin.listPayments(ctx, query) });
 defineRoute({ method: 'POST', path: '/payments/:reference/verify', tag: F, summary: 'Check a payment with the provider after the owner returns', permission: ['payments', 'create'], body: empty, handler: ({ ctx, params }) => fin.verifyPayment(ctx, params.reference) });
 defineRoute({ method: 'POST', path: '/payments/:reference/mock-complete', tag: F, summary: 'Complete a test payment (only when no payment key is set)', permission: ['payments', 'create'], body: empty, handler: ({ ctx, params }) => fin.mockComplete(ctx, params.reference) });
+
+/* ----------------------------- discounts -------------------------------- */
+defineRoute({ method: 'GET', path: '/discount-rules', tag: F, summary: 'Discount rules', permission: ['discounts', 'read'], handler: ({ ctx }) => discounts.listDiscountRules(ctx) });
+defineRoute({ method: 'POST', path: '/discount-rules', tag: F, summary: 'Propose a discount rule (needs a second person to approve it)', permission: ['discounts', 'create'], body: z.object({ kind: z.enum(['PERCENTAGE', 'FIXED', 'PROMOTIONAL_PRICE']), value: z.number().positive(), conditions: z.record(z.string(), z.any()).nullish() }), handler: async ({ ctx, body }) => status(201, await discounts.createDiscountRule(ctx, body as any)) });
+defineRoute({ method: 'POST', path: '/discount-rules/:id/approve', tag: F, summary: 'Approve a discount rule (four-eyes: not the person who created it)', permission: ['discounts', 'approve'], body: empty, handler: ({ ctx, params }) => discounts.approveDiscountRule(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/promo-campaigns', tag: F, summary: 'Create a promo campaign against an approved discount rule', permission: ['discounts', 'create'], body: z.object({ name, discountRuleId: uuid, startDate: isoDate.nullish(), endDate: isoDate.nullish() }), handler: async ({ ctx, body }) => status(201, await discounts.createPromoCampaign(ctx, body as any)) });
+defineRoute({ method: 'POST', path: '/promo-codes', tag: F, summary: 'Generate a redeemable promo code', permission: ['discounts', 'create'], body: z.object({ campaignId: uuid, prefix: optText(12), maxRedemptions: z.number().int().positive().nullish(), perCustomerLimit: z.number().int().positive().nullish(), minPurchaseGhs: money.nullish(), maxDiscountGhs: money.nullish(), expiresAt: z.string().datetime().nullish() }), handler: async ({ ctx, body }) => status(201, await discounts.createPromoCode(ctx, body as any)) });
+defineRoute({ method: 'POST', path: '/invoices/:id/apply-promo', tag: F, summary: 'Redeem a promo code against a draft invoice', permission: ['invoices', 'edit'], body: z.object({ code: text(3, 40), customerId: uuid }), handler: ({ ctx, params, body }) => discounts.applyPromoCode(ctx, params.id, body) });
 defineRoute({ method: 'POST', path: '/webhooks/paystack', tag: 'Integrations', summary: 'Paystack event receiver (HMAC-SHA512 signature)', auth: 'webhook', handler: ({ ctx, req, rawBody }) => fin.paystackWebhook(ctx, rawBody, req.headers.get('x-paystack-signature')) });
 defineRoute({ method: 'POST', path: '/integrations/kobo/webhook', tag: 'Integrations', summary: 'KoboToolbox REST service receiver (shared secret header)', auth: 'webhook', rateLimit: { key: 'kobo:ip:{ip}', limit: 600, windowSec: 60 },
   handler: async ({ ctx, req, rawBody }) => { let b: unknown; try { b = JSON.parse(rawBody); } catch { b = null; } return kobo.koboWebhook(ctx, req.headers.get('x-kobo-secret'), b); } });
