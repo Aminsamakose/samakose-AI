@@ -2,6 +2,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { api, ensureReference, makeOrg, makeUser, uniq, type Session } from './helpers';
 import { db, schema } from '@/db/client';
+import type { Ctx } from '@/lib/context';
+import { ensureCurrentPeriod, postLedgerEntries } from '@/services/ledger';
 
 let finance: Session, admin: Session, orgId: string;
 beforeAll(async () => {
@@ -79,5 +81,31 @@ describe('financial ledger (wired to invoice/payment events only)', () => {
     await api(finance).patch(`/invoices/${inv2.id}`, { status: 'Sent' });
     const [e1] = await entriesFor('INVOICE', inv1.id), [e2] = await entriesFor('INVOICE', inv2.id);
     expect(e1.periodId).toBe(e2.periodId); // same month, same period row, created at most once
+  });
+});
+
+describe('security: posting into a closed or locked period', () => {
+  // These exercise the DB trigger directly, against a brand-new period in a far-future month created
+  // just for this test - never the suite's shared "current" month, which other tests concurrently
+  // rely on staying Open. financial_ledger_entries_period_guard is the authoritative backstop; it
+  // fires on every insert, including one built entirely outside postLedgerEntries().
+  async function accountId(code: string) {
+    const [row] = await db().select({ id: schema.financialAccounts.id }).from(schema.financialAccounts).where(eq(schema.financialAccounts.code, code)).limit(1);
+    return row.id as string;
+  }
+  it('the database trigger rejects an insert dated into a Closed period', async () => {
+    const [period] = await db().insert(schema.financialPeriods).values({ label: `security-closed-${uniq()}`, startDate: '2030-01-01', endDate: '2030-01-31', status: 'Closed' }).returning();
+    const revenue = await accountId('REVENUE');
+    await expect(db().insert(schema.financialLedgerEntries).values({ accountId: revenue, debitGhs: '0', creditGhs: '10.00', referenceType: 'ADJUSTMENT', referenceId: crypto.randomUUID(), periodId: period.id })).rejects.toThrow();
+  });
+  it('the database trigger rejects an insert dated into a Locked period', async () => {
+    const [period] = await db().insert(schema.financialPeriods).values({ label: `security-locked-${uniq()}`, startDate: '2030-02-01', endDate: '2030-02-28', status: 'Locked' }).returning();
+    const revenue = await accountId('REVENUE');
+    await expect(db().insert(schema.financialLedgerEntries).values({ accountId: revenue, debitGhs: '10.00', creditGhs: '0', referenceType: 'ADJUSTMENT', referenceId: crypto.randomUUID(), periodId: period.id })).rejects.toThrow();
+  });
+  it('postLedgerEntries() itself refuses an unbalanced set of lines before even touching the period', async () => {
+    const revenue = await accountId('REVENUE'), cash = await accountId('CASH');
+    const fakeCtx = { db: db(), user: null, ip: '127.0.0.1', requestId: 'test', after: () => {} } as unknown as Ctx;
+    await expect(postLedgerEntries(fakeCtx, { referenceType: 'ADJUSTMENT', referenceId: crypto.randomUUID(), lines: [{ accountCode: 'REVENUE', debitGhs: 10 }, { accountCode: 'CASH', creditGhs: 9 }] })).rejects.toThrow();
   });
 });
