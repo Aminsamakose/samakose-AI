@@ -14,12 +14,10 @@
  * does not fully specify clawback apportionment across multiple payouts on the same invoice;
  * revisit if a cleaner signal is added later.
  *
- * Known schema note, not fixed here: refunds.ledgerEntryId and payoutAdjustments.ledgerEntryId are
- * typed `uuid` in migration 0051, but financial_ledger_entries.id is a bigserial - the two can never
- * actually be linked through that column as it stands. This service leaves ledgerEntryId unset
- * rather than attempting an insert that Postgres would reject; worth a follow-up migration (e.g.
- * change the column to bigint, or add a reference_type/reference_id pair matching the ledger's own
- * pattern) once someone signs off on a schema change.
+ * refunds.ledgerEntryId and payoutAdjustments.ledgerEntryId were originally typed `uuid` in
+ * migration 0051, which could never actually reference financial_ledger_entries.id (a bigserial).
+ * Migration 0052 fixed the column type to bigint; this service now records the id of the ledger
+ * entry each refund/clawback posted.
  */
 import { and, eq, inArray } from 'drizzle-orm';
 import { schema } from '@/db/client';
@@ -113,11 +111,11 @@ export async function processRefund(ctx: Ctx, refundId: string) {
   const [p] = await ctx.db.select().from(pay).where(eq(pay.id, r.paymentId)).limit(1);
   if (!p) throw notFound('Payment not found');
   const [i] = await ctx.db.select().from(inv).where(eq(inv.id, r.invoiceId)).limit(1);
-  await postLedgerEntries(ctx, {
+  const posted = await postLedgerEntries(ctx, {
     referenceType: 'REFUND', referenceId: r.id, description: `Refund ${r.code} on invoice ${i?.code ?? r.invoiceId}`,
     lines: [{ accountCode: 'REVENUE', debitGhs: Number(r.amountGhs) }, { accountCode: p.provider === 'manual' ? 'CASH' : 'PAYSTACK_CLEARING', creditGhs: Number(r.amountGhs) }]
   });
-  const [updated] = await ctx.db.update(rf).set({ status: 'Processed', processedAt: new Date() }).where(eq(rf.id, refundId)).returning();
+  const [updated] = await ctx.db.update(rf).set({ status: 'Processed', processedAt: new Date(), ledgerEntryId: posted[0]?.id ?? null }).where(eq(rf.id, refundId)).returning();
   await audit(ctx, 'refund.processed', 'refunds', refundId, r, updated);
 
   const clawbacks = await clawBackPaidPayouts(ctx, r);
@@ -162,11 +160,11 @@ export async function approveClawback(ctx: Ctx, adjustmentId: string) {
   if (adj.createdBy && adj.createdBy === u.id) throw forbidden('The person who opened a clawback cannot approve it');
   const [payout] = await ctx.db.select({ professionalId: pyo.professionalId }).from(pyo).where(eq(pyo.id, adj.payoutId)).limit(1);
   if (payout?.professionalId === u.id) throw forbidden('A professional cannot approve their own clawback');
-  await postLedgerEntries(ctx, {
+  const posted = await postLedgerEntries(ctx, {
     referenceType: 'ADJUSTMENT', referenceId: adj.id, description: `Payout clawback: ${adj.reason}`,
     lines: [{ accountCode: 'PROFESSIONAL_PAYABLE', debitGhs: Number(adj.amountGhs) }, { accountCode: 'REVENUE', creditGhs: Number(adj.amountGhs) }]
   });
-  const [updated] = await ctx.db.update(pa).set({ approvedBy: u.id }).where(eq(pa.id, adjustmentId)).returning();
+  const [updated] = await ctx.db.update(pa).set({ approvedBy: u.id, ledgerEntryId: posted[0]?.id ?? null }).where(eq(pa.id, adjustmentId)).returning();
   await audit(ctx, 'payout_adjustment.clawback_approved', 'payout_adjustments', adjustmentId, adj, updated);
   return updated;
 }
