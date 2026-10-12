@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import '@/api/routes';
 import { routes } from '@/api/framework';
@@ -6,6 +6,7 @@ import { can } from '@/lib/rbac';
 import { ROLES, type Role } from '@/db/schema';
 import { answerSheet, api, call, drain, ensureReference, makeOrg, makeUser, uniq, type Session } from './helpers';
 import { db, schema } from '@/db/client';
+import { clearRateLimit } from '@/lib/session';
 
 const NIL = '00000000-0000-4000-8000-000000000000';
 const fill = (p: string) => p.replace(/:reference/g, 'nothing').replace(/:[a-zA-Z]+/g, NIL);
@@ -47,6 +48,13 @@ describe('every endpoint enforces its permission for every role', () => {
       const resp = await call(r.method, fill(r.path), { body: r.method === 'GET' || r.method === 'DELETE' ? undefined : {} });
       expect(resp.status, `${r.method} ${r.path}`).toBe(401);
     }
+  });
+  // The loop above calls every guarded route with every role's session, which trips the global
+  // per-user write-rate-limit (framework.ts's w:${user.id} guard) for each role purely as a side
+  // effect of exhaustively testing permissions, not of anything a real user would do. Clear it so
+  // later tests in this file that legitimately write as one of these sessions aren't collateral damage.
+  afterAll(async () => {
+    for (const role of ROLES) await clearRateLimit(`w:${sessions[role].userId}`);
   });
 });
 
