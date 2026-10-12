@@ -358,6 +358,13 @@
       "when": 1792028000000,
       "tag": "0051_finance_professional_economy",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1792029000000,
+      "tag": "0052_fix_ledger_entry_id_types",
+      "breakpoints": true
     }
   ]
 }

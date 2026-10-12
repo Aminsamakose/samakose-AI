@@ -92,6 +92,8 @@ describe('refund lifecycle', () => {
     const entries = await db().select().from(schema.financialLedgerEntries).where(eq(schema.financialLedgerEntries.referenceId, r.id));
     expect(entries).toHaveLength(2);
     expect(entries.reduce((s, e) => s + Number(e.debitGhs) - Number(e.creditGhs), 0)).toBe(0);
+    // ledgerEntryId now links to one of the two entries posted (migration 0052 fixed the column type).
+    expect(entries.some((e) => e.id === processed.data.refund.ledgerEntryId)).toBe(true);
   });
 });
 
@@ -117,6 +119,7 @@ describe('refund-driven payout clawback', () => {
     const adjEntries = await db().select().from(schema.financialLedgerEntries).where(eq(schema.financialLedgerEntries.referenceId, clawback.id));
     expect(adjEntries).toHaveLength(2);
     expect(adjEntries.reduce((s, e) => s + Number(e.debitGhs) - Number(e.creditGhs), 0)).toBe(0);
+    expect(adjEntries.some((e) => e.id === approved.data.ledgerEntryId)).toBe(true);
   });
 
   it('a professional cannot approve the clawback on their own payout', async () => {
