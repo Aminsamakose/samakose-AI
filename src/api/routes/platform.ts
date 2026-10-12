@@ -4,6 +4,7 @@ import { listQuery } from '../list';
 import { email, isoDate, money, name, optText, text, uuid, empty } from '../schemas';
 import * as fin from '@/services/finance';
 import * as rs from '@/services/revenue-share';
+import * as apr from '@/services/approvals';
 import * as contracts from '@/services/contracts';
 import * as kobo from '@/services/kobo';
 import * as dash from '@/services/dashboards';
@@ -22,6 +23,13 @@ import * as rc from '@/services/registration-config';
 import { getJob } from '@/domain/jobs';
 import { need } from '@/services/common';
 import { forbidden, notFound } from '@/lib/errors';
+
+/* ----------------------- approval matrix / four-eyes ------------------- */
+const AP = 'Approvals';
+defineRoute({ method: 'GET', path: '/approvals', tag: AP, summary: 'Approval requests, optionally filtered by status/action type', permission: ['approvals', 'read'], query: z.object({ status: z.string().max(20).optional(), actionType: z.string().max(40).optional() }), handler: ({ ctx, query }) => apr.listApprovalRequests(ctx, query) });
+defineRoute({ method: 'POST', path: '/approvals', tag: AP, summary: 'Open an approval request for a high-risk action, routed by the Approval Matrix thresholds', permission: ['approvals', 'create'], body: z.object({ actionType: z.enum(apr.APPROVAL_ACTION_TYPES), referenceId: uuid, amountGhs: money.optional(), metric: z.number().min(0).max(100_000_000).optional() }), handler: async ({ ctx, body }) => status(201, await apr.createApprovalRequest(ctx, body as any)) });
+defineRoute({ method: 'POST', path: '/approvals/:id/decide', tag: AP, summary: 'Approve or reject an approval request (four-eyes: the decider can never be the requester)', permission: ['approvals', 'approve'], body: z.object({ decision: z.enum(['Approved', 'Rejected']), reason: optText(500) }), handler: ({ ctx, params, body }) => apr.decideApproval(ctx, params.id, body.decision, body.reason ?? undefined) });
+defineRoute({ method: 'POST', path: '/conflict-checks', tag: AP, summary: 'Record a conflict-of-interest check for one user against one context', permission: ['approvals', 'create'], body: z.object({ userId: uuid, contextType: z.enum(apr.CONFLICT_CONTEXT_TYPES), referenceId: uuid, result: z.enum(['CLEAR', 'BLOCKED']), reason: optText(500) }), handler: async ({ ctx, body }) => status(201, await apr.recordConflictCheck(ctx, { ...body, reason: body.reason ?? undefined })) });
 
 /* ----------------------------- commercial ------------------------------ */
 const F = 'Finance';
