@@ -7,7 +7,7 @@ const id = () => uuid('id').primaryKey().defaultRandom();
 const created = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const updated = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow();
 
-export const CALENDAR_PROVIDERS = ['GOOGLE', 'MICROSOFT', 'ICS', 'INTERNAL'] as const;
+export const CALENDAR_PROVIDERS = ['GOOGLE', 'MICROSOFT', 'ICS', 'INTERNAL', 'ZOOM'] as const;
 export const CALENDAR_CONNECTION_STATUSES = ['CONNECTED', 'DISCONNECTED', 'ERROR'] as const;
 export const CALENDAR_EVENT_STATUSES = ['SCHEDULED', 'UPDATED', 'CANCELLED', 'SYNC_ERROR'] as const;
 
@@ -27,7 +27,7 @@ export const calendarConnections = pgTable('calendar_connections', {
 }, (t) => [
   uniqueIndex('calendar_connection_user_provider_idx').on(t.userId, t.provider),
   index('calendar_connection_status_idx').on(t.status),
-  check('calendar_connection_provider_ck', sql`${t.provider} in ('GOOGLE','MICROSOFT','ICS','INTERNAL')`),
+  check('calendar_connection_provider_ck', sql`${t.provider} in ('GOOGLE','MICROSOFT','ICS','INTERNAL','ZOOM')`),
   check('calendar_connection_status_ck', sql`${t.status} in ('CONNECTED','DISCONNECTED','ERROR')`),
 ]);
 
@@ -56,7 +56,7 @@ export const calendarEvents = pgTable('calendar_events', {
   index('calendar_event_session_idx').on(t.sessionId),
   index('calendar_event_connection_idx').on(t.connectionId),
   index('calendar_event_external_idx').on(t.provider, t.externalEventId),
-  check('calendar_event_provider_ck', sql`${t.provider} in ('GOOGLE','MICROSOFT','ICS','INTERNAL')`),
+  check('calendar_event_provider_ck', sql`${t.provider} in ('GOOGLE','MICROSOFT','ICS','INTERNAL','ZOOM')`),
   check('calendar_event_status_ck', sql`${t.status} in ('SCHEDULED','UPDATED','CANCELLED','SYNC_ERROR')`),
   check('calendar_event_time_ck', sql`${t.endsAt} > ${t.startsAt}`),
 ]);

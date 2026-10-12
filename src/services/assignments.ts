@@ -25,6 +25,79 @@ export type Fn = 'lead' | 'specialist' | 'coach' | 'reviewer';
 const POINTER: Record<Exclude<Fn, 'specialist'>, 'consultantId' | 'coachId' | 'reviewerId'> = { lead: 'consultantId', coach: 'coachId', reviewer: 'reviewerId' };
 const FN_LABEL: Record<Fn, string> = { lead: 'lead expert', specialist: 'specialist expert', coach: 'coach', reviewer: 'reviewer' };
 
+/**
+ * The automatic-assignment ceiling for coaches. A coach already carrying this many active cases is
+ * never picked by the automatic picker below, however well they otherwise fit -- the case is left for
+ * a human to staff instead. This is a ceiling on the picker only: it does not stop an administrator or
+ * programme manager from placing a coach manually past it in a genuine exception (place() still warns
+ * when a manual placement is at or past the person's own configured maxActive, same as always).
+ */
+export const COACH_AUTO_ASSIGN_CAP = 50;
+
+/** True when the signed-in expert is the coach on this case, so they can manage its team (lead and
+ *  specialists) without needing the full programme-manager/administrator assignment permission. */
+export async function isCaseCoach(ctx: Ctx, caseId: string): Promise<boolean> {
+  const user = ctx.user;
+  if (!user || user.role !== 'EXPERT') return false;
+  const [cs] = await ctx.db.select({ coachId: c.coachId }).from(c).where(eq(c.id, caseId)).limit(1);
+  return !!cs && cs.coachId === user.id;
+}
+
+/**
+ * System-driven coach staffing: scores every approved, available coach against the business's platform,
+ * sector and region (the same engine a human's "recommended matches" screen uses) and places the best
+ * fit, skipping anyone at or past COACH_AUTO_ASSIGN_CAP active cases. Never throws -- if no one
+ * qualifies, the case is simply left uncoached for a programme manager or administrator to staff by
+ * hand, exactly as it would be without automatic assignment.
+ */
+export async function autoAssignCoach(ctx: Ctx, caseId: string): Promise<{ placed: boolean; userId?: string; reason?: string }> {
+  const [cs] = await ctx.db.select().from(c).where(eq(c.id, caseId)).limit(1);
+  if (!cs) return { placed: false, reason: 'Case not found' };
+  if (cs.coachId) return { placed: false, reason: 'This case already has a coach' };
+  const [org] = await ctx.db.select().from(schema.organisations).where(eq(schema.organisations.id, cs.orgId)).limit(1);
+  if (!org) return { placed: false, reason: 'Organisation not found' };
+  const needs: MatchNeed = { fn: 'coach', platform: platformForOrgType(org.type), sector: org.sector, size: org.size, region: org.region, weakDimensions: [] };
+  const [people, conflicts, onCase] = await Promise.all([
+    approvedPractitioners(ctx),
+    ctx.db.select({ userId: schema.practitionerConflicts.userId }).from(schema.practitionerConflicts).where(eq(schema.practitionerConflicts.orgId, cs.orgId)),
+    ctx.db.select({ userId: a.userId }).from(a).where(and(eq(a.caseId, caseId), eq(a.status, 'Active')))
+  ]);
+  const load = await loadFor(ctx, people.map((x) => x.user.id));
+  const scored = people.map((x) => {
+    const p: MatchProfile = { userId: x.user.id, name: x.user.name, functions: x.p.functions, specialisations: x.p.specialisations, strengths: x.p.strengths, sectors: x.p.sectors, platforms: x.p.platforms, businessSizes: x.p.businessSizes, regions: x.p.regions, languages: x.p.languages, yearsExperience: x.p.yearsExperience, availability: x.p.availability, maxActive: x.p.maxActive, vettingStatus: x.p.vettingStatus };
+    const active = load[x.user.id] ?? 0;
+    return scoreMatch(p, needs, { active, conflict: conflicts.some((k) => k.userId === x.user.id), onCase: onCase.some((k) => k.userId === x.user.id) });
+  }).filter((m) => m.eligible && m.active < Math.min(m.maxActive, COACH_AUTO_ASSIGN_CAP));
+  const best = rankMatches(scored)[0];
+  if (!best) return { placed: false, reason: `No eligible, available coach under the ${COACH_AUTO_ASSIGN_CAP}-case automatic-assignment limit` };
+  await place(ctx, caseId, { fn: 'coach', userId: best.userId, reason: `Automatically assigned by platform, sector and region fit (score ${best.score})`, match: best, auto: true });
+  return { placed: true, userId: best.userId };
+}
+
+/**
+ * System-driven reviewer staffing. Reviewers carry no practitioner profile -- no sector, platform or
+ * region data is collected for them -- so there is nothing to score a "type of business" fit against.
+ * This instead picks the active reviewer with the lightest current reviewing load, excluding anyone
+ * already working this case in another capacity (the independence rule a human assignment enforces
+ * too). Never throws -- an unstaffed reviewer slot is left for a human if no one qualifies.
+ */
+export async function autoAssignReviewer(ctx: Ctx, caseId: string): Promise<{ placed: boolean; userId?: string; reason?: string }> {
+  const [cs] = await ctx.db.select().from(c).where(eq(c.id, caseId)).limit(1);
+  if (!cs) return { placed: false, reason: 'Case not found' };
+  if (cs.reviewerId) return { placed: false, reason: 'This case already has a reviewer' };
+  const onCase = await ctx.db.select({ userId: a.userId }).from(a).where(and(eq(a.caseId, caseId), eq(a.status, 'Active')));
+  const onCaseIds = new Set(onCase.map((r) => r.userId));
+  const reviewers = await ctx.db.select({ id: u.id }).from(u).where(and(eq(u.role, 'REVIEWER'), eq(u.active, true)));
+  const eligible = reviewers.filter((r) => !onCaseIds.has(r.id));
+  if (!eligible.length) return { placed: false, reason: 'No eligible reviewer -- independent of everyone already on this case' };
+  const loadRows = await ctx.db.execute(sql`select user_id, count(*)::int n from case_assignments where status = 'Active' and function = 'reviewer' and user_id in (${sql.join(eligible.map((r) => sql`${r.id}`), sql`, `)}) group by user_id`);
+  const byId = new Map((loadRows.rows as { user_id: string; n: number }[]).map((r) => [r.user_id, r.n]));
+  const ranked = eligible.map((r) => ({ id: r.id, n: byId.get(r.id) ?? 0 })).sort((x, y) => x.n - y.n || x.id.localeCompare(y.id));
+  const pick = ranked[0];
+  await place(ctx, caseId, { fn: 'reviewer', userId: pick.id, reason: 'Automatically assigned: lightest current reviewing load', auto: true });
+  return { placed: true, userId: pick.id };
+}
+
 /** Independence rules. They hold whoever does the assigning. */
 async function independence(ctx: Ctx, caseId: string, fn: Fn, userId: string) {
   const rows = await ctx.db.select({ fn: a.fn, userId: a.userId }).from(a).where(and(eq(a.caseId, caseId), eq(a.status, 'Active')));
@@ -35,18 +108,23 @@ async function independence(ctx: Ctx, caseId: string, fn: Fn, userId: string) {
   if (fn === 'specialist' && mine.some((r) => r.fn === 'coach')) throw fieldError({ userId: 'The coach on this case cannot also be a specialist. Remove one role first.' });
 }
 
-export type Placement = { fn: Fn; userId: string | null; reason?: string | null; specialisation?: string | null; match?: Match | null };
+export type Placement = { fn: Fn; userId: string | null; reason?: string | null; specialisation?: string | null; match?: Match | null; auto?: boolean };
 
 /** Places, replaces or removes one person in one capacity. Returns the new assignment id, if any. */
 export async function place(ctx: Ctx, caseId: string, p: Placement): Promise<{ id: string | null; warnings: string[] }> {
-  const actor = ctx.user;
+  // A system-driven placement (auto?: true, used by autoAssignCoach/autoAssignReviewer) is recorded with
+  // no assignedBy, even though a human request triggered the case's creation -- no person chose this
+  // placement, so none should be credited or blamed for it. That in turn means replacing it later is a
+  // first placement from a human's point of view, not a reassignment, so it never demands the "say why
+  // you are replacing" justification below -- only overriding another person's actual choice does.
+  const actor = p.auto ? null : ctx.user;
   const [cs] = await ctx.db.select().from(c).where(eq(c.id, caseId)).limit(1);
   if (!cs) throw notFound('Case not found');
   const field = p.fn === 'lead' ? 'consultantId' : p.fn === 'coach' ? 'coachId' : p.fn === 'reviewer' ? 'reviewerId' : 'userId';
   const [cur] = p.fn === 'specialist' ? [undefined] : await ctx.db.select().from(a).where(and(eq(a.caseId, caseId), eq(a.fn, p.fn), eq(a.status, 'Active'))).limit(1);
   if (cur && p.userId === cur.userId) return { id: cur.id, warnings: [] };
   const reason = p.reason?.trim() || null;
-  if (cur && p.userId && (reason?.length ?? 0) < 5 && actor) throw fieldError({ reason: `Say why you are replacing the ${FN_LABEL[p.fn]}` });
+  if (cur && p.userId && cur.assignedBy && (reason?.length ?? 0) < 5 && ctx.user) throw fieldError({ reason: `Say why you are replacing the ${FN_LABEL[p.fn]}` });
   const warnings: string[] = [];
   let newId: string | null = null;
   if (p.userId) {
@@ -94,7 +172,11 @@ export async function place(ctx: Ctx, caseId: string, p: Placement): Promise<{ i
 export async function assignCase(ctx: Ctx, id: string, b: { consultantId?: string | null; coachId?: string | null; reviewerId?: string | null; reason?: string | null }) {
   allow(ctx, 'cases', 'assign');
   const user = need(ctx).user;
-  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(user.role)) throw forbidden('Only administrators and programme managers assign people to cases');
+  const coach = user.role === 'EXPERT' && (await isCaseCoach(ctx, id));
+  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(user.role) && !coach) throw forbidden('Only administrators, programme managers, or the coach on this case assign people to it');
+  // A coach picks the lead expert and specialists for their own case (see addSpecialist), but the coach
+  // and reviewer roles stay out of their hands -- those are staffed automatically or by a human manager.
+  if (coach && (b.coachId !== undefined || b.reviewerId !== undefined)) throw forbidden('A coach can assign the lead expert on this case, but not the coach or reviewer role');
   const before = await assertCase(ctx, id);
   const warnings: string[] = [];
   for (const [fn, key] of [['lead', 'consultantId'], ['coach', 'coachId'], ['reviewer', 'reviewerId']] as const) {
@@ -108,13 +190,13 @@ export async function assignCase(ctx: Ctx, id: string, b: { consultantId?: strin
 
 export async function addSpecialist(ctx: Ctx, caseId: string, b: { userId: string; specialisation?: string | null; reason?: string | null; matchScore?: number }) {
   allow(ctx, 'cases', 'assign');
-  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(need(ctx).user.role)) throw forbidden('Only administrators and programme managers assign people to cases');
+  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(need(ctx).user.role) && !(await isCaseCoach(ctx, caseId))) throw forbidden('Only administrators, programme managers, or the coach on this case assign people to it');
   await assertCase(ctx, caseId);
   return place(ctx, caseId, { fn: 'specialist', userId: b.userId, specialisation: b.specialisation, reason: b.reason });
 }
 export async function removeSpecialist(ctx: Ctx, caseId: string, userId: string, reason?: string | null) {
   allow(ctx, 'cases', 'assign');
-  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(need(ctx).user.role)) throw forbidden();
+  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(need(ctx).user.role) && !(await isCaseCoach(ctx, caseId))) throw forbidden();
   await assertCase(ctx, caseId);
   const [row] = await ctx.db.select().from(a).where(and(eq(a.caseId, caseId), eq(a.userId, userId), eq(a.fn, 'specialist'), eq(a.status, 'Active'))).limit(1);
   if (!row) throw notFound('Specialist not found on this case');
@@ -195,7 +277,11 @@ export async function caseTeam(ctx: Ctx, caseId: string) {
 /** Recommended people for one kind of work on one case. Ranked and explained; the programme manager decides. */
 export async function matches(ctx: Ctx, caseId: string, q: { fn: 'lead' | 'specialist' | 'coach'; specialisation?: string }) {
   allow(ctx, 'cases', 'assign');
-  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(need(ctx).user.role)) throw forbidden();
+  const user = need(ctx).user;
+  const coach = user.role === 'EXPERT' && (await isCaseCoach(ctx, caseId));
+  if (!['ADMIN', 'PROGRAMME_MANAGER'].includes(user.role) && !coach) throw forbidden();
+  // A coach may look up candidates for their own case's lead and specialist slots, not for the coach role itself.
+  if (coach && q.fn === 'coach') throw forbidden('A coach cannot reassign the coach role on their own case');
   const cs = await assertCase(ctx, caseId);
   const [org] = await ctx.db.select().from(schema.organisations).where(eq(schema.organisations.id, cs.orgId)).limit(1);
   const [score] = await ctx.db.select().from(schema.healthScores).where(eq(schema.healthScores.caseId, caseId)).orderBy(desc(schema.healthScores.createdAt)).limit(1);

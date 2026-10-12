@@ -39,7 +39,9 @@ export const PERMISSIONS: Record<Role, Grants> = {
     diagnoses: [R], prescriptions: [R], actions: [R, X], kpis: [R], sessions: [R], reports: [R, X], contracts: [R], dashboard: [R, X], practitioners: [R], ratings: [R, C], opportunities: [R, C, E, A], referrals: [R, C, E, A, D], messages: [R], escalations: [R], programme_workspaces: [R, C, E, S]
   },
   EXPERT: {
-    frameworks: [R], users: [R], organisations: [R, C, E], cases: [R, C, E], diagnostics: [R, C], evidence: [R, C, E, V], documents: [R, C], scores: [R],
+    // 'S' (assign) here is scoped further at the row level in assignments.ts: an expert may only
+    // place a lead or specialist on a case where they are the coach, enforced by isCaseCoach().
+    frameworks: [R], users: [R], organisations: [R, C, E], cases: [R, C, E, S], diagnostics: [R, C], evidence: [R, C, E, V], documents: [R, C], scores: [R],
     diagnoses: [R, C, E, O], prescriptions: [R, C, E, O], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E],
     reports: [R, C], dashboard: [R], practitioners: [R, E], opportunities: [R], referrals: [R, C], messages: [R, C], programme_workspaces: [R]
   },

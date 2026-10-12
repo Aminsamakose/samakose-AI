@@ -3,7 +3,7 @@ import { defineRoute, status } from '../framework';
 import * as calendar from '@/services/programme-calendar';
 
 const W = 'Programme workspace';
-const provider = z.enum(['GOOGLE', 'MICROSOFT', 'ICS', 'INTERNAL']);
+const provider = z.enum(['GOOGLE', 'MICROSOFT', 'ICS', 'INTERNAL', 'ZOOM']);
 
 const connectionInput = z.object({
   provider,
@@ -22,14 +22,24 @@ const eventInput = z.object({
   meetingUrl: z.string().url().nullish(),
   sessionId: z.string().uuid().nullish(),
   connectionId: z.string().uuid().nullish(),
-  provider,
+  provider: provider.optional(),
+  // When no meetingUrl is given and this is left false (the default), createEvent reaches for the
+  // administrator's configured video provider (Zoom or Google Meet) and creates a real meeting.
+  skipLiveMeeting: z.boolean().optional(),
   metadata: z.unknown().optional(),
+});
+
+const rescheduleInput = z.object({
+  startsAt: z.string().datetime(),
+  endsAt: z.string().datetime(),
+  timezone: z.string().trim().min(1).max(100).optional(),
 });
 
 const scheduleInput = z.object({
   connectionId: z.string().uuid().nullish(),
-  provider,
+  provider: provider.optional(),
   timezone: z.string().trim().min(1).max(100).optional(),
+  skipLiveMeeting: z.boolean().optional(),
 });
 
 defineRoute({ method: 'GET', path: '/calendar/connections', tag: W, summary: 'List current user calendar connections', permission: ['programme_workspaces', 'read'], handler: ({ ctx }) => calendar.listConnections(ctx) });
@@ -39,3 +49,4 @@ defineRoute({ method: 'GET', path: '/cohorts/:id/calendar-events', tag: W, summa
 defineRoute({ method: 'POST', path: '/cohorts/:id/calendar-events', tag: W, summary: 'Create a calendar event', permission: ['programme_workspaces', 'edit'], body: eventInput, handler: async ({ ctx, params, body }) => status(201, await calendar.createEvent(ctx, params.id, body)) });
 defineRoute({ method: 'POST', path: '/delivery-sessions/:id/calendar', tag: W, summary: 'Schedule a delivery session on the calendar', permission: ['programme_workspaces', 'edit'], body: scheduleInput, handler: async ({ ctx, params, body }) => status(201, await calendar.scheduleSession(ctx, params.id, body)) });
 defineRoute({ method: 'POST', path: '/calendar-events/:id/cancel', tag: W, summary: 'Cancel a calendar event', permission: ['programme_workspaces', 'edit'], handler: ({ ctx, params }) => calendar.cancelEvent(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/calendar-events/:id/reschedule', tag: W, summary: 'Move a calendar event (and its live meeting) to a new time', permission: ['programme_workspaces', 'edit'], body: rescheduleInput, handler: ({ ctx, params, body }) => calendar.rescheduleEvent(ctx, params.id, body) });

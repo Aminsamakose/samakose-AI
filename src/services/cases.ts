@@ -7,8 +7,8 @@ import { assertCase, assertOrg, caseScope, isInternal, assertLeadCase } from '@/
 import { CASE_TRANSITIONS, canTransitionCase } from '@/domain/logic';
 import { notifyUsers } from '@/domain/notify';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
-import { place, completeForCase } from './assignments';
-import { advanceCase, allow, caseFacts, latestScore, need, respondList } from './common';
+import { place, completeForCase, autoAssignCoach, autoAssignReviewer } from './assignments';
+import { advanceCase, allow, caseFacts, latestScore, lockCapacityScope, need, respondList } from './common';
 import { platformForOrgType } from '@/domain/routing';
 import { CASE_STATES, type CaseState } from '@/db/schema';
 
@@ -78,8 +78,15 @@ export async function createCase(ctx: Ctx, b: { orgId: string; programmeId?: str
     programmeId = co.programmeId;
     if (co.status === 'Closed') throw fieldError({ cohortId: 'This cohort is closed' });
     if (co.status === 'Draft') throw fieldError({ cohortId: 'This cohort is still a draft. Open it before enrolling businesses' });
+    // Same cohort-capacity scope as programme-participant-lifecycle's assertCohort and
+    // programmes' updateCohort, so none of these three check-then-act paths can race each other.
+    // Re-read capacity after the lock too: `co` was selected before we held it, so a concurrent
+    // updateCohort could have changed capacity in between, and comparing against the stale value
+    // would defeat the lock entirely.
+    await lockCapacityScope(ctx, `cohort:${co.id}`);
+    const [fresh] = await ctx.db.select({ capacity: schema.cohorts.capacity }).from(schema.cohorts).where(eq(schema.cohorts.id, co.id)).limit(1);
     const n = Number((await ctx.db.select({ n: countOf }).from(c).where(and(eq(c.cohortId, co.id), sql`${c.status} <> 'GRADUATED'`)))[0].n);
-    if (n >= co.capacity) throw conflict('This cohort is full');
+    if (n >= (fresh?.capacity ?? co.capacity)) throw conflict('This cohort is full');
   }
   if (programmeId) {
     const [pr] = await ctx.db.select().from(schema.programmes).where(eq(schema.programmes.id, programmeId)).limit(1);
@@ -95,6 +102,12 @@ export async function createCase(ctx: Ctx, b: { orgId: string; programmeId?: str
   }).returning({ id: c.id, code: c.code, status: c.status });
   // An expert who opens a case becomes its lead through the same checks as any other assignment (approved profile, no declared conflict).
   if (u.role === 'EXPERT') await place(ctx, row.id, { fn: 'lead', userId: u.id, reason: 'Opened the case' });
+  // A coach and a reviewer are staffed automatically, matched to the business's platform, sector and
+  // region, so a case never sits unstaffed waiting on a human to browse the pool. Best-effort: if no
+  // one qualifies (everyone at the auto-assignment cap, no reviewer available, etc.) the case is simply
+  // left for a programme manager or administrator to staff by hand, exactly as before this existed.
+  await autoAssignCoach(ctx, row.id).catch(() => undefined);
+  await autoAssignReviewer(ctx, row.id).catch(() => undefined);
   await audit(ctx, 'case.created', 'case', row.id, undefined, { orgId: b.orgId, programmeId, cohortId: b.cohortId ?? null, status: row.status }, row.id);
   return row;
 }

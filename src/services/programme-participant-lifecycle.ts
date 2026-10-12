@@ -3,8 +3,8 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { notFound, unprocessable } from '@/lib/errors';
-import { need } from '@/services/common';
-import { assertWorkspaceManager } from '@/services/programme-workspaces';
+import { lockCapacityScope, need } from '@/services/common';
+import { assertWorkspaceAccess, assertWorkspaceManager } from '@/services/programme-workspaces';
 
 const pt = schema.programmeParticipants;
 const w = schema.programmeWorkspaces;
@@ -45,12 +45,22 @@ async function assertCohort(ctx: Ctx, workspaceId: string, cohortId: string) {
   const [row] = await ctx.db.select().from(c).where(and(eq(c.id, cohortId), eq(c.programmeId, ws.programmeId))).limit(1);
   if (!row) throw notFound('Cohort not found for this programme');
   if (row.status === 'Closed') throw unprocessable('Cannot assign a participant to a closed cohort');
+  // Serialize against any other check-then-act cohort-capacity write (case creation, capacity edits)
+  // so two concurrent assignments can't both pass this count before either commits. `row` was
+  // selected before we held the lock, so re-read capacity after it too, or a concurrent capacity
+  // edit landing in between would make this check compare against a stale value.
+  await lockCapacityScope(ctx, `cohort:${cohortId}`);
+  const [fresh] = await ctx.db.select({ capacity: c.capacity }).from(c).where(eq(c.id, cohortId)).limit(1);
   const [{ n }] = await ctx.db.select({ n: count() }).from(pt).where(eq(pt.cohortId, cohortId));
-  if (Number(n) >= row.capacity) throw unprocessable('Cohort capacity has been reached');
+  if (Number(n) >= (fresh?.capacity ?? row.capacity)) throw unprocessable('Cohort capacity has been reached');
   return { ws, cohort: row };
 }
 
 export async function getParticipant(ctx: Ctx, workspaceId: string, participantId: string) {
+  // Every sibling mutation here (assignCohort, recordConsent, ...) scopes through the workspace
+  // first; this read-only lookup must too, or any role holding the bare `programme_workspaces:read`
+  // permission could read another programme's participant by guessing/enumerating IDs.
+  await assertWorkspaceAccess(ctx, workspaceId);
   return participant(ctx, workspaceId, participantId);
 }
 

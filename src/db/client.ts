@@ -1,6 +1,7 @@
 import { Pool, type PoolClient } from 'pg';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as baseSchema from './schema';
+import * as frameworkArchitectureSchema from './framework-architecture-schema';
 import * as workspaceSchema from './programme-workspace-schema';
 import * as workspaceConfigurationSchema from './programme-workspace-configuration-schema';
 import * as cohortConfigurationSchema from './cohort-configuration-schema';
@@ -9,7 +10,7 @@ import * as deliveryCoordinationSchema from './delivery-coordination-schema';
 import * as programmeCalendarSchema from './programme-calendar-schema';
 import * as providerAssignmentSchema from './provider-assignment-schema';
 
-const schema = { ...baseSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema, ...deliveryOperationsSchema, ...deliveryCoordinationSchema, ...programmeCalendarSchema, ...providerAssignmentSchema };
+const schema = { ...baseSchema, ...frameworkArchitectureSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema, ...deliveryOperationsSchema, ...deliveryCoordinationSchema, ...programmeCalendarSchema, ...providerAssignmentSchema };
 type Db = NodePgDatabase<typeof schema>;
 const g = globalThis as unknown as { __pool?: Pool; __db?: Db; __poolUrl?: string };
 

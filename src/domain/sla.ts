@@ -1,9 +1,39 @@
+import { sql } from 'drizzle-orm';
+
 /**
  * Delivery service levels. Pure rules, no database.
  * The scheduler runs once a day, so a reminder window is wider than the reminder time: a session is reminded on the first run
  * that falls within `hours + SCAN_SLACK_HOURS` of it, which is never less than `hours` and at most `hours + 12`.
  */
 export const SCAN_SLACK_HOURS = 12;
+
+/**
+ * The single definition of "this action is overdue": not Done, and past its due date.
+ * Every dashboard/report view that needs an action-overdue count or flag composes this
+ * fragment rather than re-deriving `due_date < current_date` locally -- a prior audit found
+ * the same condition independently copy-pasted in four places in dashboards.ts, which is how
+ * two views can silently drift apart the next time only one copy gets edited.
+ *
+ * `alias` lets callers qualify the columns for their own table alias (default unaliased, for
+ * queries selecting directly from `actions`).
+ */
+export function actionOverdueSql(alias?: string) {
+  const col = (name: string) => sql.raw(alias ? `${alias}.${name}` : name);
+  return sql`(${col('status')} <> 'Done' and ${col('due_date')} < current_date)`;
+}
+
+/**
+ * The same "overdue" rule as `actionOverdueSql`, for code that already has the rows in hand
+ * (an in-memory filter over actions already loaded) rather than a SQL query it can compose into.
+ * `today` is an ISO `YYYY-MM-DD` string, matching the format `actions.dueDate` is stored and
+ * compared as. Before this existed, src/domain/job-handlers.ts independently re-derived
+ * `status !== 'Done' && dueDate < today` three times (the ai_brief context, the ai_report
+ * context, and would have for the overdue_scan job had that one not already been SQL) -- the
+ * exact silent-drift risk `actionOverdueSql` was built to close, just in JS form instead of SQL.
+ */
+export function isActionOverdue(status: string, dueDate: string, today: string): boolean {
+  return status !== 'Done' && dueDate < today;
+}
 const H = 3_600_000, D = 86_400_000;
 
 /** The reminder is due when the session starts within the window and has not started yet. */

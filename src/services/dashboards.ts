@@ -4,6 +4,7 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { caseScope, orgScope, programmeScope, assertProgramme } from '@/domain/scope';
 import { suppress } from '@/domain/logic';
+import { actionOverdueSql } from '@/domain/sla';
 import { allow, loadRules, need, respondList } from './common';
 import { forbidden, notFound } from '@/lib/errors';
 import { ROLE_LABEL } from '@/lib/rbac';
@@ -78,7 +79,7 @@ async function management(ctx: Ctx) {
     (select count(*)::int from cases where ${sc}) cases,
     (select count(*)::int from cases where ${sc} and status not in ('GRADUATED')) active_cases,
     (select round(avg(overall)::numeric,1)::float from ${latestScores(u)} s) avg_score,
-    (select count(*)::int from actions a where a.status <> 'Done' and a.due_date < current_date and a.case_id in (select id from cases where ${sc})) overdue_actions,
+    (select count(*)::int from actions a where ${actionOverdueSql('a')} and a.case_id in (select id from cases where ${sc})) overdue_actions,
     (select count(*)::int from prescriptions p where p.status='IN REVIEW' and p.case_id in (select id from cases where ${sc}) and not exists (select 1 from prescriptions x where x.supersedes_id=p.id)) pending_reviews`);
   const byState = await rows(ctx, sql`select status, count(*)::int n from cases where ${sc} group by status`);
   const maturity = await rows(ctx, sql`select maturity, count(*)::int n from ${latestScores(u)} s group by maturity`);
@@ -99,7 +100,7 @@ async function consultant(ctx: Ctx, only?: 'lead') {
   const u = need(ctx).user;
   const mine = only ? sql`and c.consultant_id = ${u.id}` : sql``;
   const cases = await rows(ctx, sql`select c.id, c.code, c.status, o.name org, s.overall, s.maturity, c.updated_at,
-      (select count(*)::int from actions a where a.case_id=c.id and a.status<>'Done' and a.due_date<current_date) overdue
+      (select count(*)::int from actions a where a.case_id=c.id and ${actionOverdueSql('a')}) overdue
     from cases c join organisations o on o.id=c.org_id left join ${latestScores(u)} s on s.case_id=c.id where ${scopeC(u)} ${mine} order by c.updated_at desc limit 50`);
   const returned = await rows(ctx, sql`select p.id, p.code, p.case_id, c.code case_code, p.reviewer_note reason from prescriptions p join cases c on c.id=p.case_id
     where ${scopeC(u)} ${mine} and p.status='RETURNED' and not exists (select 1 from prescriptions x where x.supersedes_id=p.id)`);
@@ -123,7 +124,7 @@ async function coach(ctx: Ctx, only?: 'coach') {
   const mine = only ? sql`and c.coach_id = ${u.id}` : sql``;
   const sessions = await rows(ctx, sql`select s.id, s.scheduled_at, s.case_id, c.code case_code, o.name org, s.brief is not null has_brief from coaching_sessions s join cases c on c.id=s.case_id join organisations o on o.id=c.org_id
     where ${scopeC(u)} ${mine} and s.status='Scheduled' order by s.scheduled_at limit 20`);
-  const actions = await rows(ctx, sql`select a.id, a.code, a.text, a.due_date, a.status, c.code case_code, (a.due_date < current_date) overdue from actions a join cases c on c.id=a.case_id
+  const actions = await rows(ctx, sql`select a.id, a.code, a.text, a.due_date, a.status, c.code case_code, ${actionOverdueSql('a')} overdue from actions a join cases c on c.id=a.case_id
     where ${scopeC(u)} ${mine} and a.assignee_id=${u.id} and a.status<>'Done' order by a.due_date limit 20`);
   const cases = await rows(ctx, sql`select c.id, c.code, c.status, o.name org, s.overall, s.maturity from cases c join organisations o on o.id=c.org_id left join ${latestScores(u)} s on s.case_id=c.id where ${scopeC(u)} ${mine} order by c.updated_at desc limit 30`);
   return { sessions, actions, cases };
@@ -145,7 +146,7 @@ async function owner(ctx: Ctx) {
   if (!cs) return { case: null };
   const history = await rows(ctx, sql`select overall::float overall, maturity, confidence_class, created_at from health_scores where case_id=${cs.id} order by created_at`);
   const last = await one(ctx, sql`select dimensions, confidence_class from health_scores where case_id=${cs.id} order by created_at desc limit 1`);
-  const actions = await rows(ctx, sql`select id, text, due_date, status, owner_role, (due_date < current_date and status<>'Done') overdue from actions where case_id=${cs.id} order by status='Done', due_date limit 30`);
+  const actions = await rows(ctx, sql`select id, text, due_date, status, owner_role, ${actionOverdueSql()} overdue from actions where case_id=${cs.id} order by status='Done', due_date limit 30`);
   const reports = await rows(ctx, sql`select id, code, title, released_at from reports where case_id=${cs.id} and status='Released' order by released_at desc limit 5`);
   const invoices = await rows(ctx, sql`select id, code, amount_ghs::float amount, due_date, status from invoices where org_id=${u.orgId} and status in ('Sent','Overdue') order by due_date`);
   const sessions = await rows(ctx, sql`select id, scheduled_at from coaching_sessions where case_id=${cs.id} and status='Scheduled' and scheduled_at >= now() order by scheduled_at limit 3`);

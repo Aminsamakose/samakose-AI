@@ -6,7 +6,7 @@ import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme, programmeScope } from '@/domain/scope';
 import { emitEvent } from '@/domain/events';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
-import { allow, loadRules, need, respondList } from './common';
+import { allow, loadRules, lockCapacityScope, need, respondList } from './common';
 
 const p = schema.programmes, ch = schema.cohorts;
 const PROG_MOVES: Record<string, string[]> = { Draft: ['Active', 'Cancelled'], Active: ['Completed', 'Cancelled'], Completed: [], Cancelled: [] };
@@ -54,11 +54,54 @@ export async function createProgramme(ctx: Ctx, b: ProgInput) {
   await audit(ctx, 'programme.created', 'programme', row.id, undefined, b);
   return row;
 }
+/** Cases still being actively worked -- not yet at an end-of-journey state. Completing a programme
+ * while cases sit here would flip a status on top of unfinished delivery. */
+const CASE_STATES_IN_FLIGHT = ['ONBOARDING', 'PROFILED', 'DIAGNOSTIC', 'DIAGNOSED', 'PRESCRIBED', 'APPROVAL', 'IN EXECUTION', 'COACHING', 'MONITORING', 'MIDLINE'];
+
+/**
+ * Gate for Active -> Completed. Previously this transition was a bare status flip with cascading
+ * cohort closure and no check that the underlying delivery work was actually finished -- a programme
+ * could be marked Completed with businesses mid-diagnostic, open delivery exceptions nobody resolved,
+ * stalled-case escalations ignored, and not a single released report to show what was delivered.
+ * This enforces four conditions before the status is allowed to move:
+ *   1. No case under this programme is still in an in-flight delivery state.
+ *   2. No case escalation (stalled work, session-outcome flag) under this programme is unresolved.
+ *   3. No delivery exception (OPEN or IN_PROGRESS) on any of this programme's cohorts is unresolved.
+ *   4. If the programme has any cases at all, at least one has a Released report -- some documented
+ *      evidence of what was delivered, not just a status change.
+ */
+async function assertCloseoutReady(ctx: Ctx, programmeId: string, code: string) {
+  const c = schema.cases, esc = schema.caseEscalations, rep = schema.reports, dx = schema.deliveryExceptions;
+
+  const [inFlight] = await ctx.db.select({ n: countOf }).from(c)
+    .where(and(eq(c.programmeId, programmeId), sql`${c.status} in (${sql.join(CASE_STATES_IN_FLIGHT.map((s) => sql`${s}`), sql`, `)})`));
+  if (Number(inFlight.n) > 0) throw unprocessable(`Programme ${code} cannot be completed: ${inFlight.n} case(s) are still in active delivery (not yet graduated, endline, or follow-up).`);
+
+  const [openEsc] = await ctx.db.select({ n: countOf }).from(esc)
+    .innerJoin(c, eq(esc.caseId, c.id))
+    .where(and(eq(c.programmeId, programmeId), sql`${esc.resolvedAt} is null`));
+  if (Number(openEsc.n) > 0) throw unprocessable(`Programme ${code} cannot be completed: ${openEsc.n} escalation(s) on its cases are still unresolved.`);
+
+  const [openException] = await ctx.db.select({ n: countOf }).from(dx)
+    .innerJoin(ch, eq(dx.cohortId, ch.id))
+    .where(and(eq(ch.programmeId, programmeId), sql`${dx.status} in ('OPEN', 'IN_PROGRESS')`));
+  if (Number(openException.n) > 0) throw unprocessable(`Programme ${code} cannot be completed: ${openException.n} delivery exception(s) on its cohorts are still unresolved.`);
+
+  const [{ n: caseCount }] = await ctx.db.select({ n: countOf }).from(c).where(eq(c.programmeId, programmeId));
+  if (Number(caseCount) > 0) {
+    const [released] = await ctx.db.select({ n: countOf }).from(rep)
+      .innerJoin(c, eq(rep.caseId, c.id))
+      .where(and(eq(c.programmeId, programmeId), eq(rep.status, 'Released')));
+    if (Number(released.n) === 0) throw unprocessable(`Programme ${code} cannot be completed: no case has a released report documenting delivered outcomes.`);
+  }
+}
+
 export async function updateProgramme(ctx: Ctx, id: string, b: Partial<ProgInput> & { status?: string }) {
   allow(ctx, 'programmes', 'edit');
   const before = await assertProgramme(ctx, id);
   datesOk(b.startDate ?? before.startDate, b.endDate ?? before.endDate);
   if (b.status && b.status !== before.status && !PROG_MOVES[before.status]?.includes(b.status)) throw unprocessable(`A ${before.status} programme cannot become ${b.status}`);
+  if (b.status === 'Completed' && before.status !== 'Completed') await assertCloseoutReady(ctx, id, before.code);
   const patch: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(b)) if (v !== undefined) patch[k] = k === 'budgetGhs' && v !== null ? Number(v).toFixed(2) : v;
   await ctx.db.update(p).set({ ...patch, updatedAt: new Date() }).where(eq(p.id, id));
@@ -89,6 +132,9 @@ export async function updateCohort(ctx: Ctx, id: string, b: { name?: string; sta
   datesOk(b.startDate ?? before.startDate, b.endDate ?? before.endDate);
   if (b.status && b.status !== before.status && !COHORT_MOVES[before.status]?.includes(b.status)) throw unprocessable(`A ${before.status} cohort cannot become ${b.status}`);
   if (b.capacity !== undefined) {
+    // Same cohort-capacity scope as cases.createCase and the participant-lifecycle cohort
+    // assignment, so an admin lowering capacity can't race a concurrent enrollment.
+    await lockCapacityScope(ctx, `cohort:${id}`);
     const n = Number((await ctx.db.select({ n: countOf }).from(schema.cases).where(eq(schema.cases.cohortId, id)))[0].n);
     if (b.capacity < n) throw conflict(`${n} businesses are already enrolled, so capacity cannot go below ${n}`);
   }

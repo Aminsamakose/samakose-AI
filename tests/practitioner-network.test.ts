@@ -83,6 +83,9 @@ beforeAll(async () => {
   const org = await makeOrg(admin); orgId = org.id; owner = await makeUser('OWNER', { orgId: org.id });
   otherOwner = await makeUser('OWNER', { orgId: (await makeOrg(admin)).id });
   caseId = (await api(pm).post('/cases', { orgId, programmeId: progId })).data.id;
+  // This suite stages the team onto the case one step at a time to test each transition, so start from
+  // an empty team -- clear whatever coach and reviewer were picked automatically on creation.
+  await api(admin).post(`/cases/${caseId}/assign`, { coachId: null, reviewerId: null });
 });
 
 describe('profile photo: one capability, private, resized', () => {

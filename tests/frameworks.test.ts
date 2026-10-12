@@ -20,6 +20,14 @@ describe('framework versions', () => {
     const b = list.find((f) => f.code === 'SME360');
     expect(b.versions.some((v: any) => v.status === 'Published')).toBe(true);
     for (const code of ['AGRIFOOD360', 'ESO360']) expect(list.find((f) => f.code === code).versions.some((v: any) => v.status === 'Published')).toBe(false);
+
+    const published = b.versions.find((v: any) => v.status === 'Published');
+    const details = await api(admin).get(`/settings/frameworks/versions/${published.id}`);
+    expect(details.status).toBe(200);
+    expect(details.data.structuredAvailable).toBe(true);
+    expect(details.data.structured.dimensions.map((d: any) => d.name).sort()).toEqual([...details.data.dimensions].sort());
+    expect(details.data.structured.questions).toHaveLength(details.data.questions.length);
+    expect(details.data.structured.questions.every((q: any) => q.status === 'Published')).toBe(true);
   });
 
   it('lets only an administrator approve, and others at most read', async () => {
@@ -28,6 +36,11 @@ describe('framework versions', () => {
     expect((await api(consultant).post('/settings/frameworks/SME360/versions', { fromBank: true })).status).toBe(403);
     const d = await api(admin).post('/settings/frameworks/SME360/versions', { fromBank: true });
     expect(d.status).toBe(201);
+    const draftRows = await db().select().from(schema.frameworkQuestions).where(eq(schema.frameworkQuestions.frameworkVersionId, d.data.id));
+    const draftDimensions = await db().select().from(schema.frameworkDimensions).where(eq(schema.frameworkDimensions.frameworkVersionId, d.data.id));
+    expect(draftDimensions).toHaveLength(d.data.dimensions.length);
+    expect(draftRows).toHaveLength(d.data.questions.length);
+    expect(draftRows.every((q) => q.status === 'Draft')).toBe(true);
     expect((await api(reviewer).post(`/settings/frameworks/versions/${d.data.id}/publish`, { note: 'try it on' })).status).toBe(403);
     expect((await api(admin).del(`/settings/frameworks/versions/${d.data.id}`)).status).toBe(200);
   });
@@ -44,11 +57,30 @@ describe('framework versions', () => {
     expect((await api(admin).del(`/settings/frameworks/versions/${id}`)).status).toBe(200);
   });
 
-  it('keeps published versions immutable in the database itself', async () => {
+  it('keeps published versions and normalized child records immutable in the database itself', async () => {
     const b = await baseline();
     const pub = b.versions.find((v: any) => v.status === 'Published');
     await expect(db().update(schema.frameworkVersions).set({ questions: [] }).where(eq(schema.frameworkVersions.id, pub.id))).rejects.toThrow();
     await expect(db().delete(schema.frameworkVersions).where(eq(schema.frameworkVersions.id, pub.id))).rejects.toThrow();
+
+    const [dimension] = await db().select().from(schema.frameworkDimensions)
+      .where(eq(schema.frameworkDimensions.frameworkVersionId, pub.id)).limit(1);
+    const [question] = await db().select().from(schema.frameworkQuestions)
+      .where(eq(schema.frameworkQuestions.frameworkVersionId, pub.id)).limit(1);
+    expect(dimension).toBeTruthy();
+    expect(question).toBeTruthy();
+
+    await expect(db().insert(schema.frameworkDimensions).values({
+      frameworkVersionId: pub.id, code: 'MUTATION_TEST', name: 'Should be blocked', weight: 1, sortOrder: 999
+    })).rejects.toThrow();
+    await expect(db().insert(schema.frameworkSubDimensions).values({
+      dimensionId: dimension.id, code: 'MUTATION_TEST', name: 'Should be blocked', weight: 1, sortOrder: 999
+    })).rejects.toThrow();
+    await expect(db().insert(schema.frameworkEvidenceRequirements).values({
+      questionId: question.id, requirement: 'Should be blocked', method: 'manual'
+    })).rejects.toThrow();
+    await expect(db().update(schema.frameworkQuestions).set({ text: 'A changed published question' })
+      .where(eq(schema.frameworkQuestions.id, question.id))).rejects.toThrow();
   });
 
   it('ties a score to the version it was produced under, and editing the bank cannot rewrite it', async () => {

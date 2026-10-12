@@ -1,4 +1,5 @@
 import type { ProgrammeWorkspaceConfigurationStatus } from '@/db/programme-workspace-configuration-schema';
+import { conflict } from '@/lib/errors';
 
 export const CONFIGURATION_WORKFLOW: Record<ProgrammeWorkspaceConfigurationStatus, readonly ProgrammeWorkspaceConfigurationStatus[]> = {
   DRAFT: ['SUBMITTED'],
@@ -20,7 +21,9 @@ export function assertConfigurationTransition(
   to: ProgrammeWorkspaceConfigurationStatus,
 ): void {
   if (!canTransitionConfiguration(from, to)) {
-    throw new Error(`Invalid workspace configuration transition: ${from} -> ${to}`);
+    // ApiError, not a plain Error: this is routine bad input (a disallowed status change),
+    // and the dispatcher would otherwise report it as an opaque 500.
+    throw conflict(`Invalid workspace configuration transition: ${from} -> ${to}`);
   }
 }
 
