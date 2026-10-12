@@ -264,6 +264,25 @@ export const responses = pgTable('responses', {
   createdAt: created()
 }, (t) => [index('resp_diag_idx').on(t.diagnosticId)]);
 
+/**
+ * One in-progress diagnostic per case: the autosaved working copy of answers before submission. A case
+ * has at most one open draft at a time (unique caseId); submitDiagnosticCore() clears it once the
+ * answers become a real `diagnostics` row. Answers are stored exactly as the form holds them (the same
+ * AnswerInput shape submitDiagnostic takes), so resuming is just reloading this JSON back into the form.
+ */
+export const diagnosticDrafts = pgTable('diagnostic_drafts', {
+  id: id(),
+  caseId: uuid('case_id').notNull().references(() => cases.id).unique(),
+  answers: jsonb('answers').notNull().default({}),
+  updatedBy: uuid('updated_by'),
+  /** How many of the configured reminder tiers (sla.ts's `scanIncompleteDiagnostics`) have fired for the
+   *  draft currently sitting in `answers`. Reset to 0 whenever the draft is saved again, so working on it
+   *  cancels the next escalation step the same way completing it clears the row entirely. */
+  reminderTier: integer('reminder_tier').notNull().default(0),
+  lastReminderAt: timestamp('last_reminder_at', { withTimezone: true }),
+  createdAt: created(), updatedAt: updated()
+});
+
 export const documents = pgTable('documents', {
   id: id(), code: codeCol('doc'),
   orgId: uuid('org_id').notNull().references(() => organisations.id),

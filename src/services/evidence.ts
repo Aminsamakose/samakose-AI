@@ -63,6 +63,26 @@ export async function updateEvidence(ctx: Ctx, id: string, b: { class?: Evidence
   return { ok: true };
 }
 
+export async function deleteEvidence(ctx: Ctx, id: string) {
+  allow(ctx, 'evidence', 'delete');
+  const [before] = await ctx.db.select().from(ev).where(eq(ev.id, id)).limit(1);
+  if (!before) throw notFound('Evidence not found');
+  await assertLeadCase(ctx, before.caseId);
+  // Verified evidence already fed into a submitted diagnostic's score. Deleting it would silently change
+  // a scored, audited answer with no replacement -- leave that correction to updateEvidence (reclassify),
+  // not a delete. Unverified/self-reported/document-supported claims that were never checked are safe to remove.
+  if (before.class === 'Verified') throw fieldError({ class: 'Verified evidence cannot be deleted. Reclassify it first if it was verified in error.' });
+  await ctx.db.delete(ev).where(eq(ev.id, id));
+  await audit(ctx, 'evidence.deleted', 'evidence', id, { class: before.class, description: before.description }, undefined, before.caseId);
+  await emitEvent(ctx, 'EvidenceUpdated', { caseId: before.caseId, payload: { evidence: before.code, deleted: true } });
+  // Removing evidence that was backing a scored answer changes the picture the score drew from it.
+  if (before.responseId) {
+    const d = await latestDiagnostic(ctx, before.caseId);
+    if (d) { await computeScore(ctx, before.caseId, d.id); await advanceCase(ctx, before.caseId); }
+  }
+  return { ok: true };
+}
+
 /* ------------------------------ documents ------------------------------ */
 const TYPES: Record<string, { mime: string; magic: (b: Buffer) => boolean }> = {
   pdf: { mime: 'application/pdf', magic: (b) => b.subarray(0, 4).toString() === '%PDF' },

@@ -337,6 +337,13 @@
       "when": 1792025000000,
       "tag": "0048_framework_architecture",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1792026000000,
+      "tag": "0049_diagnostic_drafts",
+      "breakpoints": true
     }
   ]
 }
