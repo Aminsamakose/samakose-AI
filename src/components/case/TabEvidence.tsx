@@ -73,12 +73,19 @@ function RowActions({ ev, role, canEdit, canDelete, onDone }: { ev: Ev; role: st
   const allowed = CLASSES.filter((c) => c !== ev.class && (c !== 'Verified' || role === 'EXPERT'));
   const f = useForm({ cls: allowed[0] ?? '' }, (v) => api.patch(`/evidence/${ev.id}`, { class: v.cls }), { success: 'Evidence type changed and the case rescored', onDone: () => { setOpen(false); onDone(); } });
   const removeEvidence = async () => { await api.del(`/evidence/${ev.id}`); toast(`${ev.code} deleted`); onDone(); };
+  // An owner may delete evidence they added standalone, but not evidence tied to a submitted diagnostic
+  // answer: deleting it would fall back to the answer's originally submitted class rather than "no evidence",
+  // which could silently undo a consultant's downgrade and inflate the score back up. Server-enforced; this
+  // just keeps the owner from being shown a control that would 403.
+  const ownerBlockedByResponse = role === 'OWNER' && !!ev.responseId;
+  const canActuallyDelete = canDelete && ev.class !== 'Verified' && !ownerBlockedByResponse;
   return <div className="row">
     {canEdit && role === 'EXPERT' && ev.class !== 'Verified' && <ConfirmButton size="sm" label="Verify" variant="primary" message={`Mark ${ev.code} as verified? You are confirming you have checked it. The score is recalculated.`} onConfirm={() => set('Verified', `${ev.code} verified`)} />}
     {canEdit && ev.class !== 'Missing' && <ConfirmButton size="sm" label="Reject" variant="danger" message={`Reject ${ev.code}? It will be recorded as Missing, which carries the lowest weight, and the score is recalculated.`} onConfirm={() => set('Missing', `${ev.code} rejected`)} />}
     {canEdit && <Button size="sm" onClick={() => setOpen(true)}>Change type</Button>}
-    {canDelete && ev.class !== 'Verified' && <ConfirmButton size="sm" label="Delete" variant="danger" message={`Delete ${ev.code}? This removes it permanently and recalculates the score if it was backing an answer. This cannot be undone.`} onConfirm={removeEvidence} />}
-    {canDelete && ev.class === 'Verified' && <span className="small muted" title="Verified evidence cannot be deleted. Ask your consultant to reclassify it first.">Verified — cannot delete</span>}
+    {canActuallyDelete && <ConfirmButton size="sm" label="Delete" variant="danger" message={`Delete ${ev.code}? This removes it permanently and recalculates the score if it was backing an answer. This cannot be undone.`} onConfirm={removeEvidence} />}
+    {canDelete && !canActuallyDelete && ev.class === 'Verified' && <span className="small muted" title="Verified evidence cannot be deleted. Ask your consultant to reclassify it first.">Verified — cannot delete</span>}
+    {canDelete && !canActuallyDelete && ownerBlockedByResponse && ev.class !== 'Verified' && <span className="small muted" title="This backs a submitted diagnostic answer. Ask your consultant to reclassify it, or submit a new diagnostic version.">Backs a diagnostic answer — cannot delete</span>}
     <Modal open={open} onClose={() => setOpen(false)} title={`Change type of ${ev.code}`}>
       <form className="stack" onSubmit={f.onSubmit} noValidate>
         <FormError message={f.formError} />

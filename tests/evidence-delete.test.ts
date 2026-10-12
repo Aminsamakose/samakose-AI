@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { api, ensureReference, makeOrg, makeUser, type Session } from './helpers';
+import { answerSheet, api, ensureReference, makeOrg, makeUser, type Session } from './helpers';
 import { can } from '@/lib/rbac';
 
 let admin: Session, lead: Session, stranger: Session, owner: Session, caseId: string;
@@ -50,6 +50,27 @@ describe('evidence deletion', () => {
     expect(del.status).toBe(400);
     const list = await api(lead).get(`/cases/${caseId}/evidence`);
     expect(list.data.find((e: any) => e.id === add.data.id)).toBeDefined();
+  });
+
+  it('refuses the owner on evidence that backs a submitted diagnostic answer, even once a consultant has downgraded it', async () => {
+    const answers = await answerSheet(3, 'Self-reported');
+    const submit = await api(lead).post(`/cases/${caseId}/diagnostics`, { answers });
+    expect(submit.status).toBe(201);
+    const list = await api(lead).get(`/cases/${caseId}/evidence`);
+    const backing = list.data.find((e: any) => !!e.responseId);
+    expect(backing).toBeDefined();
+    // The consultant rejects it (downgrades it to Missing) -- this is the state where deleting it would
+    // matter most, since computeScore's fallback to the response's own frozen class would otherwise let
+    // the owner silently undo the rejection by deleting the (now Missing) evidence row.
+    const reject = await api(lead).patch(`/evidence/${backing.id}`, { class: 'Missing' });
+    expect(reject.status).toBe(200);
+    const del = await api(owner).del(`/evidence/${backing.id}`);
+    expect(del.status).toBe(403);
+    const after = await api(lead).get(`/cases/${caseId}/evidence`);
+    expect(after.data.find((e: any) => e.id === backing.id)).toBeDefined();
+    // The lead expert still can -- this restriction is owner-specific, not a blanket ban on response-linked evidence.
+    const staffDel = await api(lead).del(`/evidence/${backing.id}`);
+    expect(staffDel.status).toBe(200);
   });
 
   it('refuses to delete a 404 and a verified item, keeping it as a correction via reclassification instead', async () => {

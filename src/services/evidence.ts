@@ -72,6 +72,12 @@ export async function deleteEvidence(ctx: Ctx, id: string) {
   // a scored, audited answer with no replacement -- leave that correction to updateEvidence (reclassify),
   // not a delete. Unverified/self-reported/document-supported claims that were never checked are safe to remove.
   if (before.class === 'Verified') throw fieldError({ class: 'Verified evidence cannot be deleted. Reclassify it first if it was verified in error.' });
+  // Evidence backing a diagnostic response falls back to that response's own frozen evidenceClass once its
+  // evidence row is gone (see computeScore's override map) -- never to "no evidence". For the owner that would
+  // let deleting a consultant's rejection (reclassified to Missing) silently restore the originally submitted,
+  // higher class and inflate the score back up. Owners may only remove evidence they added standalone, not
+  // anything tied to a scored answer; staff still correct a scored answer's evidence via reclassification.
+  if (before.responseId && need(ctx).user.role === 'OWNER') throw forbidden('This evidence backs a submitted diagnostic answer and cannot be deleted. Ask your consultant to reclassify it, or submit a new diagnostic version to change the answer.');
   await ctx.db.delete(ev).where(eq(ev.id, id));
   await audit(ctx, 'evidence.deleted', 'evidence', id, { class: before.class, description: before.description }, undefined, before.caseId);
   await emitEvent(ctx, 'EvidenceUpdated', { caseId: before.caseId, payload: { evidence: before.code, deleted: true } });
