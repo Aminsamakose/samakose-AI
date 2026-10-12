@@ -226,7 +226,12 @@ export async function me(ctx: Ctx) {
   const c = need(ctx);
   const [u] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, c.user.id)).limit(1);
   const unread = Number(((await ctx.db.execute(sql`select count(*)::int n from notifications where user_id=${c.user.id} and read_at is null`)).rows[0] as { n: number }).n);
-  return { user: publicUser(u), permissions: PERMISSIONS[u.role], programmeIds: c.user.programmeIds, unreadNotifications: unread, next: nextStep(c.user), approvalStatus: u.approvalStatus, recoveryCodesLeft: u.mfaEnabled ? u.mfaRecovery.length : 0 };
+  // c.user.role is the role this session is currently acting as (its own primary role, unless switched
+  // via roleGrants.switchRole) -- that, not the account's fixed users.role row, is what permissions and
+  // the UI's role-driven display should follow.
+  const grants = await ctx.db.select({ role: schema.roleGrants.role }).from(schema.roleGrants).where(and(eq(schema.roleGrants.userId, c.user.id), eq(schema.roleGrants.status, 'approved')));
+  return { user: publicUser({ ...u, role: c.user.role }), permissions: PERMISSIONS[c.user.role], primaryRole: c.user.primaryRole,
+    switchableRoles: grants.map((g) => g.role), programmeIds: c.user.programmeIds, unreadNotifications: unread, next: nextStep(c.user), approvalStatus: u.approvalStatus, recoveryCodesLeft: u.mfaEnabled ? u.mfaRecovery.length : 0 };
 }
 export async function updateMe(ctx: Ctx, name: string) {
   const c = need(ctx);

@@ -7,6 +7,7 @@ import { can, ROLE_LABEL, type Resource } from '@/lib/rbac';
 import type { Role } from '@/db/schema';
 import { api } from '@/lib/client/api';
 import { ToastProvider, useApi } from './ui';
+import { RoleSwitcher } from './RoleSwitcher';
 import { Avatar } from '@/components/Avatar';
 import { Icon, type IconName } from './Icon';
 import { FeedbackLauncher } from './FeedbackLauncher';
@@ -77,6 +78,7 @@ export function Shell({ user, children }: { user: { name: string; role: Role; em
             <input ref={searchRef} id="gsearch" name="q" type="search" placeholder="Search cases, organisations, people  ( / )" style={{ maxWidth: 420 }} />
           </form>
           <FeedbackLauncher />
+          <RoleSwitcher />
           <Link className="btn" href="/notifications" aria-label={`Notifications${notes.data?.unread ? `, ${notes.data.unread} unread` : ''}`}><Icon name="bell" />Alerts{notes.data?.unread ? <span className="badge-n">{notes.data.unread}</span> : null}</Link>
           <Link className="btn ghost" href="/profile" title={user.email}><Avatar name={user.name} src={user.photoUrl} size={26} />{user.name}<span className="muted small hide-sm"> · {ROLE_LABEL[user.role]}</span></Link>
           <ThemeToggle className="btn icon" />

@@ -1,11 +1,13 @@
 'use client';
 import { useState } from 'react';
 import { api, errText } from '@/lib/client/api';
-import { Async, Badge, Button, Card, ConfirmButton, Field, FormError, KV, PageHead, useForm, useToast } from '@/components/ui';
+import { Async, Badge, Button, Card, ConfirmButton, Field, FormError, KV, PageHead, useApi, useForm, useToast } from '@/components/ui';
 import { useMe, useTitle } from '@/components/dash/common';
 import { OptionalCard } from '@/components/OptionalAnswers';
 import { RecoveryCodes } from '@/components/RecoveryCodes';
 import { PhotoCard, PractitionerProfileCard } from '@/components/PractitionerProfile';
+import { ROLE_LABEL } from '@/lib/rbac';
+import { ROLES, type Role } from '@/db/schema';
 
 function NameForm({ name, onSaved }: { name: string; onSaved: () => void }) {
   const f = useForm({ name }, async (v) => { return api.patch('/auth/me', { name: v.name.trim() }); }, { success: 'Name updated', onDone: onSaved });
@@ -101,6 +103,32 @@ function MfaSection({ enabled, recoveryLeft, onChanged }: { enabled: boolean; re
   </form>;
 }
 
+type Roles = { primaryRole: Role; activeRole: Role; additionalRoles: Role[] };
+function RolesCard() {
+  const roles = useApi<Roles>('/me/roles');
+  const f = useForm({ role: '' as Role | '', note: '' }, async (v) => {
+    if (!v.role) return;
+    return api.post('/me/roles/request', { role: v.role, note: v.note.trim() || undefined });
+  }, { success: 'Request sent to an administrator', onDone: () => { f.setValues({ role: '', note: '' }); roles.reload(); } });
+  return <Card title="Additional roles">
+    <Async state={roles}>{(d) => {
+      const requestable = ROLES.filter((r) => r !== d.primaryRole && !d.additionalRoles.includes(r));
+      return <div className="stack">
+        <p className="muted">Your primary role is <strong>{ROLE_LABEL[d.primaryRole]}</strong>. An administrator can authorise you to also act as another role -- switch between them from the top bar, one at a time.</p>
+        {d.additionalRoles.length > 0 && <p className="row" style={{ gap: 6, flexWrap: 'wrap' }}>Also authorised as: {d.additionalRoles.map((r) => <Badge key={r} tone="ok">{ROLE_LABEL[r]}</Badge>)}</p>}
+        <form className="stack" noValidate onSubmit={(e) => { e.preventDefault(); if (f.values.role) f.onSubmit(); }}>
+          <FormError message={f.formError} />
+          <div className="form-grid">
+            <Field label="Request an additional role" name="role" error={f.errors.role}>{(p) => <select {...p} {...f.input('role')}><option value="">Choose a role</option>{requestable.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select>}</Field>
+            <Field label="Note for the administrator (optional)" name="note" error={f.errors.note}>{(p) => <input {...p} {...f.input('note')} maxLength={500} placeholder="Why you need this role" />}</Field>
+          </div>
+          <div className="form-actions"><Button variant="primary" type="submit" loading={f.busy} disabled={!f.values.role}>Send request</Button></div>
+        </form>
+      </div>;
+    }}</Async>
+  </Card>;
+}
+
 export default function ProfilePage() {
   useTitle('Profile');
   const me = useMe();
@@ -117,6 +145,7 @@ export default function ProfilePage() {
       <PhotoCard name={d.user.name} photoUrl={(d.user as any).photoUrl ?? null} onChanged={me.reload} />
       {d.user.role === 'EXPERT' && <PractitionerProfileCard onPhotoChange={me.reload} />}
       <OptionalCard />
+      <RolesCard />
       <Card title="Change password"><PasswordForm /></Card>
       <Card title="Two-step verification"><MfaSection enabled={d.user.mfaEnabled} recoveryLeft={(d as any).recoveryCodesLeft ?? 0} onChanged={me.reload} /></Card>
       <Card title="Sessions">

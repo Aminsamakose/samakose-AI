@@ -10,6 +10,7 @@ import { badRequest } from '@/lib/errors';
 import * as fb from '@/services/feedback';
 import * as team from '@/services/team';
 import * as users from '@/services/users';
+import * as roleGrants from '@/services/role-grants';
 import { googleCallback, googleEnabled, startGoogle } from '@/services/google';
 import { env } from '@/lib/env';
 import { listQuery } from '../list';
@@ -102,3 +103,11 @@ defineRoute({ method: 'GET', path: '/auth/providers', tag: T, summary: 'Which si
 defineRoute({ method: 'GET', path: '/auth/google/start', tag: T, summary: 'Begin Google sign-in (business owners)', auth: 'public', transactional: false, rateLimit: { key: 'gstart:ip:{ip}', limit: 30, windowSec: 600 }, handler: async () => startGoogle() });
 defineRoute({ method: 'GET', path: '/auth/google/callback', tag: T, summary: 'Google returns here after sign-in', auth: 'public', transactional: false, query: z.object({ code: z.string().optional(), state: z.string().optional(), error: z.string().optional() }).passthrough(),
   handler: ({ ctx, query, req }) => googleCallback(ctx, query, parseCookies(req.headers.get('cookie'))[env.isProd ? '__Host-sk-oauth' : 'sk_oauth'], req.headers.get('user-agent')) });
+
+const RG = 'Additional roles';
+defineRoute({ method: 'GET', path: '/me/roles', tag: RG, summary: 'My primary role, the role this session currently acts as, and any additional approved roles I can switch to', gateExempt: true, handler: ({ ctx }) => roleGrants.myRoles(ctx) });
+defineRoute({ method: 'POST', path: '/me/roles/request', tag: RG, summary: 'Ask an administrator to authorise an additional role for my account', body: z.object({ role, note: z.string().trim().max(500).optional() }), handler: async ({ ctx, body }) => status(201, await roleGrants.requestRole(ctx, body.role, body.note)) });
+defineRoute({ method: 'POST', path: '/me/roles/switch', tag: RG, summary: 'Switch this session to act as an approved additional role, or pass role: null to switch back to my own primary role', gateExempt: true, body: z.object({ role: role.nullable() }), handler: ({ ctx, body }) => roleGrants.switchRole(ctx, body.role) });
+defineRoute({ method: 'GET', path: '/role-grants', tag: RG, summary: 'Pending additional-role requests awaiting a decision', permission: ['users', 'edit'], handler: ({ ctx }) => roleGrants.listPendingRoleGrants(ctx) });
+defineRoute({ method: 'POST', path: '/role-grants/:id/approve', tag: RG, summary: 'Approve an additional-role request', permission: ['users', 'edit'], body: empty, handler: ({ ctx, params }) => roleGrants.decideRoleGrant(ctx, params.id, true) });
+defineRoute({ method: 'POST', path: '/role-grants/:id/reject', tag: RG, summary: 'Reject an additional-role request', permission: ['users', 'edit'], body: empty, handler: ({ ctx, params }) => roleGrants.decideRoleGrant(ctx, params.id, false) });
