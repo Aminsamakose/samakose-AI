@@ -1,8 +1,40 @@
 'use client';
 import { useState } from 'react';
 import { api, dateTime } from '@/lib/client/api';
-import { Badge, Button, DataTable, PageHead, useToast, type Col } from '@/components/ui';
+import { Async, Badge, Button, Card, DataTable, Empty, PageHead, useApi, useToast, type Col } from '@/components/ui';
 import { Guard, roleLabel } from '@/components/admin/common';
+
+type RoleGrant = { id: string; userId: string; userName: string; userEmail: string; primaryRole: string; role: string; note: string | null; createdAt: string };
+function RoleGrantQueue() {
+  const grants = useApi<RoleGrant[]>('/role-grants');
+  const toast = useToast();
+  const [busy, setBusy] = useState<string | null>(null);
+  const decide = async (g: RoleGrant, kind: 'approve' | 'reject') => {
+    setBusy(g.id);
+    try { await api.post(`/role-grants/${g.id}/${kind}`, {}); toast(kind === 'approve' ? `${g.userName} can now act as ${roleLabel(g.role)}` : `Request from ${g.userName} rejected`); grants.reload(); }
+    catch (e: any) { toast(e.message, 'bad'); }
+    finally { setBusy(null); }
+  };
+  return <Card title="Additional-role requests">
+    <p className="muted">Someone asking to also act as a role beyond their primary one -- a separate decision from approving their account, made on its own evidence.</p>
+    <Async state={grants} empty={(d) => d.length === 0}>{(rows) => <div className="table-wrap"><table>
+      <caption className="sr">Pending additional-role requests</caption>
+      <thead><tr><th>Person</th><th>Primary role</th><th>Requested role</th><th>Note</th><th>Requested</th><th>Decision</th></tr></thead>
+      <tbody>{rows.map((g) => <tr key={g.id}>
+        <td>{g.userName}<div className="small muted">{g.userEmail}</div></td>
+        <td><Badge>{roleLabel(g.primaryRole)}</Badge></td>
+        <td><Badge tone="brand">{roleLabel(g.role)}</Badge></td>
+        <td>{g.note ?? '-'}</td>
+        <td className="num">{dateTime(g.createdAt)}</td>
+        <td><span className="row" style={{ gap: 6 }}>
+          <Button size="sm" variant="primary" loading={busy === g.id} onClick={() => decide(g, 'approve')} aria-label={`Approve ${g.userName} as ${roleLabel(g.role)}`}>Approve</Button>
+          <Button size="sm" disabled={busy === g.id} onClick={() => decide(g, 'reject')} aria-label={`Reject ${g.userName}'s request`}>Reject</Button>
+        </span></td>
+      </tr>)}</tbody>
+    </table></div>}</Async>
+    {grants.data && grants.data.length === 0 && <Empty title="No additional-role requests pending" />}
+  </Card>;
+}
 
 type Row = { id: string; name: string; email: string; role: string; signupOrgName: string | null; signupNote: string | null; createdAt: string };
 
@@ -25,5 +57,6 @@ export default function RegistrationsPage() {
   return <Guard resource="users" action="edit" title="Pending approvals">{() => <>
     <PageHead title="Pending approvals" sub="People who registered themselves and confirmed their email. Approving a consultant, coach, programme manager or partner gives the role only. Link them to work separately. Business owners are approved when they confirm their email and only see their own organisation." />
     <div className="card"><DataTable<Row> endpoint="/users" params={{ approval: 'pending' }} columns={cols} refreshKey={tick} placeholder="Search name or email" empty={{ title: 'Nothing waiting', hint: 'New registrations that need a decision appear here.' }} /></div>
+    <RoleGrantQueue />
   </>}</Guard>;
 }

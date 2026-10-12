@@ -36,7 +36,7 @@ export async function dashboardAs(ctx: Ctx, userId: string) {
   const [t] = await ctx.db.select().from(schema.users).where(eq(schema.users.id, userId)).limit(1);
   if (!t) throw notFound('User not found');
   const progs = await ctx.db.select({ p: schema.userProgrammes.programmeId }).from(schema.userProgrammes).where(eq(schema.userProgrammes.userId, t.id));
-  const target = { id: t.id, email: t.email, name: t.name, role: t.role, orgId: t.orgId, programmeIds: progs.map((x) => x.p), mfaEnabled: t.mfaEnabled, mfaVerified: true, sessionId: a.sessionId, mustChangePassword: false, approvalStatus: t.approvalStatus, profileRequired: false };
+  const target = { id: t.id, email: t.email, name: t.name, role: t.role, primaryRole: t.role, orgId: t.orgId, programmeIds: progs.map((x) => x.p), mfaEnabled: t.mfaEnabled, mfaVerified: true, sessionId: a.sessionId, mustChangePassword: false, approvalStatus: t.approvalStatus, profileRequired: false };
   await audit(ctx, 'dashboard.viewed_as', 'user', t.id, undefined, { role: t.role });
   const d: any = await dashboard({ ...ctx, user: target });
   return { ...d, viewingAs: { id: t.id, name: t.name, role: t.role, roleLabel: ROLE_LABEL[t.role] } };

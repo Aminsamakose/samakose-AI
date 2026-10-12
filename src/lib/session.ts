@@ -1,5 +1,6 @@
 import { and, eq, gt, sql } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
+import type { Role } from '@/db/schema';
 import { randomToken, sha256 } from './crypto';
 import type { AuthUser } from './context';
 import { env } from './env';
@@ -30,10 +31,18 @@ export async function loadSession(token: string | undefined | null): Promise<Aut
   }
   const progs = await db().select({ p: schema.userProgrammes.programmeId }).from(schema.userProgrammes).where(eq(schema.userProgrammes.userId, row.u.id));
   return {
-    id: row.u.id, email: row.u.email, name: row.u.name, role: row.u.role, orgId: row.u.orgId,
+    // Every place downstream reads ctx.user.role this way; a session acting as an additional
+    // role (see roleGrants.switchRole) simply carries a different value here. The person's own
+    // users.role never changes and is always what a fresh session, or a switch back, resolves to.
+    id: row.u.id, email: row.u.email, name: row.u.name, role: row.s.activeRole ?? row.u.role, primaryRole: row.u.role, orgId: row.u.orgId,
     programmeIds: progs.map((p) => p.p), mfaEnabled: row.u.mfaEnabled, mfaVerified: row.s.mfaVerified,
     sessionId: id, mustChangePassword: row.u.mustChangePassword, approvalStatus: row.u.approvalStatus, profileRequired: row.u.profileRequired
   };
+}
+
+/** Switch this session to act as `role`, or back to the person's own primary role when `role` is null. */
+export async function setActiveRole(sessionId: string, role: Role | null) {
+  await db().update(schema.sessions).set({ activeRole: role }).where(eq(schema.sessions.id, sessionId));
 }
 
 export async function destroySession(token: string) {

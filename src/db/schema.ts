@@ -96,11 +96,33 @@ export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(), // sha256 of the cookie token
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   mfaVerified: boolean('mfa_verified').notNull().default(false),
+  // The role this session is currently acting as. Null means "the user's own users.role" (the
+  // ordinary, single-role case). Set only when the signed-in person also holds an approved
+  // additional role (see roleGrants) and switched into it; see services/roleGrants.ts.
+  activeRole: roleEnum('active_role'),
   ip: text('ip'), userAgent: text('user_agent'),
   createdAt: created(),
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull()
 }, (t) => [index('sessions_user_idx').on(t.userId), index('sessions_exp_idx').on(t.expiresAt)]);
+
+/**
+ * Additional roles a person is authorised to act as, beyond their primary users.role (which
+ * always stands and needs no row here). One account, several authorised roles -- a consultant who
+ * is also a trained Reviewer, say -- switchable per session via roleGrants.switchRole(), never
+ * concurrent. Granting one is a distinct decision from approving the account itself: an ADMIN
+ * reviews and decides each request on its own evidence.
+ */
+export const roleGrants = pgTable('role_grants', {
+  id: id(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: roleEnum('role').notNull(),
+  status: text('status').notNull().default('pending'), // pending | approved | rejected
+  note: text('note'),
+  decidedBy: uuid('decided_by'),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [uniqueIndex('role_grants_user_role_uq').on(t.userId, t.role), index('role_grants_user_idx').on(t.userId), index('role_grants_status_idx').on(t.status)]);
 
 export const userTokens = pgTable('user_tokens', {
   id: id(),

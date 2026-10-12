@@ -344,6 +344,13 @@
       "when": 1792026000000,
       "tag": "0049_diagnostic_drafts",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1792027000000,
+      "tag": "0050_role_grants",
+      "breakpoints": true
     }
   ]
 }
