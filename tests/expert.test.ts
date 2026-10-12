@@ -12,11 +12,16 @@ beforeAll(async () => {
   pm = await makeUser('PROGRAMME_MANAGER', { programmeIds: [prog.id] });
   const org = await makeOrg(admin); owner = await makeUser('OWNER', { orgId: org.id });
   caseId = (await api(pm).post('/cases', { orgId: org.id, programmeId: prog.id })).data.id;
+  // This suite assigns the team explicitly to test each permission, so start from an empty team --
+  // clear whatever coach and reviewer were picked automatically on creation.
+  await api(admin).post(`/cases/${caseId}/assign`, { coachId: null, reviewerId: null });
 });
 
 describe('one EXPERT role, least privilege by assignment', () => {
   it('has the new actions in the matrix, and only where intended', () => {
-    expect(can('ADMIN', 'cases', 'assign')).toBe(true); expect(can('PROGRAMME_MANAGER', 'cases', 'assign')).toBe(true); expect(can('EXPERT', 'cases', 'assign')).toBe(false);
+    // An expert is granted 'assign' at the matrix level only so they can staff their own case as its
+    // coach; isCaseCoach() in assignments.ts narrows it row-by-row to that one case.
+    expect(can('ADMIN', 'cases', 'assign')).toBe(true); expect(can('PROGRAMME_MANAGER', 'cases', 'assign')).toBe(true); expect(can('EXPERT', 'cases', 'assign')).toBe(true);
     expect(can('EXPERT', 'evidence', 'verify')).toBe(true); expect(can('ADMIN', 'evidence', 'verify')).toBe(false); expect(can('OWNER', 'evidence', 'verify')).toBe(false);
     expect(can('ADMIN', 'cases', 'certify')).toBe(true); expect(can('EXPERT', 'cases', 'certify')).toBe(false); expect(can('PROGRAMME_MANAGER', 'cases', 'certify')).toBe(false);
   });
