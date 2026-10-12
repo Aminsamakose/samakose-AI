@@ -53,7 +53,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
     organisations: [R], plans: [R, C, E], contracts: [R, C, E, X], invoices: [R, C, E, X], payments: [R, C, X], dashboard: [R], programme_workspaces: [R]
   },
   OWNER: {
-    organisations: [R, E], cases: [R], diagnostics: [R, C], evidence: [R, C], documents: [R, C], scores: [R], prescriptions: [R],
+    organisations: [R, E], cases: [R], diagnostics: [R, C], evidence: [R, C, D], documents: [R, C], scores: [R], prescriptions: [R],
     actions: [R, E], kpis: [R, C], sessions: [R], reports: [R], contracts: [R, A], invoices: [R], payments: [C], dashboard: [R], ratings: [R, C], opportunities: [R], referrals: [R, C, D], messages: [R, C],
     team: [R, C, E, D]
   },
