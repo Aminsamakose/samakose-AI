@@ -22,3 +22,10 @@ create unique index if not exists role_grants_user_role_uq on public.role_grants
 create index if not exists role_grants_user_idx on public.role_grants(user_id);
 create index if not exists role_grants_status_idx on public.role_grants(status);
 alter table public.role_grants enable row level security;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'samakose_app') THEN
+    ALTER TABLE public.role_grants OWNER TO samakose_app;
+  END IF;
+END $$;

@@ -14,3 +14,10 @@ create table if not exists public.diagnostic_drafts (
   updated_at timestamptz not null default now()
 );
 alter table public.diagnostic_drafts enable row level security;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'samakose_app') THEN
+    ALTER TABLE public.diagnostic_drafts OWNER TO samakose_app;
+  END IF;
+END $$;
