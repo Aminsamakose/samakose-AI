@@ -25,6 +25,13 @@ export const DEFAULT_RULES: Rules = {
   'sla.session_reminder_hours': 24,
   'sla.session_outcome_hours': 24,
   'sla.stalled_days': 14,
+  // Incomplete-diagnostic reminder cadence, in hours since the draft was last saved: first reminder to
+  // the business, second to the business and the assigned professional, final to both plus the
+  // programme's managers. Configurable per the directive's example (24h / 3d / 7d); these are the
+  // platform defaults, not hard-coded recipients -- reminder() in sla.ts reads them fresh each scan.
+  'diagnostic.reminder_first_hours': 24,
+  'diagnostic.reminder_second_hours': 72,
+  'diagnostic.reminder_final_hours': 168,
   'messaging.retention_months': 12,
   'privacy.min_cell_size': 5,
   'readiness.not_ready_below': 45,

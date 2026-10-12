@@ -19,7 +19,7 @@ type Grants = Partial<Record<Resource, Action[]>>;
 
 const ADMIN: Grants = {
   users: [R, C, E, D, X], organisations: [R, C, E, D, X], programmes: [R, C, E, D, X], cohorts: [R, C, E, D, X],
-  cases: [R, C, E, X, S, T], diagnostics: [R, C], evidence: [R, C, E], documents: [R, C], scores: [R], diagnoses: [R, C],
+  cases: [R, C, E, X, S, T], diagnostics: [R, C], evidence: [R, C, E, D], documents: [R, C], scores: [R], diagnoses: [R, C],
   prescriptions: [R, C], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E], reports: [R, C, X],
   plans: [R, C, E, D], contracts: [R, C, E, X], invoices: [R, C, E, D, X], payments: [R, C, X],
   audit: [R, X], settings: [R, C, E, D], dashboard: [R, X], integrations: [R, C, E], inquiries: [R, E, X],
@@ -41,7 +41,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
   EXPERT: {
     // 'S' (assign) here is scoped further at the row level in assignments.ts: an expert may only
     // place a lead or specialist on a case where they are the coach, enforced by isCaseCoach().
-    frameworks: [R], users: [R], organisations: [R, C, E], cases: [R, C, E, S], diagnostics: [R, C], evidence: [R, C, E, V], documents: [R, C], scores: [R],
+    frameworks: [R], users: [R], organisations: [R, C, E], cases: [R, C, E, S], diagnostics: [R, C], evidence: [R, C, E, V, D], documents: [R, C], scores: [R],
     diagnoses: [R, C, E, O], prescriptions: [R, C, E, O], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E],
     reports: [R, C], dashboard: [R], practitioners: [R, E], opportunities: [R], referrals: [R, C], messages: [R, C], programme_workspaces: [R]
   },

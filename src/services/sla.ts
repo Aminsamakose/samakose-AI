@@ -19,6 +19,39 @@ const uniq = (...xs: (string | null | undefined)[]) => [...new Set(xs.filter(Boo
 /** Audit rows written by the scans themselves are not human activity. */
 export const SYSTEM_AUDIT = ['escalation.raised', 'escalation.resolved', 'session.reminded'];
 
+/**
+ * Incomplete-diagnostic reminders. Escalates in up to three configurable tiers (hours since the draft
+ * was last saved, read fresh from `rules` every scan -- never hard-coded): first to the business, second
+ * to the business and the assigned lead/coach, final to both plus the programme's managers. A draft that
+ * is worked on again (saveDraft) resets `reminderTier` to 0, so it starts over; one that is submitted or
+ * withdrawn is deleted entirely (clearDraft / no draft to scan), so a completed diagnostic never keeps
+ * generating these. Idempotent: each tier fires once for the draft currently sitting in `answers`.
+ */
+export async function scanIncompleteDiagnostics(ctx: Ctx, now = new Date()) {
+  const rules = await loadRules(ctx.db);
+  const tiers = [Number(rules['diagnostic.reminder_first_hours']), Number(rules['diagnostic.reminder_second_hours']), Number(rules['diagnostic.reminder_final_hours'])];
+  const dd = schema.diagnosticDrafts;
+  const due = await ctx.db.select().from(dd).where(sql`${dd.reminderTier} < 3`).for('update', { skipLocked: true }).limit(500);
+  let sent = 0;
+  for (const draft of due) {
+    const tier = draft.reminderTier;
+    const hours = tiers[tier];
+    if (!Number.isFinite(hours)) continue;
+    const dueAt = new Date(draft.updatedAt.getTime() + hours * 3_600_000);
+    if (now < dueAt) continue;
+    const p = await caseParties(ctx, draft.caseId);
+    if (!p) { await ctx.db.delete(dd).where(eq(dd.id, draft.id)); continue; }
+    const answered = Object.keys(draft.answers as Record<string, unknown>).length;
+    await ctx.db.update(dd).set({ reminderTier: tier + 1, lastReminderAt: now }).where(eq(dd.id, draft.id));
+    await notifyUsers(ctx, p.ownerIds, { kind: 'DiagnosticIncomplete', title: 'Your Business Diagnostic is Incomplete', body: `You started your diagnostic (${answered} question${answered === 1 ? '' : 's'} answered so far) but have not completed it. Continue where you left off.`, link: '/my-case?tab=diagnostic', email: true });
+    if (tier >= 1) await notifyUsers(ctx, uniq(p.consultantId, p.coachId), { kind: 'DiagnosticIncomplete', title: `Diagnostic completion reminder for ${p.c.code}`, body: 'The assigned business has an incomplete diagnostic requiring follow-up.', link: `/cases/${draft.caseId}?tab=diagnostic`, email: true });
+    if (tier >= 2) await notifyUsers(ctx, await managersFor(ctx, p.c.programmeId), { kind: 'DiagnosticIncomplete', title: `${p.c.code}'s diagnostic is still incomplete`, body: 'Escalated: no progress since the earlier reminders.', link: `/cases/${draft.caseId}?tab=diagnostic`, email: true });
+    await audit(ctx, 'diagnostic.reminded', 'case', draft.caseId, undefined, { tier: tier + 1, answered }, draft.caseId);
+    sent++;
+  }
+  return { reminded: sent };
+}
+
 /** One reminder per session to the coach, the lead and the owners. Moving a session clears the mark, so the new time is reminded too. */
 export async function remindSessions(ctx: Ctx, now = new Date()) {
   const rules = await loadRules(ctx.db);

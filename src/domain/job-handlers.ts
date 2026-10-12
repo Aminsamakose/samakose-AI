@@ -265,6 +265,9 @@ registerJob('session_reminder', async () => tx(async (t) => (await import('@/ser
 /** Stalled cases and sessions with no recorded outcome are raised to the people who can act, and cleared when the cause goes. */
 registerJob('escalation_scan', async () => tx(async (t) => (await import('@/services/sla')).scanEscalations(systemCtx(t, 'scan'))));
 
+/** Escalating reminders (business -> +assigned professional -> +programme managers) for a diagnostic draft that has gone quiet. Completing or resuming it stops them. */
+registerJob('diagnostic_reminder', async () => tx(async (t) => (await import('@/services/sla')).scanIncompleteDiagnostics(systemCtx(t, 'scan'))));
+
 /** Messages on a graduated case are deleted after the retention period. */
 registerJob('message_retention', async () => tx(async (t) => (await import('@/services/messages')).purgeExpired(systemCtx(t, 'scan'))));
 

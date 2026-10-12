@@ -140,7 +140,45 @@ export async function submitDiagnosticCore(ctx: Ctx, caseRow: typeof schema.case
   await emitEvent(ctx, 'DiagnosticCompleted', { caseId: caseRow.id, payload: { diagnostic: d.code } });
   const score = await computeScore(ctx, caseRow.id, d.id);
   const status = await advanceCase(ctx, caseRow.id);
+  // A real, accepted submission replaces whatever draft it came from -- clear it so a completed
+  // diagnostic never keeps prompting "continue where you left off" or generating reminders.
+  await clearDraft(ctx, caseRow.id);
   return { accepted: true as const, id: d.id, code: d.code, version: d.version, completion: v.completion, score: { overall: Number(score.overall), maturity: score.maturity, confidenceClass: score.confidenceClass }, caseStatus: status };
+}
+
+/**
+ * Autosaved draft answers for the plain (non-team) diagnostic form -- one row per case, replaced wholesale
+ * on every save. This is a different shape from the team-round drafts in `responseDrafts` (one row per
+ * question, tied to an `assessmentRounds` collection with per-colleague area ownership): a solo diagnostic
+ * has no area split and no round to collect into, so a flat per-case JSON blob mirroring the exact
+ * `AnswerInput` shape `submitDiagnostic` takes is the simplest faithful representation, not a shortcut.
+ * Never scored and never evidence on their own -- only submitDiagnosticCore() turns a draft into a real,
+ * scored diagnostic.
+ */
+export async function getDraft(ctx: Ctx, caseId: string) {
+  allow(ctx, 'diagnostics', 'create');
+  await assertLeadCase(ctx, caseId);
+  const [row] = await ctx.db.select().from(schema.diagnosticDrafts).where(eq(schema.diagnosticDrafts.caseId, caseId)).limit(1);
+  return { answers: (row?.answers as Record<string, AnswerInput>) ?? {}, updatedAt: row?.updatedAt ?? null };
+}
+
+export async function saveDraft(ctx: Ctx, caseId: string, answers: Record<string, AnswerInput>) {
+  allow(ctx, 'diagnostics', 'create');
+  const cs = await assertLeadCase(ctx, caseId);
+  if (stateIndex(cs.status) < stateIndex('PROFILED')) throw unprocessable('The business profile must be complete before a diagnostic can be taken');
+  const u = need(ctx).user;
+  // Working on the draft again cancels whatever reminder escalation it was due for -- it starts over
+  // from the top the next time it goes quiet.
+  const [row] = await ctx.db.insert(schema.diagnosticDrafts).values({ caseId, answers, updatedBy: u.id })
+    .onConflictDoUpdate({ target: schema.diagnosticDrafts.caseId, set: { answers, updatedBy: u.id, updatedAt: new Date(), reminderTier: 0, lastReminderAt: null } })
+    .returning({ updatedAt: schema.diagnosticDrafts.updatedAt });
+  return { savedAt: row.updatedAt };
+}
+
+/** Called once a diagnostic has actually been submitted (accepted or rejected): the draft it came from, if
+ *  any, is cleared so a completed diagnostic never keeps generating "continue where you left off" prompts. */
+async function clearDraft(ctx: Ctx, caseId: string) {
+  await ctx.db.delete(schema.diagnosticDrafts).where(eq(schema.diagnosticDrafts.caseId, caseId));
 }
 
 export async function submitDiagnostic(ctx: Ctx, caseId: string, b: { answers: Record<string, AnswerInput>; uuid?: string }) {
