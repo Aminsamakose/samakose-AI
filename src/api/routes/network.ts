@@ -29,7 +29,8 @@ const cred = z.object({ type: z.string().max(40), title: z.string().max(160), is
 const profileBody = z.object({
   functions: z.array(z.enum(['expert', 'coach'])).min(1).max(2), headline: z.string().max(140).nullish(), bio: z.string().max(2000).nullish(), specialisations: list, strengths: list, sectors: list, platforms: list,
   businessSizes: list, languages: list, regions: list, deliveryModes: list, yearsExperience: z.number().int().min(0).max(70).nullable(), credentials: z.array(cred).max(20),
-  maxActive: z.number().int().min(1).max(50), availability: z.enum(['Available', 'Limited', 'Unavailable']), rateNote: z.string().max(500).nullish(), acceptConduct: z.boolean()
+  maxActive: z.number().int().min(1).max(50), availability: z.enum(['Available', 'Limited', 'Unavailable']), rateNote: z.string().max(500).nullish(), acceptConduct: z.boolean(),
+  engagementType: z.enum(['Associate', 'Employee'])
 }).partial();
 defineRoute({ method: 'GET', path: '/practitioners', tag: N, summary: 'List practitioners with vetting status, load and completeness', permission: ['practitioners', 'read'], query: z.object({ status: z.string().optional(), platform: z.string().optional(), availability: z.string().optional(), q: z.string().optional() }), handler: ({ ctx, query }) => prac.listPractitioners(ctx, query) });
 defineRoute({ method: 'GET', path: '/practitioners/:id', tag: N, summary: 'One practitioner profile (use me for your own)', permission: ['practitioners', 'read'], handler: ({ ctx, params }) => prac.getProfile(ctx, params.id) });

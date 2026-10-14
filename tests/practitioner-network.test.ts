@@ -161,6 +161,16 @@ describe('practitioner profile and vetting gate', () => {
     expect(ch.data.vettingStatus).toBe('Submitted');
     expect((await api(admin).post(`/practitioners/${fresh.userId}/decision`, { decision: 'Approved' })).status).toBe(200);
   });
+  it('defaults to Associate and only an administrator can change employment classification', async () => {
+    expect((await api(admin).get(`/practitioners/${fresh.userId}`)).data.engagementType).toBe('Associate');
+    const self = await api(fresh).patch('/me/practitioner', { engagementType: 'Employee' });
+    expect(self.status).toBe(400);
+    expect((await api(admin).get(`/practitioners/${fresh.userId}`)).data.engagementType).toBe('Associate');
+    const asAdmin = await api(admin).patch(`/practitioners/${fresh.userId}`, { engagementType: 'Employee' });
+    expect(asAdmin.status).toBe(200);
+    expect((await api(admin).get(`/practitioners/${fresh.userId}`)).data.engagementType).toBe('Employee');
+    await api(admin).patch(`/practitioners/${fresh.userId}`, { engagementType: 'Associate' });
+  });
   it('lets staff list practitioners and gives colleagues only the public card of approved ones', async () => {
     const l = await api(pm).get('/practitioners'); expect(l.status).toBe(200); expect(l.data.counts.Approved).toBeGreaterThan(0); expect(l.data.items[0].completeness).toBeTruthy();
     const c = await api(e1).get('/practitioners'); expect(c.status).toBe(200); for (const x of c.data.items) { expect(x.vettingStatus).toBe('Approved'); expect(x.completeness).toBeUndefined(); expect(x.email).toBeUndefined(); }
