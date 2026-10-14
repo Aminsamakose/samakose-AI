@@ -214,8 +214,10 @@ let psOverride: PsFetch | null = null;
 export const setPaystackTransport = (f: PsFetch | null) => { psOverride = f; };
 export const paystackIsMock = () => !psOverride && !env.paystackSecret;
 /** In production the labelled test checkout is refused unless ALLOW_MOCK_PAYMENTS=1, so a missing key can never let invoices be marked paid. */
-const mockForbidden = () => paystackIsMock() && env.isProd && process.env.ALLOW_MOCK_PAYMENTS !== '1';
-const psFetch: PsFetch = async (path, init) => {
+/** Exported so other payment flows (e.g. the Resource Library) share the one production gate, instead of each re-deriving it. */
+export const mockForbidden = () => paystackIsMock() && env.isProd && process.env.ALLOW_MOCK_PAYMENTS !== '1';
+/** Exported so other payment flows share the one Paystack transport (and its test override), rather than a second HTTP client. */
+export const psFetch: PsFetch = async (path, init) => {
   if (psOverride) return psOverride(path, init);
   const res = await fetch('https://api.paystack.co' + path, { method: init?.method ?? 'GET', headers: { authorization: `Bearer ${env.paystackSecret}`, 'content-type': 'application/json' }, body: init?.body ? JSON.stringify(init.body) : undefined, signal: AbortSignal.timeout(20_000) });
   const j = await res.json().catch(() => ({}));

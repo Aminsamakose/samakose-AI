@@ -1556,3 +1556,81 @@ export const caseMessageReads = pgTable('case_message_reads', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   readAt: timestamp('read_at', { withTimezone: true }).notNull().defaultNow()
 }, (t) => [primaryKey({ columns: [t.caseId, t.userId], name: 'case_message_reads_pk' })]);
+
+/* ------------------------------------------------------------------ */
+/* Business Doctor Resource Library. Additive only: a free/premium    */
+/* catalogue of resources, authored, reviewed and published through   */
+/* the same draft -> review -> publish discipline as site content.    */
+/* Purchases flow through the existing invoices/payments tables - a   */
+/* premium resource is a new invoice line kind, not a new payment     */
+/* rail. See the Phase 0 assessment for the architecture decision.    */
+/* ------------------------------------------------------------------ */
+
+/** A named byline shown on a Library resource. Not a user account by itself - an author may or may not also sign in. */
+export const libraryAuthors = pgTable('library_authors', {
+  id: id(),
+  name: text('name').notNull(),
+  title: text('title'),
+  bio: text('bio'),
+  photoMediaId: uuid('photo_media_id').references(() => mediaAssets.id),
+  userId: uuid('user_id').references(() => users.id),
+  createdAt: created(), updatedAt: updated()
+});
+
+/** Draft -> In review -> Published -> Archived, the same lifecycle as contentDocs. A null price means the resource is free. */
+export const LIBRARY_RESOURCE_STATUSES = ['Draft', 'In review', 'Published', 'Archived'] as const;
+export const libraryResources = pgTable('library_resources', {
+  id: id(),
+  slug: text('slug').notNull().unique(),
+  title: text('title').notNull(),
+  authorId: uuid('author_id').notNull().references(() => libraryAuthors.id),
+  topic: text('topic'),
+  dimension: text('dimension'),
+  summary: text('summary').notNull().default(''),
+  body: text('body').notNull().default(''),
+  coverMediaId: uuid('cover_media_id').references(() => mediaAssets.id),
+  fileStorageKey: text('file_storage_key'),
+  fileMime: text('file_mime'),
+  fileSize: integer('file_size'),
+  priceGhs: numeric('price_ghs', { precision: 10, scale: 2 }),
+  status: text('status').notNull().default('Draft'),
+  publishAt: timestamp('publish_at', { withTimezone: true }),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  createdBy: uuid('created_by').references(() => users.id),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [
+  index('lib_res_status_idx').on(t.status),
+  index('lib_res_author_idx').on(t.authorId),
+  index('lib_res_dimension_idx').on(t.dimension)
+]);
+
+/** A grant of standing access to one premium resource for one user: by purchase, promo redemption or an administrator override. Never written for a free resource. */
+export const LIBRARY_ENTITLEMENT_SOURCES = ['purchase', 'promo', 'admin_grant'] as const;
+export const resourceEntitlements = pgTable('resource_entitlements', {
+  id: id(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  resourceId: uuid('resource_id').notNull().references(() => libraryResources.id),
+  grantedVia: text('granted_via').notNull(),
+  invoiceId: uuid('invoice_id').references(() => invoices.id),
+  grantedBy: uuid('granted_by').references(() => users.id),
+  grantedAt: timestamp('granted_at', { withTimezone: true }).notNull().defaultNow(),
+  revokedAt: timestamp('revoked_at', { withTimezone: true })
+}, (t) => [
+  uniqueIndex('res_ent_user_res_uq').on(t.userId, t.resourceId),
+  index('res_ent_resource_idx').on(t.resourceId)
+]);
+
+/** A resource purchase's own payment row, standalone from invoices (which require an organisation):
+ *  a Library buyer may be an individual with no org. Shares the one Paystack account/webhook
+ *  signature-verification logic in finance.ts - this is the same payment rail, a second row shape. */
+export const resourcePayments = pgTable('resource_payments', {
+  id: id(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  resourceId: uuid('resource_id').notNull().references(() => libraryResources.id),
+  reference: text('reference').notNull().unique(),
+  amountGhs: numeric('amount_ghs', { precision: 10, scale: 2 }).notNull(),
+  status: text('status').notNull().default('Pending'),
+  providerPayload: jsonb('provider_payload'),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [index('res_pay_resource_idx').on(t.resourceId), index('res_pay_user_idx').on(t.userId)]);
