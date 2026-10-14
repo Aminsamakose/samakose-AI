@@ -10,7 +10,8 @@ export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
   'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments', 'discounts', 'revenue_share', 'payouts', 'approvals', 'tax_rules', 'refunds',
-  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping', 'team', 'feedback', 'practitioners', 'ratings', 'opportunities', 'referrals', 'messages', 'escalations', 'programme_workspaces', 'insights'
+  'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping', 'team', 'feedback', 'practitioners', 'ratings', 'opportunities', 'referrals', 'messages', 'escalations', 'programme_workspaces', 'insights',
+  'library_resources', 'library_authors', 'library_entitlements'
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -27,13 +28,15 @@ const ADMIN: Grants = {
   content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D],
   frameworks: [R, C, E, A], agents: [R, C, E, A], consent: [R, C, E, A], role_mapping: [R, C, E, A],
   feedback: [R, E, X], practitioners: [R, E, A], ratings: [R], opportunities: [R, C, E, A], referrals: [R, C, E, A, D],
-  messages: [R], escalations: [R], programme_workspaces: [R, C, E, D, S], insights: [R]
+  messages: [R], escalations: [R], programme_workspaces: [R, C, E, D, S], insights: [R],
+  library_resources: [R, C, E, A, D], library_authors: [R, C, E, D], library_entitlements: [R, C, A, X]
 };
 export const PERMISSIONS: Record<Role, Grants> = {
   ADMIN,
   EXECUTIVE: {
     agents: [R], consent: [R], role_mapping: [R], feedback: [R], frameworks: [R], organisations: [R, X], programmes: [R, X], cohorts: [R], cases: [R, X], scores: [R], diagnoses: [R], prescriptions: [R], actions: [R],
-    kpis: [R], reports: [R, X], contracts: [R], invoices: [R, X], payments: [R], discounts: [R, A], revenue_share: [R, A], payouts: [R, A], approvals: [R, A], tax_rules: [R], refunds: [R, A], dashboard: [R, X], practitioners: [R], ratings: [R], opportunities: [R], referrals: [R], programme_workspaces: [R], insights: [R]
+    kpis: [R], reports: [R, X], contracts: [R], invoices: [R, X], payments: [R], discounts: [R, A], revenue_share: [R, A], payouts: [R, A], approvals: [R, A], tax_rules: [R], refunds: [R, A], dashboard: [R, X], practitioners: [R], ratings: [R], opportunities: [R], referrals: [R], programme_workspaces: [R], insights: [R],
+    library_resources: [R, X], library_entitlements: [R, X]
   },
   PROGRAMME_MANAGER: {
     frameworks: [R], users: [R], organisations: [R, C, E, X], programmes: [R, E, X], cohorts: [R, C, E, X], cases: [R, C, E, X, S], diagnostics: [R], scores: [R],
@@ -54,7 +57,8 @@ export const PERMISSIONS: Record<Role, Grants> = {
   },
   FINANCE: {
     organisations: [R], plans: [R, C, E], contracts: [R, C, E, X], invoices: [R, C, E, X], payments: [R, C, X], discounts: [R, C, E],
-    revenue_share: [R, C, E], payouts: [R, C, E], approvals: [R, C, A], tax_rules: [R, C, E], refunds: [R, C, A], dashboard: [R], programme_workspaces: [R]
+    revenue_share: [R, C, E], payouts: [R, C, E], approvals: [R, C, A], tax_rules: [R, C, E], refunds: [R, C, A], dashboard: [R], programme_workspaces: [R],
+    library_resources: [R], library_entitlements: [R, X]
   },
   OWNER: {
     organisations: [R, E], cases: [R], diagnostics: [R, C], evidence: [R, C, D], documents: [R, C], scores: [R], prescriptions: [R],
@@ -63,8 +67,11 @@ export const PERMISSIONS: Record<Role, Grants> = {
   },
   RESPONDENT: { dashboard: [R] },
   FUNDER: { programmes: [R], cohorts: [R], reports: [R], dashboard: [R, X], programme_workspaces: [R] },
-  CONTENT_EDITOR: { content: [R, C, E], site_settings: [R], media: [R, C], dashboard: [R] },
-  SITE_MANAGER: { content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D], inquiries: [R, E], dashboard: [R] }
+  CONTENT_EDITOR: { content: [R, C, E], site_settings: [R], media: [R, C], dashboard: [R], library_resources: [R, C, E], library_authors: [R, C, E] },
+  SITE_MANAGER: {
+    content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D], inquiries: [R, E], dashboard: [R],
+    library_resources: [R, C, E, A, D], library_authors: [R, C, E, D], library_entitlements: [R]
+  }
 };
 
 export function can(role: Role, resource: Resource, action: Action): boolean {
