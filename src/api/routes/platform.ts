@@ -14,6 +14,7 @@ import * as dash from '@/services/dashboards';
 import * as adm from '@/services/admin';
 import * as fw from '@/services/frameworks';
 import * as asst from '@/services/assistant';
+import * as ins from '@/services/insights';
 import * as ag from '@/services/agents';
 import { AGENT_STATUSES } from '@/domain/agents';
 import * as sw from '@/services/switches';
@@ -125,6 +126,11 @@ defineRoute({ method: 'GET', path: '/audit', tag: AD, summary: 'Audit log', perm
 defineRoute({ method: 'GET', path: '/events', tag: AD, summary: 'Event stream', permission: ['audit', 'read'], query: listQuery.extend({ type: z.string().optional() }), handler: ({ ctx, query }) => adm.listEvents(ctx, query) });
 defineRoute({ method: 'GET', path: '/settings/rules', tag: AD, summary: 'Scoring and workflow rules', permission: ['settings', 'read'], handler: ({ ctx }) => adm.getRules(ctx) });
 defineRoute({ method: 'GET', path: '/settings/switches', tag: AD, summary: 'Workflow and registration switches', permission: ['settings', 'read'], handler: ({ ctx }) => sw.listSwitches(ctx) });
+defineRoute({ method: 'GET', path: '/insights/snapshot', tag: AD, summary: 'Read-only aggregate snapshot of the platform (case counts, overdue invoices, pending approvals, revenue this month)', permission: ['insights', 'read'], handler: () => ins.snapshot() });
+defineRoute({ method: 'POST', path: '/insights/ask', tag: AD, summary: 'Ask the Management Insights Assistant a question. Answers come from aggregate figures only - never an individual case, client or personal record', permission: ['insights', 'read'],
+  rateLimit: { key: 'insights:ip:{ip}', limit: 20, windowSec: 900 },
+  body: z.object({ message: z.string().trim().min(3, 'Type your question').max(500) }),
+  handler: ({ ctx, body }) => ins.ask(ctx, (body as any).message) });
 defineRoute({ method: 'PUT', path: '/settings/switches/:key', tag: AD, summary: 'Turn a switch on or off. Turning a protected one off needs a reason', permission: ['settings', 'edit'], body: z.object({ on: z.boolean(), reason: z.string().trim().max(300).optional() }), handler: ({ ctx, params, body }) => sw.setSwitch(ctx, params.key, body.on, body.reason) });
 defineRoute({ method: 'GET', path: '/settings/email-templates', tag: AD, summary: 'System email wording', permission: ['settings', 'read'], handler: ({ ctx }) => sw.listTemplates(ctx) });
 defineRoute({ method: 'PUT', path: '/settings/email-templates/:key', tag: AD, summary: 'Save the wording of a system email', permission: ['settings', 'edit'], body: z.object({ subject: z.string().max(300), body: z.string().max(8000) }), handler: ({ ctx, params, body }) => sw.saveTemplate(ctx, params.key, body) });
