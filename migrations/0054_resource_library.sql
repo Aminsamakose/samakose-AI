@@ -55,3 +55,10 @@ create table if not exists public.resource_entitlements (
 );
 create unique index if not exists res_ent_user_res_uq on public.resource_entitlements(user_id, resource_id);
 create index if not exists res_ent_resource_idx on public.resource_entitlements(resource_id);
+
+-- The app connects via a direct Postgres role through Drizzle, not Supabase's RLS-governed
+-- anon/authenticated client, so enabling RLS with no policy here matches every other table:
+-- enforcement is RBAC in application code (src/lib/rbac.ts), not Postgres row security.
+alter table public.library_authors enable row level security;
+alter table public.library_resources enable row level security;
+alter table public.resource_entitlements enable row level security;
