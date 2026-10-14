@@ -365,6 +365,13 @@
       "when": 1792029000000,
       "tag": "0052_fix_ledger_entry_id_types",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1792030000000,
+      "tag": "0053_practitioner_engagement_type",
+      "breakpoints": true
     }
   ]
 }

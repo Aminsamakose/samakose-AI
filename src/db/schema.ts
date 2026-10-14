@@ -1390,6 +1390,10 @@ export const practitionerProfiles = pgTable('practitioner_profiles', {
   decidedBy: uuid('decided_by').references(() => users.id),
   decidedAt: timestamp('decided_at', { withTimezone: true }),
   rateNote: text('rate_note'),
+  /** Employment classification, distinct from the vetted role: every EXPERT/COACH/REVIEWER here is engaged as an
+   *  independent contractor ("Associate"), not payroll staff, so payouts carry withholding tax rather than payroll
+   *  tax. Administrator-set only; practitioners never self-declare their own classification. */
+  engagementType: text('engagement_type').notNull().default('Associate'), // Associate | Employee
   createdAt: created(), updatedAt: updated()
 }, (t) => [index('pp_status_idx').on(t.vettingStatus)]);
 

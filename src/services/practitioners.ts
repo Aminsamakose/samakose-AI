@@ -19,7 +19,7 @@ export type Profile = typeof pp.$inferSelect;
 export type ProfileInput = Partial<{
   functions: string[]; headline: string | null; bio: string | null; specialisations: string[]; strengths: string[]; sectors: string[]; platforms: string[]; businessSizes: string[];
   languages: string[]; regions: string[]; deliveryModes: string[]; yearsExperience: number | null; credentials: { type: string; title: string; issuer?: string; year?: number }[];
-  maxActive: number; availability: string; rateNote: string | null; acceptConduct: boolean;
+  maxActive: number; availability: string; rateNote: string | null; acceptConduct: boolean; engagementType: string;
 }>;
 
 /** Every expert has a profile row. Created on first need, so people invited or registered before this existed are covered. */
@@ -54,7 +54,7 @@ const shapeProfile = (p: Profile, user: typeof u.$inferSelect, o: { full: boolea
     availability: p.availability, vettingStatus: p.vettingStatus
   };
   if (!o.full) return base;
-  return { ...base, email: user.email, maxActive: p.maxActive, conductAcceptedAt: p.conductAcceptedAt, conductVersion: p.conductVersion, submittedAt: p.submittedAt, decidedAt: p.decidedAt, completeness: done };
+  return { ...base, email: user.email, maxActive: p.maxActive, conductAcceptedAt: p.conductAcceptedAt, conductVersion: p.conductVersion, submittedAt: p.submittedAt, decidedAt: p.decidedAt, completeness: done, engagementType: p.engagementType };
 };
 
 export async function getProfile(ctx: Ctx, rawId: string) {
@@ -106,6 +106,10 @@ export async function updateProfile(ctx: Ctx, rawId: string, b: ProfileInput) {
   if (b.functions && (!b.functions.length || b.functions.some((f) => !['expert', 'coach'].includes(f)))) errs.functions = 'Choose expert, coach or both';
   if (b.platforms && b.platforms.some((p) => !(PLATFORM_CODES as readonly string[]).includes(p))) errs.platforms = 'Choose from SME360, AGRIFOOD360 and ESO360';
   if (b.availability && !['Available', 'Limited', 'Unavailable'].includes(b.availability)) errs.availability = 'Choose Available, Limited or Unavailable';
+  if (b.engagementType !== undefined) {
+    if (!isAdmin(ctx)) errs.engagementType = 'Only an administrator can change employment classification';
+    else if (!['Associate', 'Employee'].includes(b.engagementType)) errs.engagementType = 'Choose Associate or Employee';
+  }
   if (b.maxActive != null && (!Number.isInteger(b.maxActive) || b.maxActive < 1 || b.maxActive > 50)) errs.maxActive = 'Enter a whole number from 1 to 50';
   if (b.yearsExperience != null && (!Number.isInteger(b.yearsExperience) || b.yearsExperience < 0 || b.yearsExperience > 70)) errs.yearsExperience = 'Enter a whole number from 0 to 70';
   if (Object.keys(errs).length) throw fieldError(errs);
@@ -119,6 +123,7 @@ export async function updateProfile(ctx: Ctx, rawId: string, b: ProfileInput) {
   if (b.maxActive != null) set.maxActive = b.maxActive;
   if (b.availability) set.availability = b.availability;
   if (b.rateNote !== undefined) set.rateNote = b.rateNote?.trim().slice(0, 500) || null;
+  if (b.engagementType !== undefined && isAdmin(ctx)) set.engagementType = b.engagementType;
   if (b.acceptConduct) { set.conductAcceptedAt = new Date(); set.conductVersion = CONDUCT_VERSION; }
   // Changing what was vetted (credentials or the role the person holds) sends an approved profile back for review.
   const material = before.vettingStatus === 'Approved' && ((b.credentials && JSON.stringify(set.credentials) !== JSON.stringify(before.credentials)) || (b.functions && JSON.stringify(set.functions) !== JSON.stringify(before.functions)));
