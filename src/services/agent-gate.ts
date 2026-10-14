@@ -26,7 +26,9 @@ const BUILT_INS: BuiltIn[] = [
   { code: 'opportunity_matcher', name: 'Opportunity Matcher', description: 'Explains in plain words why one business does or does not fit one opportunity, and what to do next. The rules engine decides eligibility; this agent only explains.', purpose: 'Explain a fit result and suggest next steps.',
     resources: ['The opportunity record', 'The rules-engine result', 'Overall score and maturity (no business name)'], permitted: ['Read the opportunity and the rules result supplied to it', 'Explain the result and suggest next steps'], approval: 'It cannot change the verdict or make a referral. A referral still needs the owner\'s consent and a person\'s approval.' },
   { code: 'report', name: 'Progress Report Agent', description: 'Writes a plain-language progress report from the figures given.', purpose: 'Draft a progress report for reviewer release.',
-    resources: ['Scores and KPI figures', 'Evidence classes'], permitted: ['Read the figures supplied to it', 'Draft a progress report'], approval: 'A reviewer releases the report to the owner.' }
+    resources: ['Scores and KPI figures', 'Evidence classes'], permitted: ['Read the figures supplied to it', 'Draft a progress report'], approval: 'A reviewer releases the report to the owner.' },
+  { code: 'insights', name: 'Management Insights Assistant', description: 'Answers an administrator or executive\'s question from a read-only aggregate snapshot of the platform - never an individual case, client or personal record.', purpose: 'Answer internal management questions from aggregate figures only.',
+    resources: ['Aggregate counts and totals (cases by status, overdue invoices, pending approvals, monthly revenue)'], permitted: ['Read the aggregate snapshot supplied to it', 'Answer the question from those figures', 'Say when the snapshot does not cover the question'], approval: 'Read only: it writes nothing and never sees an individual record.' }
 ];
 const configFor = (b: BuiltIn): AgentConfig => ({
   autonomy: 1, tools: ['AI gateway', 'Case database (read only, minimum context)'], resources: b.resources, permittedActions: b.permitted,
