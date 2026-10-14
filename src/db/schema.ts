@@ -1620,3 +1620,17 @@ export const resourceEntitlements = pgTable('resource_entitlements', {
   uniqueIndex('res_ent_user_res_uq').on(t.userId, t.resourceId),
   index('res_ent_resource_idx').on(t.resourceId)
 ]);
+
+/** A resource purchase's own payment row, standalone from invoices (which require an organisation):
+ *  a Library buyer may be an individual with no org. Shares the one Paystack account/webhook
+ *  signature-verification logic in finance.ts - this is the same payment rail, a second row shape. */
+export const resourcePayments = pgTable('resource_payments', {
+  id: id(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  resourceId: uuid('resource_id').notNull().references(() => libraryResources.id),
+  reference: text('reference').notNull().unique(),
+  amountGhs: numeric('amount_ghs', { precision: 10, scale: 2 }).notNull(),
+  status: text('status').notNull().default('Pending'),
+  providerPayload: jsonb('provider_payload'),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [index('res_pay_resource_idx').on(t.resourceId), index('res_pay_user_idx').on(t.userId)]);

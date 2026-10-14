@@ -116,6 +116,12 @@ async function load(ctx: Ctx, id: string) {
   return r;
 }
 
+/** No RBAC gate: used by the file-download route, where the real check is the entitlement/staff check that follows.
+ *  Returns the raw row (storage key included) rather than the public shape(), which omits it. */
+export async function loadResourceForFile(ctx: Ctx, id: string) {
+  return load(ctx, id);
+}
+
 export async function updateResource(ctx: Ctx, id: string, b: ResourceInput) {
   allow(ctx, 'library_resources', 'edit');
   const before = await load(ctx, id);
