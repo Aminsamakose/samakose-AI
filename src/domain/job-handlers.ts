@@ -105,13 +105,15 @@ registerJob('ai_brief', async ({ sessionId, caseId }, job) => {
   const score = await latestScore(systemCtx(db()), caseId);
   const acts = await db().select().from(schema.actions).where(eq(schema.actions.caseId, caseId));
   const today = new Date().toISOString().slice(0, 10);
-  const [last] = await db().select().from(schema.coachingSessions).where(and(eq(schema.coachingSessions.caseId, caseId), eq(schema.coachingSessions.status, 'Held'))).orderBy(desc(schema.coachingSessions.scheduledAt)).limit(1);
+  const recent = await db().select().from(schema.coachingSessions).where(and(eq(schema.coachingSessions.caseId, caseId), eq(schema.coachingSessions.status, 'Held'))).orderBy(desc(schema.coachingSessions.scheduledAt)).limit(4);
   const kpis = await db().select().from(schema.kpis).where(eq(schema.kpis.caseId, caseId));
   const readings = kpis.length ? await db().select().from(schema.kpiReadings).where(inArray(schema.kpiReadings.kpiId, kpis.map((k) => k.id))).orderBy(schema.kpiReadings.readingDate) : [];
   const context: BriefContext = {
     org: org.name, status: cs.status, overall: score ? Number(score.overall) : null, maturity: score?.maturity ?? null,
     open_actions: acts.filter((a) => a.status !== 'Done').map((a) => a.text), overdue_actions: acts.filter((a) => isActionOverdue(a.status, a.dueDate, today)).map((a) => a.text),
-    done_actions: acts.filter((a) => a.status === 'Done').length, last_session: last?.notes ?? null,
+    done_actions: acts.filter((a) => a.status === 'Done').length,
+    // Oldest first, so the brief reads the sessions in the order they happened.
+    session_history: [...recent].reverse().map((s) => ({ date: s.scheduledAt.toISOString().slice(0, 10), notes: s.notes ?? '' })).filter((s) => s.notes),
     kpis: kpis.map((k) => ({ name: k.name, latest: Number([...readings].reverse().find((r) => r.kpiId === k.id)?.value ?? NaN) || null, target: k.target === null ? null : Number(k.target) }))
   };
   let out;
