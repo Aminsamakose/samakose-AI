@@ -42,6 +42,8 @@ create unique index if not exists public_assessments_one_completed_uq
 create index if not exists public_assessments_email_idx
   on public.public_assessments (normalised_email, platform);
 
+alter table public.public_assessments enable row level security;
+
 -- Free assessment lead capture into the existing CRM (inquiries), per the spec's "reuse the existing
 -- CRM, do not build a second one" instruction. Nullable: every pre-existing inquiry kind
 -- (contact/demo/newsletter) leaves these null.
