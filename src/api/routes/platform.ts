@@ -23,6 +23,7 @@ import * as integrations from '@/services/integrations';
 import * as sys from '@/services/system';
 import * as bill from '@/services/billing';
 import * as inq from '@/services/inquiries';
+import * as fa from '@/services/publicAssessments';
 import * as rc from '@/services/registration-config';
 import { getJob } from '@/domain/jobs';
 import { need } from '@/services/common';
@@ -227,6 +228,29 @@ defineRoute({ method: 'POST', path: '/public/assistant', tag: W, summary: 'Ask t
   } });
 defineRoute({ method: 'GET', path: '/inquiries', tag: AD, summary: 'Website enquiries', permission: ['inquiries', 'read'], query: listQuery.extend({ status: z.string().optional(), kind: z.string().optional() }), handler: ({ ctx, query }) => inq.listInquiries(ctx, query) });
 defineRoute({ method: 'PATCH', path: '/inquiries/:id', tag: AD, summary: 'Mark an enquiry handled, spam or new', permission: ['inquiries', 'edit'], body: z.object({ status: z.enum(['New', 'Handled', 'Spam']) }), handler: ({ ctx, params, body }) => inq.setInquiryStatus(ctx, params.id, (body as any).status) });
+
+/* ------------------------- free preliminary Business Health assessment ------------------------- */
+const FA = 'Free assessment';
+defineRoute({ method: 'POST', path: '/public/assessments/start', tag: FA, summary: 'Begin a free preliminary assessment for one platform, or learn the email has already used its allowance for it', auth: 'public',
+  rateLimit: { key: 'assessment-start:ip:{ip}', limit: 10, windowSec: 900 },
+  body: z.object({
+    email, fullName: name, businessName: optText(200), platform: z.enum(fa.FREE_ASSESSMENT_PLATFORMS),
+    marketingConsent: z.boolean().optional(), privacyAcknowledged: z.literal(true, { error: 'Please acknowledge the privacy notice' }), source: optText(80)
+  }),
+  handler: ({ ctx, body }) => fa.startFreeAssessment(ctx, body) });
+defineRoute({ method: 'POST', path: '/public/assessments/:id/submit', tag: FA, summary: 'Submit all 25 answers and receive the deterministic result', auth: 'public',
+  rateLimit: { key: 'assessment-submit:ip:{ip}', limit: 20, windowSec: 900 },
+  body: z.object({ answers: z.record(z.string(), z.enum(['A', 'B', 'C', 'D'])) }),
+  handler: ({ ctx, params, body }) => fa.submitFreeAssessment(ctx, { id: params.id, answers: body.answers }) });
+defineRoute({ method: 'GET', path: '/public/assessments/:id', tag: FA, summary: 'Retrieve a completed free assessment result', auth: 'public',
+  rateLimit: { key: 'assessment-get:ip:{ip}', limit: 60, windowSec: 900 },
+  handler: ({ ctx, params }) => fa.getFreeAssessment(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/public/assessments/:id/actions/:action', tag: FA, summary: 'Use the one-time email, download or print allowance for a completed result', auth: 'public',
+  rateLimit: { key: 'assessment-action:ip:{ip}', limit: 10, windowSec: 900 },
+  handler: ({ ctx, params }) => {
+    if (params.action !== 'email' && params.action !== 'download' && params.action !== 'print') throw badRequest('Unknown action');
+    return fa.useReportAction(ctx, params.id, params.action);
+  } });
 
 /* ------------------------- website content (configuration centre) ------------------------- */
 import * as cms from '@/services/content';

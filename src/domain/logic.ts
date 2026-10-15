@@ -69,7 +69,14 @@ export const DEFAULT_RULES: Rules = {
   'recheck.interval_days': 180,
   'recheck.owed_case_days': 2,
   'ai.usd_per_million_input_tokens': 3,
-  'ai.usd_per_million_output_tokens': 15
+  'ai.usd_per_million_output_tokens': 15,
+  // Free preliminary assessment (public, anonymous, no evidence upload). Deliberately separate from
+  // the maturity.* bands above: those feed the evidence-weighted scoreDiagnostic() used on authenticated
+  // cases, these feed the simple, unweighted A=4/B=3/C=2/D=1 scorer below. Provisional per the approved
+  // spec; not to be presented as scientifically validated until the framework is tested.
+  'freeAssessment.criticalAttention_below': 40,
+  'freeAssessment.needsImprovement_below': 60,
+  'freeAssessment.developing_below': 80
 };
 export const RULE_NOTES: Record<string, string> = {
   'sla.session_reminder_hours': 'Coaching sessions: remind the coach and the owner this many hours ahead (checked daily, so the reminder lands within 12 hours either side)',
@@ -109,6 +116,9 @@ export const RULE_NOTES: Record<string, string> = {
   'cert.investment_ready_min': 'Lowest overall score for an Investment-ready certificate. At least one readiness index must also be Ready',
   'cert.min_evidence_share': 'Share of scored answers that must be verified or document-supported before a certificate can be proposed',
   'cert.valid_months': 'How long a certificate stays valid, in months',
+  'freeAssessment.criticalAttention_below': 'Free assessment overall score below this is Critical Attention',
+  'freeAssessment.needsImprovement_below': 'Free assessment overall score below this is Needs Improvement',
+  'freeAssessment.developing_below': 'Free assessment overall score below this is Developing, otherwise Strong Foundation',
   'recheck.interval_days': 'Days after the last health score before the case team and the owner are reminded to run a new check. The starting figure is a placeholder to confirm',
   'recheck.owed_case_days': 'Days an approved business owner may wait without a case before staff are alerted that one is owed',
   'ai.monthly_cost_cap_usd': 'Most the live AI may cost in a calendar month, in US dollars, across all agents. New live tasks are refused once it is reached. 0 means no cap. The starting figure is a placeholder',
@@ -183,6 +193,42 @@ export function scoreDiagnostic(responses: ResponseLite[], questions: QuestionLi
   const overall = sd ? Math.round((sn / sd) * 1000) / 10 : 0;
   for (const k of Object.keys(share)) share[k] = totalW ? share[k] / totalW : 0;
   return { dimensions, overall, maturity: maturityBand(overall, rules), evidenceShare: share };
+}
+
+/* --------------- free preliminary assessment (public, no evidence, no case) --------------- */
+/**
+ * Deterministic scorer for the free, anonymous preliminary assessment. Intentionally NOT a wrapper
+ * around scoreDiagnostic(): that engine discounts every answer by its evidence.multiplier (0.8 for
+ * Self-reported, the closest fit here), which would silently cap an all-A free assessment at 80/100
+ * and contradict the approved spec's own worked example (12/16 x 100 = 75, no discount). This scorer
+ * is the plain, unweighted model the spec specifies: A=4, B=3, C=2, D=1; dimension score is that
+ * dimension's points over its maximum, as a percentage; overall is the same over all 25 questions.
+ */
+export type FreeAssessmentAnswer = { questionCode: string; value: 1 | 2 | 3 | 4 };
+export function freeAssessmentClassification(score: number, rules: Rules): 'Critical Attention' | 'Needs Improvement' | 'Developing' | 'Strong Foundation' {
+  if (score < num(rules, 'freeAssessment.criticalAttention_below')) return 'Critical Attention';
+  if (score < num(rules, 'freeAssessment.needsImprovement_below')) return 'Needs Improvement';
+  if (score < num(rules, 'freeAssessment.developing_below')) return 'Developing';
+  return 'Strong Foundation';
+}
+export function scoreFreeAssessment(answers: FreeAssessmentAnswer[], questions: Pick<QuestionLite, 'code' | 'dimension'>[], rules: Rules) {
+  const byCode = new Map(answers.map((a) => [a.questionCode, a.value]));
+  const missing = questions.filter((q) => !byCode.has(q.code)).map((q) => q.code);
+  if (missing.length) throw new Error(`Missing answer for: ${missing.join(', ')}`);
+  const dims = new Map<string, { sum: number; count: number }>();
+  for (const q of questions) {
+    const v = byCode.get(q.code)!;
+    const d = dims.get(q.dimension) ?? { sum: 0, count: 0 };
+    d.sum += v; d.count += 1;
+    dims.set(q.dimension, d);
+  }
+  let totalSum = 0, totalCount = 0;
+  const dimensions = [...dims.entries()].map(([dimension, d]) => {
+    totalSum += d.sum; totalCount += d.count;
+    return { dimension, score: Math.round((d.sum / (d.count * 4)) * 1000) / 10 };
+  });
+  const overall = totalCount ? Math.round((totalSum / (totalCount * 4)) * 1000) / 10 : 0;
+  return { dimensions, overall, classification: freeAssessmentClassification(overall, rules) };
 }
 
 /** Confidence is computed from evidence, rule checks and validation. The model never states it. */

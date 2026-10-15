@@ -985,7 +985,7 @@ export const rateLimits = pgTable('rate_limits', {
 
 
 /** Public website enquiries (contact, demo, newsletter). Created by anonymous visitors through one rate-limited endpoint. */
-export const INQUIRY_KINDS = ['contact', 'demo', 'newsletter'] as const;
+export const INQUIRY_KINDS = ['contact', 'demo', 'newsletter', 'assessment'] as const;
 export type InquiryKind = (typeof INQUIRY_KINDS)[number];
 export const INQUIRY_STATUSES = ['New', 'Handled', 'Spam'] as const;
 export const inquiries = pgTable('inquiries', {
@@ -1003,7 +1003,14 @@ export const inquiries = pgTable('inquiries', {
   ipHash: text('ip_hash'),
   handledBy: uuid('handled_by'),
   handledAt: timestamp('handled_at', { withTimezone: true }),
-  createdAt: created()
+  createdAt: created(),
+  // Free Business Health assessment lead capture (see public_assessments below). Nullable: every
+  // pre-existing inquiry kind (contact/demo/newsletter) leaves these null. Kept on this table, not a
+  // parallel CRM, per the approved spec's "use the existing CRM, do not build a second one" instruction.
+  publicAssessmentId: uuid('public_assessment_id'),
+  platform: text('platform'),
+  overallScore: integer('overall_score'),
+  classification: text('classification')
 }, (t) => [index('inquiries_status_idx').on(t.status, t.createdAt)]);
 
 /* ---------------- website content (Phase 1 of the configuration centre) ---------------- */
@@ -1116,6 +1123,50 @@ export const frameworkVersions = pgTable('framework_versions', {
   publishedAt: timestamp('published_at', { withTimezone: true }),
   createdAt: created()
 }, (t) => [uniqueIndex('framework_version_uq').on(t.frameworkId, t.version)]);
+
+/* ------------------- Free preliminary Business Health assessment (public, anonymous) ------------------- */
+/**
+ * One row per attempt. `status` moves Started -> Completed; a Started row never blocks a retry (the
+ * partial unique index below only covers Completed), so an abandoned attempt does not consume the
+ * one-per-email-per-platform allowance. Answers and the computed result are preserved verbatim for
+ * historical review once completed, per the approved spec's scoring safeguards.
+ */
+export const PUBLIC_ASSESSMENT_STATUSES = ['Started', 'Completed'] as const;
+export const publicAssessments = pgTable('public_assessments', {
+  id: id(),
+  email: text('email').notNull(),
+  // trim + lowercase only -- never strip dots or plus-addressing (spec, Phase 6).
+  normalisedEmail: text('normalised_email').notNull(),
+  fullName: text('full_name').notNull(),
+  businessName: text('business_name'),
+  platform: text('platform').notNull(), // 'SME360' | 'AGRIFOOD360' | 'ESO360'
+  frameworkVersionId: uuid('framework_version_id').notNull().references(() => frameworkVersions.id),
+  status: text('status').notNull().default('Started'),
+  answers: jsonb('answers').$type<Record<string, 1 | 2 | 3 | 4>>(),
+  dimensionScores: jsonb('dimension_scores').$type<{ dimension: string; score: number }[]>(),
+  overallScore: integer('overall_score'),
+  classification: text('classification'),
+  marketingConsent: boolean('marketing_consent').notNull().default(false),
+  privacyAcknowledged: boolean('privacy_acknowledged').notNull().default(false),
+  source: text('source'),
+  ipHash: text('ip_hash'),
+  // One-time result-action allowances. Null = unused. Each is set only on a confirmed success
+  // (spec, Phase 7): emailSentAt only once the mail service accepts the send, downloadedAt/printedAt
+  // only once that action's server-side step completes, never on a failed or merely-attempted action.
+  resultViewedAt: timestamp('result_viewed_at', { withTimezone: true }),
+  emailSentAt: timestamp('email_sent_at', { withTimezone: true }),
+  downloadedAt: timestamp('downloaded_at', { withTimezone: true }),
+  printedAt: timestamp('printed_at', { withTimezone: true }),
+  startedAt: created(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  // Set when a signed-up account's verified email is matched to this row (spec, Phase 8). Never set silently.
+  claimedByUserId: uuid('claimed_by_user_id')
+}, (t) => [
+  // The authoritative, race-safe enforcement of "one completed free assessment per normalised email per
+  // platform": a partial unique index, checked by Postgres itself on INSERT/UPDATE, not by application code.
+  uniqueIndex('public_assessments_one_completed_uq').on(t.normalisedEmail, t.platform).where(sql`${t.status} = 'Completed'`),
+  index('public_assessments_email_idx').on(t.normalisedEmail, t.platform)
+]);
 
 /* ------------------------- AI agent registry ------------------------- */
 /** One record per AI agent. The agent has no login. It runs under the requesting person's account and case scope. */
