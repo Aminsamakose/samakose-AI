@@ -42,16 +42,22 @@ export function mockPrescription(c: PrescriptionContext): { items: PrescriptionI
   return { items };
 }
 
-export type BriefContext = { org: string; status: string; overall: number | null; maturity: string | null; open_actions: string[]; overdue_actions: string[]; done_actions: number; last_session: string | null; kpis: { name: string; latest: number | null; target: number | null }[] };
+export type BriefContext = { org: string; status: string; overall: number | null; maturity: string | null; open_actions: string[]; overdue_actions: string[]; done_actions: number; session_history: { date: string; notes: string }[]; kpis: { name: string; latest: number | null; target: number | null }[] };
 export function mockBrief(c: BriefContext) {
+  const last = c.session_history[c.session_history.length - 1];
+  const recurring = c.session_history.length > 1
+    ? c.session_history.slice(0, -1).filter((s) => last && s.notes && last.notes && s.notes.split(/\W+/).some((w) => w.length > 4 && last.notes.toLowerCase().includes(w.toLowerCase())))
+    : [];
   const lines = [
     `Where ${c.org} stands: case is ${c.status}${c.overall !== null ? `, health score ${c.overall} (${c.maturity})` : ''}.`,
     `Progress: ${c.done_actions} action(s) done, ${c.open_actions.length} open${c.overdue_actions.length ? `, ${c.overdue_actions.length} overdue` : ''}.`,
     c.overdue_actions.length ? `Overdue: ${c.overdue_actions.slice(0, 3).join('; ')}.` : 'Nothing is overdue.',
-    c.last_session ? `Last session notes: ${c.last_session}` : 'This is the first session on record.',
-    'Questions to ask: What has changed in the last two weeks? What is blocking the next action? What will you do before we meet again?',
+    last ? `Last session (${last.date}): ${last.notes}` : 'This is the first session on record.',
+    c.session_history.length > 1 ? `Across the last ${c.session_history.length} sessions: ${c.session_history.map((s) => `${s.date} - ${s.notes}`).join(' | ')}.` : null,
+    recurring.length ? 'This looks like it has come up before: check whether it was actually resolved or just reopened.' : null,
+    'Questions to ask: What has changed since last time? What is blocking the next action? What will you do before we meet again?',
     'Agree before closing: one owner and one date for each open action.'
-  ];
+  ].filter((l): l is string => l !== null);
   return { brief: lines.join('\n') };
 }
 
