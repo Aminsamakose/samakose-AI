@@ -22,7 +22,10 @@ import { sha256 } from '@/lib/crypto';
 import { sendMail } from '@/lib/mail';
 import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
 import { scoreFreeAssessment, type FreeAssessmentAnswer } from '@/domain/logic';
-import { resolveVersion, questionsOf } from './frameworks';
+import { resolveVersion, questionsOf, SME360_ANSWER_OPTIONS } from './frameworks';
+
+/** Answer-option text by platform. Only SME360 has an approved bank today; AgriFood360/ESO360 are rejected before this is ever consulted. */
+const ANSWER_OPTIONS_BY_PLATFORM: Partial<Record<FreeAssessmentPlatform, Record<string, { A: string; B: string; C: string; D: string }>>> = { SME360: SME360_ANSWER_OPTIONS };
 import { loadRules } from './common';
 
 export const FREE_ASSESSMENT_PLATFORMS = ['SME360', 'AGRIFOOD360', 'ESO360'] as const;
@@ -64,7 +67,8 @@ export async function startFreeAssessment(ctx: Ctx, input: StartInput) {
     marketingConsent: !!input.marketingConsent, privacyAcknowledged: true, source: input.source ?? null,
     ipHash: ctx.ip && ctx.ip !== 'direct' && ctx.ip !== 'unknown' ? sha256(ctx.ip) : null
   }).returning();
-  const questions = questionsOf(version).map((q) => ({ code: q.code, dimension: q.dimension, text: q.text }));
+  const options = ANSWER_OPTIONS_BY_PLATFORM[input.platform];
+  const questions = questionsOf(version).map((q) => ({ code: q.code, dimension: q.dimension, text: q.text, options: options?.[q.code] ?? null }));
   return { eligible: true as const, id: row.id, platform: row.platform, frameworkVersionId: version.id, questions };
 }
 
