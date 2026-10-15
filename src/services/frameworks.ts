@@ -397,3 +397,101 @@ export async function ensureBaseline(db: Db) {
     status: 'Published', approvedAt: now, publishedAt: now
   }).where(eq(schema.frameworkVersions.id, draft.id));
 }
+
+/**
+ * SME360's 25-question free preliminary assessment bank, approved verbatim by Amin (see the
+ * "MASTER DEVELOPMENT PROMPT: BUSINESS DOCTOR FREE 25-QUESTION ASSESSMENT" spec). Equal weight (1)
+ * per question throughout: the free assessment's scorer (scoreFreeAssessment in domain/logic.ts) is
+ * a plain percentage-of-maximum model with no weighting and no evidence discount, matching the
+ * spec's own worked example exactly. AgriFood360 and ESO360 are deliberately not seeded here -- their
+ * dimension-appropriate question banks still need to be drafted and approved before those platforms
+ * can be offered; serving them the SME360 questions under a different name was explicitly rejected.
+ */
+const SME360_QUESTIONS: FrameworkQuestion[] = [
+  { code: 'SME_Q01', dimension: 'Strategy and Leadership', text: 'Does your business have clearly defined goals?', weight: 1 },
+  { code: 'SME_Q02', dimension: 'Strategy and Leadership', text: 'Do you have a documented business plan or action plan?', weight: 1 },
+  { code: 'SME_Q03', dimension: 'Strategy and Leadership', text: 'How do you make important business decisions?', weight: 1 },
+  { code: 'SME_Q04', dimension: 'Strategy and Leadership', text: 'How regularly do you review your business performance?', weight: 1 },
+  { code: 'SME_Q05', dimension: 'Financial Health', text: 'How consistently do you record business income and expenses?', weight: 1 },
+  { code: 'SME_Q06', dimension: 'Financial Health', text: 'Do you regularly separate personal money from business money?', weight: 1 },
+  { code: 'SME_Q07', dimension: 'Financial Health', text: "How well do you understand your business's profitability?", weight: 1 },
+  { code: 'SME_Q08', dimension: 'Financial Health', text: 'How do you manage your business cash flow?', weight: 1 },
+  { code: 'SME_Q09', dimension: 'Financial Health', text: 'How do you plan for major business expenses and financial obligations?', weight: 1 },
+  { code: 'SME_Q10', dimension: 'Marketing and Sales', text: 'How well do you understand your target customers?', weight: 1 },
+  { code: 'SME_Q11', dimension: 'Marketing and Sales', text: 'How do you attract new customers?', weight: 1 },
+  { code: 'SME_Q12', dimension: 'Marketing and Sales', text: 'How consistently do you track sales performance?', weight: 1 },
+  { code: 'SME_Q13', dimension: 'Marketing and Sales', text: 'How do you respond to customer feedback and complaints?', weight: 1 },
+  { code: 'SME_Q14', dimension: 'Operations and Productivity', text: 'How clearly are your daily business activities organised?', weight: 1 },
+  { code: 'SME_Q15', dimension: 'Operations and Productivity', text: 'How do you manage stock, materials or business resources?', weight: 1 },
+  { code: 'SME_Q16', dimension: 'Operations and Productivity', text: 'How consistently do you maintain the quality of your products or services?', weight: 1 },
+  { code: 'SME_Q17', dimension: 'Operations and Productivity', text: 'How effectively does your business use technology or digital tools?', weight: 1 },
+  { code: 'SME_Q18', dimension: 'Human Resources and Organisation', text: 'Are responsibilities clearly defined for the people working in your business?', weight: 1 },
+  { code: 'SME_Q19', dimension: 'Human Resources and Organisation', text: 'How do you monitor employee or team performance?', weight: 1 },
+  { code: 'SME_Q20', dimension: 'Human Resources and Organisation', text: 'How do you identify and address skills gaps in your business?', weight: 1 },
+  { code: 'SME_Q21', dimension: 'Human Resources and Organisation', text: 'How well can your business operate when you, the owner, are unavailable?', weight: 1 },
+  { code: 'SME_Q22', dimension: 'Risk, Resilience and Growth', text: 'How do you identify and manage business risks?', weight: 1 },
+  { code: 'SME_Q23', dimension: 'Risk, Resilience and Growth', text: 'What happens when your business experiences an unexpected disruption?', weight: 1 },
+  { code: 'SME_Q24', dimension: 'Risk, Resilience and Growth', text: 'How prepared is your business to grow?', weight: 1 },
+  { code: 'SME_Q25', dimension: 'Risk, Resilience and Growth', text: 'How do you measure progress towards your business goals?', weight: 1 }
+];
+const SME360_DIMENSIONS = ['Strategy and Leadership', 'Financial Health', 'Marketing and Sales', 'Operations and Productivity', 'Human Resources and Organisation', 'Risk, Resilience and Growth'];
+/** Answer options, A-D, the same four per question throughout the bank -- kept here for the frontend/API to render, not used in scoring. */
+export const SME360_ANSWER_OPTIONS: Record<string, { A: string; B: string; C: string; D: string }> = {
+  SME_Q01: { A: 'Yes, with measurable targets.', B: 'Yes, but the goals are not measurable.', C: 'We have general ideas about what we want to achieve.', D: 'We have no clearly defined business goals.' },
+  SME_Q02: { A: 'Yes, and we review it regularly.', B: 'Yes, but we rarely review it.', C: 'We have an informal plan.', D: 'We do not have a business plan or action plan.' },
+  SME_Q03: { A: 'Using business records, market information and analysis.', B: 'Using some information alongside experience.', C: 'Mainly using experience and intuition.', D: 'Without a consistent decision-making process.' },
+  SME_Q04: { A: 'Monthly or more frequently, using records and targets.', B: 'Every few months.', C: 'Occasionally, when problems arise.', D: 'We do not regularly review performance.' },
+  SME_Q05: { A: 'Consistently, with organised records.', B: 'Most of the time, but some transactions are missed.', C: 'Occasionally, without a consistent system.', D: 'We do not maintain proper records.' },
+  SME_Q06: { A: 'Yes, completely.', B: 'Mostly, with occasional mixing.', C: 'We separate them sometimes.', D: 'We regularly mix personal and business money.' },
+  SME_Q07: { A: 'We regularly calculate revenue, costs and profit.', B: 'We estimate profit using some records.', C: 'We mainly judge profit by the money remaining.', D: 'We do not know whether the business is profitable.' },
+  SME_Q08: { A: 'We forecast cash inflows and outflows and plan ahead.', B: 'We monitor cash regularly but rarely forecast it.', C: 'We check cash when payments are due.', D: 'We frequently struggle to understand or manage our cash position.' },
+  SME_Q09: { A: 'We budget and plan for them in advance.', B: 'We plan for some major expenses.', C: 'We usually respond when expenses arise.', D: 'We have no consistent financial planning process.' },
+  SME_Q10: { A: 'We have clearly identified customer groups and understand their needs.', B: 'We understand our main customers but have limited information.', C: 'We mainly rely on our existing customer relationships.', D: 'We have not clearly identified our target customers.' },
+  SME_Q11: { A: 'Through a consistent marketing and customer acquisition strategy.', B: 'Through several methods, but without a consistent plan.', C: 'Mainly through referrals and occasional promotion.', D: 'We do not have a clear way of attracting new customers.' },
+  SME_Q12: { A: 'We record and review sales regularly against targets.', B: 'We record most sales but rarely analyse performance.', C: 'We estimate sales from memory or incomplete records.', D: 'We do not systematically track sales.' },
+  SME_Q13: { A: 'We collect feedback, record complaints and act on the findings.', B: 'We respond to most complaints but do not track patterns.', C: 'We respond only when a problem becomes serious.', D: 'We have no consistent process for handling feedback.' },
+  SME_Q14: { A: 'We have documented processes and clear responsibilities.', B: 'Most activities are organised, but some processes are undocumented.', C: 'Activities depend largely on individual experience.', D: 'We frequently experience confusion about what needs to be done.' },
+  SME_Q15: { A: 'We maintain accurate records and review stock regularly.', B: 'We keep records but sometimes experience discrepancies.', C: 'We estimate available stock or resources.', D: 'We do not have a consistent tracking system.' },
+  SME_Q16: { A: 'We use clear quality standards and check performance regularly.', B: 'We check quality but do not document the process consistently.', C: 'We mainly rely on customer complaints to identify problems.', D: 'We do not have a consistent quality-control process.' },
+  SME_Q17: { A: 'We use suitable tools to improve operations and decision-making.', B: 'We use some digital tools, but important processes remain manual.', C: 'We use technology mainly for basic communication.', D: 'We rarely use technology to support business operations.' },
+  SME_Q18: { A: 'Yes, responsibilities and reporting arrangements are clear.', B: 'Most responsibilities are clear, but some overlap.', C: 'Responsibilities are mainly communicated informally.', D: 'Responsibilities are unclear or frequently disputed.' },
+  SME_Q19: { A: 'We use clear expectations and regular performance reviews.', B: 'We monitor performance informally and provide feedback.', C: 'We intervene mainly when problems occur.', D: 'We do not have a consistent way of monitoring performance.' },
+  SME_Q20: { A: 'We regularly identify skills gaps and organise appropriate learning.', B: 'We address skills gaps when we notice them.', C: 'We provide training occasionally.', D: 'We do not have a clear approach to skills development.' },
+  SME_Q21: { A: 'The team can handle most operations using established processes.', B: 'Some activities continue, but important decisions depend on me.', C: 'Most activities slow down when I am unavailable.', D: 'The business largely stops operating without me.' },
+  SME_Q22: { A: 'We regularly identify risks and implement mitigation measures.', B: 'We recognise major risks but manage them informally.', C: 'We usually address risks after problems occur.', D: 'We do not systematically identify business risks.' },
+  SME_Q23: { A: 'We have a documented continuity or recovery plan.', B: 'We have informal arrangements for major disruptions.', C: 'We try to resolve disruptions as they occur.', D: 'We have no clear approach to business disruptions.' },
+  SME_Q24: { A: 'We have a realistic growth plan supported by resources and targets.', B: 'We have identified growth opportunities but need stronger planning.', C: 'We want to grow but have not identified clear steps.', D: 'We have not assessed our readiness for growth.' },
+  SME_Q25: { A: 'We track clear performance indicators and review them regularly.', B: 'We monitor some indicators but not consistently.', C: 'We mainly judge progress by general business activity.', D: 'We do not have a consistent way to measure progress.' }
+};
+
+/** Creates (if missing) and publishes the SME360 free-assessment framework. Idempotent; safe to call on every boot/seed, matching ensureBaseline's pattern. */
+export async function ensureSme360FreeAssessmentFramework(db: Db) {
+  let [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'SME360')).limit(1);
+  if (!f) {
+    [f] = await db.insert(schema.frameworks).values({
+      code: 'SME360', name: 'SME360 Free Business Health Assessment', orgType: 'SME', isDefault: false,
+      description: 'Free, 25-question preliminary Business Health assessment for micro and small businesses, SMEs, startups, traders, manufacturers and service providers.'
+    }).onConflictDoNothing().returning();
+    if (!f) [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'SME360')).limit(1);
+  }
+  const [have] = await db.select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions)
+    .where(and(eq(schema.frameworkVersions.frameworkId, f.id), eq(schema.frameworkVersions.status, 'Published'))).limit(1);
+  if (have) return;
+
+  const [{ n }] = await db.select({ n: sql<number>`coalesce(max(${schema.frameworkVersions.version}), 0)::int` })
+    .from(schema.frameworkVersions).where(eq(schema.frameworkVersions.frameworkId, f.id));
+  const now = new Date();
+  const [draft] = await db.insert(schema.frameworkVersions).values({
+    frameworkId: f.id, version: Number(n) + 1, status: 'Draft', questions: SME360_QUESTIONS, dimensions: SME360_DIMENSIONS,
+    sources: [{
+      component: 'Question bank, weights and scoring model', source: 'Approved "MASTER DEVELOPMENT PROMPT: BUSINESS DOCTOR FREE 25-QUESTION ASSESSMENT" specification',
+      rationale: 'Authored and approved by Samakose leadership for the free preliminary assessment', adaptation: 'None, used verbatim', approval: 'Approved'
+    }],
+    note: 'SME360 free preliminary assessment, 25 questions across 6 dimensions', createdBy: null
+  }).onConflictDoNothing().returning();
+  if (!draft) return;
+
+  await syncStructuredDraft(db, draft);
+  await db.update(schema.frameworkQuestions).set({ status: 'Published' }).where(eq(schema.frameworkQuestions.frameworkVersionId, draft.id));
+  await db.update(schema.frameworkVersions).set({ status: 'Published', approvedAt: now, publishedAt: now }).where(eq(schema.frameworkVersions.id, draft.id));
+}

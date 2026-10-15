@@ -4,7 +4,7 @@ import { api, dateTime, errText } from '@/lib/client/api';
 import { Badge, Button, useToast } from '@/components/ui';
 import { LogTable } from './common';
 
-export type InquiryRow = { id: string; kind: string; name: string | null; email: string; organisation: string | null; phone: string | null; interest: string | null; message: string | null; status: string; createdAt: string };
+export type InquiryRow = { id: string; kind: string; name: string | null; email: string; organisation: string | null; phone: string | null; interest: string | null; message: string | null; status: string; createdAt: string; platform?: string | null; overallScore?: number | null; classification?: string | null };
 const tone = (s: string) => (s === 'New' ? 'info' : s === 'Spam' ? 'bad' : 'ok');
 
 function Detail({ r, onChanged }: { r: InquiryRow; onChanged: () => void }) {
@@ -19,6 +19,10 @@ function Detail({ r, onChanged }: { r: InquiryRow; onChanged: () => void }) {
       <div style={{ display: 'contents' }}><dt>Phone</dt><dd>{r.phone ?? '-'}</dd></div>
       <div style={{ display: 'contents' }}><dt>Organisation</dt><dd>{r.organisation ?? '-'}</dd></div>
       <div style={{ display: 'contents' }}><dt>Interest</dt><dd>{r.interest ?? '-'}</dd></div>
+      {r.kind === 'assessment' && <>
+        <div style={{ display: 'contents' }}><dt>Platform</dt><dd>{r.platform ?? '-'}</dd></div>
+        <div style={{ display: 'contents' }}><dt>Preliminary score</dt><dd>{r.overallScore != null ? `${r.overallScore}/100 (${r.classification ?? '-'})` : '-'}</dd></div>
+      </>}
       <div style={{ display: 'contents' }}><dt>Message</dt><dd style={{ whiteSpace: 'pre-wrap' }}>{r.message ?? '-'}</dd></div>
     </dl>
     <div className="row">
@@ -33,8 +37,8 @@ export function InquiryTable({ exportable }: { exportable?: boolean }) {
   const [status, setStatus] = useState(''); const [tick, setTick] = useState(0);
   const cols = [
     { key: 'at', label: 'Received', sort: 'createdAt', render: (r: InquiryRow) => <span className="num">{dateTime(r.createdAt)}</span> },
-    { key: 'kind', label: 'Type', render: (r: InquiryRow) => <span className="badge">{r.kind}</span> },
-    { key: 'who', label: 'From', sort: 'name', render: (r: InquiryRow) => <span>{r.name ?? r.email}{r.organisation ? <span className="muted small"> · {r.organisation}</span> : null}</span> },
+    { key: 'kind', label: 'Type', render: (r: InquiryRow) => <span className="badge">{r.kind === 'assessment' ? (r.platform ?? 'assessment') : r.kind}</span> },
+    { key: 'who', label: 'From', sort: 'name', render: (r: InquiryRow) => <span>{r.name ?? r.email}{r.organisation ? <span className="muted small"> · {r.organisation}</span> : null}{r.kind === 'assessment' && r.overallScore != null ? <span className="muted small"> · {r.overallScore}/100</span> : null}</span> },
     { key: 'status', label: 'Status', sort: 'status', render: (r: InquiryRow) => <Badge tone={tone(r.status)}>{r.status}</Badge> }
   ];
   return <div className="stack">
