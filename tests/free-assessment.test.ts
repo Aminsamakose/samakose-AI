@@ -20,9 +20,9 @@ describe('free assessment scorer (plain, unweighted -- not scoreDiagnostic)', ()
     const answers: FreeAssessmentAnswer[] = [{ questionCode: 'Q1', value: 4 }, { questionCode: 'Q2', value: 4 }];
     expect(scoreFreeAssessment(answers, qs, DEFAULT_RULES).overall).toBe(100);
   });
-  it('scores 0 for all D answers', () => {
+  it('scores 25 for all D answers (D=1 of a possible 4, not zero)', () => {
     const qs = [{ code: 'Q1', dimension: 'D' }];
-    expect(scoreFreeAssessment([{ questionCode: 'Q1', value: 1 }], qs, DEFAULT_RULES).overall).toBe(0);
+    expect(scoreFreeAssessment([{ questionCode: 'Q1', value: 1 }], qs, DEFAULT_RULES).overall).toBe(25);
   });
   it('throws rather than silently scoring a missing answer as the lowest value (spec, Phase 5 safeguard)', () => {
     const qs = [{ code: 'Q1', dimension: 'D' }, { code: 'Q2', dimension: 'D' }];

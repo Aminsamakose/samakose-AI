@@ -386,6 +386,13 @@
       "when": 1792050000000,
       "tag": "0055_resource_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1792060000000,
+      "tag": "0056_free_assessment",
+      "breakpoints": true
     }
   ]
 }
