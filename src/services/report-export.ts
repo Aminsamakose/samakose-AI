@@ -69,6 +69,32 @@ function wrap(text: string, font: PDFFont, size: number, max: number): string[] 
   return out;
 }
 
+/** The free preliminary assessment's downloadable result (#123: a real PDF, not a client-side text Blob). Short and fixed-length, so no pagination is needed. */
+export async function buildFreeAssessmentPdf(input: {
+  platform: string; businessName: string | null; overallScore: number; classification: string;
+  dimensionScores: { dimension: string; score: number }[]; completedAt: string | Date | null;
+}) {
+  const title = `${input.platform} Free Business Health Result`;
+  const pdf = await PDFDocument.create();
+  pdf.setTitle(pdfSafe(title)); pdf.setAuthor(BRAND); pdf.setCreator(BRAND);
+  const reg = await pdf.embedFont(StandardFonts.Helvetica); const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const W = 595.28, H = 841.89, M = 56, max = W - M * 2;
+  const page = pdf.addPage([W, H]); let y = H - M;
+  const draw = (text: string, font: PDFFont, size: number, color = rgb(0.1, 0.1, 0.1), gap = 4) => {
+    for (const l of wrap(pdfSafe(text), font, size, max)) { if (l) page.drawText(l, { x: M, y: y - size, size, font, color }); y -= size + gap; }
+  };
+  draw(title, bold, 20, rgb(0, 0, 0), 8);
+  if (input.businessName) draw(input.businessName, reg, 12, rgb(0.33, 0.33, 0.33), 10);
+  draw(`Overall score: ${input.overallScore}/100 (${input.classification})`, bold, 14, rgb(0, 0, 0), 14);
+  draw('Dimension scores', bold, 13, rgb(0, 0, 0), 6);
+  for (const d of input.dimensionScores) draw(`${d.dimension}: ${d.score}/100`, reg, 11, rgb(0.1, 0.1, 0.1), 4);
+  y -= 10;
+  draw('This is a preliminary assessment based on your own answers, not a certified diagnosis, investment-readiness determination or guarantee of business success.', reg, 9, rgb(0.45, 0.45, 0.45), 3);
+  if (input.completedAt) draw(`Generated: ${new Date(input.completedAt).toISOString().slice(0, 10)}`, reg, 9, rgb(0.45, 0.45, 0.45), 3);
+  page.drawText(pdfSafe(`${BRAND}  |  Free preliminary assessment`), { x: M, y: 28, size: 8, font: reg, color: rgb(0.45, 0.45, 0.45) });
+  return pdf.save();
+}
+
 async function buildPdf(title: string, meta: string[], content: { heading: string; body: string }[], basis: { verified: number; unverified: number } | null) {
   const pdf = await PDFDocument.create();
   pdf.setTitle(pdfSafe(title)); pdf.setAuthor(BRAND); pdf.setCreator(BRAND);

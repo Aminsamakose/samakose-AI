@@ -1,7 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { PDFDocument } from 'pdf-lib';
 import { DEFAULT_RULES, freeAssessmentClassification, scoreFreeAssessment, type FreeAssessmentAnswer } from '@/domain/logic';
 import { SME360_ANSWER_OPTIONS } from '@/services/frameworks';
 import { normaliseEmail } from '@/services/publicAssessments';
+import { dispatch } from '@/api/framework';
+import { ensureReference } from './helpers';
+
+const post = (path: string, body: unknown = {}) => dispatch(new Request('http://localhost/api/v1' + path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '10.44.44.44' }, body: JSON.stringify(body) }));
 
 // SME360_QUESTIONS isn't exported (kept module-private in frameworks.ts); re-derive the 25-question
 // shape locally from the answer-options map, which IS exported, purely so these tests don't need DB access.
@@ -58,5 +63,35 @@ describe('email normalisation (spec, Phase 6: trim + case-fold only, never strip
   it('treats dot/plus variants as genuinely distinct addresses', () => {
     expect(normaliseEmail('user@example.com')).not.toBe(normaliseEmail('u.ser@example.com'));
     expect(normaliseEmail('user@example.com')).not.toBe(normaliseEmail('user+tag@example.com'));
+  });
+});
+
+describe('free assessment result download (#123: a real PDF, not a client-side plain-text Blob)', () => {
+  beforeAll(async () => { await ensureReference(); });
+
+  it('the download action returns an actual application/pdf file carrying the score and classification', async () => {
+    const start = await post('/public/assessments/start', {
+      email: `pdf-download-${Date.now()}@test.samakose.test`, fullName: 'PDF Download Test', platform: 'SME360', privacyAcknowledged: true
+    });
+    expect(start.status).toBe(200);
+    const started = await start.json();
+    const { id, questions } = started.data;
+    const answers: Record<string, 'A'> = {};
+    for (const q of questions) answers[q.code] = 'A';
+    const submit = await post(`/public/assessments/${id}/submit`, { answers });
+    expect(submit.status).toBe(200);
+
+    const res = await post(`/public/assessments/${id}/actions/download`, {});
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('application/pdf');
+    expect(res.headers.get('content-disposition')).toMatch(/attachment; filename="SME360-result\.pdf"/);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    expect(Buffer.from(bytes.slice(0, 5)).toString('latin1')).toBe('%PDF-');
+    const pdf = await PDFDocument.load(bytes);
+    expect(pdf.getPageCount()).toBe(1);
+
+    // The one-time allowance still applies -- a second download attempt is refused, same as before.
+    const again = await post(`/public/assessments/${id}/actions/download`, {});
+    expect(again.status).toBe(409);
   });
 });

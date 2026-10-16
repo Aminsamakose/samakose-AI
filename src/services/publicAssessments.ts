@@ -21,8 +21,10 @@ import { audit } from '@/lib/audit';
 import { sha256 } from '@/lib/crypto';
 import { sendMail } from '@/lib/mail';
 import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
+import { fileResponse } from '@/api/framework';
 import { scoreFreeAssessment, type FreeAssessmentAnswer } from '@/domain/logic';
 import { resolveVersion, questionsOf, SME360_ANSWER_OPTIONS } from './frameworks';
+import { buildFreeAssessmentPdf } from './report-export';
 
 /** Answer-option text by platform. Only SME360 has an approved bank today; AgriFood360/ESO360 are rejected before this is ever consulted. */
 const ANSWER_OPTIONS_BY_PLATFORM: Partial<Record<FreeAssessmentPlatform, Record<string, { A: string; B: string; C: string; D: string }>>> = { SME360: SME360_ANSWER_OPTIONS };
@@ -184,7 +186,12 @@ export async function useReportAction(ctx: Ctx, id: string, action: 'email' | 'd
     if (row.downloadedAt) throw conflict('The result has already been downloaded for this assessment');
     const [updated] = await ctx.db.update(t).set({ downloadedAt: new Date() }).where(and(eq(t.id, id), isNull(t.downloadedAt))).returning();
     if (!updated) throw conflict('The result has already been downloaded for this assessment');
-    return { ok: true };
+    // #123: a real PDF, not a client-side plain-text Blob built from JSON the browser already had.
+    const pdf = await buildFreeAssessmentPdf({
+      platform: updated.platform, businessName: updated.businessName, overallScore: updated.overallScore ?? 0,
+      classification: updated.classification ?? '', dimensionScores: updated.dimensionScores ?? [], completedAt: updated.completedAt
+    });
+    return fileResponse(`${updated.platform}-result.pdf`, 'application/pdf', pdf);
   }
   if (row.printedAt) throw conflict('Print has already been authorised for this assessment');
   const [updated] = await ctx.db.update(t).set({ printedAt: new Date() }).where(and(eq(t.id, id), isNull(t.printedAt))).returning();
