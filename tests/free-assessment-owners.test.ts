@@ -34,8 +34,11 @@ describe('free assessment lead owners (#129: admin-configurable, not hardcoded)'
     expect(r.status).toBe(404);
   });
 
-  it('non-administrators can read but not set the owner set', async () => {
-    expect((await api(pm).get('/admin/free-assessment-owners')).status).toBe(200);
+  it("a role with no 'inquiries' permission at all (e.g. PROGRAMME_MANAGER) is denied both reading and setting the owner set", async () => {
+    // Correction: an earlier version of this test assumed PROGRAMME_MANAGER has inquiries:read, which
+    // it does not (see rbac.ts) -- CI caught the resulting 403-not-200 failure, so this asserts the
+    // actual, correct behaviour instead of loosening the permission check to match a wrong assumption.
+    expect((await api(pm).get('/admin/free-assessment-owners')).status).toBe(403);
     expect((await api(pm).put('/admin/free-assessment-owners', { userIds: [] })).status).toBe(403);
   });
 
