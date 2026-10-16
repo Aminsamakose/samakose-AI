@@ -39,7 +39,7 @@ export const DEFAULT_SECTIONS: HomeSection[] = HOME_SECTIONS.map((s) => ({ id: s
 const url = (key: string, label: string, hint?: string): Field => ({ key, label, type: 'url', max: 300, hint });
 
 const isUrl = (v: string) => /^https:\/\/[^\s]+\.[^\s]+$/i.test(v) || /^\/[a-z0-9\-/_#?=&.]*$/i.test(v);
-export const DEFAULT_MENU = ['Platform | /platform', 'Solutions | /solutions', 'Impact | /impact', 'Resources | /resources', 'Pricing | /pricing', 'About | /about', 'Contact | /contact'].join('\n');
+export const DEFAULT_MENU = ['Free health check | /assessment', 'Platform | /platform', 'Solutions | /solutions', 'Impact | /impact', 'Resources | /resources', 'Pricing | /pricing', 'About | /about', 'Contact | /contact'].join('\n');
 
 /** Reads the menu text into links. Returns the links and any problem found, so the editor can say exactly what is wrong. */
 export function parseMenu(text: string): { items: { label: string; href: string }[]; error?: string } {

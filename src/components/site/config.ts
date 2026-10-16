@@ -16,9 +16,12 @@ export const REGISTER_HREF = '/register';
 export const LOGIN_HREF = '/login';
 export const PORTAL_HREF = '/dashboard';
 
+export const FREE_ASSESSMENT_HREF = '/assessment';
+
 export type NavItem = { label: string; href: string };
 /** Only live destinations appear here. Pages are added as each stage ships. */
 export const NAV: NavItem[] = [
+  { label: 'Free health check', href: FREE_ASSESSMENT_HREF },
   { label: 'Platform', href: '/platform' },
   { label: 'Solutions', href: '/solutions' },
   { label: 'Impact', href: '/impact' },
