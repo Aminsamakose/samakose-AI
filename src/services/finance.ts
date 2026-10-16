@@ -106,6 +106,17 @@ export async function deletePlan(ctx: Ctx, id: string) {
   return { deleted: true as const, archived: false as const, totalContracts: 0, activeContracts: 0 };
 }
 
+/** Whether the separate, site-wide "Pricing display" switch is live - distinct from any one plan's own priceConfirmed flag.
+ *  Lets the Plans screen warn finance/admin users when their confirmed prices still won't show to visitors, without requiring the 'content' permission. */
+export async function pricingPublishStatus(ctx: Ctx) {
+  allow(ctx, 'plans', 'read');
+  const [row] = await ctx.db.select({ live: schema.contentDocs.live }).from(schema.contentDocs)
+    .where(and(eq(schema.contentDocs.kind, 'pricing_settings'), eq(schema.contentDocs.key, 'pricing_settings'))).limit(1);
+  const live = (row?.live ?? {}) as Record<string, unknown>;
+  const approved = live.pricesConfirmed === true && String(live.approvalRef ?? '').trim().length >= 5;
+  return { approved, approvalRef: approved ? String(live.approvalRef) : null };
+}
+
 /* ------------------------------ contracts ------------------------------ */
 const conCols = { id: con.id, code: con.code, orgId: con.orgId, org: o.name, planId: con.planId, programmeId: con.programmeId, status: con.status, startDate: con.startDate, endDate: con.endDate, amountGhs: con.amountGhs, createdAt: con.createdAt, acceptedAt: con.acceptedAt, signatoryName: con.signatoryName, renewalOf: con.renewalOf };
 export async function listContracts(ctx: Ctx, q: ListQuery & { status?: string; orgId?: string }) {
