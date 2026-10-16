@@ -407,6 +407,13 @@
       "when": 1792152700000,
       "tag": "0058_fix_app_role_ownership",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1792160000000,
+      "tag": "0059_framework_purpose",
+      "breakpoints": true
     }
   ]
 }

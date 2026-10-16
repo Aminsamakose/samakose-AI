@@ -23,7 +23,7 @@ import { sendMail } from '@/lib/mail';
 import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
 import { fileResponse } from '@/api/framework';
 import { scoreFreeAssessment, type FreeAssessmentAnswer } from '@/domain/logic';
-import { resolveVersion, questionsOf, SME360_ANSWER_OPTIONS } from './frameworks';
+import { resolveFreeAssessmentVersion, questionsOf, SME360_ANSWER_OPTIONS } from './frameworks';
 import { buildFreeAssessmentPdf } from './report-export';
 
 /** Answer-option text by platform. Only SME360 has an approved bank today; AgriFood360/ESO360 are rejected before this is ever consulted. */
@@ -62,7 +62,7 @@ export async function startFreeAssessment(ctx: Ctx, input: StartInput) {
     .where(and(eq(t.normalisedEmail, normalisedEmail), eq(t.platform, input.platform), eq(t.status, 'Completed'))).limit(1);
   if (already) return { eligible: false as const, ...ALREADY_USED_MESSAGE };
 
-  const version = await resolveVersion(ctx.db, PLATFORM_ORG_TYPE[input.platform]);
+  const version = await resolveFreeAssessmentVersion(ctx.db, PLATFORM_ORG_TYPE[input.platform]);
   const [row] = await ctx.db.insert(t).values({
     email: input.email.trim(), normalisedEmail, fullName: input.fullName.trim(), businessName: input.businessName?.trim() || null,
     platform: input.platform, frameworkVersionId: version.id, status: 'Started',
