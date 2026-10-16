@@ -16,7 +16,7 @@ export type PublicArticle = { slug: string; title: string; summary: string; date
 /** price is only ever a real figure once THIS plan's own price is confirmed (see PublishablePlanRow);
  *  otherwise it is null and priceStatus says why, so the page never renders a placeholder in the shape
  *  of a price - "Pricing pending confirmation" is text, not a number, and is styled as a status badge. */
-export type PricingCard = { name: string; audience: string; features: string[]; price: string | null; priceStatus: 'free' | 'confirmed' | 'pending' | 'by_agreement'; reference: string | null; period: string; ctaLabel: string; ctaHref: string; highlighted: boolean; serviceTier: string | null; durationDays: number | null };
+export type PricingCard = { id: string | null; name: string; audience: string; features: string[]; price: string | null; priceStatus: 'free' | 'confirmed' | 'pending' | 'by_agreement'; reference: string | null; period: string; ctaLabel: string; ctaHref: string; buyable: boolean; highlighted: boolean; serviceTier: string | null; durationDays: number | null };
 export type PricingView = { confirmed: boolean; banner: string; currency: 'GHS' | 'USD'; enquiryLabel: string; enquiryHref: string; plans: PricingCard[] };
 export type SiteContent = {
   pricing: PricingView; pricing_settings: Rec;
@@ -30,7 +30,7 @@ const money = (v: unknown, cur: string) => { const n = Number(String(v ?? '')); 
 /** A published, billable plan - the shape `finance.listPlans`/the `plans` table actually produces. This is
  *  the ONE authoritative source for public pricing cards; there is no separate CMS copy to keep in sync. */
 export type PublishablePlanRow = {
-  name: string; audience: string | null; serviceTier: string | null; durationDays: number | null;
+  id: string; name: string; audience: string | null; serviceTier: string | null; durationDays: number | null;
   pricingModel: 'free' | 'fixed' | 'custom'; priceGhs: string; priceConfirmed: boolean;
   entitlements: { key: string; enabled: boolean; limit?: number | string }[] | null;
 };
@@ -57,15 +57,22 @@ export function buildPricing(s: Rec, planRows: PublishablePlanRow[]): PricingVie
     // by a buyer). So every CTA routes into the same real next step that exists today - registration
     // for anything a visitor can act on immediately, an enquiry for anything whose price isn't public
     // yet or that needs a custom agreement - rather than a "Buy" button with nowhere real to land.
+    // A confirmed, fixed-price plan is "buyable" - the button drives the real self-serve checkout
+    // (see plan-purchases.ts) instead of just linking somewhere. Everything else still routes to the
+    // next real step that exists for it: registration for the free tier, an enquiry for anything
+    // whose price isn't public yet or that needs a custom agreement.
+    const buyable = priceStatus === 'confirmed';
     const { ctaLabel, ctaHref } = priceStatus === 'by_agreement'
       ? { ctaLabel: 'Ask about programme pricing', ctaHref: '/contact' }
       : priceStatus === 'pending'
         ? { ctaLabel: 'Enquire about this plan', ctaHref: '/contact' }
-        : { ctaLabel: priceStatus === 'free' ? 'Start your health check' : 'Get started', ctaHref: REGISTER_HREF };
+        : buyable
+          ? { ctaLabel: `Get started - ${price}`, ctaHref: REGISTER_HREF }
+          : { ctaLabel: 'Start your health check', ctaHref: REGISTER_HREF };
     return {
-      name: p.name, audience: p.audience ?? '', features: entitlementLines(p.entitlements),
+      id: p.id, name: p.name, audience: p.audience ?? '', features: entitlementLines(p.entitlements),
       price, priceStatus, reference: null, period,
-      ctaLabel, ctaHref, highlighted: false, serviceTier: p.serviceTier, durationDays: p.durationDays
+      ctaLabel, ctaHref, buyable, highlighted: false, serviceTier: p.serviceTier, durationDays: p.durationDays
     };
   });
   // Page-level "confirmed" now means "at least one real price is actually showing" - it drives whether
@@ -104,7 +111,7 @@ async function load(): Promise<SiteContent> {
   site.partners = of('partner') as Partner[];
   site.team = (of('team_member') as (TeamMember & { position?: string })[]).map((m, i) => ({ m, k: m.position ? Number(m.position) : 1000 + i })).sort((a, b) => a.k - b.k).map((x) => x.m);
   site.stats = of('stat') as Stat[];
-  const publishedPlans = await db().select({ name: schema.plans.name, audience: schema.plans.audience, serviceTier: schema.plans.serviceTier, durationDays: schema.plans.durationDays, pricingModel: schema.plans.pricingModel, priceGhs: schema.plans.priceGhs, priceConfirmed: schema.plans.priceConfirmed, entitlements: schema.plans.entitlements })
+  const publishedPlans = await db().select({ id: schema.plans.id, name: schema.plans.name, audience: schema.plans.audience, serviceTier: schema.plans.serviceTier, durationDays: schema.plans.durationDays, pricingModel: schema.plans.pricingModel, priceGhs: schema.plans.priceGhs, priceConfirmed: schema.plans.priceConfirmed, entitlements: schema.plans.entitlements })
     .from(schema.plans).where(eq(schema.plans.publicationStatus, 'published'));
   site.pricing = buildPricing(site.pricing_settings, publishedPlans as any);
   site.articles = (of('article') as PublicArticle[]).sort((a, b) => b.date.localeCompare(a.date));

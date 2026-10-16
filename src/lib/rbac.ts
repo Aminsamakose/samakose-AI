@@ -11,7 +11,7 @@ export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
   'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments', 'discounts', 'revenue_share', 'payouts', 'approvals', 'tax_rules', 'refunds',
   'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping', 'team', 'feedback', 'practitioners', 'ratings', 'opportunities', 'referrals', 'messages', 'escalations', 'programme_workspaces', 'insights',
-  'library_resources', 'library_authors', 'library_entitlements', 'library_catalog'
+  'library_resources', 'library_authors', 'library_entitlements', 'library_catalog', 'plan_catalog'
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -64,7 +64,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
   OWNER: {
     organisations: [R, E], cases: [R], diagnostics: [R, C], evidence: [R, C, D], documents: [R, C], scores: [R], prescriptions: [R],
     actions: [R, E], kpis: [R, C], sessions: [R], reports: [R], contracts: [R, A], invoices: [R], payments: [C], refunds: [R, C], dashboard: [R], ratings: [R, C], opportunities: [R], referrals: [R, C, D], messages: [R, C],
-    team: [R, C, E, D], library_catalog: [R]
+    team: [R, C, E, D], library_catalog: [R], plan_catalog: [R]
   },
   RESPONDENT: { dashboard: [R], library_catalog: [R] },
   FUNDER: { programmes: [R], cohorts: [R], reports: [R], dashboard: [R, X], programme_workspaces: [R], library_catalog: [R] },
