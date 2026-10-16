@@ -464,15 +464,28 @@ export const SME360_ANSWER_OPTIONS: Record<string, { A: string; B: string; C: st
   SME_Q25: { A: 'We track clear performance indicators and review them regularly.', B: 'We monitor some indicators but not consistently.', C: 'We mainly judge progress by general business activity.', D: 'We do not have a consistent way to measure progress.' }
 };
 
-/** Creates (if missing) and publishes the SME360 free-assessment framework. Idempotent; safe to call on every boot/seed, matching ensureBaseline's pattern. */
+/**
+ * Creates (if missing) and publishes the SME360 free-assessment framework. Idempotent; safe to call on
+ * every boot/seed, matching ensureBaseline's pattern.
+ *
+ * Deliberately uses the code 'SME360_FREE', not 'SME360': the code 'SME360' is already taken by the
+ * pre-existing, isDefault:true, 100-question paid/registration SME360 framework. Reusing that code here
+ * would make this function find that framework (it already has a Published version) and silently no-op,
+ * leaving the free assessment with no question bank of its own -- resolveVersion() would then fall
+ * through to the isDefault:true framework and serve the paid 100-question bank as the "free assessment",
+ * which is exactly the question-bank conflation the governing spec prohibits. Caught and fixed before
+ * this ever reached a real user: discovered by checking production data directly, not by inspection
+ * alone. orgType 'SME' + isDefault:false is what makes resolveVersion(db, 'SME') select this framework
+ * over the paid one (its first branch filters on exactly that combination).
+ */
 export async function ensureSme360FreeAssessmentFramework(db: Db) {
-  let [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'SME360')).limit(1);
+  let [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'SME360_FREE')).limit(1);
   if (!f) {
     [f] = await db.insert(schema.frameworks).values({
-      code: 'SME360', name: 'SME360 Free Business Health Assessment', orgType: 'SME', isDefault: false,
+      code: 'SME360_FREE', name: 'SME360 Free Business Health Assessment', orgType: 'SME', isDefault: false,
       description: 'Free, 25-question preliminary Business Health assessment for micro and small businesses, SMEs, startups, traders, manufacturers and service providers.'
     }).onConflictDoNothing().returning();
-    if (!f) [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'SME360')).limit(1);
+    if (!f) [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'SME360_FREE')).limit(1);
   }
   const [have] = await db.select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions)
     .where(and(eq(schema.frameworkVersions.frameworkId, f.id), eq(schema.frameworkVersions.status, 'Published'))).limit(1);
