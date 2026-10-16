@@ -525,13 +525,50 @@ export const reports = pgTable('reports', {
 }, (t) => [index('rep_case_idx').on(t.caseId)]);
 
 /* ----------------------- commercial and payments ---------------------- */
+/** Service tier a plan represents (what the customer receives) - distinct from durationDays (how long support lasts). */
+export const PLAN_SERVICE_TIERS = ['discovery', 'diagnostic', 'transform', 'growth', 'programme'] as const;
+/** How a plan is priced. 'custom' means the amount is agreed per-contract (e.g. Programme tier) rather than fixed here. */
+export const PLAN_PRICING_MODELS = ['free', 'fixed', 'custom'] as const;
+/** Draft: being configured, never public. Published: live on the public pricing page and selectable for new contracts.
+ *  Inactive: hidden from new selection but existing contracts keep working. Archived: hidden everywhere; kept only for history. */
+export const PLAN_PUBLICATION_STATUSES = ['draft', 'published', 'inactive', 'archived'] as const;
+/** A fixed catalogue of entitlement keys a plan can grant, each with an optional limit. Keeping this a small fixed
+ *  list (rather than free text) is what lets the admin UI render checkboxes/limits instead of a textarea, and lets
+ *  future code actually enforce a feature instead of merely describing it. Extend this list only once a feature is
+ *  real and reviewed - never add a key here to make a plan look more complete than the product actually is. */
+export const PLAN_ENTITLEMENT_KEYS = [
+  'free_assessment', 'full_assessment', 'ai_assisted_report', 'detailed_report',
+  'action_plan', 'kpi_tracking', 'coaching_sessions', 'progress_reviews',
+  'priority_support', 'opportunity_matching', 'investment_readiness_pack',
+  'cohort_management', 'coach_management', 'portfolio_reporting'
+] as const;
 export const plans = pgTable('plans', {
   id: id(), code: codeCol('plan'),
   name: text('name').notNull(),
   description: text('description'),
+  /** Who this plan is for, shown publicly - e.g. "Owners who want a full picture and clear priorities." */
+  audience: text('audience'),
+  /** One of PLAN_SERVICE_TIERS, or null for a legacy plan created before this model existed. */
+  serviceTier: text('service_tier'),
+  /** Org types this plan applies to (e.g. ['SME','AGRIFOOD','ESO']). Empty/null means all platforms. */
+  platforms: jsonb('platforms').$type<string[]>().default([]),
+  /** Structured entitlements this plan grants: [{ key: 'coaching_sessions', enabled: true, limit: 4 }, ...].
+   *  key must be one of PLAN_ENTITLEMENT_KEYS. limit is optional (e.g. session count, participant cap). */
+  entitlements: jsonb('entitlements').$type<{ key: string; enabled: boolean; limit?: number | string }[]>().default([]),
+  /** Support duration in days (30/180/360, or a custom number). Null means the plan has no fixed support
+   *  horizon (e.g. a one-off assessment). This is independent of serviceTier - a Diagnostic plan can be sold
+   *  standalone (durationDays null) or bundled with any horizon. */
+  durationDays: integer('duration_days'),
+  pricingModel: text('pricing_model').notNull().default('fixed'),
+  /** Required even for pricingModel 'free' (0.00) or 'custom' (a representative/placeholder figure); the
+   *  authoritative custom amount for a real deal lives on the contract, not here. */
   priceGhs: numeric('price_ghs', { precision: 12, scale: 2 }).notNull(),
   intervalMonths: integer('interval_months').notNull().default(12),
-  active: boolean('active').notNull().default(true),
+  publicationStatus: text('publication_status').notNull().default('draft'),
+  /** Kept in sync with publicationStatus (true only when 'published') so existing code that filters or
+   *  orders by `active` keeps working unchanged. Write through updatePlan()/setPlanStatus(), never directly.
+   *  Defaults to false to match the 'draft' default above - a freshly inserted row is never active until published. */
+  active: boolean('active').notNull().default(false),
   createdAt: created(), updatedAt: updated()
 });
 export const contracts = pgTable('contracts', {

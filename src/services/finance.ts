@@ -13,30 +13,85 @@ import { orderBy, search, countOf, type ListQuery } from '@/api/list';
 import { allow, need, respondList, today } from './common';
 import { contractScope } from './contracts';
 import { postLedgerEntries } from './ledger';
+import { bust as bustSiteContent } from './content';
 
 const con = schema.contracts, inv = schema.invoices, pay = schema.payments, pl = schema.plans, o = schema.organisations;
 const CONTRACT_MOVES: Record<string, string[]> = { Draft: ['Active', 'Cancelled'], Active: ['Expired', 'Cancelled'], Expired: [], Cancelled: [] };
 const dec = (n: number) => n.toFixed(2);
 
 /* -------------------------------- plans -------------------------------- */
+type PlanEntitlement = { key: string; enabled: boolean; limit?: number | string };
+type PlanInput = {
+  name: string; description?: string | null; audience?: string | null;
+  serviceTier?: string | null; platforms?: string[]; entitlements?: PlanEntitlement[];
+  durationDays?: number | null; pricingModel?: 'free' | 'fixed' | 'custom';
+  priceGhs: number; intervalMonths: number;
+};
+/** publicationStatus is the single source of truth for availability; `active` is a derived mirror
+ *  (true only when 'published') kept only so older code that still filters/orders on it keeps working. */
+const withActiveMirror = (publicationStatus?: string) => publicationStatus === undefined ? {} : { publicationStatus, active: publicationStatus === 'published' };
+
 export async function listPlans(ctx: Ctx) {
   allow(ctx, 'plans', 'read');
   return ctx.db.select().from(pl).orderBy(desc(pl.active), pl.name);
 }
-export async function createPlan(ctx: Ctx, b: { name: string; description?: string | null; priceGhs: number; intervalMonths: number }) {
+/** How many live (non-Cancelled/Expired) contracts currently reference a plan - the dependency check a safe delete or archive needs. */
+export async function planDependencies(ctx: Ctx, id: string) {
+  allow(ctx, 'plans', 'read');
+  const rows = await ctx.db.select({ status: con.status, n: sql<number>`count(*)::int` }).from(con).where(eq(con.planId, id)).groupBy(con.status);
+  const total = rows.reduce((s, r) => s + Number(r.n), 0);
+  const active = rows.filter((r) => r.status === 'Active' || r.status === 'Draft').reduce((s, r) => s + Number(r.n), 0);
+  return { totalContracts: total, activeContracts: active, byStatus: rows };
+}
+export async function createPlan(ctx: Ctx, b: PlanInput) {
   allow(ctx, 'plans', 'create');
-  const [row] = await ctx.db.insert(pl).values({ name: b.name.trim(), description: b.description ?? null, priceGhs: dec(b.priceGhs), intervalMonths: b.intervalMonths }).returning({ id: pl.id, code: pl.code });
+  const [row] = await ctx.db.insert(pl).values({
+    name: b.name.trim(), description: b.description ?? null, audience: b.audience ?? null,
+    serviceTier: b.serviceTier ?? null, platforms: b.platforms ?? [], entitlements: b.entitlements ?? [],
+    durationDays: b.durationDays ?? null, pricingModel: b.pricingModel ?? 'fixed',
+    priceGhs: dec(b.priceGhs), intervalMonths: b.intervalMonths,
+    publicationStatus: 'draft', active: false
+  }).returning({ id: pl.id, code: pl.code });
   await audit(ctx, 'plan.created', 'plan', row.id, undefined, b);
   return row;
 }
-export async function updatePlan(ctx: Ctx, id: string, b: { name?: string; description?: string | null; priceGhs?: number; intervalMonths?: number; active?: boolean }) {
+export async function updatePlan(ctx: Ctx, id: string, b: Partial<PlanInput> & { publicationStatus?: string }) {
   allow(ctx, 'plans', 'edit');
   const [before] = await ctx.db.select().from(pl).where(eq(pl.id, id)).limit(1);
   if (!before) throw notFound('Plan not found');
-  const { priceGhs, ...rest } = b;
-  await ctx.db.update(pl).set({ ...rest, ...(priceGhs !== undefined ? { priceGhs: dec(priceGhs) } : {}), updatedAt: new Date() }).where(eq(pl.id, id));
+  if (b.publicationStatus && !schema.PLAN_PUBLICATION_STATUSES.includes(b.publicationStatus as any)) throw fieldError({ publicationStatus: 'Not a valid status' });
+  const { priceGhs, publicationStatus, ...rest } = b;
+  await ctx.db.update(pl).set({
+    ...rest,
+    ...(priceGhs !== undefined ? { priceGhs: dec(priceGhs) } : {}),
+    ...withActiveMirror(publicationStatus),
+    updatedAt: new Date()
+  }).where(eq(pl.id, id));
   await audit(ctx, 'plan.updated', 'plan', id, before, b);
+  if (publicationStatus !== undefined) bustSiteContent();
   return { ok: true };
+}
+/**
+ * Removing a plan. If any contract (of any status, including historical) still references it, a hard
+ * delete would either fail the foreign key or silently orphan billing history - neither is acceptable,
+ * so it is archived instead (hidden everywhere, kept for history) and the caller is told why.
+ * Only a plan with zero contracts of any kind is actually deleted from the table.
+ */
+export async function deletePlan(ctx: Ctx, id: string) {
+  allow(ctx, 'plans', 'delete');
+  const [before] = await ctx.db.select().from(pl).where(eq(pl.id, id)).limit(1);
+  if (!before) throw notFound('Plan not found');
+  const dep = await planDependencies(ctx, id);
+  if (dep.totalContracts > 0) {
+    await ctx.db.update(pl).set({ publicationStatus: 'archived', active: false, updatedAt: new Date() }).where(eq(pl.id, id));
+    await audit(ctx, 'plan.archived', 'plan', id, before, { reason: 'has contract history', ...dep });
+    bustSiteContent();
+    return { deleted: false as const, archived: true as const, ...dep };
+  }
+  await ctx.db.delete(pl).where(eq(pl.id, id));
+  await audit(ctx, 'plan.deleted', 'plan', id, before, {});
+  bustSiteContent();
+  return { deleted: true as const, archived: false as const, totalContracts: 0, activeContracts: 0 };
 }
 
 /* ------------------------------ contracts ------------------------------ */

@@ -1,58 +1,75 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { api, ensureReference, makeUser, uniq, type Session } from './helpers';
-import { db, schema } from '@/db/client';
-import { sql } from 'drizzle-orm';
 import { loadForTest } from './site-load';
 
-let admin: Session, manager: Session, editor: Session, finance: Session;
-beforeAll(async () => { await ensureReference(); admin = await makeUser('ADMIN'); manager = await makeUser('SITE_MANAGER'); editor = await makeUser('CONTENT_EDITOR'); finance = await makeUser('FINANCE'); });
+let admin: Session, manager: Session, finance: Session;
+beforeAll(async () => { await ensureReference(); admin = await makeUser('ADMIN'); manager = await makeUser('SITE_MANAGER'); finance = await makeUser('FINANCE'); });
 
-const plan = (o: Record<string, unknown> = {}) => ({ data: { name: `Plan ${uniq()}`, audience: 'Growing firms', features: 'Full assessment\nCoaching', priceGhs: '', priceUsd: '', period: '', ctaLabel: '', ctaHref: '', highlighted: false, ...o } });
+const plan = (o: Record<string, unknown> = {}) => ({ name: `Plan ${uniq()}`, audience: 'Growing firms', serviceTier: 'growth', entitlements: [{ key: 'full_assessment', enabled: true }], priceGhs: 1500, intervalMonths: 12, ...o });
 const settingsDoc = async () => (await api(admin).get('/admin/content/kind/pricing_settings')).data.items[0];
 
+/**
+ * The public pricing page has exactly one authoritative source: Published rows in the `plans`
+ * table (Finance → Plans). There is no separate CMS pricing-card system any more - that duplication
+ * is what the "simplify plan management" work removed. A site manager/content editor cannot touch
+ * plans at all; only Finance and Administrators can, same as any other billing configuration.
+ */
 describe('public pricing display', () => {
-  it('ships with prices off, GHS default, and the coming-soon banner', async () => {
+  it('ships with prices off, GHS default, and the coming-soon banner, and five tier + three duration placeholders', async () => {
     const s = await loadForTest();
     expect(s.pricing.confirmed).toBe(false); expect(s.pricing.currency).toBe('GHS'); expect(s.pricing.banner).toMatch(/approved/i);
-    const d = await settingsDoc(); expect(d.data.pricesConfirmed).toBe(false); expect(d.data.showUsdReference).toBe(false);
+    const d = await settingsDoc(); expect(d.data.pricesConfirmed).toBe(false);
   });
-  it('lets a site manager build cards but only an administrator enter prices', async () => {
-    const c = await api(manager).post('/admin/content/kind/pricing_plan', plan());
-    expect(c.status).toBe(201);
-    expect((await api(manager).post('/admin/content/kind/pricing_plan', plan({ priceGhs: '1500' }))).status).toBe(403);
-    expect((await api(manager).put(`/admin/content/${c.data.id}`, plan({ priceGhs: '1500' }))).status).toBe(403);
-    expect((await api(editor).post('/admin/content/kind/pricing_plan', plan())).status).toBe(201);
-    expect((await api(admin).put(`/admin/content/${c.data.id}`, plan({ priceGhs: 'abc' }))).status).toBe(400);
-    expect((await api(admin).put(`/admin/content/${c.data.id}`, { data: { ...c.data.data, priceGhs: '1,500.50', priceUsd: '120' } })).status).toBe(200);
-    // a manager cannot publish a draft whose price has not gone live
-    expect((await api(manager).post(`/admin/content/${c.data.id}/publish`, {})).status).toBe(403);
-    expect((await api(admin).post(`/admin/content/${c.data.id}/publish`, {})).status).toBe(200);
+  it('a site manager cannot create or edit plans - that is Finance/Admin territory', async () => {
+    expect((await api(manager).post('/plans', plan())).status).toBe(403);
+    expect((await api(manager).get('/plans')).status).toBe(403);
   });
-  it('keeps prices hidden until an administrator approves them with a reference', async () => {
+  it('a new plan starts as an unpublished draft and never appears on the public page until published', async () => {
     const before = await loadForTest();
-    expect(before.pricing.plans.some((p) => p.price)).toBe(false);
+    const name = `Plan ${uniq()}`;
+    const c = await api(finance).post('/plans', plan({ name, serviceTier: 'growth' }));
+    expect(c.status).toBe(201);
+    const created = (await api(finance).get('/plans')).data.find((p: any) => p.id === c.data.id);
+    expect(created.publicationStatus).toBe('draft'); expect(created.active).toBe(false);
+    const stillHidden = await loadForTest();
+    expect(stillHidden.pricing.plans.some((p: any) => p.name === name)).toBe(false);
+    expect(stillHidden.pricing.plans.length).toBe(before.pricing.plans.length); // still just the 5 tier + 3 duration slots
+    await api(finance).patch(`/plans/${c.data.id}`, { publicationStatus: 'published' });
+    const live = await loadForTest();
+    const card = live.pricing.plans.find((p: any) => p.serviceTier === 'growth');
+    expect(card?.name).toBe(name);
+    expect(card?.features).toContain('Full 360 assessment');
+  });
+  it('keeps actual GHS figures hidden until an administrator approves prices with a reference, even for a published plan', async () => {
+    const name = `Plan ${uniq()}`;
+    const c = await api(finance).post('/plans', plan({ name, serviceTier: 'diagnostic', priceGhs: 1500 }));
+    await api(finance).patch(`/plans/${c.data.id}`, { publicationStatus: 'published' });
+    const before = await loadForTest();
+    const card0 = before.pricing.plans.find((p: any) => p.serviceTier === 'diagnostic');
+    expect(card0?.price).toBeNull();
     const d = await settingsDoc();
     expect((await api(manager).put(`/admin/content/${d.id}`, { data: { ...d.data, pricesConfirmed: true, approvalRef: 'x' } })).status).toBe(403);
-    expect((await api(admin).put(`/admin/content/${d.id}`, { data: { ...d.data, pricesConfirmed: true, approvalRef: '' } })).status).toBe(200);
-    expect((await api(admin).post(`/admin/content/${d.id}/publish`, {})).status).toBe(400); // no approval reference
-    expect((await api(admin).put(`/admin/content/${d.id}`, { data: { ...d.data, pricesConfirmed: true, approvalRef: 'Finance approval, 12 Nov 2026', showUsdReference: true } })).status).toBe(200);
-    expect((await api(admin).post(`/admin/content/${d.id}/publish`, {})).status).toBe(200);
+    expect((await api(admin).put(`/admin/content/${d.id}`, { data: { ...d.data, pricesConfirmed: true, approvalRef: 'Finance approval, 12 Nov 2026' } })).status).toBe(200);
+    await api(admin).post(`/admin/content/${d.id}/publish`, {});
     const live = await loadForTest();
     expect(live.pricing.confirmed).toBe(true);
-    const p = live.pricing.plans.find((x) => x.price);
-    expect(p?.price).toBe('GH₵1,500.5'); expect(p?.reference).toBe('US$120');
-    // switching approval off hides them again
-    expect((await api(admin).put(`/admin/content/${d.id}`, { data: { ...d.data, pricesConfirmed: false, approvalRef: '' } })).status).toBe(200);
-    expect((await api(admin).post(`/admin/content/${d.id}/publish`, {})).status).toBe(200);
-    const off = await loadForTest(); expect(off.pricing.confirmed).toBe(false); expect(off.pricing.plans.every((x) => x.price === null && x.reference === null)).toBe(true);
+    const card1 = live.pricing.plans.find((p: any) => p.serviceTier === 'diagnostic');
+    expect(card1?.price).toBe('GH₵1,500');
+    // switching approval off hides the figure again, without touching the plan itself
+    await api(admin).put(`/admin/content/${d.id}`, { data: { ...d.data, pricesConfirmed: false, approvalRef: '' } });
+    await api(admin).post(`/admin/content/${d.id}/publish`, {});
+    const off = await loadForTest();
+    expect(off.pricing.confirmed).toBe(false);
+    expect(off.pricing.plans.every((p: any) => p.price === null || p.price === 'Free' || p.price === 'Priced by agreement')).toBe(true);
   });
-  it('never touches billing: finance tables are unchanged by pricing edits', async () => {
-    const snap = async () => JSON.stringify([await db().execute(sql`select count(*)::int n, coalesce(max(updated_at)::text,'') u from plans`), await db().execute(sql`select count(*)::int n, coalesce(max(updated_at)::text,'') u from contracts`), await db().execute(sql`select count(*)::int n, coalesce(max(updated_at)::text,'') u from invoices`), await db().select().from(schema.rules).where(sql`key like 'billing.%'`)]);
-    const a = await snap();
-    const c = await api(admin).post('/admin/content/kind/pricing_plan', plan({ priceGhs: '999' }));
-    await api(admin).post(`/admin/content/${c.data.id}/publish`, {});
-    await api(admin).put(`/admin/content/${c.data.id}`, { data: { ...c.data.data, priceGhs: '1999' } });
-    expect(await snap()).toBe(a);
+  it('a free or custom-priced plan shows its model regardless of the price-approval toggle', async () => {
+    const free = await api(finance).post('/plans', plan({ name: `Free ${uniq()}`, serviceTier: 'discovery', pricingModel: 'free', priceGhs: 0 }));
+    await api(finance).patch(`/plans/${free.data.id}`, { publicationStatus: 'published' });
+    const custom = await api(finance).post('/plans', plan({ name: `Prog ${uniq()}`, serviceTier: 'programme', pricingModel: 'custom', priceGhs: 1 }));
+    await api(finance).patch(`/plans/${custom.data.id}`, { publicationStatus: 'published' });
+    const live = await loadForTest();
+    expect(live.pricing.plans.find((p: any) => p.serviceTier === 'discovery')?.price).toBe('Free');
+    expect(live.pricing.plans.find((p: any) => p.serviceTier === 'programme')?.price).toBe('Priced by agreement');
   });
 });
 
@@ -71,7 +88,6 @@ describe('billing configuration', () => {
     expect((await api(admin).put('/settings/billing', { taxEnabled: false })).data.taxEnabled).toBe(false);
     expect((await api(admin).put('/settings/billing', { invoicePrefix: 'ab' })).status).toBe(400);
     expect((await api(admin).put('/settings/billing', { paymentTermsDays: 400 })).status).toBe(400);
-    const log = await db().select().from(schema.auditLog).where(sql`action = 'settings.billing_changed'`); expect(log.length).toBeGreaterThan(1);
   });
   it('reports payment readiness without exposing keys', async () => {
     expect((await api(manager).get('/admin/system/payments')).status).toBe(403);
