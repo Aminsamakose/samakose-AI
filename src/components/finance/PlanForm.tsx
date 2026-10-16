@@ -10,7 +10,7 @@ export type Plan = {
   id: string; code: string; name: string; description: string | null; audience: string | null;
   serviceTier: string | null; platforms: string[]; entitlements: PlanEntitlement[];
   durationDays: number | null; pricingModel: 'free' | 'fixed' | 'custom';
-  priceGhs: string; intervalMonths: number; publicationStatus: 'draft' | 'published' | 'inactive' | 'archived'; active: boolean;
+  priceGhs: string; intervalMonths: number; priceConfirmed: boolean; publicationStatus: 'draft' | 'published' | 'inactive' | 'archived'; active: boolean;
 };
 
 const TIERS = [{ value: '', label: 'No tier (legacy plan)' }, ...PLAN_SERVICE_TIERS.map((t) => ({ value: t.value, label: `${t.label} — ${t.who}` }))];
@@ -24,7 +24,7 @@ type FormValues = {
   name: string; description: string; audience: string; serviceTier: string; platforms: string[];
   entitlementMap: Record<string, { enabled: boolean; limit: string }>;
   durationChoice: string; customDays: string;
-  pricingModel: 'free' | 'fixed' | 'custom'; priceGhs: string; intervalMonths: string;
+  pricingModel: 'free' | 'fixed' | 'custom'; priceGhs: string; intervalMonths: string; priceConfirmed: boolean;
 };
 
 function toEntitlementMap(list: PlanEntitlement[]): Record<string, { enabled: boolean; limit: string }> {
@@ -42,7 +42,8 @@ export function PlanForm({ plan, onDone, onCancel }: { plan?: Plan; onDone: () =
     serviceTier: plan?.serviceTier ?? '', platforms: plan?.platforms ?? [],
     entitlementMap: toEntitlementMap(plan?.entitlements ?? []),
     durationChoice: initialDuration, customDays: initialDuration === 'custom' ? String(plan?.durationDays ?? '') : '',
-    pricingModel: plan?.pricingModel ?? 'fixed', priceGhs: plan ? String(Number(plan.priceGhs)) : '', intervalMonths: String(plan?.intervalMonths ?? 12)
+    pricingModel: plan?.pricingModel ?? 'fixed', priceGhs: plan ? String(Number(plan.priceGhs)) : '', intervalMonths: String(plan?.intervalMonths ?? 12),
+    priceConfirmed: plan?.priceConfirmed ?? false
   }, async (v) => {
     const errs: Record<string, string> = {};
     if (v.name.trim().length < 2) errs.name = 'Enter at least 2 characters';
@@ -60,7 +61,8 @@ export function PlanForm({ plan, onDone, onCancel }: { plan?: Plan; onDone: () =
     const body = {
       name: v.name.trim(), description: v.description.trim() || null, audience: v.audience.trim() || null,
       serviceTier: v.serviceTier || null, platforms: v.platforms, entitlements, durationDays,
-      pricingModel: v.pricingModel, priceGhs: v.pricingModel === 'free' ? 0 : num(v.priceGhs), intervalMonths: m
+      pricingModel: v.pricingModel, priceGhs: v.pricingModel === 'free' ? 0 : num(v.priceGhs), intervalMonths: m,
+      priceConfirmed: v.pricingModel === 'fixed' ? v.priceConfirmed : false
     };
     return plan ? api.patch(`/plans/${plan.id}`, body) : api.post('/plans', body);
   }, { success: plan ? 'Plan updated' : 'Plan saved as a draft', onDone });
@@ -104,6 +106,7 @@ export function PlanForm({ plan, onDone, onCancel }: { plan?: Plan; onDone: () =
       </select>}</Field>
       {f.values.pricingModel === 'fixed' && <Field label="Price (GHS)" name="priceGhs" required error={f.errors.priceGhs}>{(p) => <input {...p} value={f.values.priceGhs} onChange={(e) => f.set('priceGhs', e.target.value)} type="number" inputMode="decimal" min="0.01" step="0.01" />}</Field>}
       {f.values.pricingModel === 'custom' && <p className="small muted">The actual agreed amount is recorded on each contract, not here. This plan will show as “Priced by agreement” until a contract sets a figure.</p>}
+      {f.values.pricingModel === 'fixed' && <Field label="Price confirmed for visitors" name="priceConfirmed" hint="While off, this plan's price shows publicly as “Pricing pending confirmation” instead of a figure — even if the plan is published. Turn this on only once the price above is approved to be seen.">{() => <label className="row" style={{ gap: 6 }}><input type="checkbox" checked={f.values.priceConfirmed} onChange={(e) => f.set('priceConfirmed', e.target.checked)} />{f.values.priceConfirmed ? 'Confirmed — this price will show to visitors' : 'Not yet confirmed'}</label>}</Field>}
       <Field label="Billing interval (months)" name="intervalMonths" required error={f.errors.intervalMonths} hint="How often this plan is billed — independent of the support duration above.">{(p) => <input {...p} value={f.values.intervalMonths} onChange={(e) => f.set('intervalMonths', e.target.value)} type="number" min="1" max="60" step="1" />}</Field>
     </div>}
 
@@ -115,6 +118,7 @@ export function PlanForm({ plan, onDone, onCancel }: { plan?: Plan; onDone: () =
         <dt>Features included</dt><dd>{Object.entries(f.values.entitlementMap).filter(([, e]) => e.enabled).map(([k]) => ENTITLEMENTS.find((e) => e.key === k)?.label).join(', ') || 'None selected yet'}</dd>
         <dt>Duration</dt><dd>{f.values.durationChoice ? `${f.values.durationChoice === 'custom' ? f.values.customDays : f.values.durationChoice} days` : 'No fixed duration'}</dd>
         <dt>Price</dt><dd>{f.values.pricingModel === 'free' ? 'Free' : f.values.pricingModel === 'custom' ? 'Priced by agreement' : (f.values.priceGhs ? `GHS ${f.values.priceGhs}` : '—')} every {f.values.intervalMonths} month(s)</dd>
+        {f.values.pricingModel === 'fixed' && <><dt>Shown to visitors as</dt><dd>{f.values.priceConfirmed ? `GHS ${f.values.priceGhs || '—'}` : 'Pricing pending confirmation'}</dd></>}
       </dl>
       {!f.values.serviceTier && <p className="small" style={{ color: 'var(--warn)' }}>No service tier selected — this plan will be treated as legacy and won't appear grouped with the five tiers.</p>}
       {Object.values(f.values.entitlementMap).every((e) => !e.enabled) && <p className="small" style={{ color: 'var(--warn)' }}>No features are turned on yet — the plan will publish with an empty feature list.</p>}

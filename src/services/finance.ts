@@ -25,7 +25,7 @@ type PlanInput = {
   name: string; description?: string | null; audience?: string | null;
   serviceTier?: string | null; platforms?: string[]; entitlements?: PlanEntitlement[];
   durationDays?: number | null; pricingModel?: 'free' | 'fixed' | 'custom';
-  priceGhs: number; intervalMonths: number;
+  priceGhs: number; intervalMonths: number; priceConfirmed?: boolean;
 };
 /** publicationStatus is the single source of truth for availability; `active` is a derived mirror
  *  (true only when 'published') kept only so older code that still filters/orders on it keeps working. */
@@ -55,7 +55,9 @@ export async function createPlan(ctx: Ctx, b: PlanInput) {
     serviceTier: b.serviceTier ?? null, platforms: b.platforms ?? [], entitlements: b.entitlements ?? [],
     durationDays: b.durationDays ?? null, pricingModel: b.pricingModel ?? 'fixed',
     priceGhs: dec(b.priceGhs), intervalMonths: b.intervalMonths,
-    publicationStatus: 'draft', active: false
+    // A freshly created plan never starts with its price confirmed, even if the caller sent
+    // priceConfirmed: true - confirming is a deliberate edit, not a side effect of creation.
+    priceConfirmed: false, publicationStatus: 'draft', active: false
   }).returning({ id: pl.id, code: pl.code });
   await audit(ctx, 'plan.created', 'plan', row.id, undefined, b);
   return row;
@@ -66,7 +68,11 @@ export async function updatePlan(ctx: Ctx, id: string, b: Partial<PlanInput> & {
   if (!before) throw notFound('Plan not found');
   if (b.publicationStatus && !schema.PLAN_PUBLICATION_STATUSES.includes(b.publicationStatus as any)) throw fieldError({ publicationStatus: 'Not a valid status' });
   const { priceGhs, publicationStatus, ...rest } = b;
-  checkPricing(b.pricingModel ?? before.pricingModel, priceGhs ?? Number(before.priceGhs));
+  const resolvedPricingModel = b.pricingModel ?? before.pricingModel;
+  checkPricing(resolvedPricingModel, priceGhs ?? Number(before.priceGhs));
+  // Confirmation only makes sense for a fixed-price plan with a real number behind it - "Free" and
+  // "Priced by agreement" are never shown as pending, so there is nothing to confirm on them.
+  if (rest.priceConfirmed === true && resolvedPricingModel !== 'fixed') throw fieldError({ priceConfirmed: 'Only a fixed-price plan can have its price confirmed' });
   await ctx.db.update(pl).set({
     ...rest,
     ...(priceGhs !== undefined ? { priceGhs: dec(priceGhs) } : {}),
@@ -74,7 +80,7 @@ export async function updatePlan(ctx: Ctx, id: string, b: Partial<PlanInput> & {
     updatedAt: new Date()
   }).where(eq(pl.id, id));
   await audit(ctx, 'plan.updated', 'plan', id, before, b);
-  if (publicationStatus !== undefined) bustSiteContent();
+  if (publicationStatus !== undefined || rest.priceConfirmed !== undefined) bustSiteContent();
   return { ok: true };
 }
 /**

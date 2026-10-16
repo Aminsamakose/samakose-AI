@@ -12,7 +12,7 @@ const STATUS_LABEL: Record<string, string> = { draft: 'Draft', published: 'Publi
 function priceLabel(p: Plan) {
   if (p.pricingModel === 'free') return 'Free';
   if (p.pricingModel === 'custom') return 'Priced by agreement';
-  return ghs(p.priceGhs);
+  return p.priceConfirmed ? ghs(p.priceGhs) : `${ghs(p.priceGhs)} (not shown to visitors)`;
 }
 
 function DeletePlan({ plan, onDone }: { plan: Plan; onDone: () => void }) {
