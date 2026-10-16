@@ -37,21 +37,48 @@ export const formQuestionsOf = (v: Pick<VersionRow, 'questions'>) => v.questions
 /** Global rules with the version's own overrides on top. The merged set is stored with every score. */
 export const rulesFor = (v: Pick<VersionRow, 'rules'>, global: Rules): Rules => ({ ...global, ...(v.rules ?? {}) });
 
-/** The version a new diagnostic for this kind of organisation is taken under. */
+/**
+ * The version a new PAID diagnostic for this kind of organisation is taken under.
+ *
+ * Filters on purpose: 'full' (#133): without it, a free-preliminary framework published for a non-SME
+ * orgType (AgriFood360, ESO360) with no isDefault:true anchor of its own could be picked up here and
+ * score a real paying client's diagnostic against the free 25-question bank. SME360 was never at risk
+ * of this specific collision (its paid framework is the one isDefault:true framework), but every other
+ * platform was, so the filter is applied unconditionally rather than only where a collision is known.
+ */
 export async function resolveVersion(db: Db, orgType?: string | null): Promise<VersionRow> {
   if (orgType) {
     const [s] = await db.select({ v: schema.frameworkVersions }).from(schema.frameworkVersions)
       .innerJoin(schema.frameworks, eq(schema.frameworks.id, schema.frameworkVersions.frameworkId))
-      .where(and(eq(schema.frameworks.orgType, orgType as 'SME'), eq(schema.frameworks.isDefault, false), eq(schema.frameworkVersions.status, 'Published')))
+      .where(and(eq(schema.frameworks.orgType, orgType as 'SME'), eq(schema.frameworks.isDefault, false), eq(schema.frameworks.purpose, 'full'), eq(schema.frameworkVersions.status, 'Published')))
       .orderBy(desc(schema.frameworkVersions.version)).limit(1);
     if (s) return s.v;
   }
   const [d] = await db.select({ v: schema.frameworkVersions }).from(schema.frameworkVersions)
     .innerJoin(schema.frameworks, eq(schema.frameworks.id, schema.frameworkVersions.frameworkId))
-    .where(and(eq(schema.frameworks.isDefault, true), eq(schema.frameworkVersions.status, 'Published')))
+    .where(and(eq(schema.frameworks.isDefault, true), eq(schema.frameworks.purpose, 'full'), eq(schema.frameworkVersions.status, 'Published')))
     .orderBy(desc(schema.frameworkVersions.version)).limit(1);
   if (!d) throw unprocessable('No published Business Health framework is available');
   return d.v;
+}
+
+/**
+ * The version the FREE preliminary assessment for this kind of organisation is taken under (#133).
+ *
+ * Mirrors resolveVersion()'s shape but filters purpose: 'free_preliminary' instead of 'full', and has
+ * no isDefault:true fallback -- a free assessment with no matching free framework for its orgType should
+ * fail loudly (no published free preliminary assessment is available) rather than silently fall through
+ * to a paid framework's question bank, which is the exact conflation #133 exists to prevent.
+ */
+export async function resolveFreeAssessmentVersion(db: Db, orgType?: string | null): Promise<VersionRow> {
+  if (orgType) {
+    const [s] = await db.select({ v: schema.frameworkVersions }).from(schema.frameworkVersions)
+      .innerJoin(schema.frameworks, eq(schema.frameworks.id, schema.frameworkVersions.frameworkId))
+      .where(and(eq(schema.frameworks.orgType, orgType as 'SME'), eq(schema.frameworks.purpose, 'free_preliminary'), eq(schema.frameworkVersions.status, 'Published')))
+      .orderBy(desc(schema.frameworkVersions.version)).limit(1);
+    if (s) return s.v;
+  }
+  throw unprocessable('No published free preliminary assessment is available for this kind of organisation');
 }
 export async function versionById(db: Db, id: string): Promise<VersionRow | null> {
   const [v] = await db.select().from(schema.frameworkVersions).where(eq(schema.frameworkVersions.id, id)).limit(1);
@@ -482,7 +509,7 @@ export async function ensureSme360FreeAssessmentFramework(db: Db) {
   let [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'SME360_FREE')).limit(1);
   if (!f) {
     [f] = await db.insert(schema.frameworks).values({
-      code: 'SME360_FREE', name: 'SME360 Free Business Health Assessment', orgType: 'SME', isDefault: false,
+      code: 'SME360_FREE', name: 'SME360 Free Business Health Assessment', orgType: 'SME', isDefault: false, purpose: 'free_preliminary',
       description: 'Free, 25-question preliminary Business Health assessment for micro and small businesses, SMEs, startups, traders, manufacturers and service providers.'
     }).onConflictDoNothing().returning();
     if (!f) [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'SME360_FREE')).limit(1);

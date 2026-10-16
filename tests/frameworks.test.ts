@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { answerSheet, api, ensureReference, makeOrg, makeUser, uniq, type Session } from './helpers';
 import { db, schema } from '@/db/client';
+import { resolveVersion, resolveFreeAssessmentVersion } from '@/services/frameworks';
 
 let admin: Session, pm: Session, consultant: Session, reviewer: Session, owner: Session, orgId: string;
 beforeAll(async () => {
@@ -138,5 +139,36 @@ describe('business health record', () => {
     expect((await api(other).get(`/organisations/${org.id}/record`)).status).toBe(404);
     const funder = await makeUser('FUNDER');
     expect((await api(funder).get(`/organisations/${org.id}/record`)).status).toBe(403);
+  });
+});
+
+describe('framework purpose (#133): resolveVersion and resolveFreeAssessmentVersion must not cross-pick each other', () => {
+  it('for a non-SME orgType with both a full and a free_preliminary framework published, each resolver only ever returns its own purpose', async () => {
+    const tag = uniq();
+    const [full] = await db().insert(schema.frameworks).values({
+      code: `TEST_FULL_${tag}`, name: 'Test full framework', orgType: 'AGRIFOOD', isDefault: false, purpose: 'full',
+      description: 'Synthetic paid framework for the #133 regression test'
+    }).returning();
+    const [free] = await db().insert(schema.frameworks).values({
+      code: `TEST_FREE_${tag}`, name: 'Test free framework', orgType: 'AGRIFOOD', isDefault: false, purpose: 'free_preliminary',
+      description: 'Synthetic free-preliminary framework for the #133 regression test'
+    }).returning();
+    const content = { questions: [{ code: 'Q1', dimension: 'D1', text: 'Test question', weight: 1 }], dimensions: ['D1'] };
+    const [fullVersion] = await db().insert(schema.frameworkVersions).values({
+      frameworkId: full.id, version: 1, status: 'Published', ...content, note: 'full test version', createdBy: null
+    }).returning();
+    const [freeVersion] = await db().insert(schema.frameworkVersions).values({
+      frameworkId: free.id, version: 1, status: 'Published', ...content, note: 'free test version', createdBy: null
+    }).returning();
+
+    // resolveVersion (paid callers) must pick the full one, never the free one.
+    expect((await resolveVersion(db(), 'AGRIFOOD')).id).toBe(fullVersion.id);
+    // resolveFreeAssessmentVersion (the free preliminary assessment) must pick the free one, never the full one.
+    expect((await resolveFreeAssessmentVersion(db(), 'AGRIFOOD')).id).toBe(freeVersion.id);
+  });
+
+  it('resolveFreeAssessmentVersion throws rather than falling through to a paid framework when no free one is published for the orgType', async () => {
+    // ESO360 (orgType ESO) has no free_preliminary framework at all in reference data.
+    await expect(resolveFreeAssessmentVersion(db(), 'ESO')).rejects.toThrow(/free preliminary/i);
   });
 });

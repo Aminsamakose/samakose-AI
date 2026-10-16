@@ -1106,7 +1106,19 @@ export type FrameworkSource = {
   component: string; source: string; rationale: string; adaptation: string;
   approval: 'Proposed' | 'Approved' | 'Rejected'; approvedBy?: string | null; approvedAt?: string | null;
 };
-/** One framework per kind of organisation. The default one is used until a specialised framework has an approved version. */
+export const FRAMEWORK_PURPOSES = ['full', 'free_preliminary'] as const;
+export type FrameworkPurpose = (typeof FRAMEWORK_PURPOSES)[number];
+/**
+ * One framework per kind of organisation. The default one is used until a specialised framework has
+ * an approved version.
+ *
+ * `purpose` (#133) is what lets resolveVersion() (real paid diagnostics) and
+ * resolveFreeAssessmentVersion() (the free preliminary assessment) pick the right framework for a
+ * given orgType without colliding. Before this, the only signal was `isDefault`, which happened to
+ * work for SME360 (its paid framework is the platform's one isDefault:true framework) but would have
+ * silently let a real paying AgriFood360/ESO360 client get scored against the free 25-question bank,
+ * or vice versa, since neither of those platforms has an isDefault:true framework to anchor on.
+ */
 export const frameworks = pgTable('frameworks', {
   id: id(),
   code: text('code').notNull().unique(),
@@ -1114,6 +1126,7 @@ export const frameworks = pgTable('frameworks', {
   orgType: orgTypeEnum('org_type'),
   description: text('description'),
   isDefault: boolean('is_default').notNull().default(false),
+  purpose: text('purpose').notNull().default('full').$type<FrameworkPurpose>(),
   createdAt: created(), updatedAt: updated()
 });
 /** A published version never changes; scores and diagnostics point at the version they were produced under. */
