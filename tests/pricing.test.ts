@@ -40,27 +40,53 @@ describe('public pricing display', () => {
     expect(card?.name).toBe(name);
     expect(card?.features).toContain('Full 360 assessment');
   });
-  it('keeps actual GHS figures hidden until an administrator approves prices with a reference, even for a published plan', async () => {
+  it('keeps actual GHS figures hidden until BOTH the site-wide approval and that plan\'s own price are confirmed, even for a published plan', async () => {
     const name = `Plan ${uniq()}`;
     const c = await api(finance).post('/plans', plan({ name, serviceTier: 'diagnostic', priceGhs: 1500 }));
     await api(finance).patch(`/plans/${c.data.id}`, { publicationStatus: 'published' });
     const before = await loadForTest();
     const card0 = before.pricing.plans.find((p: any) => p.serviceTier === 'diagnostic');
     expect(card0?.price).toBeNull();
+    expect(card0?.priceStatus).toBe('pending');
     const d = await settingsDoc();
     expect((await api(manager).put(`/admin/content/${d.id}`, { data: { ...d.data, pricesConfirmed: true, approvalRef: 'x' } })).status).toBe(403);
     expect((await api(admin).put(`/admin/content/${d.id}`, { data: { ...d.data, pricesConfirmed: true, approvalRef: 'Finance approval, 12 Nov 2026' } })).status).toBe(200);
     await api(admin).post(`/admin/content/${d.id}/publish`, {});
+    // Site-wide approval alone is not enough - this plan's own price is still unconfirmed, so the
+    // figure stays hidden. Per-plan confirmation is the point of this gate, not a global switch.
+    const stillPending = await loadForTest();
+    const cardPending = stillPending.pricing.plans.find((p: any) => p.serviceTier === 'diagnostic');
+    expect(cardPending?.price).toBeNull();
+    expect(cardPending?.priceStatus).toBe('pending');
+    expect((await api(manager).patch(`/plans/${c.data.id}`, { priceConfirmed: true })).status).toBe(403);
+    await api(finance).patch(`/plans/${c.data.id}`, { priceConfirmed: true });
     const live = await loadForTest();
     expect(live.pricing.confirmed).toBe(true);
     const card1 = live.pricing.plans.find((p: any) => p.serviceTier === 'diagnostic');
     expect(card1?.price).toBe('GH₵1,500');
-    // switching approval off hides the figure again, without touching the plan itself
+    expect(card1?.priceStatus).toBe('confirmed');
+    // switching site-wide approval off hides the figure again, without touching the plan's own confirmation
     await api(admin).put(`/admin/content/${d.id}`, { data: { ...d.data, pricesConfirmed: false, approvalRef: '' } });
     await api(admin).post(`/admin/content/${d.id}/publish`, {});
     const off = await loadForTest();
     expect(off.pricing.confirmed).toBe(false);
     expect(off.pricing.plans.every((p: any) => p.price === null || p.price === 'Free' || p.price === 'Priced by agreement')).toBe(true);
+  });
+  it('a plan cannot be confirmed as priced unless it is actually fixed-price', async () => {
+    const free = await api(finance).post('/plans', plan({ name: `Free ${uniq()}`, serviceTier: 'discovery', pricingModel: 'free', priceGhs: 0 }));
+    expect((await api(finance).patch(`/plans/${free.data.id}`, { priceConfirmed: true })).status).toBe(400);
+  });
+  it('two published plans can have independent price-confirmation states under the same site approval', async () => {
+    const d = await settingsDoc();
+    await api(admin).put(`/admin/content/${d.id}`, { data: { ...d.data, pricesConfirmed: true, approvalRef: 'Finance approval, 12 Nov 2026' } });
+    await api(admin).post(`/admin/content/${d.id}/publish`, {});
+    const a = await api(finance).post('/plans', plan({ name: `A ${uniq()}`, serviceTier: 'transform', priceGhs: 1200 }));
+    const b = await api(finance).post('/plans', plan({ name: `B ${uniq()}`, serviceTier: 'growth', priceGhs: 7500 }));
+    await api(finance).patch(`/plans/${a.data.id}`, { publicationStatus: 'published', priceConfirmed: true });
+    await api(finance).patch(`/plans/${b.data.id}`, { publicationStatus: 'published' }); // left unconfirmed
+    const live = await loadForTest();
+    expect(live.pricing.plans.find((p: any) => p.serviceTier === 'transform')?.price).toBe('GH₵1,200');
+    expect(live.pricing.plans.find((p: any) => p.serviceTier === 'growth')?.price).toBeNull();
   });
   it('a free or custom-priced plan shows its model regardless of the price-approval toggle', async () => {
     const free = await api(finance).post('/plans', plan({ name: `Free ${uniq()}`, serviceTier: 'discovery', pricingModel: 'free', priceGhs: 0 }));

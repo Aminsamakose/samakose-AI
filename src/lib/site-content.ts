@@ -12,7 +12,10 @@ export type Partner = { name: string; website: string; note: string };
 export type TeamMember = { name: string; role: string; bio: string; photo: string; linkedin: string };
 export type Stat = { value: string; label: string; source: string };
 export type PublicArticle = { slug: string; title: string; summary: string; date: string; author: string; body: string };
-export type PricingCard = { name: string; audience: string; features: string[]; price: string | null; reference: string | null; period: string; ctaLabel: string; ctaHref: string; highlighted: boolean; serviceTier: string | null; durationDays: number | null };
+/** price is only ever a real figure once THIS plan's own price is confirmed (see PublishablePlanRow);
+ *  otherwise it is null and priceStatus says why, so the page never renders a placeholder in the shape
+ *  of a price - "Pricing pending confirmation" is text, not a number, and is styled as a status badge. */
+export type PricingCard = { name: string; audience: string; features: string[]; price: string | null; priceStatus: 'free' | 'confirmed' | 'pending' | 'by_agreement'; reference: string | null; period: string; ctaLabel: string; ctaHref: string; highlighted: boolean; serviceTier: string | null; durationDays: number | null };
 export type PricingView = { confirmed: boolean; banner: string; currency: 'GHS' | 'USD'; enquiryLabel: string; enquiryHref: string; plans: PricingCard[] };
 export type SiteContent = {
   pricing: PricingView; pricing_settings: Rec;
@@ -27,26 +30,33 @@ const money = (v: unknown, cur: string) => { const n = Number(String(v ?? '')); 
  *  the ONE authoritative source for public pricing cards; there is no separate CMS copy to keep in sync. */
 export type PublishablePlanRow = {
   name: string; audience: string | null; serviceTier: string | null; durationDays: number | null;
-  pricingModel: 'free' | 'fixed' | 'custom'; priceGhs: string; entitlements: { key: string; enabled: boolean; limit?: number | string }[] | null;
+  pricingModel: 'free' | 'fixed' | 'custom'; priceGhs: string; priceConfirmed: boolean;
+  entitlements: { key: string; enabled: boolean; limit?: number | string }[] | null;
 };
 /**
- * Prices reach a visitor only when an administrator has approved showing prices (Pricing display
- * settings) AND at least one published plan actually carries a price. Until then every card shows
- * "To be confirmed" and the enquiry banner stays - but the cards themselves (name/audience/features)
- * always reflect real, Published plans; nothing here is hardcoded marketing copy.
+ * Each plan's price is shown as a real figure only when that specific plan's own priceConfirmed is
+ * true - confirmation is per plan, not a single site-wide switch, so Finance can confirm Diagnostic's
+ * price while Growth's is still pending. A plan whose price is not confirmed never renders a
+ * price-shaped placeholder like "To be confirmed": it carries an explicit priceStatus the page renders
+ * as a status badge instead of a number. The site-wide "Pricing display" setting (pricesConfirmed +
+ * approvalRef) is an additional governance gate: even a plan marked priceConfirmed will not show its
+ * figure until Finance has also switched on public display at the site level.
  */
 export function buildPricing(s: Rec, planRows: PublishablePlanRow[]): PricingView {
   const cur = s.currency === 'USD' ? 'USD' : 'GHS';
-  const priced = planRows.some((p) => p.pricingModel === 'fixed' && Number(p.priceGhs) > 0);
-  const confirmed = s.pricesConfirmed === true && String(s.approvalRef ?? '').trim().length >= 5 && priced;
+  const siteApproved = s.pricesConfirmed === true && String(s.approvalRef ?? '').trim().length >= 5;
   const plans: PricingCard[] = planRows.map((p) => {
-    const price = p.pricingModel === 'free' ? 'Free' : p.pricingModel === 'custom' ? 'Priced by agreement' : confirmed ? money(p.priceGhs, cur) : null;
+    const priceStatus: PricingCard['priceStatus'] = p.pricingModel === 'free' ? 'free' : p.pricingModel === 'custom' ? 'by_agreement' : (siteApproved && p.priceConfirmed) ? 'confirmed' : 'pending';
+    const price = priceStatus === 'free' ? 'Free' : priceStatus === 'by_agreement' ? 'Priced by agreement' : priceStatus === 'confirmed' ? money(p.priceGhs, cur) : null;
     return {
       name: p.name, audience: p.audience ?? '', features: entitlementLines(p.entitlements),
-      price, reference: null, period: p.pricingModel === 'free' || p.pricingModel === 'custom' ? '' : 'per year',
+      price, priceStatus, reference: null, period: p.pricingModel === 'free' || p.pricingModel === 'custom' ? '' : 'per year',
       ctaLabel: '', ctaHref: '', highlighted: false, serviceTier: p.serviceTier, durationDays: p.durationDays
     };
   });
+  // Page-level "confirmed" now means "at least one real price is actually showing" - it drives whether
+  // the top banner still needs to appear, not whether any individual card shows a number.
+  const confirmed = plans.some((p) => p.priceStatus === 'confirmed');
   return { confirmed, banner: String(s.bannerText ?? ''), currency: cur, enquiryLabel: String(s.enquiryLabel ?? 'Send an enquiry'), enquiryHref: String(s.enquiryHref || '/contact'), plans };
 }
 
@@ -80,7 +90,7 @@ async function load(): Promise<SiteContent> {
   site.partners = of('partner') as Partner[];
   site.team = (of('team_member') as (TeamMember & { position?: string })[]).map((m, i) => ({ m, k: m.position ? Number(m.position) : 1000 + i })).sort((a, b) => a.k - b.k).map((x) => x.m);
   site.stats = of('stat') as Stat[];
-  const publishedPlans = await db().select({ name: schema.plans.name, audience: schema.plans.audience, serviceTier: schema.plans.serviceTier, durationDays: schema.plans.durationDays, pricingModel: schema.plans.pricingModel, priceGhs: schema.plans.priceGhs, entitlements: schema.plans.entitlements })
+  const publishedPlans = await db().select({ name: schema.plans.name, audience: schema.plans.audience, serviceTier: schema.plans.serviceTier, durationDays: schema.plans.durationDays, pricingModel: schema.plans.pricingModel, priceGhs: schema.plans.priceGhs, priceConfirmed: schema.plans.priceConfirmed, entitlements: schema.plans.entitlements })
     .from(schema.plans).where(eq(schema.plans.publicationStatus, 'published'));
   site.pricing = buildPricing(site.pricing_settings, publishedPlans as any);
   site.articles = (of('article') as PublicArticle[]).sort((a, b) => b.date.localeCompare(a.date));

@@ -21,13 +21,21 @@ export default async function PricingPage() {
   const { pricing } = await getSite();
   const tierCards = PLAN_SERVICE_TIERS.map((t) => {
     const match = pricing.plans.find((p) => p.serviceTier === t.value && !p.durationDays) ?? pricing.plans.find((p) => p.serviceTier === t.value);
-    return match ? { ...match, key: t.value } : { name: t.label, audience: t.who, features: [], price: null, reference: null, period: '', ctaLabel: '', ctaHref: '', highlighted: false, serviceTier: t.value, durationDays: null, key: t.value, placeholder: true };
+    return match ? { ...match, key: t.value } : { name: t.label, audience: t.who, features: [], price: null, priceStatus: 'pending' as const, reference: null, period: '', ctaLabel: '', ctaHref: '', highlighted: false, serviceTier: t.value, durationDays: null, key: t.value, placeholder: true };
   });
   const horizonCards = PLAN_DURATIONS.map((h) => {
     const match = pricing.plans.find((p) => p.durationDays === h.days);
-    return match ? { ...match, key: String(h.days) } : { name: h.label, audience: h.who, features: [], price: null, reference: null, period: '', ctaLabel: '', ctaHref: '', highlighted: false, serviceTier: null, durationDays: h.days, key: String(h.days), placeholder: true };
+    return match ? { ...match, key: String(h.days) } : { name: h.label, audience: h.who, features: [], price: null, priceStatus: 'pending' as const, reference: null, period: '', ctaLabel: '', ctaHref: '', highlighted: false, serviceTier: null, durationDays: h.days, key: String(h.days), placeholder: true };
   });
-  const renderPrice = (c: (PricingCard & { placeholder?: boolean })) => c.placeholder ? 'To be confirmed' : (c.price ? <>{c.price}{c.period && <span className="text-sm font-normal text-muted"> {c.period}</span>}</> : 'To be confirmed');
+  // A real price renders as a price (bold, brand colour). Anything not yet confirmed - whether no plan
+  // has been published for this slot at all, or a published plan's own price is still pending
+  // confirmation - renders as an explicit status badge instead, so nothing price-shaped is ever shown
+  // for a figure nobody has approved.
+  const renderPrice = (c: (PricingCard & { placeholder?: boolean })) => {
+    if (!c.placeholder && c.price) return <>{c.price}{c.period && <span className="text-sm font-normal text-muted"> {c.period}</span>}</>;
+    const label = c.placeholder ? 'Not yet available' : 'Pricing pending confirmation';
+    return <span className="inline-flex items-center rounded-full border border-dashed border-gold bg-[color:var(--warn-soft)] px-2.5 py-0.5 text-xs font-medium normal-case text-[color:var(--warn)]">{label}</span>;
+  };
 
   return (
     <>

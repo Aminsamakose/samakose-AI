@@ -564,6 +564,11 @@ export const plans = pgTable('plans', {
    *  authoritative custom amount for a real deal lives on the contract, not here. */
   priceGhs: numeric('price_ghs', { precision: 12, scale: 2 }).notNull(),
   intervalMonths: integer('interval_months').notNull().default(12),
+  /** Whether THIS plan's own price is approved to be shown as a real figure on the public page.
+   *  Independent of publicationStatus: a plan can be published (visible, sellable by Samakose staff via
+   *  a contract) while its price still reads "Pricing pending confirmation" to a visitor, and a Finance
+   *  reviewer can confirm one plan's price without exposing every other plan's price at the same time. */
+  priceConfirmed: boolean('price_confirmed').notNull().default(false),
   publicationStatus: text('publication_status').notNull().default('draft'),
   /** Kept in sync with publicationStatus (true only when 'published') so existing code that filters or
    *  orders by `active` keeps working unchanged. Write through updatePlan()/setPlanStatus(), never directly.
