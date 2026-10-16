@@ -1168,7 +1168,7 @@ export const publicAssessments = pgTable('public_assessments', {
   emailSentAt: timestamp('email_sent_at', { withTimezone: true }),
   downloadedAt: timestamp('downloaded_at', { withTimezone: true }),
   printedAt: timestamp('printed_at', { withTimezone: true }),
-  startedAt: created(),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
   // Set when a signed-up account's verified email is matched to this row (spec, Phase 8). Never set silently.
   claimedByUserId: uuid('claimed_by_user_id')
