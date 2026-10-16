@@ -4,6 +4,7 @@ import { db, schema } from '@/db/client';
 import { KIND_BY_ID, validateData, phoneHref, parseMenu, DEFAULT_MENU, type HomeSection, DEFAULT_SECTIONS } from '@/domain/content-kinds';
 import { SITE } from '@/components/site/config';
 import { entitlementLines } from '@/domain/plan-catalog';
+import { REGISTER_HREF } from '@/components/site/config';
 
 type Rec = Record<string, any>;
 export type Faq = { question: string; answer: string };
@@ -48,10 +49,23 @@ export function buildPricing(s: Rec, planRows: PublishablePlanRow[]): PricingVie
   const plans: PricingCard[] = planRows.map((p) => {
     const priceStatus: PricingCard['priceStatus'] = p.pricingModel === 'free' ? 'free' : p.pricingModel === 'custom' ? 'by_agreement' : (siteApproved && p.priceConfirmed) ? 'confirmed' : 'pending';
     const price = priceStatus === 'free' ? 'Free' : priceStatus === 'by_agreement' ? 'Priced by agreement' : priceStatus === 'confirmed' ? money(p.priceGhs, cur) : null;
+    // The period label follows the plan's own duration rather than a fixed "per year" - a 30-day
+    // Quick Fix plan billed once for 30 days is not "per year", and a duration-less tier (Diagnostic,
+    // a one-off assessment) has no recurring period to show at all.
+    const period = priceStatus === 'free' || priceStatus === 'by_agreement' ? '' : p.durationDays ? `for ${p.durationDays} days` : '';
+    // No self-serve checkout exists yet (see finance.ts: contracts are created by Finance/Admin, not
+    // by a buyer). So every CTA routes into the same real next step that exists today - registration
+    // for anything a visitor can act on immediately, an enquiry for anything whose price isn't public
+    // yet or that needs a custom agreement - rather than a "Buy" button with nowhere real to land.
+    const { ctaLabel, ctaHref } = priceStatus === 'by_agreement'
+      ? { ctaLabel: 'Ask about programme pricing', ctaHref: '/contact' }
+      : priceStatus === 'pending'
+        ? { ctaLabel: 'Enquire about this plan', ctaHref: '/contact' }
+        : { ctaLabel: priceStatus === 'free' ? 'Start your health check' : 'Get started', ctaHref: REGISTER_HREF };
     return {
       name: p.name, audience: p.audience ?? '', features: entitlementLines(p.entitlements),
-      price, priceStatus, reference: null, period: p.pricingModel === 'free' || p.pricingModel === 'custom' ? '' : 'per year',
-      ctaLabel: '', ctaHref: '', highlighted: false, serviceTier: p.serviceTier, durationDays: p.durationDays
+      price, priceStatus, reference: null, period,
+      ctaLabel, ctaHref, highlighted: false, serviceTier: p.serviceTier, durationDays: p.durationDays
     };
   });
   // Page-level "confirmed" now means "at least one real price is actually showing" - it drives whether

@@ -21,11 +21,17 @@ export default async function PricingPage() {
   const { pricing } = await getSite();
   const tierCards = PLAN_SERVICE_TIERS.map((t) => {
     const match = pricing.plans.find((p) => p.serviceTier === t.value && !p.durationDays) ?? pricing.plans.find((p) => p.serviceTier === t.value);
-    return match ? { ...match, key: t.value } : { name: t.label, audience: t.who, features: [], price: null, priceStatus: 'pending' as const, reference: null, period: '', ctaLabel: '', ctaHref: '', highlighted: false, serviceTier: t.value, durationDays: null, key: t.value, placeholder: true };
+    return match ? { ...match, key: t.value } : { name: t.label, audience: t.who, features: [], price: null, priceStatus: 'pending' as const, reference: null, period: '', ctaLabel: 'Ask about this plan', ctaHref: '/contact', highlighted: false, serviceTier: t.value, durationDays: null, key: t.value, placeholder: true };
   });
-  const horizonCards = PLAN_DURATIONS.map((h) => {
-    const match = pricing.plans.find((p) => p.durationDays === h.days);
-    return match ? { ...match, key: String(h.days) } : { name: h.label, audience: h.who, features: [], price: null, priceStatus: 'pending' as const, reference: null, period: '', ctaLabel: '', ctaHref: '', highlighted: false, serviceTier: null, durationDays: h.days, key: String(h.days), placeholder: true };
+  // A duration can hold more than one published plan (e.g. a 180-day Transform plan and a 180-day
+  // Growth plan) - picking only the first match with `.find` silently dropped every other plan sharing
+  // that duration from the page entirely. List every match instead, so a published plan is never
+  // invisible, and fall back to a single placeholder only when genuinely nothing has been published
+  // for that length yet.
+  const horizonCards = PLAN_DURATIONS.flatMap((h) => {
+    const matches = pricing.plans.filter((p) => p.durationDays === h.days);
+    if (!matches.length) return [{ name: h.label, audience: h.who, features: [], price: null, priceStatus: 'pending' as const, reference: null, period: '', ctaLabel: 'Ask about this plan', ctaHref: '/contact', highlighted: false, serviceTier: null, durationDays: h.days, key: String(h.days), placeholder: true }];
+    return matches.map((m) => ({ ...m, key: `${h.days}-${m.name}` }));
   });
   // A real price renders as a price (bold, brand colour). Anything not yet confirmed - whether no plan
   // has been published for this slot at all, or a published plan's own price is still pending
@@ -66,6 +72,7 @@ export default async function PricingPage() {
                   <p className="font-display text-lg font-semibold text-leaf-ink">{renderPrice(h)}</p>
                   <p className="text-sm text-muted">{h.audience}</p>
                   {h.features.length > 0 && <ul className="mt-1 flex flex-col gap-2 text-sm">{h.features.map((p) => <li key={p} className="flex gap-2"><span className="mt-1.5 size-1.5 flex-none rounded-full bg-leaf" aria-hidden="true" />{p}</li>)}</ul>}
+                  {h.ctaLabel && h.ctaHref && <ButtonLink href={h.ctaHref} variant="ghost">{h.ctaLabel}</ButtonLink>}
                 </Card>
               </Item>
             ))}
