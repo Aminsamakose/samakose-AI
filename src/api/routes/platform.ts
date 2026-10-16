@@ -228,6 +228,8 @@ defineRoute({ method: 'POST', path: '/public/assistant', tag: W, summary: 'Ask t
   } });
 defineRoute({ method: 'GET', path: '/inquiries', tag: AD, summary: 'Website enquiries', permission: ['inquiries', 'read'], query: listQuery.extend({ status: z.string().optional(), kind: z.string().optional() }), handler: ({ ctx, query }) => inq.listInquiries(ctx, query) });
 defineRoute({ method: 'PATCH', path: '/inquiries/:id', tag: AD, summary: 'Mark an enquiry handled, spam or new', permission: ['inquiries', 'edit'], body: z.object({ status: z.enum(['New', 'Handled', 'Spam']) }), handler: ({ ctx, params, body }) => inq.setInquiryStatus(ctx, params.id, (body as any).status) });
+defineRoute({ method: 'GET', path: '/admin/free-assessment-owners', tag: AD, summary: 'Who owns triaging new free-assessment leads', permission: ['inquiries', 'read'], handler: ({ ctx }) => inq.listFreeAssessmentOwners(ctx) });
+defineRoute({ method: 'PUT', path: '/admin/free-assessment-owners', tag: AD, summary: 'Set (replace) who owns triaging new free-assessment leads', permission: ['inquiries', 'edit'], body: z.object({ userIds: z.array(uuid).max(20) }), handler: ({ ctx, body }) => inq.setFreeAssessmentOwners(ctx, (body as any).userIds) });
 
 /* ------------------------- free preliminary Business Health assessment ------------------------- */
 const FA = 'Free assessment';

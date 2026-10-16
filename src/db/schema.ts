@@ -1013,6 +1013,17 @@ export const inquiries = pgTable('inquiries', {
   classification: text('classification')
 }, (t) => [index('inquiries_status_idx').on(t.status, t.createdAt)]);
 
+/**
+ * Admin-configurable owner(s) for new free-assessment leads (#129). Not per-lead assignment -- an
+ * administrator maintains a small set of users who own triaging newly completed free assessments as a
+ * team responsibility; who actually works a given lead is still a manual call among that set.
+ */
+export const freeAssessmentOwners = pgTable('free_assessment_owners', {
+  userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  addedBy: uuid('added_by').references(() => users.id),
+  addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow()
+});
+
 /* ---------------- website content (Phase 1 of the configuration centre) ---------------- */
 export const CONTENT_STATUS = ['Draft', 'In review', 'Published', 'Scheduled', 'Archived'] as const;
 /** One document per piece of public content: a setting, an FAQ, a testimonial, an article. `live` is what visitors see; `draft` is the working copy. */

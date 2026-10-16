@@ -1,4 +1,4 @@
-import { and, eq, gte } from 'drizzle-orm';
+import { and, eq, gte, inArray } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -56,4 +56,29 @@ export async function setInquiryStatus(ctx: Ctx, id: string, status: 'New' | 'Ha
   const [after] = await ctx.db.update(t).set({ status, handledBy: status === 'New' ? null : ctx.user!.id, handledAt: status === 'New' ? null : new Date() }).where(eq(t.id, id)).returning();
   await audit(ctx, 'inquiry.status', 'inquiry', id, { status: before.status }, { status });
   return after;
+}
+
+/** Who owns triaging newly completed free assessment leads (#129), admin-configurable. */
+export async function listFreeAssessmentOwners(ctx: Ctx) {
+  allow(ctx, 'inquiries', 'read');
+  const t = schema.freeAssessmentOwners;
+  return ctx.db.select({ userId: t.userId, addedAt: t.addedAt, name: schema.users.name, email: schema.users.email })
+    .from(t).innerJoin(schema.users, eq(schema.users.id, t.userId)).orderBy(t.addedAt);
+}
+
+/** Replaces the whole owner set with exactly the given user ids. An administrator-only, full-set operation -- not per-lead reassignment. */
+export async function setFreeAssessmentOwners(ctx: Ctx, userIds: string[]) {
+  allow(ctx, 'inquiries', 'edit');
+  const ids = [...new Set(userIds)];
+  if (ids.length) {
+    const found = await ctx.db.select({ id: schema.users.id }).from(schema.users).where(inArray(schema.users.id, ids));
+    if (found.length !== ids.length) throw notFound('One or more users were not found');
+  }
+  const t = schema.freeAssessmentOwners;
+  await ctx.db.transaction(async (tx) => {
+    await tx.delete(t);
+    if (ids.length) await tx.insert(t).values(ids.map((userId) => ({ userId, addedBy: ctx.user!.id })));
+  });
+  await audit(ctx, 'free_assessment.owners_set', 'free_assessment_owners', 'singleton', undefined, { userIds: ids });
+  return listFreeAssessmentOwners(ctx);
 }
