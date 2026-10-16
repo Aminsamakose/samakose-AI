@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
 import { DEFAULT_RULES, freeAssessmentClassification, scoreFreeAssessment, type FreeAssessmentAnswer } from '@/domain/logic';
-import { SME360_ANSWER_OPTIONS, AGRIFOOD360_ANSWER_OPTIONS } from '@/services/frameworks';
+import { SME360_ANSWER_OPTIONS, AGRIFOOD360_ANSWER_OPTIONS, ESO360_ANSWER_OPTIONS } from '@/services/frameworks';
 import { normaliseEmail } from '@/services/publicAssessments';
 import { dispatch } from '@/api/framework';
 import { db, schema } from '@/db/client';
@@ -70,6 +70,32 @@ describe('AgriFood360 question bank (#125): drafted content, seeded as Draft pen
   it('is seeded as a Draft version, never auto-published, so the free assessment cannot be taken under it yet', async () => {
     await ensureReference();
     const [f] = await db().select().from(schema.frameworks).where(eq(schema.frameworks.code, 'AGRIFOOD360_FREE')).limit(1);
+    expect(f).toBeTruthy();
+    expect(f.purpose).toBe('free_preliminary');
+    const versions = await db().select().from(schema.frameworkVersions).where(eq(schema.frameworkVersions.frameworkId, f.id));
+    expect(versions.length).toBeGreaterThan(0);
+    expect(versions.every((v) => v.status === 'Draft')).toBe(true);
+
+    // Unapproved content: a publish attempt is refused until the source is reviewed, same gate AGRIFOOD360 hits.
+    const admin = await makeUser('ADMIN');
+    const pub = await api(admin).post(`/settings/frameworks/versions/${versions[0].id}/publish`, { note: 'Attempt without review' });
+    expect(pub.status).toBe(422);
+  });
+});
+
+describe('ESO360 question bank (#126): drafted content, seeded as Draft pending Amin’s review', () => {
+  it('has exactly 25 questions across 6 dimensions, with 4 answer options each', () => {
+    const codes = Object.keys(ESO360_ANSWER_OPTIONS);
+    expect(codes).toHaveLength(25);
+    for (const code of codes) {
+      const opts = ESO360_ANSWER_OPTIONS[code];
+      expect(Object.keys(opts).sort()).toEqual(['A', 'B', 'C', 'D']);
+    }
+  });
+
+  it('is seeded as a Draft version, never auto-published, so the free assessment cannot be taken under it yet', async () => {
+    await ensureReference();
+    const [f] = await db().select().from(schema.frameworks).where(eq(schema.frameworks.code, 'ESO360_FREE')).limit(1);
     expect(f).toBeTruthy();
     expect(f.purpose).toBe('free_preliminary');
     const versions = await db().select().from(schema.frameworkVersions).where(eq(schema.frameworkVersions.frameworkId, f.id));

@@ -15,21 +15,22 @@ const frameworks = async () => (await api(admin).get("/settings/frameworks")).da
 const baseline = async () => (await frameworks()).find((f) => f.isDefault);
 
 describe('framework versions', () => {
-  it('ships five frameworks (the paid SME360 default, its two unreleased paid siblings, the published SME360 free bank, and the drafted-but-unapproved AgriFood360 free bank), with only SME360 and SME360_FREE published', async () => {
+  it('ships six frameworks (the paid SME360 default, its two unreleased paid siblings, the published SME360 free bank, and the drafted-but-unapproved AgriFood360 and ESO360 free banks), with only SME360 and SME360_FREE published', async () => {
     const list = await frameworks();
     // SME360_FREE is the free, 25-question preliminary assessment's own framework (ensureSme360FreeAssessmentFramework),
     // deliberately a different code from the paid, isDefault:true 'SME360' -- see that function's comment for why reusing
     // 'SME360' here would silently serve the paid 100-question bank as the "free assessment" instead.
-    // AGRIFOOD360_FREE (#125) exists for the same reason but has no Published version yet -- its content was
-    // drafted by Claude, not reviewed by Samakose leadership, so ensureAgriFood360FreeAssessmentFramework
-    // deliberately leaves it as Draft; see that function's own comment.
-    expect(list.map((f) => f.code).sort()).toEqual(['AGRIFOOD360', 'AGRIFOOD360_FREE', 'ESO360', 'SME360', 'SME360_FREE']);
+    // AGRIFOOD360_FREE (#125) and ESO360_FREE (#126) exist for the same reason but have no Published version
+    // yet -- their content was drafted by Claude, not reviewed by Samakose leadership, so
+    // ensureAgriFood360FreeAssessmentFramework / ensureEso360FreeAssessmentFramework deliberately leave them
+    // as Draft; see those functions' own comments.
+    expect(list.map((f) => f.code).sort()).toEqual(['AGRIFOOD360', 'AGRIFOOD360_FREE', 'ESO360', 'ESO360_FREE', 'SME360', 'SME360_FREE']);
     const b = list.find((f) => f.code === 'SME360');
     expect(b.versions.some((v: any) => v.status === 'Published')).toBe(true);
     const free = list.find((f) => f.code === 'SME360_FREE');
     expect(free.isDefault).toBe(false);
     expect(free.versions.some((v: any) => v.status === 'Published')).toBe(true);
-    for (const code of ['AGRIFOOD360', 'AGRIFOOD360_FREE', 'ESO360']) expect(list.find((f) => f.code === code).versions.some((v: any) => v.status === 'Published')).toBe(false);
+    for (const code of ['AGRIFOOD360', 'AGRIFOOD360_FREE', 'ESO360', 'ESO360_FREE']) expect(list.find((f) => f.code === code).versions.some((v: any) => v.status === 'Published')).toBe(false);
 
     const published = b.versions.find((v: any) => v.status === 'Published');
     const details = await api(admin).get(`/settings/frameworks/versions/${published.id}`);

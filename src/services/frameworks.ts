@@ -641,3 +641,100 @@ export async function ensureAgriFood360FreeAssessmentFramework(db: Db) {
     note: 'AgriFood360 free preliminary assessment, 25 questions across 6 dimensions -- Draft, pending Amin’s content review and approval (#125)', createdBy: null
   }).onConflictDoNothing();
 }
+
+/* ------------------------------ ESO360 free preliminary assessment (#126) ------------------------------ */
+/**
+ * 25 questions across 6 dimensions for enterprise support organisations (ESOs): accelerators, incubators,
+ * mentorship and business-development programmes. Drafted to fill #126, mirroring #125's AgriFood360
+ * approach: the dimensions assess the ESO's own organisational and programme health (not the enterprises
+ * it supports), following the shape of established accelerator/incubator benchmarking practice (ANDE's
+ * and GALI's own frameworks look at programme design, selection, delivery capacity, M&E and
+ * sustainability in broadly this way). Same A-D / 4-3-2-1 scoring model as SME360 and AgriFood360.
+ */
+const ESO360_QUESTIONS: FrameworkQuestion[] = [
+  { code: 'ESO_Q01', dimension: 'Programme Design and Curriculum', text: 'How is the content and structure of your programme (curriculum, milestones, support services) decided?', weight: 1 },
+  { code: 'ESO_Q02', dimension: 'Programme Design and Curriculum', text: 'How well does your programme design match the stage and needs of the enterprises you support, such as pre-seed, early growth or scale-up?', weight: 1 },
+  { code: 'ESO_Q03', dimension: 'Programme Design and Curriculum', text: 'How do you keep programme content and delivery methods current, based on market trends, new tools or participant feedback?', weight: 1 },
+  { code: 'ESO_Q04', dimension: 'Programme Design and Curriculum', text: 'How clearly are the expected outcomes of your programme, for participants and for your organisation, defined and communicated?', weight: 1 },
+  { code: 'ESO_Q05', dimension: 'Cohort Recruitment and Selection', text: 'How do you attract applicants for each cohort or intake?', weight: 1 },
+  { code: 'ESO_Q06', dimension: 'Cohort Recruitment and Selection', text: 'How do you select participants or enterprises to support?', weight: 1 },
+  { code: 'ESO_Q07', dimension: 'Cohort Recruitment and Selection', text: 'How well do you track and understand the diversity, such as gender, geography, sector or business stage, of your applicant pool and selected cohorts?', weight: 1 },
+  { code: 'ESO_Q08', dimension: 'Cohort Recruitment and Selection', text: 'How confident are you that the enterprises you select are a good fit for what your programme can actually deliver?', weight: 1 },
+  { code: 'ESO_Q09', dimension: 'Mentorship, Advisory and Delivery Capacity', text: 'How do you recruit, vet and match mentors, coaches or advisors to participants?', weight: 1 },
+  { code: 'ESO_Q10', dimension: 'Mentorship, Advisory and Delivery Capacity', text: 'How do you monitor and support the quality of mentorship or advisory sessions actually delivered?', weight: 1 },
+  { code: 'ESO_Q11', dimension: 'Mentorship, Advisory and Delivery Capacity', text: 'Do you have enough qualified staff, facilitators, mentors or advisors to deliver your current programme commitments?', weight: 1 },
+  { code: 'ESO_Q12', dimension: 'Mentorship, Advisory and Delivery Capacity', text: 'How do you build the skills and performance of your own facilitators, mentors and programme staff over time?', weight: 1 },
+  { code: 'ESO_Q13', dimension: 'Monitoring, Evaluation and Impact Tracking', text: 'What data do you collect on participants during and after the programme, such as revenue, jobs, investment raised or survival?', weight: 1 },
+  { code: 'ESO_Q14', dimension: 'Monitoring, Evaluation and Impact Tracking', text: 'How do you know whether your programme is actually achieving its intended outcomes?', weight: 1 },
+  { code: 'ESO_Q15', dimension: 'Monitoring, Evaluation and Impact Tracking', text: 'How do you use monitoring and evaluation findings to improve the programme?', weight: 1 },
+  { code: 'ESO_Q16', dimension: 'Monitoring, Evaluation and Impact Tracking', text: 'How do you maintain contact with and track alumni after they exit the programme?', weight: 1 },
+  { code: 'ESO_Q17', dimension: 'Funding, Sustainability and Partnerships', text: 'How diversified are your organisation’s funding sources, such as donors, fees, corporate partners, government or earned revenue?', weight: 1 },
+  { code: 'ESO_Q18', dimension: 'Funding, Sustainability and Partnerships', text: 'How far in advance is your funding or revenue secured relative to your programme delivery commitments?', weight: 1 },
+  { code: 'ESO_Q19', dimension: 'Funding, Sustainability and Partnerships', text: 'Do you have a plan or model for how your organisation sustains itself, or becomes self-sustaining, beyond grant funding?', weight: 1 },
+  { code: 'ESO_Q20', dimension: 'Funding, Sustainability and Partnerships', text: 'How do you build and manage relationships with partner organisations, such as investors, corporates, government or other ESOs?', weight: 1 },
+  { code: 'ESO_Q21', dimension: 'Funding, Sustainability and Partnerships', text: 'How do you report your results and impact to funders, partners and the public?', weight: 1 },
+  { code: 'ESO_Q22', dimension: 'Organisational Capacity and Governance', text: 'Does your organisation have a documented strategy or business plan guiding its own direction?', weight: 1 },
+  { code: 'ESO_Q23', dimension: 'Organisational Capacity and Governance', text: 'How are governance and oversight of your organisation structured, such as a board, advisory committee or management team?', weight: 1 },
+  { code: 'ESO_Q24', dimension: 'Organisational Capacity and Governance', text: 'How well can your organisation continue operating if a key staff member, such as the director, were unavailable?', weight: 1 },
+  { code: 'ESO_Q25', dimension: 'Organisational Capacity and Governance', text: 'How do you identify and manage organisational risks, such as financial, reputational, compliance or staff-turnover risks?', weight: 1 }
+];
+const ESO360_DIMENSIONS = ['Programme Design and Curriculum', 'Cohort Recruitment and Selection', 'Mentorship, Advisory and Delivery Capacity', 'Monitoring, Evaluation and Impact Tracking', 'Funding, Sustainability and Partnerships', 'Organisational Capacity and Governance'];
+/** Answer options, A-D, the same four per question throughout the bank -- kept here for the frontend/API to render, not used in scoring. */
+export const ESO360_ANSWER_OPTIONS: Record<string, { A: string; B: string; C: string; D: string }> = {
+  ESO_Q01: { A: 'Based on documented needs assessments, evidence of what works, and regular curriculum review.', B: 'Based on some needs assessment or benchmarking, updated occasionally.', C: 'Mainly based on what previous cohorts or staff experience suggest.', D: 'We do not have a defined curriculum or programme structure.' },
+  ESO_Q02: { A: 'Programme tracks are tailored to specific stages or needs, with clear entry and exit criteria.', B: 'Some differentiation by stage, but most support is generic.', C: 'One-size-fits-all programme regardless of enterprise stage.', D: 'We have not assessed whether our programme matches participants’ needs.' },
+  ESO_Q03: { A: 'We review and update content systematically each cycle, using feedback and external input.', B: 'We make occasional updates when something clearly needs fixing.', C: 'Content has stayed largely the same for several cycles.', D: 'We have no process for reviewing or updating programme content.' },
+  ESO_Q04: { A: 'Clear, specific outcomes are defined, documented and shared with participants and stakeholders.', B: 'General outcomes are understood internally but not clearly documented or communicated.', C: 'Outcomes are vague or differ depending on who you ask.', D: 'We have not defined what success looks like for this programme.' },
+  ESO_Q05: { A: 'Through a planned, multi-channel outreach strategy reaching beyond our existing network.', B: 'Mainly through our existing network and occasional targeted outreach.', C: 'Largely passive; we rely on word of mouth or inbound interest.', D: 'We struggle to attract enough applicants to fill a cohort.' },
+  ESO_Q06: { A: 'Using documented, consistent selection criteria and a structured review process.', B: 'Using general criteria, but the process varies between cohorts or reviewers.', C: 'Mostly informal judgement calls with little documentation.', D: 'We accept most applicants with no real selection process.' },
+  ESO_Q07: { A: 'We track this systematically and use it to guide outreach and selection.', B: 'We have some data on this but do not act on it consistently.', C: 'We have a general impression but no real data.', D: 'We do not track this at all.' },
+  ESO_Q08: { A: 'High confidence, supported by clear fit criteria applied consistently.', B: 'Reasonably confident, though mismatches happen occasionally.', C: 'Mismatches between participant needs and programme offer are common.', D: 'We have no way of assessing fit before selection.' },
+  ESO_Q09: { A: 'A documented process for recruitment, vetting and matching based on participant needs.', B: 'Some process exists, but matching is often ad hoc.', C: 'We use whichever mentors are available, with little matching.', D: 'We do not have a structured mentor or advisor network.' },
+  ESO_Q10: { A: 'We track session delivery and quality, and act on participant or mentor feedback.', B: 'We get occasional feedback but do not systematically monitor quality.', C: 'We assume sessions happen but rarely verify quality or completion.', D: 'We have no visibility into whether mentorship sessions actually happen or help.' },
+  ESO_Q11: { A: 'Yes, sufficient capacity with some ability to flex for growth.', B: 'Generally sufficient, but it is a regular stretch.', C: 'Frequently under-resourced, affecting delivery quality.', D: 'We consistently lack the people needed to deliver what we have promised.' },
+  ESO_Q12: { A: 'Through a deliberate development plan, such as training, feedback or performance review, for programme delivery staff.', B: 'Occasional training or feedback, but no consistent plan.', C: 'Staff mostly develop skills informally, on the job.', D: 'We have no process for developing programme delivery capacity.' },
+  ESO_Q13: { A: 'We systematically collect defined outcome metrics during the programme and track them afterward.', B: 'We collect some data during the programme, but tracking after it ends is limited.', C: 'We collect anecdotal success stories, not structured data.', D: 'We do not collect outcome data on participants.' },
+  ESO_Q14: { A: 'We analyse outcome data against defined targets or a theory of change, regularly.', B: 'We review outcomes informally, without a clear benchmark.', C: 'We assume the programme works because participants complete it.', D: 'We have no way of knowing whether the programme achieves its outcomes.' },
+  ESO_Q15: { A: 'Findings directly inform changes to curriculum, selection or delivery each cycle.', B: 'Findings are reviewed but changes happen only occasionally.', C: 'Findings are collected but rarely acted on.', D: 'We do not generate findings that could inform improvement.' },
+  ESO_Q16: { A: 'Structured alumni engagement and tracking, with defined check-in points.', B: 'Some informal contact with alumni, but not systematic.', C: 'Contact with alumni mostly ends once the programme is over.', D: 'We lose touch with almost all participants after exit.' },
+  ESO_Q17: { A: 'Multiple diversified sources, with no single source representing most of our funding.', B: 'A few sources, but one or two account for most of our funding.', C: 'Heavily dependent on a single donor or funding source.', D: 'We have no secured funding beyond the current cycle.' },
+  ESO_Q18: { A: 'Funding is secured well beyond the current cycle, supporting multi-year planning.', B: 'Funding covers the current cycle, with some visibility beyond it.', C: 'Funding is usually secured only just in time for the current cycle.', D: 'We frequently deliver programmes without confirmed funding in place.' },
+  ESO_Q19: { A: 'Yes, a documented plan with a credible path toward diversified or earned revenue.', B: 'We have ideas about sustainability but no documented plan.', C: 'We rely entirely on securing the next grant, with no sustainability plan.', D: 'We have not considered how the organisation sustains itself long term.' },
+  ESO_Q20: { A: 'Deliberate partnership strategy with defined roles, managed relationships and mutual value.', B: 'Several partnerships exist, but they are managed informally.', C: 'Partnerships are occasional and largely reactive.', D: 'We have few or no active partnerships.' },
+  ESO_Q21: { A: 'Clear, evidence-based reporting aligned to agreed indicators, on a regular schedule.', B: 'We report when required, using whatever data is readily available.', C: 'Reporting is inconsistent and often reconstructed after the fact.', D: 'We have no regular reporting process.' },
+  ESO_Q22: { A: 'Yes, a current strategy with clear priorities, reviewed regularly.', B: 'Yes, but it is outdated or rarely referenced.', C: 'We have general direction but nothing documented.', D: 'We have no strategic plan for the organisation itself.' },
+  ESO_Q23: { A: 'Active governance body with clear oversight, meeting regularly and holding management accountable.', B: 'A governance body exists but meets infrequently or has limited influence.', C: 'Governance exists mostly on paper.', D: 'We have no formal governance structure.' },
+  ESO_Q24: { A: 'Documented systems, succession plans and shared knowledge mean the organisation would continue smoothly.', B: 'Some continuity exists, but key knowledge sits with one or two people.', C: 'Most critical functions would stall without that person.', D: 'The organisation would likely stop functioning without that person.' },
+  ESO_Q25: { A: 'Through a documented risk management approach reviewed regularly.', B: 'We recognise major risks but manage them informally.', C: 'We deal with risks only as they arise.', D: 'We have no process for identifying or managing organisational risks.' }
+};
+
+/**
+ * Creates (if missing) a Draft ESO360 free-assessment version and leaves it there, for the same reason
+ * ensureAgriFood360FreeAssessmentFramework does (#125's comment): this content was drafted by Claude per
+ * #126's brief, not reviewed by Samakose leadership or anyone with ESO/accelerator domain authority. Its
+ * one source is marked 'Proposed', so validateContent's publish gate refuses it with a 422 until Amin
+ * reviews the question/option text and approves the source through the normal /settings/frameworks UI.
+ */
+export async function ensureEso360FreeAssessmentFramework(db: Db) {
+  let [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'ESO360_FREE')).limit(1);
+  if (!f) {
+    [f] = await db.insert(schema.frameworks).values({
+      code: 'ESO360_FREE', name: 'ESO360 Free Business Health Assessment', orgType: 'ESO', isDefault: false, purpose: 'free_preliminary',
+      description: 'Free, 25-question preliminary Business Health assessment for enterprise support organisations: accelerators, incubators, mentorship programmes and business-development providers.'
+    }).onConflictDoNothing().returning();
+    if (!f) [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'ESO360_FREE')).limit(1);
+  }
+  const [haveAny] = await db.select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions)
+    .where(eq(schema.frameworkVersions.frameworkId, f.id)).limit(1);
+  if (haveAny) return; // A draft (or published) version already exists; never overwrite content an admin may be editing.
+
+  await db.insert(schema.frameworkVersions).values({
+    frameworkId: f.id, version: 1, status: 'Draft', questions: ESO360_QUESTIONS, dimensions: ESO360_DIMENSIONS,
+    sources: [{
+      component: 'Question bank, weights and scoring model', source: 'Drafted by Claude per issue #126’s brief, following established accelerator/incubator benchmarking practice (programme design, selection, delivery capacity, M&E, sustainability)',
+      rationale: 'No ESO360 question bank existed yet; drafted to the same 25-question, 4/3/2/1-scored, A-D format as SME360 and AgriFood360 so it is ready for domain review rather than left as "Coming soon"',
+      adaptation: 'Not adapted from an external source; written for this assessment', approval: 'Proposed'
+    }],
+    note: 'ESO360 free preliminary assessment, 25 questions across 6 dimensions -- Draft, pending Amin’s content review and approval (#126)', createdBy: null
+  }).onConflictDoNothing();
+}
