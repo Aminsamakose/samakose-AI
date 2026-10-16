@@ -198,7 +198,6 @@ export default async function Home() {
               <div className="flex flex-wrap gap-3">
                 <ButtonLink href={REGISTER_HREF} variant="lime">{h.primaryCta} <ArrowRight className="size-4" aria-hidden="true" /></ButtonLink>
                 <ButtonLink href={FREE_ASSESSMENT_HREF} variant="ghost-dark">Try the free health check</ButtonLink>
-                <ButtonLink href="/#how-it-works" variant="ghost-dark">See how it works</ButtonLink>
               </div>
             </Reveal>
             <Reveal delay={0.2}><p className="text-sm text-white/60">Built for SME owners, accelerators, cooperatives, development partners and governments.</p></Reveal>

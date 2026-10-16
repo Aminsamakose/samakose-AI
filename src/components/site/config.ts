@@ -21,12 +21,11 @@ export const FREE_ASSESSMENT_HREF = '/assessment';
 export type NavItem = { label: string; href: string };
 /** Only live destinations appear here. Pages are added as each stage ships. */
 export const NAV: NavItem[] = [
-  { label: 'Free health check', href: FREE_ASSESSMENT_HREF },
   { label: 'Platform', href: '/platform' },
   { label: 'Solutions', href: '/solutions' },
   { label: 'Impact', href: '/impact' },
   { label: 'Resources', href: '/resources' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' }
+  { label: 'Home', href: '/' }
 ];
