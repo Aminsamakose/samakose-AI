@@ -254,7 +254,7 @@ function ResultStep({ result }: { result: Result }) {
         <p style={{ fontSize: 10.5, marginTop: 2 }}>Priority area{priorities.length > 1 ? 's' : ''}: {priorities.map((d) => d.dimension).join(', ')}.</p>
         <h2 style={{ fontSize: 13, fontWeight: 700, marginTop: 10 }}>Recommended next step</h2>
         <p style={{ fontSize: 10.5, marginTop: 4 }}>Address your priority area{priorities.length > 1 ? 's' : ''} first, then explore the full {result.platform} Business Health Assessment for a complete diagnosis, evidence review and written action plan.</p>
-        <p style={{ fontSize: 9, color: '#777', marginTop: 12 }}>This is a preliminary assessment based on your own answers, not a certified diagnosis, investment-readiness determination or guarantee of business success.</p>
+        <p style={{ fontSize: 9, color: '#777', marginTop: 12 }}>This is a preliminary assessment based on your own answers, not a certified diagnosis, investment-readiness determination or guarantee of business success. The score bands above are provisional, set by expert judgment and not yet statistically validated against business outcomes.</p>
         <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '0.6px solid #ccc', marginTop: 16, paddingTop: 6, fontSize: 8.5, color: '#777' }}>
           <span>Business Doctor by Samakose  |  Free preliminary assessment</span>
           <span>www.samakose.com</span>
@@ -282,7 +282,7 @@ function ResultStep({ result }: { result: Result }) {
           ))}
         </ul>
       </div>
-      <p className="rounded-xl bg-surface-2 p-4 text-sm text-muted">This is a preliminary assessment based on your own answers, not a certified diagnosis, investment-readiness determination or guarantee of business success. For a full diagnosis, evidence review and a written action plan, explore the full Business Health Assessment below.</p>
+      <p className="rounded-xl bg-surface-2 p-4 text-sm text-muted">This is a preliminary assessment based on your own answers, not a certified diagnosis, investment-readiness determination or guarantee of business success. The score bands above (Critical Attention / Needs Improvement / Developing / Strong Foundation) are provisional, set by expert judgment and not yet statistically validated against business outcomes. For a full diagnosis, evidence review and a written action plan, explore the full Business Health Assessment below.</p>
       {actionError && <p role="alert" className="text-sm font-semibold text-[color:var(--bad)]">{actionError}</p>}
       <div className="flex flex-wrap gap-3">
         <button type="button" onClick={sendEmail} disabled={emailState === 'sending' || emailState === 'sent'} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-5 font-semibold text-fg transition duration-200 hover:bg-surface-2 disabled:opacity-60">

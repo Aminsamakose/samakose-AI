@@ -183,7 +183,7 @@ export async function buildFreeAssessmentPdf(input: {
   draw('Recommended next step', bold, 12.5, rgb(0, 0, 0), 5);
   draw(`Address your priority area${priorities.length > 1 ? 's' : ''} first, then explore the full ${input.platform} Business Health Assessment for a complete diagnosis, evidence review and written action plan.`, reg, 10, rgb(0.15, 0.15, 0.15), 10);
 
-  draw('This is a preliminary assessment based on your own answers, not a certified diagnosis, investment-readiness determination or guarantee of business success.', reg, 8.5, rgb(0.45, 0.45, 0.45), 3);
+  draw('This is a preliminary assessment based on your own answers, not a certified diagnosis, investment-readiness determination or guarantee of business success. The score bands are provisional, set by expert judgment and not yet statistically validated against business outcomes.', reg, 8.5, rgb(0.45, 0.45, 0.45), 3);
 
   drawFooter(page, W, M, `${BRAND}  |  Free preliminary assessment  |  ${input.email}`, reg);
   return pdf.save();
