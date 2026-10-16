@@ -4,7 +4,7 @@ import { Section, Container, Eyebrow, ButtonLink, Card, Placeholder } from '@/co
 import { Reveal, Stagger, Item } from '@/components/site/motion';
 import { HeroVitals } from '@/components/site/HeroVitals';
 import { HowItWorks } from '@/components/site/HowItWorks';
-import { REGISTER_HREF, LOGIN_HREF } from '@/components/site/config';
+import { REGISTER_HREF, LOGIN_HREF, FREE_ASSESSMENT_HREF } from '@/components/site/config';
 import { getSite, contactOf } from '@/lib/site-content';
 
 const PRODUCTS = [
@@ -172,6 +172,7 @@ export default async function Home() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <ButtonLink href={REGISTER_HREF} variant="lime">Start your health check</ButtonLink>
+                <ButtonLink href={FREE_ASSESSMENT_HREF} variant="ghost-dark">Try the free health check</ButtonLink>
                 <ButtonLink href={LOGIN_HREF} variant="ghost-dark">Sign in</ButtonLink>
                 <ButtonLink href="/contact" variant="ghost-dark">Send us a message</ButtonLink>
               </div>
@@ -196,6 +197,7 @@ export default async function Home() {
             <Reveal delay={0.15}>
               <div className="flex flex-wrap gap-3">
                 <ButtonLink href={REGISTER_HREF} variant="lime">{h.primaryCta} <ArrowRight className="size-4" aria-hidden="true" /></ButtonLink>
+                <ButtonLink href={FREE_ASSESSMENT_HREF} variant="ghost-dark">Try the free health check</ButtonLink>
                 <ButtonLink href="/#how-it-works" variant="ghost-dark">See how it works</ButtonLink>
               </div>
             </Reveal>

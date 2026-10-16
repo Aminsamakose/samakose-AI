@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Logo } from './Logo';
 import { Container } from './ui';
-import { LOGIN_HREF, REGISTER_HREF } from './config';
+import { FREE_ASSESSMENT_HREF, LOGIN_HREF, REGISTER_HREF } from './config';
 import { contactOf, socialLinks, type SiteContent } from '@/lib/site-content';
 
 export function SiteFooter({ site }: { site: SiteContent }) {
@@ -23,6 +23,7 @@ export function SiteFooter({ site }: { site: SiteContent }) {
               {site.nav.map((n) => <li key={n.href}><Link href={n.href} className={lk}>{n.label}</Link></li>)}
               <li><Link href="/#how-it-works" className={lk}>How it works</Link></li>
               <li><Link href={LOGIN_HREF} className={lk}>Sign in</Link></li>
+              <li><Link href={FREE_ASSESSMENT_HREF} className={lk}>Free health check</Link></li>
               <li className="col-span-2 sm:col-span-1"><Link href={REGISTER_HREF} className={lk}>Start your health check</Link></li>
             </ul>
           </nav>
