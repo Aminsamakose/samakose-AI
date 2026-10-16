@@ -414,6 +414,13 @@
       "when": 1792160000000,
       "tag": "0059_framework_purpose",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1792170000000,
+      "tag": "0060_plan_service_model",
+      "breakpoints": true
     }
   ]
 }

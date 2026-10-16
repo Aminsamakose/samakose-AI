@@ -25,6 +25,7 @@ import * as bill from '@/services/billing';
 import * as inq from '@/services/inquiries';
 import * as fa from '@/services/publicAssessments';
 import * as rc from '@/services/registration-config';
+import { PLAN_SERVICE_TIERS, PLAN_PLATFORMS, PLAN_ENTITLEMENTS } from '@/domain/plan-catalog';
 import { getJob } from '@/domain/jobs';
 import { need } from '@/services/common';
 import { forbidden, notFound } from '@/lib/errors';
@@ -38,9 +39,19 @@ defineRoute({ method: 'POST', path: '/conflict-checks', tag: AP, summary: 'Recor
 
 /* ----------------------------- commercial ------------------------------ */
 const F = 'Finance';
+const serviceTier = z.enum(PLAN_SERVICE_TIERS.map((t) => t.value) as [string, ...string[]]).nullable().optional();
+const pricingModel = z.enum(['free', 'fixed', 'custom']).optional();
+const publicationStatus = z.enum(['draft', 'published', 'inactive', 'archived']);
+const entitlement = z.object({ key: z.enum(PLAN_ENTITLEMENTS.map((e) => e.key) as [string, ...string[]]), enabled: z.boolean(), limit: z.union([z.number(), z.string().max(60)]).optional() });
+// A free plan legitimately prices at 0 - only a 'fixed' plan must be a real positive amount.
+// 'custom' (priced per contract) still takes a representative figure here, same rule as 'fixed'.
+const planPrice = z.number().min(0).max(100_000_000);
+const planBody = { name, description: optText(500), audience: optText(160), serviceTier, platforms: z.array(z.enum(PLAN_PLATFORMS.map((p) => p.value) as [string, ...string[]])).max(3).optional(), entitlements: z.array(entitlement).max(20).optional(), durationDays: z.number().int().min(1).max(3650).nullable().optional(), pricingModel, priceGhs: planPrice, intervalMonths: z.number().int().min(1).max(60).default(12) };
 defineRoute({ method: 'GET', path: '/plans', tag: F, summary: 'Service plans', permission: ['plans', 'read'], handler: ({ ctx }) => fin.listPlans(ctx) });
-defineRoute({ method: 'POST', path: '/plans', tag: F, summary: 'Create a plan', permission: ['plans', 'create'], body: z.object({ name, description: optText(500), priceGhs: money, intervalMonths: z.number().int().min(1).max(60).default(12) }), handler: async ({ ctx, body }) => status(201, await fin.createPlan(ctx, body as any)) });
-defineRoute({ method: 'PATCH', path: '/plans/:id', tag: F, summary: 'Update or retire a plan', permission: ['plans', 'edit'], body: z.object({ name: name.optional(), description: optText(500), priceGhs: money.optional(), intervalMonths: z.number().int().min(1).max(60).optional(), active: z.boolean().optional() }), handler: ({ ctx, params, body }) => fin.updatePlan(ctx, params.id, body as any) });
+defineRoute({ method: 'GET', path: '/plans/:id/dependencies', tag: F, summary: 'Contracts referencing this plan, for a safe delete/archive decision', permission: ['plans', 'read'], handler: ({ ctx, params }) => fin.planDependencies(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/plans', tag: F, summary: 'Create a plan', permission: ['plans', 'create'], body: z.object(planBody), handler: async ({ ctx, body }) => status(201, await fin.createPlan(ctx, body as any)) });
+defineRoute({ method: 'PATCH', path: '/plans/:id', tag: F, summary: 'Update a plan, including publishing, deactivating or archiving it', permission: ['plans', 'edit'], body: z.object({ ...Object.fromEntries(Object.entries(planBody).map(([k, v]) => [k, (v as any).optional ? (v as any).optional() : v])), publicationStatus: publicationStatus.optional() }), handler: ({ ctx, params, body }) => fin.updatePlan(ctx, params.id, body as any) });
+defineRoute({ method: 'DELETE', path: '/plans/:id', tag: F, summary: 'Delete a plan, or archive it instead if contracts reference it', permission: ['plans', 'delete'], handler: ({ ctx, params }) => fin.deletePlan(ctx, params.id) });
 defineRoute({ method: 'GET', path: '/contracts', tag: F, summary: 'Contracts', permission: ['contracts', 'read'], query: listQuery.extend({ status: z.string().optional(), orgId: z.string().optional() }), handler: ({ ctx, query }) => fin.listContracts(ctx, query) });
 defineRoute({ method: 'POST', path: '/contracts', tag: F, summary: 'Create a contract', permission: ['contracts', 'create'], body: z.object({ orgId: uuid, planId: uuid.nullish(), programmeId: uuid.nullish(), startDate: isoDate.nullish(), endDate: isoDate.nullish(), amountGhs: z.number().min(0).max(1e9).optional() }), handler: async ({ ctx, body }) => status(201, await fin.createContract(ctx, body)) });
 defineRoute({ method: 'PATCH', path: '/contracts/:id', tag: F, summary: 'Update terms or move status', permission: ['contracts', 'edit'], body: z.object({ status: z.enum(['Active', 'Expired', 'Cancelled']).optional(), startDate: isoDate.nullish(), endDate: isoDate.nullish(), amountGhs: z.number().min(0).max(1e9).optional() }), handler: ({ ctx, params, body }) => fin.updateContract(ctx, params.id, body) });

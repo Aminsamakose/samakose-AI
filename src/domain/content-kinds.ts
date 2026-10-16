@@ -144,22 +144,6 @@ export const KINDS: Kind[] = [
     defaults: { pricesConfirmed: false, approvalRef: '', bannerText: 'Plans and prices will be published here once they are approved. Send us an enquiry and we will tell you what fits your business.', currency: 'GHS', showUsdReference: false, enquiryLabel: 'Send an enquiry', enquiryHref: '/contact' }
   },
   {
-    id: 'pricing_plan', label: 'Pricing card', plural: 'Pricing cards', group: 'content', singleton: false, titleField: 'name', adminFields: ['priceGhs', 'priceUsd'],
-    blurb: 'A plan card on the public pricing page. Prices are entered and published by an administrator, and appear only when Pricing display says prices are approved.',
-    fields: [
-      { key: 'name', label: 'Plan name', type: 'text', max: 60, required: true },
-      { key: 'audience', label: 'Who it is for', type: 'text', max: 160, required: true },
-      { key: 'features', label: 'What is included', type: 'textarea', max: 800, hint: 'One point per line, up to 8 lines.' },
-      { key: 'priceGhs', label: 'Price in GHS', type: 'text', max: 14, hint: 'Numbers only, for example 1500 or 1500.50. Leave empty until approved. Administrator only.' },
-      { key: 'priceUsd', label: 'USD reference price (optional)', type: 'text', max: 14, hint: 'For donors and partners. Leave empty if not used. Administrator only.' },
-      { key: 'period', label: 'Billing period label', type: 'select', options: [{ value: '', label: 'None' }, { value: 'one-off', label: 'One-off' }, { value: 'month', label: 'Per month' }, { value: 'quarter', label: 'Per quarter' }, { value: 'year', label: 'Per year' }, { value: 'participant', label: 'Per participant' }] },
-      { key: 'ctaLabel', label: 'Button label', type: 'text', max: 40 },
-      url('ctaHref', 'Button address', 'A page such as /contact or a full https:// address.'),
-      { key: 'highlighted', label: 'Highlight this card', type: 'bool' }
-    ],
-    defaults: { name: '', audience: '', features: '', priceGhs: '', priceUsd: '', period: '', ctaLabel: '', ctaHref: '', highlighted: false }
-  },
-  {
     id: 'home', label: 'Home page', plural: 'Home page', group: 'site_settings', singleton: true,
     blurb: 'The opening headline and call to action. Section order and visibility are set below.',
     fields: [
@@ -288,14 +272,6 @@ export function validateData(kind: Kind, input: unknown, opts: { forPublish?: bo
     if (out.ga4Id && !/^G-[A-Z0-9]{6,14}$/.test(String(out.ga4Id).toUpperCase())) errs.ga4Id = 'Use the form G-ABC123XYZ4';
     else if (out.ga4Id) out.ga4Id = String(out.ga4Id).toUpperCase();
     if (out.plausibleDomain && !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(String(out.plausibleDomain))) errs.plausibleDomain = 'Enter a domain such as samakose.com, without https://';
-  }
-  if (kind.id === 'pricing_plan') {
-    for (const key of ['priceGhs', 'priceUsd']) if (out[key] && !/^\d{1,9}(\.\d{1,2})?$/.test(String(out[key]).replace(/,/g, ''))) errs[key] = 'Enter a number such as 1500 or 1500.50';
-    else if (out[key]) out[key] = String(out[key]).replace(/,/g, '');
-    const lines = String(out.features ?? '').split('\n').map((l) => l.trim()).filter(Boolean);
-    if (lines.length > 8) errs.features = 'Use at most 8 points';
-    else if (lines.some((l) => l.length > 120)) errs.features = 'Keep each point under 120 characters';
-    if (out.ctaLabel && !out.ctaHref) errs.ctaHref = 'Add an address for the button';
   }
   if (kind.id === 'team_member' && out.position && !/^\d{1,3}$/.test(String(out.position))) errs.position = 'Enter a whole number such as 1 or 2';
   if (kind.id === 'pricing_settings') {
