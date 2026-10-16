@@ -165,16 +165,20 @@ function ResultStep({ result }: { result: Result }) {
   }
   async function download() {
     setActionError(null);
-    const r = await post(`/public/assessments/${result.id}/actions/download`, {});
-    if (!r.ok) { setActionError(r.message); return; }
-    const lines = [
-      `${result.platform} Free Business Health Result`, result.businessName ?? '', `Overall score: ${result.overallScore}/100 (${result.classification})`, '',
-      'Dimension scores:', ...result.dimensionScores.map((d) => `  ${d.dimension}: ${d.score}/100`), '',
-      'This is a preliminary assessment, not a certified diagnosis, investment-readiness determination or guarantee of business success.'
-    ];
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    // #123: the server now returns a real PDF (application/pdf) for this action, not JSON -- fetch it
+    // directly rather than going through post(), which assumes a JSON body.
+    let res: Response;
+    try {
+      res = await fetch(`/api/v1/public/assessments/${result.id}/actions/download`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    } catch { setActionError('We could not reach the server. Check your connection and try again.'); return; }
+    if (!res.ok) {
+      const j = await res.json().catch(() => null);
+      setActionError(j?.error?.message ?? 'Something went wrong. Please try again.');
+      return;
+    }
+    const blob = await res.blob();
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `${result.platform}-result.txt`; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = `${result.platform}-result.pdf`; a.click();
     URL.revokeObjectURL(url);
     setDownloadState('done');
   }
