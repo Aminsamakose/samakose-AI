@@ -14,11 +14,17 @@ const frameworks = async () => (await api(admin).get("/settings/frameworks")).da
 const baseline = async () => (await frameworks()).find((f) => f.isDefault);
 
 describe('framework versions', () => {
-  it('ships three frameworks, with the baseline published and the specialised ones empty', async () => {
+  it('ships four frameworks (the paid SME360 default, its two unreleased siblings, and the free-assessment bank), with only the paid baseline and the free bank published', async () => {
     const list = await frameworks();
-    expect(list.map((f) => f.code).sort()).toEqual(['AGRIFOOD360', 'ESO360', 'SME360']);
+    // SME360_FREE is the free, 25-question preliminary assessment's own framework (ensureSme360FreeAssessmentFramework),
+    // deliberately a different code from the paid, isDefault:true 'SME360' -- see that function's comment for why reusing
+    // 'SME360' here would silently serve the paid 100-question bank as the "free assessment" instead.
+    expect(list.map((f) => f.code).sort()).toEqual(['AGRIFOOD360', 'ESO360', 'SME360', 'SME360_FREE']);
     const b = list.find((f) => f.code === 'SME360');
     expect(b.versions.some((v: any) => v.status === 'Published')).toBe(true);
+    const free = list.find((f) => f.code === 'SME360_FREE');
+    expect(free.isDefault).toBe(false);
+    expect(free.versions.some((v: any) => v.status === 'Published')).toBe(true);
     for (const code of ['AGRIFOOD360', 'ESO360']) expect(list.find((f) => f.code === code).versions.some((v: any) => v.status === 'Published')).toBe(false);
 
     const published = b.versions.find((v: any) => v.status === 'Published');
