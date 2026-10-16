@@ -7,7 +7,7 @@ import { eq, sql } from 'drizzle-orm';
 import { db, closeDb, schema } from './client';
 import { SEED_LIBRARY, SEED_QUESTIONS } from '@/domain/logic';
 import { hashPassword, randomToken } from '@/lib/crypto';
-import { ensureBaseline, ensureSme360FreeAssessmentFramework } from '@/services/frameworks';
+import { ensureBaseline, ensureSme360FreeAssessmentFramework, ensureAgriFood360FreeAssessmentFramework } from '@/services/frameworks';
 import { CHART_OF_ACCOUNTS } from '@/services/ledger';
 
 export async function seedReference() {
@@ -18,6 +18,7 @@ export async function seedReference() {
     await d.insert(schema.libraryItems).values({ code, title, dimension, description, typicalDays, kpiHint }).onConflictDoNothing();
   await ensureBaseline(d);
   await ensureSme360FreeAssessmentFramework(d);
+  await ensureAgriFood360FreeAssessmentFramework(d);
   for (const a of CHART_OF_ACCOUNTS)
     await d.insert(schema.financialAccounts).values({ code: a.code, name: a.name, type: a.type }).onConflictDoNothing();
   const plans = await d.select({ n: sql<number>`count(*)::int` }).from(schema.plans);

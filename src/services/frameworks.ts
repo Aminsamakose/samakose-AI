@@ -535,3 +535,109 @@ export async function ensureSme360FreeAssessmentFramework(db: Db) {
   await db.update(schema.frameworkQuestions).set({ status: 'Published' }).where(eq(schema.frameworkQuestions.frameworkVersionId, draft.id));
   await db.update(schema.frameworkVersions).set({ status: 'Published', approvedAt: now, publishedAt: now }).where(eq(schema.frameworkVersions.id, draft.id));
 }
+
+/* ------------------------- AgriFood360 free preliminary assessment (#125) ------------------------- */
+/**
+ * 25 questions across 6 dimensions, agricultural/agribusiness context, same A-D / 4-3-2-1 scoring model
+ * as SME360. Drafted to fill #125 ("Build AgriFood360 question bank"); the dimensions follow the issue's
+ * own brief (climate/seasonal exposure, input access, storage/cold chain, market access, value-chain
+ * position), plus a sixth dimension carrying the business/financial-management content that the other
+ * five intentionally leave out, so the assessment still reads as a *business health* check, not an
+ * agronomy quiz. This is content, not engineering, and Samakose leadership has not reviewed it -- see
+ * ensureAgriFood360FreeAssessmentFramework's own comment for why it is seeded as Draft, never published.
+ */
+const AGRIFOOD360_QUESTIONS: FrameworkQuestion[] = [
+  { code: 'AGR_Q01', dimension: 'Production and Agronomic Practices', text: 'Do you keep records of planting dates, inputs used and yields each season?', weight: 1 },
+  { code: 'AGR_Q02', dimension: 'Production and Agronomic Practices', text: 'How do you decide which crop varieties, breeds or farming methods to use?', weight: 1 },
+  { code: 'AGR_Q03', dimension: 'Production and Agronomic Practices', text: 'How do you manage soil fertility, pest and disease control on your farm or in your operation?', weight: 1 },
+  { code: 'AGR_Q04', dimension: 'Production and Agronomic Practices', text: 'How do you monitor and improve productivity (yield per acre, output per animal, or production efficiency) over time?', weight: 1 },
+  { code: 'AGR_Q05', dimension: 'Climate and Seasonal Resilience', text: 'How exposed is your production to seasonal and climate-related disruption, such as erratic rainfall, drought or flooding?', weight: 1 },
+  { code: 'AGR_Q06', dimension: 'Climate and Seasonal Resilience', text: 'Do you have access to reliable water for irrigation or livestock, independent of rainfall?', weight: 1 },
+  { code: 'AGR_Q07', dimension: 'Climate and Seasonal Resilience', text: 'How do you plan your production calendar around seasonal risk, such as planting and harvest timing or off-season activities?', weight: 1 },
+  { code: 'AGR_Q08', dimension: 'Climate and Seasonal Resilience', text: 'What would happen to your business if this season’s harvest or production failed significantly?', weight: 1 },
+  { code: 'AGR_Q09', dimension: 'Input Access and Supply Reliability', text: 'How reliably can you access the seeds, feed, fertiliser or other inputs you need, when you need them?', weight: 1 },
+  { code: 'AGR_Q10', dimension: 'Input Access and Supply Reliability', text: 'How do you finance the purchase of inputs each season?', weight: 1 },
+  { code: 'AGR_Q11', dimension: 'Input Access and Supply Reliability', text: 'How confident are you in the quality of the inputs, such as seeds, feed or agrochemicals, that you currently use?', weight: 1 },
+  { code: 'AGR_Q12', dimension: 'Input Access and Supply Reliability', text: 'Do you have more than one reliable source for your most critical input?', weight: 1 },
+  { code: 'AGR_Q13', dimension: 'Storage, Post-Harvest Handling and Cold Chain', text: 'What share of your harvest or production is typically lost between production and sale, due to spoilage, pests or poor handling?', weight: 1 },
+  { code: 'AGR_Q14', dimension: 'Storage, Post-Harvest Handling and Cold Chain', text: 'What storage facilities do you use for your product between production and sale?', weight: 1 },
+  { code: 'AGR_Q15', dimension: 'Storage, Post-Harvest Handling and Cold Chain', text: 'If your product needs a cold chain to maintain quality, how reliable is it?', weight: 1 },
+  { code: 'AGR_Q16', dimension: 'Storage, Post-Harvest Handling and Cold Chain', text: 'How do you handle grading, cleaning, packaging or basic processing before sale?', weight: 1 },
+  { code: 'AGR_Q17', dimension: 'Market Access and Value Chain Position', text: 'How do you currently sell your produce or products?', weight: 1 },
+  { code: 'AGR_Q18', dimension: 'Market Access and Value Chain Position', text: 'How well do you understand current prices and demand for your product before you sell?', weight: 1 },
+  { code: 'AGR_Q19', dimension: 'Market Access and Value Chain Position', text: 'Where does your business sit in the value chain: raw production only, or also grading, processing, branding or direct sale?', weight: 1 },
+  { code: 'AGR_Q20', dimension: 'Market Access and Value Chain Position', text: 'How dependent is your business on a single buyer or a single market?', weight: 1 },
+  { code: 'AGR_Q21', dimension: 'Market Access and Value Chain Position', text: 'Are you part of, or do you have access to, a cooperative, farmer group, aggregator or association that strengthens your market position?', weight: 1 },
+  { code: 'AGR_Q22', dimension: 'Business and Financial Management', text: 'How do you record and track the income and costs of your agricultural business?', weight: 1 },
+  { code: 'AGR_Q23', dimension: 'Business and Financial Management', text: 'Do you know your actual cost of production per unit, such as per bag, per acre, per animal or per batch?', weight: 1 },
+  { code: 'AGR_Q24', dimension: 'Business and Financial Management', text: 'How do you manage risks such as crop or livestock loss, price swings or input cost increases?', weight: 1 },
+  { code: 'AGR_Q25', dimension: 'Business and Financial Management', text: 'How ready is this agribusiness to grow, whether by expanding production, adding buyers, accessing larger finance or moving into new markets?', weight: 1 }
+];
+const AGRIFOOD360_DIMENSIONS = ['Production and Agronomic Practices', 'Climate and Seasonal Resilience', 'Input Access and Supply Reliability', 'Storage, Post-Harvest Handling and Cold Chain', 'Market Access and Value Chain Position', 'Business and Financial Management'];
+/** Answer options, A-D, the same four per question throughout the bank -- kept here for the frontend/API to render, not used in scoring. */
+export const AGRIFOOD360_ANSWER_OPTIONS: Record<string, { A: string; B: string; C: string; D: string }> = {
+  AGR_Q01: { A: 'Yes, detailed records for every season, used to plan input needs.', B: 'Yes, basic records, but not consistently reviewed.', C: 'We keep informal notes or rely on memory.', D: 'We do not keep any production records.' },
+  AGR_Q02: { A: 'Based on documented performance data, soil or agro-ecological testing and extension advice.', B: 'Based on some testing or advice, combined with past experience.', C: 'Mainly based on what neighbours or family have always used.', D: 'Without a consistent method; decisions change year to year.' },
+  AGR_Q03: { A: 'We follow a planned programme, such as soil testing, integrated pest management or certified inputs.', B: 'We apply inputs regularly but without a documented plan.', C: 'We react only when problems appear.', D: 'We have no regular soil, pest or disease management practice.' },
+  AGR_Q04: { A: 'We track productivity each season and use it to adjust practices.', B: 'We have a general sense of whether productivity is improving.', C: 'We rarely compare productivity across seasons.', D: 'We do not track productivity at all.' },
+  AGR_Q05: { A: 'We have specific measures, such as irrigation, drought-tolerant varieties or a diversified calendar, that substantially reduce this exposure.', B: 'We have some measures in place, but they only partly reduce exposure.', C: 'We are aware of the exposure but have taken little action.', D: 'Our production depends almost entirely on favourable weather, with no mitigation.' },
+  AGR_Q06: { A: 'Yes, a reliable year-round water source and irrigation system.', B: 'Yes, but access is inconsistent or seasonal.', C: 'Limited access, mostly dependent on rain.', D: 'No reliable water access beyond rainfall.' },
+  AGR_Q07: { A: 'We actively plan and adjust the calendar each season based on forecasts and past experience.', B: 'We follow a general seasonal pattern with occasional adjustments.', C: 'We follow the same calendar every year regardless of conditions.', D: 'We have no deliberate seasonal planning.' },
+  AGR_Q08: { A: 'We have savings, insurance or alternative income that would absorb the loss.', B: 'We would be under pressure but could recover within a season or two.', C: 'It would set the business back significantly, with no clear recovery plan.', D: 'It would likely end the business or force us to stop operating.' },
+  AGR_Q09: { A: 'Reliable access through established, trusted suppliers, planned in advance.', B: 'Generally accessible but with occasional delays or shortages.', C: 'Frequently difficult to access on time.', D: 'Access is a persistent problem that regularly disrupts production.' },
+  AGR_Q10: { A: 'Through planned working capital, savings or affordable credit secured in advance.', B: 'A mix of own funds and informal borrowing, arranged as the season approaches.', C: 'Mostly informal, high-cost borrowing or delayed purchases.', D: 'We often cannot afford the inputs we need.' },
+  AGR_Q11: { A: 'High confidence; inputs are from certified or verified sources.', B: 'Reasonably confident, though sources are not always verified.', C: 'Uncertain; we use whatever is available or affordable.', D: 'We have had repeated problems with poor-quality inputs.' },
+  AGR_Q12: { A: 'Yes, at least two reliable alternative suppliers.', B: 'One main supplier, with an occasional backup.', C: 'Only one supplier, with no real alternative.', D: 'We do not have a consistent supplier at all.' },
+  AGR_Q13: { A: 'Very low losses, under about 5 percent, with measures in place to keep it that way.', B: 'Moderate losses, roughly 5 to 15 percent.', C: 'Significant losses, roughly 15 to 30 percent.', D: 'High losses, over about 30 percent, with no real control over it.' },
+  AGR_Q14: { A: 'Proper, purpose-built storage, such as warehousing, cold storage or controlled-atmosphere storage, appropriate to the product.', B: 'Basic but adequate storage, with some protection from pests and moisture.', C: 'Informal or improvised storage with limited protection.', D: 'No dedicated storage; products are kept however is available.' },
+  AGR_Q15: { A: 'Reliable, consistent cold chain from production through to sale (or the product does not require one).', B: 'Partially reliable, with occasional breaks or gaps.', C: 'Frequently breaks down or is unavailable when needed.', D: 'No cold chain exists, even though the product needs one.' },
+  AGR_Q16: { A: 'We consistently grade, clean and package to meet buyer or market standards.', B: 'We do this sometimes, depending on the buyer or market.', C: 'We do minimal grading or packaging, mostly selling as harvested.', D: 'We do not grade, clean or package our product at all.' },
+  AGR_Q17: { A: 'Through stable off-take agreements, contracts or established buyers at agreed prices.', B: 'Mainly to known traders or markets, without formal agreements.', C: 'Mostly at the farm gate, to whoever is available, at prevailing prices.', D: 'We regularly struggle to find a buyer at all.' },
+  AGR_Q18: { A: 'We actively track prices and demand across more than one market or buyer.', B: 'We have a general sense of prices from one main source.', C: 'We mostly rely on what the first buyer offers.', D: 'We have little or no information on prices before selling.' },
+  AGR_Q19: { A: 'We add meaningful value, such as processing, grading, branding or direct sale to end buyers, beyond raw production.', B: 'We do some basic value addition some of the time.', C: 'We sell raw, unprocessed product almost exclusively.', D: 'We have no involvement beyond production and no plan to add value.' },
+  AGR_Q20: { A: 'We sell to several buyers or markets, so losing one would not seriously harm the business.', B: 'We have more than one buyer, but one accounts for most of our sales.', C: 'We depend almost entirely on a single buyer or market.', D: 'We have one buyer and no realistic alternative if that relationship ended.' },
+  AGR_Q21: { A: 'Yes, active membership that provides real benefits, such as bulk input or sale prices, market information or training.', B: 'Yes, membership exists, but we make limited use of it.', C: 'We know of such groups but are not part of one.', D: 'No such group is accessible to us.' },
+  AGR_Q22: { A: 'Consistent, season-by-season financial records covering all major costs and income.', B: 'Basic records that cover some, but not all, costs and income.', C: 'Informal tracking, mostly from memory.', D: 'We keep no financial records at all.' },
+  AGR_Q23: { A: 'Yes, calculated and used to set prices or decide what to produce.', B: 'We have a rough estimate, but it is not regularly updated.', C: 'We do not calculate this; we judge profitability by feel.', D: 'We have no idea what our production actually costs.' },
+  AGR_Q24: { A: 'Through specific measures, such as insurance, diversification, contracts or reserves, matched to our main risks.', B: 'We are aware of the main risks but only manage some of them.', C: 'We deal with problems only as they happen, without a plan.', D: 'We have no way of managing these risks and absorb whatever happens.' },
+  AGR_Q25: { A: 'We have a clear growth plan and the records, systems or finance needed to pursue it.', B: 'We want to grow and have some of what is needed, but gaps remain.', C: 'We would like to grow but do not have a plan or the basics in place.', D: 'Growth is not something we have been able to consider; we are focused on surviving each season.' }
+};
+
+/**
+ * Creates (if missing) a Draft AgriFood360 free-assessment version and leaves it there -- unlike
+ * ensureSme360FreeAssessmentFramework, this never auto-publishes.
+ *
+ * The SME360 free-assessment content came from an already-approved specification ("MASTER DEVELOPMENT
+ * PROMPT"), so publishing it on every boot was safe. This AgriFood360 content has no such approval: it
+ * was drafted by Claude per #125's brief, not reviewed by Samakose leadership or anyone with agribusiness
+ * domain authority. Marking its one source 'Proposed' (not 'Approved') is deliberate, not an oversight --
+ * validateContent's own publish gate ("will not publish a specialised framework until every source is
+ * approved", exercised by the existing frameworks.test.ts case) means an admin publish attempt is refused
+ * with a 422 until Amin reviews the question/option text and approves the source through the normal
+ * /settings/frameworks UI (PATCH the version's sources to 'Approved', then POST .../publish). Code
+ * '<AGRIFOOD360_FREE' is used rather than reusing the pre-seeded paid 'AGRIFOOD360' framework for the same
+ * reason SME360_FREE exists: see that function's own comment.
+ */
+export async function ensureAgriFood360FreeAssessmentFramework(db: Db) {
+  let [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'AGRIFOOD360_FREE')).limit(1);
+  if (!f) {
+    [f] = await db.insert(schema.frameworks).values({
+      code: 'AGRIFOOD360_FREE', name: 'AgriFood360 Free Business Health Assessment', orgType: 'AGRIFOOD', isDefault: false, purpose: 'free_preliminary',
+      description: 'Free, 25-question preliminary Business Health assessment for farms, agribusinesses, cooperatives and agricultural traders, processors and input/output market actors.'
+    }).onConflictDoNothing().returning();
+    if (!f) [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'AGRIFOOD360_FREE')).limit(1);
+  }
+  const [haveAny] = await db.select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions)
+    .where(eq(schema.frameworkVersions.frameworkId, f.id)).limit(1);
+  if (haveAny) return; // A draft (or published) version already exists; never overwrite content an admin may be editing.
+
+  await db.insert(schema.frameworkVersions).values({
+    frameworkId: f.id, version: 1, status: 'Draft', questions: AGRIFOOD360_QUESTIONS, dimensions: AGRIFOOD360_DIMENSIONS,
+    sources: [{
+      component: 'Question bank, weights and scoring model', source: 'Drafted by Claude per issue #125’s brief (climate/seasonal exposure, input access, storage/cold chain, market access, value-chain position)',
+      rationale: 'No AgriFood360 question bank existed yet; drafted to the same 25-question, 4/3/2/1-scored, A-D format as SME360 so it is ready for domain review rather than left as "Coming soon"',
+      adaptation: 'Not adapted from an external source; written for this assessment', approval: 'Proposed'
+    }],
+    note: 'AgriFood360 free preliminary assessment, 25 questions across 6 dimensions -- Draft, pending Amin’s content review and approval (#125)', createdBy: null
+  }).onConflictDoNothing();
+}
