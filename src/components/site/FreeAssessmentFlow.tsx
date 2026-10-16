@@ -9,7 +9,19 @@ type Question = { code: string; dimension: string; text: string; options: { A: s
 type StartOk = { eligible: true; id: string; platform: string; frameworkVersionId: string; questions: Question[] };
 type AlreadyUsed = { eligible: false; title: string; body: string; actions: string[] };
 type StartResponse = StartOk | AlreadyUsed;
-type Result = { eligible: true; id: string; platform: string; businessName: string | null; overallScore: number; classification: string; dimensionScores: { dimension: string; score: number }[]; completedAt: string };
+type Result = { eligible: true; id: string; platform: string; fullName: string; businessName: string | null; overallScore: number; classification: string; dimensionScores: { dimension: string; score: number }[]; completedAt: string };
+
+/** Isolates printing to the branded one-page report block below (.fa-print-area), regardless of what
+ *  else is on the page (site header/footer, hero, buttons) -- the standard print-isolation technique,
+ *  so it keeps working even if those components change independently of this one. */
+const PRINT_CSS = `
+@media print {
+  @page { size: A4; margin: 14mm; }
+  body * { visibility: hidden; }
+  .fa-print-area, .fa-print-area * { visibility: visible; }
+  .fa-print-area { position: absolute; top: 0; left: 0; width: 100%; }
+}
+`;
 
 const ctl = 'w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-fg placeholder:text-muted/70 focus-visible:outline-2';
 const lbl = 'mb-1 block text-sm font-semibold';
@@ -191,8 +203,65 @@ function ResultStep({ result }: { result: Result }) {
     window.print();
   }
 
+  const sorted = [...result.dimensionScores].sort((a, b) => b.score - a.score);
+  const topN = sorted.length >= 5 ? 2 : 1;
+  const strengths = sorted.slice(0, topN);
+  const priorities = sorted.slice(-topN).reverse();
+  const ref = `REF-${result.id.slice(0, 8).toUpperCase()}`;
+  const dateStr = new Date(result.completedAt).toLocaleDateString();
+
   return (
-    <div className="flex flex-col gap-8 rounded-card border border-line bg-surface p-6 sm:p-8">
+    <div className="flex flex-col gap-8">
+      {/* Branded, one-page printable report. Hidden on screen (print:block), shown only via window.print(); see PRINT_CSS above for how it is isolated from the rest of the page when printing. */}
+      <style>{PRINT_CSS}</style>
+      <div className="fa-print-area hidden print:block" style={{ color: '#0c2622' }}>
+        <div className="flex items-center justify-between border-b-2 pb-3" style={{ borderColor: '#0f4a3f' }}>
+          <div className="flex items-center gap-3">
+            <svg viewBox="0 0 40 40" style={{ width: 36, height: 36 }} aria-hidden="true">
+              <circle cx="20" cy="20" r="19" fill="#0f4a3f" />
+              <path d="M6 21h7l3-8 5 16 4-11 2 3h7" fill="none" stroke="#c6f26b" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>Business Doctor</div>
+              <div style={{ fontSize: 11, color: '#555' }}>by Samakose</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div style={{ fontWeight: 700, fontSize: 13 }}>Free Business Health Check</div>
+            <div style={{ fontSize: 11, color: '#555' }}>{result.platform}</div>
+          </div>
+        </div>
+        <h1 style={{ fontSize: 20, fontWeight: 700, marginTop: 14 }}>{result.platform} Preliminary Result</h1>
+        <p style={{ fontSize: 11, color: '#555', marginTop: 4 }}>{[result.fullName, result.businessName, ref, dateStr].filter(Boolean).join('   |   ')}</p>
+        <div style={{ marginTop: 14, display: 'flex', alignItems: 'baseline', gap: 10 }}>
+          <span style={{ fontSize: 34, fontWeight: 700 }}>{result.overallScore}<span style={{ fontSize: 14, color: '#777', fontWeight: 400 }}>/100</span></span>
+          <span className={BAND_TONE[result.classification] ?? ''} style={{ fontSize: 13, fontWeight: 700 }}>{result.classification}</span>
+        </div>
+        <h2 style={{ fontSize: 13, fontWeight: 700, marginTop: 16 }}>Dimension scores</h2>
+        <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {result.dimensionScores.map((d) => (
+            <div key={d.dimension} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10.5 }}>
+              <span style={{ width: 170, flex: 'none' }}>{d.dimension}</span>
+              <span style={{ flex: 1, height: 6, borderRadius: 3, background: '#e5e5e5', overflow: 'hidden' }}>
+                <span style={{ display: 'block', height: '100%', width: `${d.score}%`, background: '#1e7a5a' }} />
+              </span>
+              <span style={{ width: 44, flex: 'none', textAlign: 'right', color: '#555' }}>{d.score}/100</span>
+            </div>
+          ))}
+        </div>
+        <h2 style={{ fontSize: 13, fontWeight: 700, marginTop: 14 }}>Key findings</h2>
+        <p style={{ fontSize: 10.5, marginTop: 4 }}>Strength{strengths.length > 1 ? 's' : ''}: {strengths.map((d) => d.dimension).join(', ')}.</p>
+        <p style={{ fontSize: 10.5, marginTop: 2 }}>Priority area{priorities.length > 1 ? 's' : ''}: {priorities.map((d) => d.dimension).join(', ')}.</p>
+        <h2 style={{ fontSize: 13, fontWeight: 700, marginTop: 10 }}>Recommended next step</h2>
+        <p style={{ fontSize: 10.5, marginTop: 4 }}>Address your priority area{priorities.length > 1 ? 's' : ''} first, then explore the full {result.platform} Business Health Assessment for a complete diagnosis, evidence review and written action plan.</p>
+        <p style={{ fontSize: 9, color: '#777', marginTop: 12 }}>This is a preliminary assessment based on your own answers, not a certified diagnosis, investment-readiness determination or guarantee of business success.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '0.6px solid #ccc', marginTop: 16, paddingTop: 6, fontSize: 8.5, color: '#777' }}>
+          <span>Business Doctor by Samakose  |  Free preliminary assessment</span>
+          <span>www.samakose.com</span>
+        </div>
+      </div>
+
+      <div className="print:hidden flex flex-col gap-8 rounded-card border border-line bg-surface p-6 sm:p-8">
       <div role="status" className="flex flex-col items-start gap-2">
         <CheckCircle2 className="size-8 text-leaf-ink" aria-hidden="true" />
         <h2 className="font-display text-3xl font-bold">Your preliminary result</h2>
@@ -229,6 +298,7 @@ function ResultStep({ result }: { result: Result }) {
       <p className="text-xs text-muted">Each of the three actions above can be used once for this result. Screenshots and other ways of saving what is on screen are outside our control.</p>
       <div className="border-t border-line pt-6">
         <Link href="/pricing" className="inline-flex min-h-12 w-fit items-center justify-center rounded-full bg-forest px-7 font-semibold text-white no-underline transition duration-200 hover:bg-leaf active:scale-[0.97]">Explore the full Business Health Assessment</Link>
+      </div>
       </div>
     </div>
   );

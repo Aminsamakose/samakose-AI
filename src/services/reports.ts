@@ -37,7 +37,10 @@ export async function getReport(ctx: Ctx, id: string) {
   if (!row) throw notFound('Report not found');
   const cs = await assertCase(ctx, row.caseId);
   if (need(ctx).user.role === 'OWNER' && row.status !== 'Released') throw notFound('Report not found');
-  const [org] = await ctx.db.select({ name: schema.organisations.name, code: schema.organisations.code }).from(schema.organisations).where(eq(schema.organisations.id, cs.orgId));
+  const [org] = await ctx.db.select({
+    name: schema.organisations.name, code: schema.organisations.code, type: schema.organisations.type,
+    contactName: schema.organisations.contactName, contactEmail: schema.organisations.contactEmail
+  }).from(schema.organisations).where(eq(schema.organisations.id, cs.orgId));
   return { ...row, caseCode: cs.code, org };
 }
 export async function editReport(ctx: Ctx, id: string, b: { title?: string; content?: { heading: string; body: string }[] }) {

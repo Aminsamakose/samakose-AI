@@ -135,7 +135,7 @@ export async function submitFreeAssessment(ctx: Ctx, input: SubmitInput) {
 
 function resultOf(row: typeof schema.publicAssessments.$inferSelect) {
   return {
-    eligible: true as const, id: row.id, platform: row.platform, businessName: row.businessName,
+    eligible: true as const, id: row.id, platform: row.platform, fullName: row.fullName, businessName: row.businessName,
     overallScore: row.overallScore, classification: row.classification, dimensionScores: row.dimensionScores,
     completedAt: row.completedAt
   };
@@ -188,8 +188,8 @@ export async function useReportAction(ctx: Ctx, id: string, action: 'email' | 'd
     if (!updated) throw conflict('The result has already been downloaded for this assessment');
     // #123: a real PDF, not a client-side plain-text Blob built from JSON the browser already had.
     const pdf = await buildFreeAssessmentPdf({
-      platform: updated.platform, businessName: updated.businessName, overallScore: updated.overallScore ?? 0,
-      classification: updated.classification ?? '', dimensionScores: updated.dimensionScores ?? [], completedAt: updated.completedAt
+      id: updated.id, platform: updated.platform, fullName: updated.fullName, email: updated.email, businessName: updated.businessName,
+      overallScore: updated.overallScore ?? 0, classification: updated.classification ?? '', dimensionScores: updated.dimensionScores ?? [], completedAt: updated.completedAt
     });
     return fileResponse(`${updated.platform}-result.pdf`, 'application/pdf', pdf);
   }

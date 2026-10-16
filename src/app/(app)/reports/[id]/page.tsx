@@ -10,12 +10,15 @@ import ReasonModal from '@/components/case/clinical/ReasonModal';
 type Report = {
   id: string; code: string; caseId: string; status: string; title: string; content: { heading: string; body: string }[];
   basis: { verified: number; unverified: number } | null; aiRequestId: string | null; createdBy: string | null; createdAt: string; releasedAt: string | null;
-  caseCode: string; org: { name: string; code: string };
+  caseCode: string; org: { name: string; code: string; type: string; contactName: string | null; contactEmail: string | null };
 };
 type CaseLite = { reviewerId: string | null; consultantId: string | null };
 
+const PLATFORM_LABEL: Record<string, string> = { SME: 'SME360', AGRIFOOD: 'AgriFood360', ESO: 'ESO360' };
+
 const PRINT_CSS = `
 @media print {
+  @page { size: A4; margin: 14mm; }
   .nav, .topbar, .skip, .toasts, .no-print, .scrim { display: none !important; }
   .shell { display: block !important; }
   .content, .main { padding: 0 !important; margin: 0 !important; }
@@ -24,6 +27,7 @@ const PRINT_CSS = `
   .print-section { break-inside: avoid; margin-bottom: 14pt; }
   a { color: inherit; text-decoration: none; }
   .badge { border: 1px solid #000; background: none !important; color: #000 !important; }
+  .report-letterhead { display: flex !important; }
 }
 `;
 
@@ -69,8 +73,24 @@ export default function ReportPage() {
         {editing && canEdit ? <EditForm r={r} onCancel={() => setEditing(false)} onDone={() => { setEditing(false); refresh(); }} /> :
           <article className="card stack" aria-label={r.title}>
             <header className="print-section">
+              <div className="report-letterhead" style={{ display: 'none', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #0f4a3f', paddingBottom: 10, marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <svg viewBox="0 0 40 40" style={{ width: 32, height: 32 }} aria-hidden="true">
+                    <circle cx="20" cy="20" r="19" fill="#0f4a3f" /><path d="M6 21h7l3-8 5 16 4-11 2 3h7" fill="none" stroke="#c6f26b" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <div><div style={{ fontWeight: 700, fontSize: 15 }}>Business Doctor</div><div style={{ fontSize: 10, color: '#555' }}>by Samakose</div></div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 700, fontSize: 12 }}>Deep Business Health Assessment</div>
+                  <div style={{ fontSize: 10, color: '#555' }}>{PLATFORM_LABEL[r.org.type] ?? r.org.type}</div>
+                </div>
+              </div>
               <h1 style={{ display: 'none' }} className="print-title">{r.title}</h1>
-              <KV items={[['Business', r.org.name], ['Case', r.caseCode], ['Report', r.code], ['Status', draft ? 'Draft' : 'Released'], ['Prepared', dateTime(r.createdAt)], ['Released', r.releasedAt ? dateTime(r.releasedAt) : '-']]} />
+              <KV items={[
+                ['Business', r.org.name], ['Platform', PLATFORM_LABEL[r.org.type] ?? r.org.type],
+                ...(r.org.contactName ? [['Prepared for', r.org.contactEmail ? `${r.org.contactName} (${r.org.contactEmail})` : r.org.contactName] as [string, string]] : []),
+                ['Case', r.caseCode], ['Report', r.code], ['Status', draft ? 'Draft' : 'Released'], ['Prepared', dateTime(r.createdAt)], ['Released', r.releasedAt ? dateTime(r.releasedAt) : '-']
+              ]} />
               {r.basis && <p className="small muted" style={{ marginTop: 8 }}>Evidence basis: {r.basis.verified} verified and {r.basis.unverified} unverified or self-reported item{r.basis.unverified === 1 ? '' : 's'}.</p>}
             </header>
             {r.content.map((s, i) => <section key={i} className="print-section"><h2 style={{ fontSize: '1.15rem', marginBottom: 6 }}>{s.heading}</h2><p style={{ whiteSpace: 'pre-wrap' }}>{s.body}</p></section>)}
