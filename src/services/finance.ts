@@ -43,8 +43,13 @@ export async function planDependencies(ctx: Ctx, id: string) {
   const active = rows.filter((r) => r.status === 'Active' || r.status === 'Draft').reduce((s, r) => s + Number(r.n), 0);
   return { totalContracts: total, activeContracts: active, byStatus: rows };
 }
+/** A 'fixed' plan must be a real positive price; 'free' and 'custom' may legitimately be 0 (custom's actual amount lives on the contract, not here). */
+function checkPricing(pricingModel: string | undefined, priceGhs: number | undefined) {
+  if ((pricingModel ?? 'fixed') === 'fixed' && (priceGhs ?? 0) <= 0) throw fieldError({ priceGhs: 'Enter an amount above zero for a fixed-price plan' });
+}
 export async function createPlan(ctx: Ctx, b: PlanInput) {
   allow(ctx, 'plans', 'create');
+  checkPricing(b.pricingModel, b.priceGhs);
   const [row] = await ctx.db.insert(pl).values({
     name: b.name.trim(), description: b.description ?? null, audience: b.audience ?? null,
     serviceTier: b.serviceTier ?? null, platforms: b.platforms ?? [], entitlements: b.entitlements ?? [],
@@ -61,6 +66,7 @@ export async function updatePlan(ctx: Ctx, id: string, b: Partial<PlanInput> & {
   if (!before) throw notFound('Plan not found');
   if (b.publicationStatus && !schema.PLAN_PUBLICATION_STATUSES.includes(b.publicationStatus as any)) throw fieldError({ publicationStatus: 'Not a valid status' });
   const { priceGhs, publicationStatus, ...rest } = b;
+  checkPricing(b.pricingModel ?? before.pricingModel, priceGhs ?? Number(before.priceGhs));
   await ctx.db.update(pl).set({
     ...rest,
     ...(priceGhs !== undefined ? { priceGhs: dec(priceGhs) } : {}),

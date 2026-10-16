@@ -43,7 +43,10 @@ const serviceTier = z.enum(PLAN_SERVICE_TIERS.map((t) => t.value) as [string, ..
 const pricingModel = z.enum(['free', 'fixed', 'custom']).optional();
 const publicationStatus = z.enum(['draft', 'published', 'inactive', 'archived']);
 const entitlement = z.object({ key: z.enum(PLAN_ENTITLEMENTS.map((e) => e.key) as [string, ...string[]]), enabled: z.boolean(), limit: z.union([z.number(), z.string().max(60)]).optional() });
-const planBody = { name, description: optText(500), audience: optText(160), serviceTier, platforms: z.array(z.enum(PLAN_PLATFORMS.map((p) => p.value) as [string, ...string[]])).max(3).optional(), entitlements: z.array(entitlement).max(20).optional(), durationDays: z.number().int().min(1).max(3650).nullable().optional(), pricingModel, priceGhs: money, intervalMonths: z.number().int().min(1).max(60).default(12) };
+// A free plan legitimately prices at 0 - only a 'fixed' plan must be a real positive amount.
+// 'custom' (priced per contract) still takes a representative figure here, same rule as 'fixed'.
+const planPrice = z.number().min(0).max(100_000_000);
+const planBody = { name, description: optText(500), audience: optText(160), serviceTier, platforms: z.array(z.enum(PLAN_PLATFORMS.map((p) => p.value) as [string, ...string[]])).max(3).optional(), entitlements: z.array(entitlement).max(20).optional(), durationDays: z.number().int().min(1).max(3650).nullable().optional(), pricingModel, priceGhs: planPrice, intervalMonths: z.number().int().min(1).max(60).default(12) };
 defineRoute({ method: 'GET', path: '/plans', tag: F, summary: 'Service plans', permission: ['plans', 'read'], handler: ({ ctx }) => fin.listPlans(ctx) });
 defineRoute({ method: 'GET', path: '/plans/:id/dependencies', tag: F, summary: 'Contracts referencing this plan, for a safe delete/archive decision', permission: ['plans', 'read'], handler: ({ ctx, params }) => fin.planDependencies(ctx, params.id) });
 defineRoute({ method: 'POST', path: '/plans', tag: F, summary: 'Create a plan', permission: ['plans', 'create'], body: z.object(planBody), handler: async ({ ctx, body }) => status(201, await fin.createPlan(ctx, body as any)) });
