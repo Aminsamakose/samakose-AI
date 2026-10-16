@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { CheckCircle2, ChevronLeft, ChevronRight, Download, Mail, Printer } from 'lucide-react';
 import { Section } from './ui';
 
+type Platform = 'SME360' | 'AGRIFOOD360' | 'ESO360';
 type Question = { code: string; dimension: string; text: string; options: { A: string; B: string; C: string; D: string } | null };
 type StartOk = { eligible: true; id: string; platform: string; frameworkVersionId: string; questions: Question[] };
 type AlreadyUsed = { eligible: false; title: string; body: string; actions: string[] };
@@ -32,7 +33,7 @@ async function get<T>(path: string): Promise<{ ok: true; data: T } | { ok: false
 
 const BAND_TONE: Record<string, string> = { 'Critical Attention': 'text-[color:var(--bad)]', 'Needs Improvement': 'text-[color:var(--warn)]', Developing: 'text-leaf-ink', 'Strong Foundation': 'text-leaf-ink' };
 
-function RegisterStep({ onStarted }: { onStarted: (r: StartResponse) => void }) {
+function RegisterStep({ platform, onStarted }: { platform: Platform; onStarted: (r: StartResponse) => void }) {
   const id = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +44,7 @@ function RegisterStep({ onStarted }: { onStarted: (r: StartResponse) => void }) 
     const f = new FormData(e.currentTarget);
     const body = {
       email: String(f.get('email') ?? ''), fullName: String(f.get('fullName') ?? ''), businessName: String(f.get('businessName') ?? '') || undefined,
-      platform: 'SME360', marketingConsent: f.get('marketingConsent') === 'on', privacyAcknowledged: f.get('privacyAcknowledged') === 'on' ? true : false, source: 'assessment-sme360'
+      platform, marketingConsent: f.get('marketingConsent') === 'on', privacyAcknowledged: f.get('privacyAcknowledged') === 'on' ? true : false, source: `assessment-${platform.toLowerCase()}`
     };
     const local: Record<string, string> = {};
     if (body.fullName.trim().length < 2) local.fullName = 'Enter your name';
@@ -233,23 +234,24 @@ function ResultStep({ result }: { result: Result }) {
   );
 }
 
-export function FreeAssessmentFlow() {
+export function FreeAssessmentFlow({ platform = 'SME360' }: { platform?: Platform }) {
   const [start, setStart] = useState<StartResponse | null>(null);
   const [result, setResult] = useState<Result | null>(null);
+  const storageKey = `${platform.toLowerCase()}_assessment_id`;
 
   // If the browser already holds a completed assessment id for this session (e.g. a refresh right
   // after submitting), fetch and show the result again rather than losing it.
   useEffect(() => {
-    const saved = (() => { try { return sessionStorage.getItem('sme360_assessment_id'); } catch { return null; } })();
+    const saved = (() => { try { return sessionStorage.getItem(storageKey); } catch { return null; } })();
     if (!saved) return;
     let cancelled = false;
     get<Result>(`/public/assessments/${saved}`).then((r) => { if (!cancelled && r.ok) setResult(r.data); });
     return () => { cancelled = true; };
-  }, []);
+  }, [storageKey]);
 
   function onStarted(r: StartResponse) {
     setStart(r);
-    if (r.eligible) { try { sessionStorage.setItem('sme360_assessment_id', r.id); } catch { /* ignore */ } }
+    if (r.eligible) { try { sessionStorage.setItem(storageKey, r.id); } catch { /* ignore */ } }
   }
   function onDone(r: Result) { setResult(r); }
 
@@ -257,7 +259,7 @@ export function FreeAssessmentFlow() {
     <Section>
       <div className="mx-auto max-w-2xl">
         {result ? <ResultStep result={result} />
-          : !start ? <RegisterStep onStarted={onStarted} />
+          : !start ? <RegisterStep platform={platform} onStarted={onStarted} />
           : !start.eligible ? <AlreadyUsedCard r={start} />
           : <QuestionsStep start={start} onDone={onDone} />}
       </div>

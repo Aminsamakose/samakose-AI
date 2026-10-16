@@ -2,9 +2,10 @@
  * Free preliminary Business Health assessment (public, anonymous, no sign-in).
  *
  * Governing rules, carried over from the approved spec exactly:
- *  - One shared engine, framework per platform (frameworks/frameworkVersions) -- SME360 is the only
- *    platform with an approved, published question bank today; AgriFood360 and ESO360 are rejected
- *    with a clear "not yet available" error rather than silently served the SME360 questions.
+ *  - One shared engine, framework per platform (frameworks/frameworkVersions). A platform is served only
+ *    once it actually has an approved, published free_preliminary version -- resolveFreeAssessmentVersion
+ *    throws if not, which this function surfaces as a clear "not yet available" error rather than
+ *    silently falling back to another platform's questions.
  *  - One completed free assessment per normalised email per platform. Enforced by a database partial
  *    unique index (public_assessments_one_completed_uq), not by this code -- this code only produces
  *    the friendly, pre-flight "already used" response; the index is what actually cannot be bypassed.
@@ -23,11 +24,13 @@ import { sendMail } from '@/lib/mail';
 import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
 import { fileResponse } from '@/api/framework';
 import { scoreFreeAssessment, type FreeAssessmentAnswer } from '@/domain/logic';
-import { resolveFreeAssessmentVersion, questionsOf, SME360_ANSWER_OPTIONS } from './frameworks';
+import { resolveFreeAssessmentVersion, questionsOf, SME360_ANSWER_OPTIONS, AGRIFOOD360_ANSWER_OPTIONS, ESO360_ANSWER_OPTIONS } from './frameworks';
 import { buildFreeAssessmentPdf } from './report-export';
 
-/** Answer-option text by platform. Only SME360 has an approved bank today; AgriFood360/ESO360 are rejected before this is ever consulted. */
-const ANSWER_OPTIONS_BY_PLATFORM: Partial<Record<FreeAssessmentPlatform, Record<string, { A: string; B: string; C: string; D: string }>>> = { SME360: SME360_ANSWER_OPTIONS };
+/** Answer-option text by platform, for the frontend/API to render. Not used in scoring. */
+const ANSWER_OPTIONS_BY_PLATFORM: Partial<Record<FreeAssessmentPlatform, Record<string, { A: string; B: string; C: string; D: string }>>> = {
+  SME360: SME360_ANSWER_OPTIONS, AGRIFOOD360: AGRIFOOD360_ANSWER_OPTIONS, ESO360: ESO360_ANSWER_OPTIONS
+};
 import { loadRules } from './common';
 
 export const FREE_ASSESSMENT_PLATFORMS = ['SME360', 'AGRIFOOD360', 'ESO360'] as const;
@@ -50,9 +53,6 @@ type StartInput = { email: string; fullName: string; businessName?: string | nul
 /** Begin (or resume) a free assessment. Does not consume the one-per-email-per-platform allowance -- only a Completed row does that. */
 export async function startFreeAssessment(ctx: Ctx, input: StartInput) {
   if (!FREE_ASSESSMENT_PLATFORMS.includes(input.platform)) throw fieldError({ platform: 'Unknown platform' });
-  if (input.platform !== 'SME360') {
-    throw unprocessable(`${input.platform} is not yet available. Its question bank has not been developed and approved.`);
-  }
   if (!input.privacyAcknowledged) throw fieldError({ privacyAcknowledged: 'You must acknowledge the privacy notice to continue' });
   const normalisedEmail = normaliseEmail(input.email);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalisedEmail)) throw fieldError({ email: 'Enter a valid email address' });
