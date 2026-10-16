@@ -22,22 +22,25 @@ const BRAND_COLOR = {
 };
 
 /** Draws the in-app Logo mark (src/components/site/Logo.tsx: a circle with a traced pulse line) directly with pdf-lib
- *  primitives, so every PDF carries the real Business Doctor mark without needing a separate image asset. */
-function drawLogoMark(page: PDFPage, cx: number, cy: number, r: number) {
-  page.drawCircle({ x: cx, y: cy, size: r, color: BRAND_COLOR.forest });
+ *  primitives, so every PDF carries the real Business Doctor mark without needing a separate image asset.
+ *  onDark mirrors the app component's own onDark variant: on the forest-green header band, a forest-colored
+ *  circle would vanish into the band, so the mark flips to a lime circle with a dark ink line, exactly as
+ *  Logo.tsx does when it is placed on a dark background. */
+function drawLogoMark(page: PDFPage, cx: number, cy: number, r: number, onDark = false) {
+  page.drawCircle({ x: cx, y: cy, size: r, color: onDark ? BRAND_COLOR.lime : BRAND_COLOR.forest });
   // Pulse-line points traced from the app logo's SVG path ("M6 21h7l3-8 5 16 4-11 2 3h7", viewBox 0 0 40 40, y-down),
   // scaled to 80% of the circle's diameter and flipped into pdf-lib's y-up coordinate space.
   const raw: [number, number][] = [[6, 21], [13, 21], [16, 13], [21, 29], [25, 18], [27, 21], [34, 21]];
   const scale = (r * 2 * 0.8) / 40;
   const ox = cx - (40 * scale) / 2, oy = cy + (40 * scale) / 2;
   const pts = raw.map(([x, y]) => ({ x: ox + x * scale, y: oy - y * scale }));
-  for (let i = 0; i < pts.length - 1; i++) page.drawLine({ start: pts[i], end: pts[i + 1], thickness: Math.max(1.3, r * 0.09), color: BRAND_COLOR.lime });
+  for (let i = 0; i < pts.length - 1; i++) page.drawLine({ start: pts[i], end: pts[i + 1], thickness: Math.max(1.3, r * 0.09), color: onDark ? BRAND_COLOR.ink : BRAND_COLOR.lime });
 }
 
 /** Draws the corporate header band (logo + brand name on the left, document title on the right) at the top of a page. */
 function drawHeaderBand(page: PDFPage, W: number, H: number, bandH: number, title: string, subtitle: string, bold: PDFFont, reg: PDFFont, M: number) {
   page.drawRectangle({ x: 0, y: H - bandH, width: W, height: bandH, color: BRAND_COLOR.forest });
-  drawLogoMark(page, M - 22, H - bandH / 2, 15);
+  drawLogoMark(page, M - 22, H - bandH / 2, 15, true);
   page.drawText(pdfSafe('Business Doctor'), { x: M, y: H - bandH / 2 + 1, size: 15, font: bold, color: rgb(1, 1, 1) });
   page.drawText(pdfSafe('by Samakose'), { x: M, y: H - bandH / 2 - 12, size: 8, font: reg, color: rgb(0.85, 0.93, 0.9) });
   const tw = bold.widthOfTextAtSize(pdfSafe(title), 11);
