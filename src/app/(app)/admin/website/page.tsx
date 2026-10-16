@@ -16,7 +16,7 @@ function Inner() {
       <Tabs tabs={[{ id: 'content', label: 'Content and settings' }, ...(canInq ? [{ id: 'enquiries', label: 'Enquiries' }] : [])]} active={tab} onChange={(t) => router.replace(t === 'content' ? '/admin/website' : `/admin/website?tab=${t}`)} />
       <div role="tabpanel">
         {tab === 'content' && <WebsiteHub />}
-        {tab === 'enquiries' && <div className="card stack"><p className="muted small">Messages and sign-ups sent from the public website. Mark each one handled once someone has replied.</p><InquiryTable exportable={me.can('inquiries', 'export')} /></div>}
+        {tab === 'enquiries' && <div className="card stack"><p className="muted small">Messages and sign-ups sent from the public website. Mark each one handled once someone has replied.</p><InquiryTable exportable={me.can('inquiries', 'export')} canManageOwners={me.can('inquiries', 'edit')} /></div>}
       </div>
     </>;
   }}</Guard>;
