@@ -25,6 +25,7 @@ import * as bill from '@/services/billing';
 import * as inq from '@/services/inquiries';
 import * as fa from '@/services/publicAssessments';
 import * as rc from '@/services/registration-config';
+import * as planPurchases from '@/services/plan-purchases';
 import { PLAN_SERVICE_TIERS, PLAN_PLATFORMS, PLAN_ENTITLEMENTS } from '@/domain/plan-catalog';
 import { getJob } from '@/domain/jobs';
 import { need } from '@/services/common';
@@ -52,6 +53,13 @@ defineRoute({ method: 'GET', path: '/plans/:id/dependencies', tag: F, summary: '
 defineRoute({ method: 'POST', path: '/plans', tag: F, summary: 'Create a plan', permission: ['plans', 'create'], body: z.object(planBody), handler: async ({ ctx, body }) => status(201, await fin.createPlan(ctx, body as any)) });
 defineRoute({ method: 'PATCH', path: '/plans/:id', tag: F, summary: 'Update a plan, including publishing, deactivating, archiving or confirming its price', permission: ['plans', 'edit'], body: z.object({ ...Object.fromEntries(Object.entries(planBody).map(([k, v]) => [k, (v as any).optional ? (v as any).optional() : v])), publicationStatus: publicationStatus.optional(), priceConfirmed: z.boolean().optional() }), handler: ({ ctx, params, body }) => fin.updatePlan(ctx, params.id, body as any) });
 defineRoute({ method: 'DELETE', path: '/plans/:id', tag: F, summary: 'Delete a plan, or archive it instead if contracts reference it', permission: ['plans', 'delete'], handler: ({ ctx, params }) => fin.deletePlan(ctx, params.id) });
+/* A business owner buying a published plan for their own organisation - the self-serve path the
+ * public pricing page's "Get started" button leads to. Gated on `plan_catalog` (read-only, every
+ * signed-in owner already has it) rather than `plans`, because `plans` also covers the full admin
+ * catalogue (drafts, archived plans, internal pricing); the handler itself enforces that only a
+ * published, fixed-price, confirmed plan can actually be bought this way. */
+defineRoute({ method: 'POST', path: '/plans/:id/purchase', tag: F, summary: 'Buy a published plan for your own organisation (starts a Paystack transaction, or the mock-payment path outside production)', permission: ['plan_catalog', 'read'],
+  body: z.object({}).passthrough(), handler: ({ ctx, params }) => planPurchases.startPlanPurchase(ctx, params.id) });
 defineRoute({ method: 'GET', path: '/contracts', tag: F, summary: 'Contracts', permission: ['contracts', 'read'], query: listQuery.extend({ status: z.string().optional(), orgId: z.string().optional() }), handler: ({ ctx, query }) => fin.listContracts(ctx, query) });
 defineRoute({ method: 'POST', path: '/contracts', tag: F, summary: 'Create a contract', permission: ['contracts', 'create'], body: z.object({ orgId: uuid, planId: uuid.nullish(), programmeId: uuid.nullish(), startDate: isoDate.nullish(), endDate: isoDate.nullish(), amountGhs: z.number().min(0).max(1e9).optional() }), handler: async ({ ctx, body }) => status(201, await fin.createContract(ctx, body)) });
 defineRoute({ method: 'PATCH', path: '/contracts/:id', tag: F, summary: 'Update terms or move status', permission: ['contracts', 'edit'], body: z.object({ status: z.enum(['Active', 'Expired', 'Cancelled']).optional(), startDate: isoDate.nullish(), endDate: isoDate.nullish(), amountGhs: z.number().min(0).max(1e9).optional() }), handler: ({ ctx, params, body }) => fin.updateContract(ctx, params.id, body) });
