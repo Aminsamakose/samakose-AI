@@ -143,14 +143,22 @@ describe('business health record', () => {
 });
 
 describe('framework purpose (#133): resolveVersion and resolveFreeAssessmentVersion must not cross-pick each other', () => {
+  // Deliberately uses orgType 'ESO', not 'AGRIFOOD': Published framework versions can never be deleted or
+  // edited once published (framework_versions_no_delete / framework_versions_guard triggers, migration 0011),
+  // so whatever this test publishes here stays in the shared test database for the rest of the run. makeOrg()
+  // always creates 'AGRIFOOD' organisations, and other suites (content.test.ts, workflow.test.ts) create real
+  // 'SME' diagnostics, so publishing a colliding framework under either of those orgTypes would permanently
+  // corrupt every other test's resolveVersion() result for the rest of the suite. Nothing else in this test
+  // suite takes a real diagnostic against an 'ESO'-type organisation, so a synthetic published framework there
+  // is inert everywhere except the two assertions below.
   it('for a non-SME orgType with both a full and a free_preliminary framework published, each resolver only ever returns its own purpose', async () => {
     const tag = uniq();
     const [full] = await db().insert(schema.frameworks).values({
-      code: `TEST_FULL_${tag}`, name: 'Test full framework', orgType: 'AGRIFOOD', isDefault: false, purpose: 'full',
+      code: `TEST_FULL_${tag}`, name: 'Test full framework', orgType: 'ESO', isDefault: false, purpose: 'full',
       description: 'Synthetic paid framework for the #133 regression test'
     }).returning();
     const [free] = await db().insert(schema.frameworks).values({
-      code: `TEST_FREE_${tag}`, name: 'Test free framework', orgType: 'AGRIFOOD', isDefault: false, purpose: 'free_preliminary',
+      code: `TEST_FREE_${tag}`, name: 'Test free framework', orgType: 'ESO', isDefault: false, purpose: 'free_preliminary',
       description: 'Synthetic free-preliminary framework for the #133 regression test'
     }).returning();
     const content = { questions: [{ code: 'Q1', dimension: 'D1', text: 'Test question', weight: 1 }], dimensions: ['D1'] };
@@ -162,13 +170,14 @@ describe('framework purpose (#133): resolveVersion and resolveFreeAssessmentVers
     }).returning();
 
     // resolveVersion (paid callers) must pick the full one, never the free one.
-    expect((await resolveVersion(db(), 'AGRIFOOD')).id).toBe(fullVersion.id);
+    expect((await resolveVersion(db(), 'ESO')).id).toBe(fullVersion.id);
     // resolveFreeAssessmentVersion (the free preliminary assessment) must pick the free one, never the full one.
-    expect((await resolveFreeAssessmentVersion(db(), 'AGRIFOOD')).id).toBe(freeVersion.id);
+    expect((await resolveFreeAssessmentVersion(db(), 'ESO')).id).toBe(freeVersion.id);
   });
 
   it('resolveFreeAssessmentVersion throws rather than falling through to a paid framework when no free one is published for the orgType', async () => {
-    // ESO360 (orgType ESO) has no free_preliminary framework at all in reference data.
-    await expect(resolveFreeAssessmentVersion(db(), 'ESO')).rejects.toThrow(/free preliminary/i);
+    // AGRIFOOD360 (orgType AGRIFOOD) has no free_preliminary framework at all in reference data, and this
+    // assertion is read-only (no insert here), so it is safe even though AGRIFOOD is the orgType makeOrg() uses.
+    await expect(resolveFreeAssessmentVersion(db(), 'AGRIFOOD')).rejects.toThrow(/free preliminary/i);
   });
 });
