@@ -8,8 +8,8 @@ import { REGISTER_HREF, LOGIN_HREF, FREE_ASSESSMENT_HREF } from '@/components/si
 import { getSite, contactOf } from '@/lib/site-content';
 
 const PRODUCTS = [
-  { name: 'SME360', who: 'Owner-managed businesses in trade, services and light manufacturing.', pts: ['Scored across six health dimensions, from finance and sales to records and compliance', 'A Business Health Score with a plan of dated actions', 'Coaching sessions and progress tracking on one record'], tone: 'bg-leaf text-white' },
-  { name: 'AgriFood360', who: 'Farms, aggregators, processors, cooperatives and agrifood exporters.', pts: ['The same six-dimension health check, set up for farms, aggregators and processors', 'Evidence upload and review for records and compliance', 'Agrifood-specific modules such as value-chain mapping are planned'], tone: 'bg-gold text-ink' },
+  { name: 'SME360', who: 'Owner-managed businesses in trade, services and light manufacturing.', pts: ['Scored across eight health dimensions, from finance and sales to records and compliance', 'A Business Health Score with a plan of dated actions', 'Coaching sessions and progress tracking on one record'], tone: 'bg-leaf text-white' },
+  { name: 'AgriFood360', who: 'Farms, aggregators, processors, cooperatives and agrifood exporters.', pts: ['An eight-dimension health check built for farms, aggregators and processors, covering market access, traceability and seasonal finance', 'Evidence upload and review for records and compliance', 'Agrifood-specific modules such as value-chain mapping are planned'], tone: 'bg-gold text-ink' },
   { name: 'ESO360', who: 'Accelerators, incubators, hubs and enterprise support programmes.', pts: ['Cohorts, programmes and portfolio views for the businesses you support', 'Baseline, midline and endline tracking', 'Programme-health modules such as a business model lab are planned'], tone: 'bg-clay text-white' }
 ];
 
