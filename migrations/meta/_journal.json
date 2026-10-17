@@ -435,6 +435,13 @@
       "when": 1792190000000,
       "tag": "0062_browser_scored_free_assessment",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1792217320044,
+      "tag": "0063_free_assessment_created_at",
+      "breakpoints": true
     }
   ]
 }
