@@ -144,7 +144,8 @@ describe('browser-scored free assessment storage and result download', () => {
     expect(stored.fullName).toBe('Browser Score Test');
     expect(stored.platform).toBe('SME360');
     expect(stored.result.overallScore).toBe(100);
-    expect(Object.keys(stored)).toEqual(['id', 'email', 'fullName', 'platform', 'result']);
+    expect(stored.createdAt).toBeInstanceOf(Date);
+    expect(Object.keys(stored)).toEqual(['id', 'email', 'fullName', 'platform', 'result', 'createdAt']);
     const leads = await db().select().from(schema.inquiries).where(eq(schema.inquiries.publicAssessmentId, stored.id));
     expect(leads).toHaveLength(1);
     expect(leads[0]).toMatchObject({
