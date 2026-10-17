@@ -30,7 +30,6 @@ export default async function PricingPage() {
     if (!matches.length) return [{ id: null, name: t.label, audience: t.who, features: [], price: null, priceStatus: 'pending' as const, reference: null, period: '', ctaLabel: 'Ask about this plan', ctaHref: '/contact', buyable: false, highlighted: false, serviceTier: t.value, durationDays: null, key: t.value, placeholder: true }];
     return matches.map((m) => ({ ...m, key: `${t.value}-${m.name}` }));
   });
-  const gridCols = planCards.length <= 3 ? 'lg:grid-cols-3' : planCards.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-5';
   // A real price renders as a price (bold, brand colour). Anything not yet confirmed - whether no plan
   // has been published for this slot at all, or a published plan's own price is still pending
   // confirmation - renders as an explicit status badge instead, so nothing price-shaped is ever shown
@@ -51,7 +50,11 @@ export default async function PricingPage() {
       <PageHero eyebrow="Pricing and plans" title="Start with a diagnosis. Add support when it helps." intro="Each plan is a step on the same business health journey. You keep the score and report you have paid for, and you can move up when the diagnosis shows you need more." />
       <Section>
         {!pricing.confirmed && <div role="note" className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-gold bg-[color:var(--warn-soft)] p-4 text-sm text-[color:var(--warn)]"><span><strong>Pricing coming soon.</strong> {pricing.banner}</span><ButtonLink href={pricing.enquiryHref} variant="ghost">{pricing.enquiryLabel}</ButtonLink></div>}
-        <Stagger className={`grid gap-5 sm:grid-cols-2 ${gridCols}`}>
+        {/* auto-fit (not a fixed column count) so an uneven card count - 7 plans doesn't divide evenly
+            into any neat column count - never leaves an empty, reserved-but-unused column of blank
+            space hanging off a short last row. Empty tracks collapse to zero width automatically, and
+            the layout reflows at any viewport without separate sm:/lg: breakpoints to keep in sync. */}
+        <Stagger className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
           {planCards.map((c) => (
             <Item key={c.key}>
               <Card className={`flex h-full flex-col gap-3 ${c.highlighted ? '!border-2 !border-forest' : ''}`}>
