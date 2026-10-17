@@ -8,7 +8,12 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 export default async function setup() {
   const url = process.env.TEST_DATABASE_URL ?? 'postgres://postgres@localhost:5433/samakose_test';
   // A fresh Postgres server (such as the CI service container) has no test database yet, so create it first.
-  const u = new URL(url); const dbName = decodeURIComponent(u.pathname.slice(1)); u.pathname = '/postgres';
+  const u = new URL(url); const dbName = decodeURIComponent(u.pathname.slice(1));
+  const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
+  if (!localHosts.has(u.hostname.toLowerCase()) || !/(^|_)test($|_)/i.test(dbName)) {
+    throw new Error('Refusing to reset the test database: TEST_DATABASE_URL must point to localhost and a database name containing "test".');
+  }
+  u.pathname = '/postgres';
   const admin = new pg.Client({ connectionString: u.toString() });
   await admin.connect();
   try { if (!(await admin.query('select 1 from pg_database where datname = $1', [dbName])).rowCount) await admin.query(`create database "${dbName.replace(/"/g, '""')}"`); } finally { await admin.end(); }

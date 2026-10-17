@@ -13,6 +13,10 @@ Samakose Accelerator Lab is based at ${SITE.address.join(', ')}. You can reach u
 
 **When you use the platform.** Account details, and the business information, answers, documents and notes that you or your advisers enter. Access to this information is limited by role, so that people see only what their role allows.
 
+**When you take a free preliminary assessment.** The questions and your answers are processed in your browser and are not sent to our assessment service. We use your email address to check whether you have already completed that platform's free assessment; the assessment database does not save eligibility checks or unfinished attempts. When you complete the assessment, we store your name, email address, selected platform and the result shown to you so we can enforce the one-completion limit and provide the result and report actions. We also create an admin-visible assessment lead in our existing inquiry queue for service triage. This does not give us permission to send marketing or unsolicited follow-up; we record no contact permission for that lead. We do not store individual answers or assessment progress for this free assessment. If you ask us to email your result, our email provider processes the address and result to send that message.
+
+Records from free assessments completed before this change may contain answers and other assessment details in the previous system. We are reviewing the retention and removal of those legacy records.
+
 ## Why we use it
 We use the details you send us to reply to you. We use platform information to provide the health check, produce reports and support the programmes you take part in. We rely on your consent for website enquiries and on your agreement with us, or with the programme that supports you, for platform use.
 
@@ -32,4 +36,4 @@ Under Ghana's Data Protection Act, 2012 (Act 843), you can ask to see the person
 We will update this notice when our practices change and show the date at the top of the page.
 `;
 
-export default async function Page() { return <LegalPage title="Privacy notice" updated="1 October 2026" body={body(contactOf(await getSite()))} />; }
+export default async function Page() { return <LegalPage title="Privacy notice" updated="17 October 2026" body={body(contactOf(await getSite()))} />; }

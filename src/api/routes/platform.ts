@@ -253,24 +253,32 @@ defineRoute({ method: 'PUT', path: '/admin/free-assessment-owners', tag: AD, sum
 
 /* ------------------------- free preliminary Business Health assessment ------------------------- */
 const FA = 'Free assessment';
-defineRoute({ method: 'POST', path: '/public/assessments/start', tag: FA, summary: 'Begin a free preliminary assessment for one platform, or learn the email has already used its allowance for it', auth: 'public',
-  rateLimit: { key: 'assessment-start:ip:{ip}', limit: 10, windowSec: 900 },
+defineRoute({ method: 'POST', path: '/public/assessments/eligibility', tag: FA, summary: 'Check whether an email has completed this platform assessment without creating a record', auth: 'public',
+  rateLimit: { key: 'assessment-eligibility:ip:{ip}', limit: 10, windowSec: 900 },
+  body: z.object({ email, platform: z.enum(fa.FREE_ASSESSMENT_PLATFORMS) }),
+  handler: ({ ctx, body }) => fa.checkFreeAssessmentEligibility(ctx, body.email, body.platform) });
+defineRoute({ method: 'GET', path: '/public/assessments/questions/:platform', tag: FA, summary: 'Fetch published questions without identifying or tracking a respondent', auth: 'public',
+  rateLimit: { key: 'assessment-questions:ip:{ip}', limit: 60, windowSec: 900 },
+  handler: ({ ctx, params }) => fa.getFreeAssessmentQuestions(ctx, params.platform as fa.FreeAssessmentPlatform) });
+defineRoute({ method: 'POST', path: '/public/assessments/complete', tag: FA, summary: 'Store only name, email, platform and the completed browser-scored result', auth: 'public',
+  rateLimit: { key: 'assessment-complete:ip:{ip}', limit: 10, windowSec: 900 },
   body: z.object({
-    email, fullName: name, businessName: optText(200), platform: z.enum(fa.FREE_ASSESSMENT_PLATFORMS),
-    marketingConsent: z.boolean().optional(), privacyAcknowledged: z.literal(true, { error: 'Please acknowledge the privacy notice' }), source: optText(80)
+    email, fullName: name, platform: z.enum(fa.FREE_ASSESSMENT_PLATFORMS),
+    result: z.object({
+      overallScore: z.number().min(0).max(100),
+      classification: z.enum(['Critical Attention', 'Needs Improvement', 'Developing', 'Strong Foundation']),
+      dimensionScores: z.array(z.object({ dimension: z.string().trim().min(1).max(120), score: z.number().min(0).max(100) })).min(1).max(10),
+      completedAt: z.string().datetime()
+    })
   }),
-  handler: ({ ctx, body }) => fa.startFreeAssessment(ctx, body) });
-defineRoute({ method: 'POST', path: '/public/assessments/:id/submit', tag: FA, summary: 'Submit all 25 answers and receive the deterministic result', auth: 'public',
-  rateLimit: { key: 'assessment-submit:ip:{ip}', limit: 20, windowSec: 900 },
-  body: z.object({ answers: z.record(z.string(), z.enum(['A', 'B', 'C', 'D'])) }),
-  handler: ({ ctx, params, body }) => fa.submitFreeAssessment(ctx, { id: params.id, answers: body.answers }) });
+  handler: ({ ctx, body }) => fa.completeFreeAssessment(ctx, body) });
 defineRoute({ method: 'GET', path: '/public/assessments/:id', tag: FA, summary: 'Retrieve a completed free assessment result', auth: 'public',
   rateLimit: { key: 'assessment-get:ip:{ip}', limit: 60, windowSec: 900 },
   handler: ({ ctx, params }) => fa.getFreeAssessment(ctx, params.id) });
-defineRoute({ method: 'POST', path: '/public/assessments/:id/actions/:action', tag: FA, summary: 'Use the one-time email, download or print allowance for a completed result', auth: 'public',
-  rateLimit: { key: 'assessment-action:ip:{ip}', limit: 10, windowSec: 900 },
+defineRoute({ method: 'POST', path: '/public/assessments/:id/actions/:action', tag: FA, summary: 'Email or download a completed result on request', auth: 'public',
+  rateLimit: { key: 'assessment-action:ip:{ip}', limit: 10, windowSec: 900 }, body: empty,
   handler: ({ ctx, params }) => {
-    if (params.action !== 'email' && params.action !== 'download' && params.action !== 'print') throw badRequest('Unknown action');
+    if (params.action !== 'email' && params.action !== 'download') throw badRequest('Unknown action');
     return fa.useReportAction(ctx, params.id, params.action);
   } });
 

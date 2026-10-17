@@ -120,21 +120,54 @@ describe('email normalisation (spec, Phase 6: trim + case-fold only, never strip
   });
 });
 
-describe('free assessment result download (#123: a real PDF, not a client-side plain-text Blob)', () => {
+describe('browser-scored free assessment storage and result download', () => {
   beforeAll(async () => { await ensureReference(); });
 
-  it('the download action returns an actual application/pdf file carrying the score and classification', async () => {
-    const start = await post('/public/assessments/start', {
-      email: `pdf-download-${Date.now()}@test.samakose.test`, fullName: 'PDF Download Test', platform: 'SME360', privacyAcknowledged: true
-    });
-    expect(start.status).toBe(200);
-    const started = await start.json();
-    const { id, questions } = started.data;
-    const answers: Record<string, 'A'> = {};
-    for (const q of questions) answers[q.code] = 'A';
-    const submit = await post(`/public/assessments/${id}/submit`, { answers });
-    expect(submit.status).toBe(200);
+  it('serves questions without identity, stores only the completed result, and enforces one completion per email/platform', async () => {
+    const questions = await dispatch(new Request('http://localhost/api/v1/public/assessments/questions/SME360'));
+    expect(questions.status).toBe(200);
+    const qBody = await questions.json();
+    expect(qBody.data.questions).toHaveLength(25);
+    expect(JSON.stringify(qBody)).not.toMatch(/email|answers|fullName/i);
 
+    const email = `browser-score-${Date.now()}@test.samakose.test`;
+    const complete = await post('/public/assessments/complete', {
+      email, fullName: 'Browser Score Test', platform: 'SME360',
+      result: { overallScore: 100, classification: 'Strong Foundation', dimensionScores: [{ dimension: 'Finance', score: 100 }], completedAt: new Date().toISOString() },
+      answers: { SHOULD_NOT_BE_STORED: 'A' }, businessName: 'Not allowed', marketingConsent: true
+    });
+    expect(complete.status).toBe(200);
+    const completed = await complete.json();
+    expect(completed.data.eligible).toBe(true);
+    const [stored] = await db().select().from(schema.freeAssessmentResults).where(eq(schema.freeAssessmentResults.id, completed.data.id)).limit(1);
+    expect(stored.email).toBe(email.toLowerCase());
+    expect(stored.fullName).toBe('Browser Score Test');
+    expect(stored.platform).toBe('SME360');
+    expect(stored.result.overallScore).toBe(100);
+    expect(Object.keys(stored)).toEqual(['id', 'email', 'fullName', 'platform', 'result']);
+    const leads = await db().select().from(schema.inquiries).where(eq(schema.inquiries.publicAssessmentId, stored.id));
+    expect(leads).toHaveLength(1);
+    expect(leads[0]).toMatchObject({
+      kind: 'assessment', name: 'Browser Score Test', email: email.toLowerCase(), consent: false,
+      source: 'free-assessment', publicAssessmentId: stored.id, platform: 'SME360',
+      overallScore: 100, classification: 'Strong Foundation'
+    });
+
+    const duplicate = await post('/public/assessments/complete', {
+      email: email.toUpperCase(), fullName: 'Browser Score Test', platform: 'SME360',
+      result: { overallScore: 100, classification: 'Strong Foundation', dimensionScores: [{ dimension: 'Finance', score: 100 }], completedAt: new Date().toISOString() }
+    });
+    expect((await duplicate.json()).data.eligible).toBe(false);
+    expect(await db().select().from(schema.inquiries).where(eq(schema.inquiries.publicAssessmentId, stored.id))).toHaveLength(1);
+  });
+
+  it('the download action returns an actual one-page application/pdf', async () => {
+    const email = `pdf-download-${Date.now()}@test.samakose.test`;
+    const complete = await post('/public/assessments/complete', {
+      email, fullName: 'PDF Download Test', platform: 'SME360',
+      result: { overallScore: 100, classification: 'Strong Foundation', dimensionScores: [{ dimension: 'Finance', score: 100 }], completedAt: new Date().toISOString() }
+    });
+    const { id } = (await complete.json()).data;
     const res = await post(`/public/assessments/${id}/actions/download`, {});
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('application/pdf');
@@ -144,8 +177,8 @@ describe('free assessment result download (#123: a real PDF, not a client-side p
     const pdf = await PDFDocument.load(bytes);
     expect(pdf.getPageCount()).toBe(1);
 
-    // The one-time allowance still applies -- a second download attempt is refused, same as before.
+    // Downloading is a client-requested action and does not create a stored action/progress record.
     const again = await post(`/public/assessments/${id}/actions/download`, {});
-    expect(again.status).toBe(409);
+    expect(again.status).toBe(200);
   });
 });

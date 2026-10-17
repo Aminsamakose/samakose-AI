@@ -1234,6 +1234,22 @@ export const publicAssessments = pgTable('public_assessments', {
   index('public_assessments_email_idx').on(t.normalisedEmail, t.platform)
 ]);
 
+/** Allowlisted result record for browser-scored free assessments. No answers or progress are stored. */
+export const freeAssessmentResults = pgTable('free_assessment_results', {
+  id: id(),
+  email: text('email').notNull(),
+  fullName: text('full_name').notNull(),
+  platform: text('platform').notNull(),
+  result: jsonb('result').notNull().$type<{
+    overallScore: number;
+    classification: string;
+    dimensionScores: { dimension: string; score: number }[];
+    completedAt: string;
+  }>()
+}, (t) => [
+  uniqueIndex('free_assessment_results_email_platform_uq').on(sql`lower(btrim(${t.email}))`, t.platform)
+]);
+
 /* ------------------------- AI agent registry ------------------------- */
 /** One record per AI agent. The agent has no login. It runs under the requesting person's account and case scope. */
 export const aiAgents = pgTable('ai_agents', {

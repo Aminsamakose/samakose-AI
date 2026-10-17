@@ -428,6 +428,13 @@
       "when": 1792180000000,
       "tag": "0061_plan_price_confirmation",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1792190000000,
+      "tag": "0062_browser_scored_free_assessment",
+      "breakpoints": true
     }
   ]
 }
