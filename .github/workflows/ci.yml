@@ -65,4 +65,7 @@ jobs:
             cat /tmp/business-doctor-e2e.log
             exit 1
           fi
+          npm run worker > /tmp/business-doctor-worker.log 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true; kill "$server_pid" 2>/dev/null || true' EXIT
           npm run test:e2e
