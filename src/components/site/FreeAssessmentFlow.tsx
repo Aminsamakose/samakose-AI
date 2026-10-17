@@ -3,13 +3,15 @@ import { useEffect, useId, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, ChevronLeft, ChevronRight, Download, Mail, Printer } from 'lucide-react';
 import { Section } from './ui';
+import { DEFAULT_RULES, scoreFreeAssessment, type FreeAssessmentAnswer } from '@/domain/logic';
 
 type Platform = 'SME360' | 'AGRIFOOD360' | 'ESO360';
 type Question = { code: string; dimension: string; text: string; options: { A: string; B: string; C: string; D: string } | null };
-type StartOk = { eligible: true; id: string; platform: string; frameworkVersionId: string; questions: Question[] };
+type StartOk = { eligible: true; platform: Platform; scoringRules: Record<string, string | number>; questions: Question[] };
 type AlreadyUsed = { eligible: false; title: string; body: string; actions: string[] };
 type StartResponse = StartOk | AlreadyUsed;
-type Result = { eligible: true; id: string; platform: string; fullName: string; businessName: string | null; overallScore: number; classification: string; dimensionScores: { dimension: string; score: number }[]; completedAt: string };
+type Applicant = { email: string; fullName: string };
+type Result = { eligible: true; id: string; platform: Platform; fullName: string; overallScore: number; classification: string; dimensionScores: { dimension: string; score: number }[]; completedAt: string };
 
 /** Isolates printing to the branded one-page report block below (.fa-print-area), regardless of what
  *  else is on the page (site header/footer, hero, buttons) -- the standard print-isolation technique,
@@ -45,7 +47,7 @@ async function get<T>(path: string): Promise<{ ok: true; data: T } | { ok: false
 
 const BAND_TONE: Record<string, string> = { 'Critical Attention': 'text-[color:var(--bad)]', 'Needs Improvement': 'text-[color:var(--warn)]', Developing: 'text-leaf-ink', 'Strong Foundation': 'text-leaf-ink' };
 
-function RegisterStep({ platform, onStarted }: { platform: Platform; onStarted: (r: StartResponse) => void }) {
+function RegisterStep({ platform, onStarted }: { platform: Platform; onStarted: (r: StartResponse, applicant?: Applicant) => void }) {
   const id = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,24 +56,26 @@ function RegisterStep({ platform, onStarted }: { platform: Platform; onStarted: 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const body = {
-      email: String(f.get('email') ?? ''), fullName: String(f.get('fullName') ?? ''), businessName: String(f.get('businessName') ?? '') || undefined,
-      platform, marketingConsent: f.get('marketingConsent') === 'on', privacyAcknowledged: f.get('privacyAcknowledged') === 'on' ? true : false, source: `assessment-${platform.toLowerCase()}`
-    };
+    const privacyAcknowledged = f.get('privacyAcknowledged') === 'on';
+    const body = { email: String(f.get('email') ?? '').trim(), fullName: String(f.get('fullName') ?? '').trim(), platform };
     const local: Record<string, string> = {};
     if (body.fullName.trim().length < 2) local.fullName = 'Enter your name';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim())) local.email = 'Enter a valid email address';
-    if (!body.privacyAcknowledged) local.privacyAcknowledged = 'Please acknowledge the privacy notice to continue';
+    if (!privacyAcknowledged) local.privacyAcknowledged = 'Please acknowledge the privacy notice to continue';
     if (Object.keys(local).length) { setFields(local); setError('Please check the highlighted fields.'); return; }
     setBusy(true); setError(null); setFields({});
-    const r = await post<StartResponse>('/public/assessments/start', body);
-    setBusy(false);
+    const r = await post<StartResponse>('/public/assessments/eligibility', { email: body.email, platform });
     if (!r.ok) {
+      setBusy(false);
       if (r.status === 429) setError('Too many attempts from this connection. Please wait a few minutes and try again.');
       else { setFields(r.fields ?? {}); setError(r.message); }
       return;
     }
-    onStarted(r.data);
+    if (!r.data.eligible) { setBusy(false); onStarted(r.data); return; }
+    const q = await get<StartOk>(`/public/assessments/questions/${platform}`);
+    setBusy(false);
+    if (!q.ok) { setError(q.message); return; }
+    onStarted(q.data, { email: body.email, fullName: body.fullName });
   }
 
   const err = (k: string) => fields[k] ? <p role="alert" className="mt-1 text-sm font-semibold text-[color:var(--bad)]">{fields[k]}</p> : null;
@@ -82,10 +86,8 @@ function RegisterStep({ platform, onStarted }: { platform: Platform; onStarted: 
         <div><label htmlFor={`${id}-name`} className={lbl}>Your name <span aria-hidden="true">*</span></label><input id={`${id}-name`} name="fullName" autoComplete="name" required className={ctl} />{err('fullName')}</div>
         <div><label htmlFor={`${id}-email`} className={lbl}>Email <span aria-hidden="true">*</span></label><input id={`${id}-email`} name="email" type="email" autoComplete="email" required className={ctl} />{err('email')}</div>
       </div>
-      <div><label htmlFor={`${id}-biz`} className={lbl}>Business name</label><input id={`${id}-biz`} name="businessName" autoComplete="organization" className={ctl} /></div>
       <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="privacyAcknowledged" required className="mt-1 size-5 flex-none" /><span>I have read and agree to the <Link href="/privacy" className="font-semibold text-leaf-ink underline">privacy notice</Link>. <span aria-hidden="true">*</span></span></label>
       {err('privacyAcknowledged')}
-      <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="marketingConsent" className="mt-1 size-5 flex-none" /><span>I would also like to receive occasional emails about Samakose services. (Optional, not required for your free result.)</span></label>
       <button type="submit" disabled={busy} className="inline-flex min-h-12 w-fit items-center justify-center rounded-full bg-forest px-7 font-semibold text-white transition duration-200 hover:bg-leaf active:scale-[0.97] disabled:opacity-60">
         {busy ? 'Starting...' : 'Start the 25 questions'}
       </button>
@@ -106,7 +108,7 @@ function AlreadyUsedCard({ r }: { r: AlreadyUsed }) {
   );
 }
 
-function QuestionsStep({ start, onDone }: { start: StartOk; onDone: (r: Result) => void }) {
+function QuestionsStep({ start, applicant, onDone }: { start: StartOk; applicant: Applicant; onDone: (r: Result) => void }) {
   const [i, setI] = useState(0);
   const [answers, setAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
   const [busy, setBusy] = useState(false);
@@ -122,13 +124,19 @@ function QuestionsStep({ start, onDone }: { start: StartOk; onDone: (r: Result) 
 
   async function submit() {
     setBusy(true); setError(null);
-    const r = await post<Result>(`/public/assessments/${start.id}/submit`, { answers });
+    const scoreAnswers: FreeAssessmentAnswer[] = start.questions.map((q) => ({
+      questionCode: q.code, value: ({ A: 4, B: 3, C: 2, D: 1 } as const)[answers[q.code]]
+    }));
+    const scored = scoreFreeAssessment(scoreAnswers, start.questions, { ...DEFAULT_RULES, ...start.scoringRules });
+    const result = { ...scored, completedAt: new Date().toISOString() };
+    const r = await post<Result | AlreadyUsed>('/public/assessments/complete', { ...applicant, platform: start.platform, result });
     setBusy(false);
     if (!r.ok) {
       if (r.fields?.answers) setError(r.fields.answers);
       else setError(r.message);
       return;
     }
+    if (!r.data.eligible) { setError(r.data.body); return; }
     onDone(r.data);
   }
 
@@ -196,9 +204,6 @@ function ResultStep({ result }: { result: Result }) {
     setDownloadState('done');
   }
   async function print() {
-    setActionError(null);
-    const r = await post(`/public/assessments/${result.id}/actions/print`, {});
-    if (!r.ok) { setActionError(r.message); return; }
     setPrintState('done');
     window.print();
   }
@@ -232,7 +237,7 @@ function ResultStep({ result }: { result: Result }) {
           </div>
         </div>
         <h1 style={{ fontSize: 20, fontWeight: 700, marginTop: 14 }}>{result.platform} Preliminary Result</h1>
-        <p style={{ fontSize: 11, color: '#555', marginTop: 4 }}>{[result.fullName, result.businessName, ref, dateStr].filter(Boolean).join('   |   ')}</p>
+        <p style={{ fontSize: 11, color: '#555', marginTop: 4 }}>{[result.fullName, ref, dateStr].filter(Boolean).join('   |   ')}</p>
         <div style={{ marginTop: 14, display: 'flex', alignItems: 'baseline', gap: 10 }}>
           <span style={{ fontSize: 34, fontWeight: 700 }}>{result.overallScore}<span style={{ fontSize: 14, color: '#777', fontWeight: 400 }}>/100</span></span>
           <span className={BAND_TONE[result.classification] ?? ''} style={{ fontSize: 13, fontWeight: 700 }}>{result.classification}</span>
@@ -265,7 +270,6 @@ function ResultStep({ result }: { result: Result }) {
       <div role="status" className="flex flex-col items-start gap-2">
         <CheckCircle2 className="size-8 text-leaf-ink" aria-hidden="true" />
         <h2 className="font-display text-3xl font-bold">Your preliminary result</h2>
-        {result.businessName && <p className="text-muted">{result.businessName}</p>}
       </div>
       <div className="flex flex-col items-start gap-1">
         <span className={`font-display text-6xl font-bold ${BAND_TONE[result.classification] ?? ''}`}>{result.overallScore}<span className="text-2xl text-muted">/100</span></span>
@@ -295,7 +299,7 @@ function ResultStep({ result }: { result: Result }) {
           <Printer className="size-4" aria-hidden="true" />{printState === 'done' ? 'Printed' : 'Print'}
         </button>
       </div>
-      <p className="text-xs text-muted">Each of the three actions above can be used once for this result. Screenshots and other ways of saving what is on screen are outside our control.</p>
+      <p className="text-xs text-muted">You can print or save this result from your browser. Download or print a copy before closing this browser session.</p>
       <div className="border-t border-line pt-6">
         <Link href="/pricing" className="inline-flex min-h-12 w-fit items-center justify-center rounded-full bg-forest px-7 font-semibold text-white no-underline transition duration-200 hover:bg-leaf active:scale-[0.97]">Explore the full Business Health Assessment</Link>
       </div>
@@ -307,6 +311,7 @@ function ResultStep({ result }: { result: Result }) {
 export function FreeAssessmentFlow({ platform = 'SME360' }: { platform?: Platform }) {
   const [start, setStart] = useState<StartResponse | null>(null);
   const [result, setResult] = useState<Result | null>(null);
+  const [applicant, setApplicant] = useState<Applicant | null>(null);
   const storageKey = `${platform.toLowerCase()}_assessment_id`;
 
   // If the browser already holds a completed assessment id for this session (e.g. a refresh right
@@ -319,11 +324,14 @@ export function FreeAssessmentFlow({ platform = 'SME360' }: { platform?: Platfor
     return () => { cancelled = true; };
   }, [storageKey]);
 
-  function onStarted(r: StartResponse) {
+  function onStarted(r: StartResponse, submittedBy?: Applicant) {
     setStart(r);
-    if (r.eligible) { try { sessionStorage.setItem(storageKey, r.id); } catch { /* ignore */ } }
+    if (r.eligible && submittedBy) setApplicant(submittedBy);
   }
-  function onDone(r: Result) { setResult(r); }
+  function onDone(r: Result) {
+    setResult(r);
+    try { sessionStorage.setItem(storageKey, r.id); } catch { /* ignore */ }
+  }
 
   return (
     <Section>
@@ -331,7 +339,8 @@ export function FreeAssessmentFlow({ platform = 'SME360' }: { platform?: Platfor
         {result ? <ResultStep result={result} />
           : !start ? <RegisterStep platform={platform} onStarted={onStarted} />
           : !start.eligible ? <AlreadyUsedCard r={start} />
-          : <QuestionsStep start={start} onDone={onDone} />}
+          : applicant ? <QuestionsStep start={start} applicant={applicant} onDone={onDone} />
+          : <RegisterStep platform={platform} onStarted={onStarted} />}
       </div>
     </Section>
   );
