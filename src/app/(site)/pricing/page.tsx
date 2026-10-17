@@ -50,13 +50,14 @@ export default async function PricingPage() {
       <PageHero eyebrow="Pricing and plans" title="Start with a diagnosis. Add support when it helps." intro="Each plan is a step on the same business health journey. You keep the score and report you have paid for, and you can move up when the diagnosis shows you need more." />
       <Section>
         {!pricing.confirmed && <div role="note" className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-gold bg-[color:var(--warn-soft)] p-4 text-sm text-[color:var(--warn)]"><span><strong>Pricing coming soon.</strong> {pricing.banner}</span><ButtonLink href={pricing.enquiryHref} variant="ghost">{pricing.enquiryLabel}</ButtonLink></div>}
-        {/* auto-fit (not a fixed column count) so an uneven card count - 7 plans doesn't divide evenly
-            into any neat column count - never leaves an empty, reserved-but-unused column of blank
-            space hanging off a short last row. Empty tracks collapse to zero width automatically, and
-            the layout reflows at any viewport without separate sm:/lg: breakpoints to keep in sync. */}
-        <Stagger className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
+        {/* Flex-wrap, not CSS Grid: a short last row (7 plans at 4-per-row leaves 3) needs to be
+            centred, not left-stuck next to empty space. Grid's auto-fit only collapses a column
+            with NOTHING placed in it across the WHOLE grid - since row 1 fills every column, that
+            same column stays reserved-but-blank in a shorter row below it. Flex items have no shared
+            column grid to begin with, so justify-center simply centres whatever is left over. */}
+        <Stagger className="flex flex-wrap justify-center gap-5">
           {planCards.map((c) => (
-            <Item key={c.key}>
+            <Item key={c.key} className="w-full sm:w-64">
               <Card className={`flex h-full flex-col gap-3 ${c.highlighted ? '!border-2 !border-forest' : ''}`}>
                 <h2 className="font-display text-2xl font-bold">{c.name}</h2>
                 <div className="text-leaf-ink">{renderPrice(c)}</div>
