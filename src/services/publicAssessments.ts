@@ -71,9 +71,19 @@ export async function completeFreeAssessment(ctx: Ctx, input: { email: string; f
   if (legacy) return { eligible: false as const, ...ALREADY_USED_MESSAGE };
 
   try {
-    const [row] = await ctx.db.insert(schema.freeAssessmentResults).values({
-      email, fullName: input.fullName.trim(), platform: input.platform, result: input.result
-    }).returning({ id: schema.freeAssessmentResults.id });
+    const row = await ctx.db.transaction(async (tx) => {
+      const [result] = await tx.insert(schema.freeAssessmentResults).values({
+        email, fullName: input.fullName.trim(), platform: input.platform, result: input.result
+      }).returning({ id: schema.freeAssessmentResults.id });
+      // Add the completion to the existing admin inquiry queue. Consent remains false because
+      // acknowledging the privacy notice is not permission for marketing or unsolicited outreach.
+      await tx.insert(schema.inquiries).values({
+        kind: 'assessment', name: input.fullName.trim(), email, consent: false, source: 'free-assessment',
+        publicAssessmentId: result.id, platform: input.platform,
+        overallScore: input.result.overallScore, classification: input.result.classification
+      });
+      return result;
+    });
     return { eligible: true as const, id: row.id, platform: input.platform, fullName: input.fullName.trim(), ...input.result };
   } catch (error) {
     const e = error as { code?: string; constraint?: string };

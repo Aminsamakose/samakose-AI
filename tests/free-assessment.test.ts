@@ -145,12 +145,20 @@ describe('browser-scored free assessment storage and result download', () => {
     expect(stored.platform).toBe('SME360');
     expect(stored.result.overallScore).toBe(100);
     expect(Object.keys(stored)).toEqual(['id', 'email', 'fullName', 'platform', 'result']);
+    const leads = await db().select().from(schema.inquiries).where(eq(schema.inquiries.publicAssessmentId, stored.id));
+    expect(leads).toHaveLength(1);
+    expect(leads[0]).toMatchObject({
+      kind: 'assessment', name: 'Browser Score Test', email: email.toLowerCase(), consent: false,
+      source: 'free-assessment', publicAssessmentId: stored.id, platform: 'SME360',
+      overallScore: 100, classification: 'Strong Foundation'
+    });
 
     const duplicate = await post('/public/assessments/complete', {
       email: email.toUpperCase(), fullName: 'Browser Score Test', platform: 'SME360',
       result: { overallScore: 100, classification: 'Strong Foundation', dimensionScores: [{ dimension: 'Finance', score: 100 }], completedAt: new Date().toISOString() }
     });
     expect((await duplicate.json()).data.eligible).toBe(false);
+    expect(await db().select().from(schema.inquiries).where(eq(schema.inquiries.publicAssessmentId, stored.id))).toHaveLength(1);
   });
 
   it('the download action returns an actual one-page application/pdf', async () => {
