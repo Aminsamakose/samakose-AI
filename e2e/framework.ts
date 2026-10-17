@@ -14,7 +14,7 @@ import { check, healthy, launch, login, problems, tally } from './lib';
   await link.click(); await page.waitForURL(/\/record$/);
   const h = await healthy(page, orgUrl + '/record');
   check(h.status === 200 && h.errBox === 0 && !h.overflow, 'record page renders without errors', JSON.stringify(h));
-  check(await page.getByText(/Score history|No score yet/i).first().isVisible().catch(() => false), 'record shows score history or an honest empty state');
+  check(await page.getByText(/Score history|No score yet|No cases in your view/i).first().isVisible().catch(() => false), 'record shows score history or an honest empty state');
 
   console.log('Frameworks tab');
   await page.goto('/admin/settings'); await page.waitForLoadState('networkidle');

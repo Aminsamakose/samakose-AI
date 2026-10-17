@@ -45,6 +45,7 @@ import { check, launch, login, newContext, problems, tally } from './lib';
   check(sawFocusRing, 'focused controls show a visible focus indicator (first 8 tab stops)');
   await b.close();
   console.log('\nRuntime problems:', problems.length);
+  for (const p of problems.slice(0, 20)) console.log(' -', p.where, '|', p.what);
   const t = tally(); console.log(`\n${t.pass} passed, ${t.fail} failed`);
   process.exit(t.fail || problems.length ? 1 : 0);
 })();

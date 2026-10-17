@@ -66,20 +66,24 @@ const seen = async (page: Page, text: string | RegExp, ms = 15000) => page.getBy
 
   console.log('Administrator matches and assigns');
   const { page: pm } = await login(b, 'admin@demo.samakose.test');
-  const { page: cp } = await login(b, 'consultant@demo.samakose.test');
-  await cp.goto('/cases/new'); await cp.getByLabel('Organisation *').selectOption({ value: orgId });
-  await cp.getByRole('button', { name: 'Open case' }).click(); await cp.waitForURL(/\/cases\/[0-9a-f-]{36}/);
-  const url = cp.url();
-  await pm.goto(url); await pm.waitForLoadState('networkidle');
-  await pm.getByRole('button', { name: 'Choose coaching expert' }).click();
+  // An expert cannot open a case for an organisation created by an admin.
+  // Keep that authorization rule intact and have the administrator open it.
+  await pm.goto('/cases/new'); await pm.getByLabel('Organisation *').selectOption({ value: orgId });
+  await pm.getByRole('button', { name: 'Open case' }).click(); await pm.waitForURL(/\/cases\/[0-9a-f-]{36}/);
+  const url = pm.url();
+  await pm.waitForLoadState('networkidle');
+  await pm.getByRole('button', { name: /^(Choose|Change) coaching expert$/ }).click();
+  const assignmentDialog = pm.locator('dialog[open]');
+  await assignmentDialog.getByText(/Match \d+/).first().waitFor({ timeout: 15000 });
   check(await seen(pm, /Match \d+/), 'ranked matches shown with a score');
   check(!(await pm.getByText('Kwame Applicant').first().isVisible().catch(() => false)), 'unapproved applicant is not offered');
   await pm.locator('dialog[open]').getByText('Why this score').first().click();
   check(await seen(pm, /Fit with the weakest areas/), 'score is explained by factor');
-  await pm.locator('dialog[open] input[type=radio]').first().check();
-  await pm.locator('dialog[open]').getByRole('button', { name: 'Assign' }).click();
+  await assignmentDialog.locator('input[type=radio]').first().check();
+  const changeReason = assignmentDialog.getByLabel('Reason for the change');
+  if (await changeReason.isVisible().catch(() => false)) await changeReason.fill('E2E verification of expert matching');
+  await assignmentDialog.getByRole('button', { name: /^(Assign|Change)$/ }).click();
   check(await seen(pm, 'Coaching expert assigned'), 'coach assigned');
-  await cp.reload(); await cp.waitForLoadState('networkidle');
   await pm.screenshot({ path: 'e2e/shots/network-team.png', fullPage: true });
 
   console.log('Phone width');

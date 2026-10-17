@@ -9,7 +9,9 @@ const seen = (page: Page, t: string | RegExp, ms = 15000) => page.getByText(t).f
   const { page } = await login(b, 'consultant@demo.samakose.test');
   await page.goto('/cases?status=IN%20EXECUTION'); await page.waitForLoadState('networkidle');
   // The oldest in-execution case is the seeded one with indicators and a scored diagnostic; newer ones come from other journeys.
-  const hrefs = await page.locator('tbody tr').evaluateAll((rows) => rows.filter((r) => /IN EXECUTION/.test(r.textContent ?? '')).map((r) => r.querySelector('a')!.getAttribute('href')!));
+  const hrefs = await page.locator('tbody tr').evaluateAll((rows) => rows.filter((r) => /IN EXECUTION/.test(r.textContent ?? '')).map((r) => r.querySelector('a')?.getAttribute('href')).filter((h): h is string => !!h));
+  check(hrefs.length > 0, 'an in-execution case is available for delivery checks');
+  if (!hrefs.length) throw new Error('No in-execution case exists; the lifecycle journey must pass first.');
   await page.goto(hrefs[hrefs.length - 1]); await page.waitForURL(/\/cases\/[0-9a-f-]{36}/);
   const caseUrl = page.url();
   await page.getByRole('tab', { name: 'KPIs' }).click(); await page.waitForTimeout(2500);

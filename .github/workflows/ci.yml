@@ -2,6 +2,7 @@ name: ci
 on: [push, pull_request]
 jobs:
   test:
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -21,3 +22,50 @@ jobs:
       - run: npm test
       - run: npm run build
         env: { DATABASE_URL: "postgres://postgres@localhost:5433/samakose_test" }
+      - name: Install Chromium for browser journeys
+        run: |
+          PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright-core install --with-deps chromium
+          chromium_path="$(find /opt/pw-browsers -type f -name chrome -print -quit)"
+          test -n "$chromium_path"
+          printf 'CHROMIUM=%s\n' "$chromium_path" >> "$GITHUB_ENV"
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+      - name: Create isolated end-to-end database
+        run: |
+          node - <<'NODE'
+          const { Client } = require('pg');
+          (async () => {
+            const client = new Client({ connectionString: 'postgres://postgres@localhost:5433/postgres' });
+            await client.connect();
+            await client.query('CREATE DATABASE samakose_e2e');
+            await client.end();
+          })().catch((error) => { console.error(error); process.exit(1); });
+          NODE
+      - name: Migrate and seed isolated end-to-end database
+        run: npm run db:migrate && npm run db:seed
+        env:
+          DATABASE_URL: postgres://postgres@localhost:5433/samakose_e2e
+          SEED_DEMO: '1'
+      - name: Run browser journey suite against the isolated app
+        run: |
+          set -euo pipefail
+          export DATABASE_URL=postgres://postgres@localhost:5433/samakose_e2e
+          export APP_URL=http://localhost:3100
+          export E2E_BASE=http://localhost:3100
+          export AI_MODE=mock
+          export DISABLE_INPROCESS_JOBS=1
+          npm run dev -- --hostname 127.0.0.1 --port 3100 > /tmp/business-doctor-e2e.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --silent --output /dev/null --fail http://127.0.0.1:3100/login; then break; fi
+            sleep 2
+          done
+          if ! curl --silent --output /dev/null --fail http://127.0.0.1:3100/login; then
+            cat /tmp/business-doctor-e2e.log
+            exit 1
+          fi
+          npm run worker > /tmp/business-doctor-worker.log 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true; kill "$server_pid" 2>/dev/null || true' EXIT
+          npm run test:e2e
