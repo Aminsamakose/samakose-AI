@@ -3,7 +3,7 @@ import { useApi, Badge } from '@/components/ui';
 import { CASE_TRANSITIONS } from '@/domain/logic';
 
 /** All case states in lifecycle order, derived from the transition table (no server import). */
-export const CASE_STATE_ORDER: string[] = [...CASE_TRANSITIONS.map((t) => t.from as string), CASE_TRANSITIONS[CASE_TRANSITIONS.length - 1].to as string];
+export const CASE_STATE_ORDER: string[] = [...new Set([...CASE_TRANSITIONS.map((t) => t.from as string), CASE_TRANSITIONS[CASE_TRANSITIONS.length - 1].to as string])];
 
 export type Me = { user: { id: string; name: string; email: string; role: string; orgId?: string | null }; permissions: Record<string, string[]> };
 

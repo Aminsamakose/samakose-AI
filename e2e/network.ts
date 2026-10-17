@@ -66,11 +66,12 @@ const seen = async (page: Page, text: string | RegExp, ms = 15000) => page.getBy
 
   console.log('Administrator matches and assigns');
   const { page: pm } = await login(b, 'admin@demo.samakose.test');
-  const { page: cp } = await login(b, 'consultant@demo.samakose.test');
-  await cp.goto('/cases/new'); await cp.getByLabel('Organisation *').selectOption({ value: orgId });
-  await cp.getByRole('button', { name: 'Open case' }).click(); await cp.waitForURL(/\/cases\/[0-9a-f-]{36}/);
-  const url = cp.url();
-  await pm.goto(url); await pm.waitForLoadState('networkidle');
+  // An expert cannot open a case for an organisation created by an admin.
+  // Keep that authorization rule intact and have the administrator open it.
+  await pm.goto('/cases/new'); await pm.getByLabel('Organisation *').selectOption({ value: orgId });
+  await pm.getByRole('button', { name: 'Open case' }).click(); await pm.waitForURL(/\/cases\/[0-9a-f-]{36}/);
+  const url = pm.url();
+  await pm.waitForLoadState('networkidle');
   await pm.getByRole('button', { name: 'Choose coaching expert' }).click();
   check(await seen(pm, /Match \d+/), 'ranked matches shown with a score');
   check(!(await pm.getByText('Kwame Applicant').first().isVisible().catch(() => false)), 'unapproved applicant is not offered');
@@ -79,7 +80,6 @@ const seen = async (page: Page, text: string | RegExp, ms = 15000) => page.getBy
   await pm.locator('dialog[open] input[type=radio]').first().check();
   await pm.locator('dialog[open]').getByRole('button', { name: 'Assign' }).click();
   check(await seen(pm, 'Coaching expert assigned'), 'coach assigned');
-  await cp.reload(); await cp.waitForLoadState('networkidle');
   await pm.screenshot({ path: 'e2e/shots/network-team.png', fullPage: true });
 
   console.log('Phone width');

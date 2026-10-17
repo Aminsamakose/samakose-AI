@@ -1,6 +1,10 @@
 /** Runs every browser journey against a running app (E2E_BASE, default http://localhost:3100) seeded with SEED_DEMO=1. */
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import pg from 'pg';
+
+const require = createRequire(import.meta.url);
+const tsxCli = require.resolve('tsx/cli');
 
 /** Each journey signs in several roles. The login limiter is per address, so clear it between journeys on the local dev database. */
 async function resetLoginLimits() {
@@ -15,7 +19,9 @@ let failed = 0;
 for (const s of steps) {
   await resetLoginLimits();
   console.log(`\n=== e2e/${s}.ts ===`);
-  const r = spawnSync('npx', ['tsx', `e2e/${s}.ts`], { stdio: 'inherit' });
+  // Invoke the current Node binary directly so this also works on Windows,
+  // where spawnSync('npx') does not resolve the npx.cmd shim without a shell.
+  const r = spawnSync(process.execPath, [tsxCli, `e2e/${s}.ts`], { stdio: 'inherit' });
   if (r.status !== 0) failed++;
 }
 console.log(failed ? `\n${failed} journey(s) failed` : '\nAll journeys passed');

@@ -2,6 +2,7 @@ name: ci
 on: [push, pull_request]
 jobs:
   test:
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     services:
       postgres:

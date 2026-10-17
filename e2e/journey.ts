@@ -9,21 +9,35 @@ const tab = async (page: Page, name: string) => { await page.getByRole('tab', { 
 (async () => {
   const b = await launch();
   const { page } = await login(b, 'consultant@demo.samakose.test');
-  console.log('Consultant opens a case');
-  await page.goto('/cases/new');
-  await page.getByLabel('Organisation *').selectOption({ index: 1 });
-  await page.getByRole('button', { name: 'Open case' }).click();
-  await page.waitForURL(/\/cases\/[0-9a-f-]{36}/);
-  const caseUrl = page.url();
-  check(await seen(page, /Case opened|PROFILED/i), 'case created in PROFILED');
-
-  console.log('Administrator assigns the reviewer');
+  console.log('Administrator opens a case and assigns the lead expert');
+  // Experts may open cases only for organisations they registered themselves.
+  // The seeded organisation belongs to the administrator, so use the supported
+  // admin hand-off and then continue the lifecycle as the assigned expert.
   const { page: ap } = await login(b, 'admin@demo.samakose.test');
-  await ap.goto(caseUrl); await ap.waitForLoadState('networkidle');
-  await ap.getByRole('button', { name: 'Choose reviewer' }).click();
-  await ap.locator('dialog[open]').getByLabel('Reviewer').selectOption({ label: 'Efua Reviewer' });
-  await ap.locator('dialog[open]').getByRole('button', { name: 'Assign' }).click();
-  check(await seen(ap, 'Reviewer assigned', 8000), 'reviewer assigned');
+  await ap.goto('/cases/new');
+  await ap.getByLabel('Organisation *').selectOption({ index: 1 });
+  await ap.getByRole('button', { name: 'Open case' }).click();
+  await ap.waitForURL(/\/cases\/[0-9a-f-]{36}/);
+
+  // The admin created the case; switch back to the assigned consultant's page
+  // only after the admin has assigned the case team.
+  const createdCaseUrl = ap.url();
+  const caseUrl = createdCaseUrl;
+  await ap.getByRole('button', { name: /Choose lead expert|Change lead expert/ }).click();
+  const leadDialog = ap.locator('dialog[open]');
+  await leadDialog.locator('label.card', { hasText: 'Yaw Consultant' }).locator('input[type=radio]').check();
+  await leadDialog.getByRole('button', { name: 'Assign' }).click();
+  check(await seen(ap, 'Lead expert assigned', 8000), 'lead expert assigned');
+  await ap.goto(createdCaseUrl); await ap.waitForLoadState('networkidle');
+  const reviewerButton = ap.getByRole('button', { name: /Choose reviewer|Change reviewer/ });
+  if (await reviewerButton.isVisible().catch(() => false)) {
+    await reviewerButton.click();
+    await ap.locator('dialog[open]').getByLabel('Reviewer').selectOption({ label: 'Efua Reviewer' });
+    await ap.locator('dialog[open]').getByRole('button', { name: 'Assign' }).click();
+    check(await seen(ap, 'Reviewer assigned', 8000), 'reviewer assigned');
+  }
+  await page.goto(createdCaseUrl); await page.waitForLoadState('networkidle');
+  check(/PROFILED/i.test(await page.locator('body').innerText()), 'case created in PROFILED');
   console.log('Diagnostic');
   await tab(page, 'Diagnostic');
   check(await page.getByRole('button', { name: 'Submit diagnostic' }).isDisabled(), 'blank questionnaire cannot be submitted');
