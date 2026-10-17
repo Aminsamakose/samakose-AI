@@ -81,16 +81,16 @@ export function buildPricing(s: Rec, planRows: PublishablePlanRow[]): PricingVie
     // whose price isn't public yet or that needs a custom agreement.
     const buyable = priceStatus === 'confirmed';
     const { ctaLabel, ctaHref } = priceStatus === 'by_agreement'
-      ? { ctaLabel: 'Ask about programme pricing', ctaHref: '/contact' }
+      ? { ctaLabel: 'Ask for Pricing', ctaHref: '/contact' }
       : priceStatus === 'pending'
         ? { ctaLabel: 'Enquire about this plan', ctaHref: '/contact' }
         : buyable
           ? { ctaLabel: 'Get started', ctaHref: REGISTER_HREF }
-          : { ctaLabel: 'Start your health check', ctaHref: REGISTER_HREF };
+          : { ctaLabel: 'Free', ctaHref: REGISTER_HREF };
     return {
       id: p.id, name: p.name, audience: p.audience ?? '', features: cascaded.get(p.id) ?? entitlementLines(p.entitlements),
       price, priceStatus, reference: null, period,
-      ctaLabel, ctaHref, buyable, highlighted: false, serviceTier: p.serviceTier, durationDays: p.durationDays
+      ctaLabel, ctaHref, buyable, highlighted: p.serviceTier === 'diagnostic', serviceTier: p.serviceTier, durationDays: p.durationDays
     };
   });
   // Page-level "confirmed" now means "at least one real price is actually showing" - it drives whether
