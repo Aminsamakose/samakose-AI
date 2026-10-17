@@ -1240,6 +1240,7 @@ export const freeAssessmentResults = pgTable('free_assessment_results', {
   email: text('email').notNull(),
   fullName: text('full_name').notNull(),
   platform: text('platform').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   result: jsonb('result').notNull().$type<{
     overallScore: number;
     classification: string;
