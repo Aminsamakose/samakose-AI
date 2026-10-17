@@ -13,6 +13,14 @@ const run = <T>(f: (ctx: ReturnType<typeof systemCtx>) => Promise<T>) => tx((t) 
 
 const post = (path: string, body: unknown = {}) => dispatch(new Request('http://localhost/api/v1' + path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '10.44.44.44' }, body: JSON.stringify(body) }));
 
+// A result consistent with the real, published SME360 framework and with the classification bands --
+// the server now rejects a payload that isn't (audit Section B), so test fixtures must be genuine.
+const SME360_DIMENSIONS = ['Strategy and Leadership', 'Financial Health', 'Marketing and Sales', 'Operations and Productivity', 'Human Resources and Organisation', 'Risk, Resilience and Growth'];
+const sme360Result = (score: number, completedAt = new Date().toISOString()) => ({
+  overallScore: score, classification: freeAssessmentClassification(score, DEFAULT_RULES),
+  dimensionScores: SME360_DIMENSIONS.map((dimension) => ({ dimension, score })), completedAt
+});
+
 // SME360_QUESTIONS isn't exported (kept module-private in frameworks.ts); re-derive the 25-question
 // shape locally from the answer-options map, which IS exported, purely so these tests don't need DB access.
 const questions = Object.keys(SME360_ANSWER_OPTIONS).map((code, i) => ({ code, dimension: `D${Math.floor(i / 4)}` }));
@@ -136,7 +144,7 @@ describe('browser-scored free assessment storage and result download', () => {
     const email = `browser-score-${Date.now()}@test.samakose.test`;
     const complete = await post('/public/assessments/complete', {
       email, fullName: 'Browser Score Test', platform: 'SME360',
-      result: { overallScore: 100, classification: 'Strong Foundation', dimensionScores: [{ dimension: 'Finance', score: 100 }], completedAt: new Date().toISOString() },
+      result: sme360Result(100),
       answers: { SHOULD_NOT_BE_STORED: 'A' }, businessName: 'Not allowed', marketingConsent: true
     });
     expect(complete.status).toBe(200);
@@ -159,7 +167,7 @@ describe('browser-scored free assessment storage and result download', () => {
 
     const duplicate = await post('/public/assessments/complete', {
       email: email.toUpperCase(), fullName: 'Browser Score Test', platform: 'SME360',
-      result: { overallScore: 100, classification: 'Strong Foundation', dimensionScores: [{ dimension: 'Finance', score: 100 }], completedAt: new Date().toISOString() }
+      result: sme360Result(100)
     });
     expect((await duplicate.json()).data.eligible).toBe(false);
     expect(await db().select().from(schema.inquiries).where(eq(schema.inquiries.publicAssessmentId, stored.id))).toHaveLength(1);
@@ -169,7 +177,7 @@ describe('browser-scored free assessment storage and result download', () => {
     const email = `pdf-download-${Date.now()}@test.samakose.test`;
     const complete = await post('/public/assessments/complete', {
       email, fullName: 'PDF Download Test', platform: 'SME360',
-      result: { overallScore: 100, classification: 'Strong Foundation', dimensionScores: [{ dimension: 'Finance', score: 100 }], completedAt: new Date().toISOString() }
+      result: sme360Result(100)
     });
     const { id } = (await complete.json()).data;
     const res = await post(`/public/assessments/${id}/actions/download`, {});
@@ -214,7 +222,7 @@ describe('free assessment retention (owner-approved schedule: anonymise, never g
     const email = `old-completed-${Date.now()}@test.samakose.test`;
     const complete = await post('/public/assessments/complete', {
       email, fullName: 'Old Completion', platform: 'SME360',
-      result: { overallScore: 88, classification: 'Strong Foundation', dimensionScores: [{ dimension: 'Finance', score: 88 }], completedAt: new Date().toISOString() }
+      result: sme360Result(88)
     });
     const { id } = (await complete.json()).data;
     await db().update(schema.freeAssessmentResults).set({ createdAt: new Date(Date.now() - 600 * 86400000) }).where(eq(schema.freeAssessmentResults.id, id));
@@ -234,5 +242,55 @@ describe('free assessment retention (owner-approved schedule: anonymise, never g
     // Running it again is a no-op -- it must not re-touch an already-anonymised row.
     const second = await run((ctx) => purgeFreeAssessmentPII(ctx));
     expect(second.anonymisedResults).toBe(0);
+  });
+});
+
+describe('free assessment result consistency (audit Section B: cannot prove the raw answers, can reject an inconsistent forgery)', () => {
+  const base = () => sme360Result(90);
+
+  it('rejects a classification that does not match the band for the submitted score', async () => {
+    const res = await post('/public/assessments/complete', {
+      email: `forge-band-${Date.now()}@test.samakose.test`, fullName: 'Forge Test', platform: 'SME360',
+      result: { ...base(), overallScore: 10, classification: 'Strong Foundation' } // 10 is Critical Attention, not Strong Foundation
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.details).toHaveProperty(['result.classification']);
+  });
+
+  it('rejects a dimension name that does not belong to the platform\'s published question set', async () => {
+    const r = base();
+    const res = await post('/public/assessments/complete', {
+      email: `forge-dim-${Date.now()}@test.samakose.test`, fullName: 'Forge Test', platform: 'SME360',
+      result: { ...r, dimensionScores: [...r.dimensionScores.slice(1), { dimension: 'Made Up Dimension', score: 90 }] }
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.details).toHaveProperty(['result.dimensionScores']);
+  });
+
+  it('rejects a dimension count that does not match the platform\'s actual dimension count', async () => {
+    const r = base();
+    const res = await post('/public/assessments/complete', {
+      email: `forge-count-${Date.now()}@test.samakose.test`, fullName: 'Forge Test', platform: 'SME360',
+      result: { ...r, dimensionScores: r.dimensionScores.slice(0, 2) }
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.details).toHaveProperty(['result.dimensionScores']);
+  });
+
+  it('rejects an overall score far from the average of the submitted dimension scores', async () => {
+    const r = base();
+    const res = await post('/public/assessments/complete', {
+      email: `forge-avg-${Date.now()}@test.samakose.test`, fullName: 'Forge Test', platform: 'SME360',
+      result: { ...r, overallScore: 95, classification: 'Strong Foundation', dimensionScores: r.dimensionScores.map((d) => ({ ...d, score: 10 })) }
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.details).toHaveProperty(['result.overallScore']);
+  });
+
+  it('accepts a genuinely self-consistent result (the limit of what the server can check without the raw answers)', async () => {
+    const res = await post('/public/assessments/complete', {
+      email: `genuine-${Date.now()}@test.samakose.test`, fullName: 'Genuine Test', platform: 'SME360', result: base()
+    });
+    expect(res.status).toBe(200);
   });
 });
