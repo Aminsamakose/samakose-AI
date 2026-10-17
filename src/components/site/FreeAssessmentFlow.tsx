@@ -128,7 +128,13 @@ function QuestionsStep({ start, applicant, onDone }: { start: StartOk; applicant
       questionCode: q.code, value: ({ A: 4, B: 3, C: 2, D: 1 } as const)[answers[q.code]]
     }));
     const scored = scoreFreeAssessment(scoreAnswers, start.questions, { ...DEFAULT_RULES, ...start.scoringRules });
-    const result = { ...scored, completedAt: new Date().toISOString() };
+    // Map the scorer's domain names to the completion API's result contract.
+    const result = {
+      overallScore: scored.overall,
+      classification: scored.classification,
+      dimensionScores: scored.dimensions,
+      completedAt: new Date().toISOString()
+    };
     const r = await post<Result | AlreadyUsed>('/public/assessments/complete', { ...applicant, platform: start.platform, result });
     setBusy(false);
     if (!r.ok) {
