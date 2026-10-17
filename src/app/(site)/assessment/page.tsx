@@ -12,12 +12,12 @@ const PLATFORMS = [
     dims: 'Strategy and Leadership, Financial Health, Marketing and Sales, Operations and Productivity, Human Resources and Organisation, Risk Resilience and Growth.'
   },
   {
-    code: 'agrifood360', name: 'AgriFood360', available: true, tone: 'bg-gold text-ink',
+    code: 'agrifood360', name: 'AgriFood360', available: false, tone: 'bg-gold text-ink',
     who: 'Smallholder and commercial farmers, agribusinesses, input suppliers, aggregators, processors and distributors.',
     dims: 'Production and Agronomic Practices, Climate and Seasonal Resilience, Input Access and Supply Reliability, Storage and Post-Harvest Handling, Market Access and Value Chain Position, Business and Financial Management.'
   },
   {
-    code: 'eso360', name: 'ESO360', available: true, tone: 'bg-clay text-white',
+    code: 'eso360', name: 'ESO360', available: false, tone: 'bg-clay text-white',
     who: 'Enterprise support organisations, accelerators, incubators and enterprise mentorship programmes.',
     dims: 'Programme Design and Curriculum, Cohort Recruitment and Selection, Mentorship and Delivery Capacity, Monitoring and Impact Tracking, Funding and Sustainability, Organisational Capacity and Governance.'
   }
