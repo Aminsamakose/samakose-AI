@@ -3,7 +3,7 @@ import { eq, inArray } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { KIND_BY_ID, validateData, phoneHref, parseMenu, DEFAULT_MENU, type HomeSection, DEFAULT_SECTIONS } from '@/domain/content-kinds';
 import { SITE } from '@/components/site/config';
-import { entitlementLines } from '@/domain/plan-catalog';
+import { entitlementLines, PLAN_SERVICE_TIERS } from '@/domain/plan-catalog';
 import { REGISTER_HREF } from '@/components/site/config';
 
 type Rec = Record<string, any>;
@@ -43,9 +43,27 @@ export type PublishablePlanRow = {
  * approvalRef) is an additional governance gate: even a plan marked priceConfirmed will not show its
  * figure until Finance has also switched on public display at the site level.
  */
+const TIER_RANK: Record<string, number> = Object.fromEntries(PLAN_SERVICE_TIERS.map((t, i) => [t.value, i]));
+// Diagnostic -> Transform -> Growth is a ladder: each step up keeps everything the step below had,
+// plus whatever is new. Discovery (the free entry point) and Programme (custom, institutional) stand
+// on their own and are never folded into another card's list.
+const CASCADE_TIERS = new Set(['diagnostic', 'transform', 'growth']);
+function cascadedFeatures(planRows: PublishablePlanRow[]): Map<string, string[]> {
+  const chain = planRows
+    .filter((p) => CASCADE_TIERS.has(p.serviceTier ?? ''))
+    .sort((a, b) => (TIER_RANK[a.serviceTier ?? ''] ?? 99) * 100000 + (a.durationDays ?? 0) - ((TIER_RANK[b.serviceTier ?? ''] ?? 99) * 100000 + (b.durationDays ?? 0)));
+  const byId = new Map<string, string[]>();
+  let running: string[] = [];
+  for (const p of chain) {
+    for (const f of entitlementLines(p.entitlements)) if (!running.includes(f)) running.push(f);
+    byId.set(p.id, [...running]);
+  }
+  return byId;
+}
 export function buildPricing(s: Rec, planRows: PublishablePlanRow[]): PricingView {
   const cur = s.currency === 'USD' ? 'USD' : 'GHS';
   const siteApproved = s.pricesConfirmed === true && String(s.approvalRef ?? '').trim().length >= 5;
+  const cascaded = cascadedFeatures(planRows);
   const plans: PricingCard[] = planRows.map((p) => {
     const priceStatus: PricingCard['priceStatus'] = p.pricingModel === 'free' ? 'free' : p.pricingModel === 'custom' ? 'by_agreement' : (siteApproved && p.priceConfirmed) ? 'confirmed' : 'pending';
     const price = priceStatus === 'free' ? 'Free' : priceStatus === 'by_agreement' ? 'Priced by agreement' : priceStatus === 'confirmed' ? money(p.priceGhs, cur) : null;
@@ -67,10 +85,10 @@ export function buildPricing(s: Rec, planRows: PublishablePlanRow[]): PricingVie
       : priceStatus === 'pending'
         ? { ctaLabel: 'Enquire about this plan', ctaHref: '/contact' }
         : buyable
-          ? { ctaLabel: `Get started - ${price}`, ctaHref: REGISTER_HREF }
+          ? { ctaLabel: 'Get started', ctaHref: REGISTER_HREF }
           : { ctaLabel: 'Start your health check', ctaHref: REGISTER_HREF };
     return {
-      id: p.id, name: p.name, audience: p.audience ?? '', features: entitlementLines(p.entitlements),
+      id: p.id, name: p.name, audience: p.audience ?? '', features: cascaded.get(p.id) ?? entitlementLines(p.entitlements),
       price, priceStatus, reference: null, period,
       ctaLabel, ctaHref, buyable, highlighted: false, serviceTier: p.serviceTier, durationDays: p.durationDays
     };
