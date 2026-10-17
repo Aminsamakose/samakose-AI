@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { PageHero, Section, Card, ButtonLink } from '@/components/site/ui';
 import { Stagger, Item } from '@/components/site/motion';
-import { REGISTER_HREF } from '@/components/site/config';
 import { getSite, type PricingCard } from '@/lib/site-content';
 import { PLAN_SERVICE_TIERS } from '@/domain/plan-catalog';
 import { PlanBuyButton } from '@/components/site/PlanBuyButton';
@@ -68,10 +67,6 @@ export default async function PricingPage() {
             </Item>
           ))}
         </Stagger>
-        <div className="mt-10 flex flex-wrap gap-3">
-          <ButtonLink href={REGISTER_HREF}>Start your health check</ButtonLink>
-          <ButtonLink href="/contact" variant="ghost">Ask about programme pricing</ButtonLink>
-        </div>
       </Section>
     </>
   );
