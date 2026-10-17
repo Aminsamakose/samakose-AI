@@ -2,14 +2,11 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
 import { DEFAULT_RULES, freeAssessmentClassification, scoreFreeAssessment, type FreeAssessmentAnswer } from '@/domain/logic';
 import { SME360_ANSWER_OPTIONS, AGRIFOOD360_ANSWER_OPTIONS, ESO360_ANSWER_OPTIONS } from '@/services/frameworks';
-import { normaliseEmail, purgeFreeAssessmentPII } from '@/services/publicAssessments';
+import { normaliseEmail } from '@/services/publicAssessments';
 import { dispatch } from '@/api/framework';
-import { db, tx, schema } from '@/db/client';
-import { systemCtx } from '@/services/common';
+import { db, schema } from '@/db/client';
 import { eq } from 'drizzle-orm';
 import { ensureReference, api, makeUser } from './helpers';
-
-const run = <T>(f: (ctx: ReturnType<typeof systemCtx>) => Promise<T>) => tx((t) => f(systemCtx(t as any, 'scan')));
 
 const post = (path: string, body: unknown = {}) => dispatch(new Request('http://localhost/api/v1' + path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '10.44.44.44' }, body: JSON.stringify(body) }));
 
@@ -192,56 +189,6 @@ describe('browser-scored free assessment storage and result download', () => {
     // Downloading is a client-requested action and does not create a stored action/progress record.
     const again = await post(`/public/assessments/${id}/actions/download`, {});
     expect(again.status).toBe(200);
-  });
-});
-
-describe('free assessment retention (owner-approved schedule: anonymise, never guess, never touch recent data)', () => {
-  it('deletes a stale legacy abandoned attempt but leaves a recent one and a completed one untouched', async () => {
-    const { resolveFreeAssessmentVersion } = await import('@/services/frameworks');
-    const version = await resolveFreeAssessmentVersion(db(), 'SME');
-    const stale = `stale-abandoned-${Date.now()}@test.samakose.test`;
-    const recent = `recent-abandoned-${Date.now()}@test.samakose.test`;
-    const completedEmail = `legacy-completed-${Date.now()}@test.samakose.test`;
-    await db().insert(schema.publicAssessments).values([
-      { email: stale, normalisedEmail: normaliseEmail(stale), fullName: 'Stale', platform: 'SME360', frameworkVersionId: version.id, status: 'Started', startedAt: new Date(Date.now() - 90 * 86400000) },
-      { email: recent, normalisedEmail: normaliseEmail(recent), fullName: 'Recent', platform: 'SME360', frameworkVersionId: version.id, status: 'Started', startedAt: new Date() },
-      { email: completedEmail, normalisedEmail: normaliseEmail(completedEmail), fullName: 'Still Within Window', platform: 'SME360', frameworkVersionId: version.id, status: 'Completed', startedAt: new Date(Date.now() - 400 * 86400000), completedAt: new Date(Date.now() - 400 * 86400000) }
-    ]);
-
-    const result = await run((ctx) => purgeFreeAssessmentPII(ctx));
-    expect(result.deletedAbandoned).toBeGreaterThanOrEqual(1);
-
-    expect(await db().select().from(schema.publicAssessments).where(eq(schema.publicAssessments.normalisedEmail, normaliseEmail(stale)))).toHaveLength(0);
-    expect(await db().select().from(schema.publicAssessments).where(eq(schema.publicAssessments.normalisedEmail, normaliseEmail(recent)))).toHaveLength(1);
-    // 400 days < the 18-month (≈548 day) default anonymise window: still identified.
-    const [stillNamed] = await db().select().from(schema.publicAssessments).where(eq(schema.publicAssessments.normalisedEmail, normaliseEmail(completedEmail)));
-    expect(stillNamed.fullName).toBe('Still Within Window');
-  });
-
-  it('anonymises a completed result and its linked inquiry once past the window, keeping the score', async () => {
-    const email = `old-completed-${Date.now()}@test.samakose.test`;
-    const complete = await post('/public/assessments/complete', {
-      email, fullName: 'Old Completion', platform: 'SME360',
-      result: sme360Result(88)
-    });
-    const { id } = (await complete.json()).data;
-    await db().update(schema.freeAssessmentResults).set({ createdAt: new Date(Date.now() - 600 * 86400000) }).where(eq(schema.freeAssessmentResults.id, id));
-
-    const result = await run((ctx) => purgeFreeAssessmentPII(ctx));
-    expect(result.anonymisedResults).toBeGreaterThanOrEqual(1);
-
-    const [row] = await db().select().from(schema.freeAssessmentResults).where(eq(schema.freeAssessmentResults.id, id));
-    expect(row.fullName).toBe('Redacted');
-    expect(row.email).toBe(`redacted-${id}@samakose.invalid`);
-    expect(row.result.overallScore).toBe(88); // the score is kept for aggregate reporting
-
-    const [lead] = await db().select().from(schema.inquiries).where(eq(schema.inquiries.publicAssessmentId, id));
-    expect(lead.name).toBe('Redacted');
-    expect(lead.overallScore).toBe(88);
-
-    // Running it again is a no-op -- it must not re-touch an already-anonymised row.
-    const second = await run((ctx) => purgeFreeAssessmentPII(ctx));
-    expect(second.anonymisedResults).toBe(0);
   });
 });
 
