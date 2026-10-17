@@ -273,6 +273,9 @@ registerJob('diagnostic_reminder', async () => tx(async (t) => (await import('@/
 /** Messages on a graduated case are deleted after the retention period. */
 registerJob('message_retention', async () => tx(async (t) => (await import('@/services/messages')).purgeExpired(systemCtx(t, 'scan'))));
 
+/** Free-assessment retention: delete stale legacy abandoned attempts, anonymise completed records past the window. */
+registerJob('free_assessment_retention', async () => tx(async (t) => (await import('@/services/publicAssessments')).purgeFreeAssessmentPII(systemCtx(t, 'scan'))));
+
 registerJob('kobo_pull', async () => koboPull());
 
 /** Website items whose scheduled time has passed go live, and the public pages refresh. */
