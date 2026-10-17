@@ -60,10 +60,47 @@ export async function getFreeAssessmentQuestions(ctx: Ctx, platform: FreeAssessm
   };
 }
 
+/**
+ * Low-impact forgery resistance (audit Section B). The server never sees the raw per-question
+ * answers -- that is the deliberate, approved privacy design, and this does not weaken it -- so it
+ * cannot prove a submitted result was honestly computed from real answers. What it CAN cheaply catch
+ * is an internally-inconsistent or framework-mismatched payload: a classification that does not match
+ * the band the overall score actually falls in, dimension names that do not belong to the platform's
+ * published question set, a dimension count that does not match it, or an overall score far from the
+ * average of the submitted dimension scores. None of this is cryptographic proof; it only raises the
+ * bar from "type any number" to "the forged number must at least be self-consistent with the published
+ * framework". The result stays explicitly preliminary either way (see the UI disclaimer) and must never
+ * drive eligibility, finance, certification or other high-stakes decisions on its own.
+ */
+async function assertResultIsConsistent(ctx: Ctx, platform: FreeAssessmentPlatform, result: FreeAssessmentResult) {
+  const rules = await loadRules(ctx.db);
+  const expectedClassification = (await import('@/domain/logic')).freeAssessmentClassification(result.overallScore, rules);
+  if (expectedClassification !== result.classification) {
+    throw fieldError({ 'result.classification': `Does not match the band for a score of ${result.overallScore}` });
+  }
+
+  const version = await resolveFreeAssessmentVersion(ctx.db, PLATFORM_ORG_TYPE[platform]);
+  const validDimensions = new Set(questionsOf(version).map((q) => q.dimension));
+  const submittedDimensions = result.dimensionScores.map((d) => d.dimension);
+  if (new Set(submittedDimensions).size !== submittedDimensions.length) throw fieldError({ 'result.dimensionScores': 'Duplicate dimension' });
+  for (const d of submittedDimensions) {
+    if (!validDimensions.has(d)) throw fieldError({ 'result.dimensionScores': `Unknown dimension for ${platform}: ${d}` });
+  }
+  if (submittedDimensions.length !== validDimensions.size) {
+    throw fieldError({ 'result.dimensionScores': `Expected ${validDimensions.size} dimensions for ${platform}, got ${submittedDimensions.length}` });
+  }
+
+  const avg = result.dimensionScores.reduce((s, d) => s + d.score, 0) / result.dimensionScores.length;
+  if (Math.abs(result.overallScore - avg) > 15) {
+    throw fieldError({ 'result.overallScore': 'Does not match the submitted dimension scores' });
+  }
+}
+
 export async function completeFreeAssessment(ctx: Ctx, input: { email: string; fullName: string; platform: FreeAssessmentPlatform; result: FreeAssessmentResult }) {
   if (!FREE_ASSESSMENT_PLATFORMS.includes(input.platform)) throw fieldError({ platform: 'Unknown platform' });
   const email = normaliseEmail(input.email);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw fieldError({ email: 'Enter a valid email address' });
+  await assertResultIsConsistent(ctx, input.platform, input.result);
   const [existing] = await ctx.db.select({ id: schema.freeAssessmentResults.id }).from(schema.freeAssessmentResults)
     .where(sql`lower(btrim(${schema.freeAssessmentResults.email})) = ${email} and ${schema.freeAssessmentResults.platform} = ${input.platform}`).limit(1);
   if (existing) return { eligible: false as const, ...ALREADY_USED_MESSAGE };
