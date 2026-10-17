@@ -40,7 +40,7 @@ export function ScorePanel({ score }: { score: { overall: number; maturity: stri
 export function ActionsPanel({ caseId }: { caseId: string }) {
   const st = useApi<{ items: any[] }>(`/actions?caseId=${caseId}&pageSize=100&sort=due&dir=asc`);
   return <Async state={st}>{(d) => d.items.length === 0 ? <Empty title="No actions yet" hint="Your adviser will add actions after your prescription is approved." /> :
-    <div className="table-wrap"><table><caption className="sr">Actions for your business</caption>
+    <div className="table-wrap" tabIndex={0}><table><caption className="sr">Actions for your business</caption>
       <thead><tr><th>What to do</th><th>Who</th><th>Due</th><th>Status</th></tr></thead>
       <tbody>{d.items.map((a) => <tr key={a.id}>
         <td>{a.text}{a.evidenceNote && <span className="small muted" style={{ display: 'block' }}>Note: {a.evidenceNote}</span>}</td>
@@ -67,7 +67,7 @@ export function InvoicesPanel() {
     } catch (e) { toast(e instanceof Error && e.message === 'missing' ? 'The payment page could not be opened. Please try again.' : errText(e), 'bad'); setBusy(null); }
   };
   return <Async state={st}>{(d) => d.items.length === 0 ? <Empty title="No invoices" hint="Invoices from Samakose appear here." /> :
-    <div className="table-wrap"><table><caption className="sr">Your invoices</caption>
+    <div className="table-wrap" tabIndex={0}><table><caption className="sr">Your invoices</caption>
       <thead><tr><th>Invoice</th><th className="r">Amount</th><th>Due</th><th>Status</th><th><span className="sr">Pay</span></th></tr></thead>
       <tbody>{d.items.map((i) => <tr key={i.id}><td className="mono">{i.code}</td><td className="r num">{ghs(i.amountGhs)}</td><td>{dateFmt(i.dueDate)}</td><td><Badge>{i.status}</Badge></td>
         <td>{['Sent', 'Overdue'].includes(i.status) && <Button size="sm" variant="primary" loading={busy === i.id} aria-label={`Pay invoice ${i.code}, ${ghs(i.amountGhs)}`} onClick={() => pay(i.id)}>Pay now</Button>}</td></tr>)}</tbody></table></div>}</Async>;
@@ -98,7 +98,7 @@ export function KpiPanel({ caseId }: { caseId: string }) {
       <div className="tile"><span className="l">Latest</span><span className="v" style={{ fontSize: '1.2rem' }}>{k.latest ? k.latest.value : '-'}</span><span className="small muted">{k.latest ? dateFmt(k.latest.date) : 'No reading yet'}</span></div>
       <div className="tile"><span className="l">Target</span><span className="v" style={{ fontSize: '1.2rem' }}>{k.target ?? '-'}</span><span className="small muted">{k.progress === null ? 'Progress shown once baseline, target and a reading exist' : `${Math.round(k.progress * 100)}% of the way`}</span></div>
     </div>
-    {k.readings.length > 0 && <details className="small muted"><summary>Earlier readings ({k.readings.length})</summary><div className="table-wrap"><table><thead><tr><th>Date</th><th className="r">Value</th><th>Source</th></tr></thead><tbody>{[...k.readings].reverse().map((r: any) => <tr key={r.id}><td>{dateFmt(r.date)}</td><td className="r num">{r.value}</td><td>{r.sourceClass}</td></tr>)}</tbody></table></div></details>}
+    {k.readings.length > 0 && <details className="small muted"><summary>Earlier readings ({k.readings.length})</summary><div className="table-wrap" tabIndex={0}><table><thead><tr><th>Date</th><th className="r">Value</th><th>Source</th></tr></thead><tbody>{[...k.readings].reverse().map((r: any) => <tr key={r.id}><td>{dateFmt(r.date)}</td><td className="r num">{r.value}</td><td>{r.sourceClass}</td></tr>)}</tbody></table></div></details>}
     <ReadingForm kpi={k} onDone={st.reload} />
   </section>)}</div>}</Async>;
 }
@@ -130,7 +130,7 @@ export function EvidencePanel({ caseId }: { caseId: string }) {
       <div className="form-actions"><Button type="submit" variant="primary" loading={f.busy}>Add evidence</Button></div>
     </form>
     <h3>Evidence you have shared</h3>
-    <Async state={ev} empty={(d) => d.length === 0}>{(d) => <div className="table-wrap"><table><caption className="sr">Evidence shared</caption><thead><tr><th>Description</th><th>Status</th><th>Added</th></tr></thead>
+    <Async state={ev} empty={(d) => d.length === 0}>{(d) => <div className="table-wrap" tabIndex={0}><table><caption className="sr">Evidence shared</caption><thead><tr><th>Description</th><th>Status</th><th>Added</th></tr></thead>
       <tbody>{d.map((e) => <tr key={e.id}><td>{e.description}{e.link && <span className="small" style={{ display: 'block' }}><a href={e.link} target="_blank" rel="noopener noreferrer">Open link</a></span>}{e.documentId && <span className="small" style={{ display: 'block' }}><a href={`/api/v1/documents/${e.documentId}/download`}>Download file</a></span>}</td><td><Badge>{e.class}</Badge></td><td>{dateFmt(e.createdAt)}</td></tr>)}</tbody></table></div>}</Async>
     <h3>Documents</h3>
     <Async state={docs} empty={(d) => d.length === 0}>{(d) => <ul className="timeline">{d.map((x) => <li key={x.id}><div><a href={`/api/v1/documents/${x.id}/download`}>{x.filename}</a><div className="small muted">{(x.size / 1024).toFixed(0)} KB, added {dateTime(x.createdAt)}</div></div></li>)}</ul>}</Async>

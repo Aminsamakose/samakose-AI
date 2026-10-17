@@ -29,9 +29,10 @@ const tab = async (page: Page, name: string) => { await page.getByRole('tab', { 
   await leadDialog.getByRole('button', { name: 'Assign' }).click();
   check(await seen(ap, 'Lead expert assigned', 8000), 'lead expert assigned');
   await ap.goto(createdCaseUrl); await ap.waitForLoadState('networkidle');
-  const reviewerButton = ap.getByRole('button', { name: /Choose reviewer|Change reviewer/ });
-  if (await reviewerButton.isVisible().catch(() => false)) {
-    await reviewerButton.click();
+  const chooseReviewer = ap.getByRole('button', { name: 'Choose reviewer', exact: true });
+  // Case creation may already have selected an eligible reviewer. Preserve that assignment.
+  if (await chooseReviewer.isVisible().catch(() => false)) {
+    await chooseReviewer.click();
     await ap.locator('dialog[open]').getByLabel('Reviewer').selectOption({ label: 'Efua Reviewer' });
     await ap.locator('dialog[open]').getByRole('button', { name: 'Assign' }).click();
     check(await seen(ap, 'Reviewer assigned', 8000), 'reviewer assigned');

@@ -24,8 +24,10 @@ import { check, launch, login, problems, tally } from './lib';
   await op.getByRole('button', { name: /Pay online|Pay now/i }).first().click();
   await op.waitForURL(/\/pay\/mock\//, { timeout: 15000 }).catch(() => {});
   check(/\/pay\/mock\//.test(op.url()), 'redirected to the test checkout', op.url());
-  check(await op.getByRole('heading', { name: 'Test payment page' }).isVisible()
-    && await op.getByText(/This is a TEST payment page/).isVisible(), 'checkout is clearly labelled as a test');
+  const testHeading = op.getByRole('heading', { name: 'Test payment page' });
+  await testHeading.waitFor({ timeout: 10000 });
+  const testNotice = await op.getByRole('note').innerText();
+  check(await testHeading.isVisible() && /This is a TEST payment page/.test(testNotice), 'checkout is clearly labelled as a test', testNotice);
   await op.getByRole('button', { name: /Complete test payment/i }).click();
   await op.waitForURL(/\/pay\/return/, { timeout: 15000 });
   check(await op.getByText(/success|paid|received|thank/i).first().waitFor({ timeout: 15000 }).then(() => true).catch(() => false), 'return page confirms payment');
