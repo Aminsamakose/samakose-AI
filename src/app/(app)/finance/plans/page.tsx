@@ -1,5 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { api, ghs } from '@/lib/client/api';
 import { Async, Badge, Button, Card, ConfirmButton, Empty, Modal, PageHead, useApi, useToast } from '@/components/ui';
 import { useMe, useTitle } from '@/components/finance/common';
@@ -37,9 +38,13 @@ export default function PlansPage() {
   useTitle('Plans');
   const me = useMe(); const toast = useToast();
   const st = useApi<Plan[]>('/plans');
+  const pricingStatus = useApi<{ approved: boolean; approvalRef: string | null }>('/plans/pricing-status');
   const [editing, setEditing] = useState<Plan | 'new' | null>(null);
   const [q, setQ] = useState(''); const [statusFilter, setStatusFilter] = useState('');
   const canCreate = me.can('plans', 'create'), canEdit = me.can('plans', 'edit'), canDelete = me.can('plans', 'delete');
+  const canPublishSite = me.can('site_settings', 'approve');
+  const confirmedPublished = (st.data ?? []).filter((p) => p.publicationStatus === 'published' && (p.priceConfirmed || p.pricingModel !== 'fixed'));
+  const showPricingBanner = !pricingStatus.data?.approved && confirmedPublished.length > 0;
 
   const setStatus = async (p: Plan, publicationStatus: string) => {
     try { await api.patch(`/plans/${p.id}`, { publicationStatus }); toast(`${p.name}: ${STATUS_LABEL[publicationStatus].toLowerCase()}`); st.reload(); }
@@ -53,6 +58,15 @@ export default function PlansPage() {
 
   return <>
     <PageHead title="Service plans" sub="One place for service tier, features, duration and price. Deactivated or archived plans stay on existing contracts — nothing here changes a customer's current entitlements." actions={canCreate ? <Button variant="primary" onClick={() => setEditing('new')}>New plan</Button> : undefined} />
+    {showPricingBanner && (
+      <div className="alert warn" role="note" style={{ marginBottom: 12 }}>
+        {confirmedPublished.length} published plan{confirmedPublished.length === 1 ? '' : 's'} {confirmedPublished.length === 1 ? 'has' : 'have'} a confirmed price, but the public pricing page still won&apos;t show real figures until the site-wide pricing display is approved.
+        {' '}
+        {canPublishSite
+          ? <Link href="/admin/website/pricing_settings">Go approve it</Link>
+          : 'Ask an administrator or site manager to approve it at Website → Pricing display.'}
+      </div>
+    )}
     <Card>
       <div className="row" style={{ gap: 10, marginBottom: 12 }}>
         <input type="search" placeholder="Search plans" value={q} onChange={(e) => setQ(e.target.value)} style={{ maxWidth: 260 }} aria-label="Search plans" />
