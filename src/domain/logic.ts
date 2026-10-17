@@ -76,13 +76,22 @@ export const DEFAULT_RULES: Rules = {
   // spec; not to be presented as scientifically validated until the framework is tested.
   'freeAssessment.criticalAttention_below': 40,
   'freeAssessment.needsImprovement_below': 60,
-  'freeAssessment.developing_below': 80
+  'freeAssessment.developing_below': 80,
+  // Retention for the free preliminary assessment. An "abandoned" record is a legacy row started but
+  // never completed (the current browser-only flow never persists an incomplete attempt, so this only
+  // ever applies to pre-existing legacy data). A completed record is kept, identified, for ordinary CRM
+  // follow-up; past this many months it is anonymised (name/email stripped) rather than deleted, so the
+  // aggregate score still counts toward reporting without keeping anyone's contact details indefinitely.
+  'freeAssessment.abandonedRetentionDays': 60,
+  'freeAssessment.completedAnonymiseMonths': 18
 };
 export const RULE_NOTES: Record<string, string> = {
   'sla.session_reminder_hours': 'Coaching sessions: remind the coach and the owner this many hours ahead (checked daily, so the reminder lands within 12 hours either side)',
   'sla.session_outcome_hours': 'Coaching sessions: flag a session whose outcome is still not recorded this many hours after it was due',
   'sla.stalled_days': 'Cases: flag a case to the programme manager when nobody has acted on it for this many days',
   'messaging.retention_months': 'Case messages on a graduated case are deleted this many months after they were sent',
+  'freeAssessment.abandonedRetentionDays': 'Legacy free-assessment attempts started but never completed are deleted this many days after they were started',
+  'freeAssessment.completedAnonymiseMonths': 'Completed free-assessment results (and their linked inquiry) have the name and email stripped this many months after completion; the score is kept',
   'evidence.multiplier.Verified': 'Share of a stated answer that counts when the evidence is verified',
   'evidence.multiplier.Document-supported': 'Share that counts when a document supports the answer',
   'evidence.multiplier.Self-reported': 'Share that counts when the owner states it without evidence',

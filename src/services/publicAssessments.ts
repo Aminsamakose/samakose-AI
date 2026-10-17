@@ -4,6 +4,7 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { fieldError, notFound } from '@/lib/errors';
 import { fileResponse } from '@/api/framework';
+import { audit } from '@/lib/audit';
 import { resolveFreeAssessmentVersion, questionsOf, SME360_ANSWER_OPTIONS, AGRIFOOD360_ANSWER_OPTIONS, ESO360_ANSWER_OPTIONS } from './frameworks';
 import { buildFreeAssessmentPdf } from './report-export';
 import { sendMail } from '@/lib/mail';
@@ -117,4 +118,60 @@ export async function useReportAction(ctx: Ctx, id: string, action: 'email' | 'd
     overallScore: result.overallScore, classification: result.classification, dimensionScores: result.dimensionScores, completedAt: result.completedAt
   });
   return fileResponse(`${result.platform}-result.pdf`, 'application/pdf', pdf);
+}
+
+/**
+ * Free-assessment retention (owner-approved schedule, not invented mid-flight): two independent
+ * sweeps, run daily alongside the other scheduled jobs.
+ *  1. Delete legacy rows that were started but never completed, once they are stale. The current
+ *     browser-only flow never persists an incomplete attempt at all, so this only ever clears out
+ *     pre-existing legacy data -- it cannot grow from new traffic.
+ *  2. Anonymise (never delete) a completed record once it is older than the retention window: strip
+ *     the name and email from the result row and its linked inquiry, replacing the email with a
+ *     per-row placeholder so the duplicate-prevention unique index stays intact, while keeping the
+ *     platform, score and completion date so aggregate reporting still works. Legacy completed rows
+ *     already have their answers/scores cleared from an earlier, separately-approved cleanup, so this
+ *     only touches their remaining identifying fields.
+ */
+export async function purgeFreeAssessmentPII(ctx: Ctx, now = new Date()) {
+  const rules = await loadRules(ctx.db);
+  const abandonedDays = Number(rules['freeAssessment.abandonedRetentionDays']);
+  const anonymiseMonths = Number(rules['freeAssessment.completedAnonymiseMonths']);
+
+  const abandonedCutoff = new Date(now); abandonedCutoff.setUTCDate(abandonedCutoff.getUTCDate() - abandonedDays);
+  const deletedAbandoned = await ctx.db.execute(sql`
+    delete from public_assessments where status <> 'Completed' and started_at < ${abandonedCutoff.toISOString()}`);
+
+  const anonymiseCutoff = new Date(now); anonymiseCutoff.setUTCMonth(anonymiseCutoff.getUTCMonth() - anonymiseMonths);
+
+  const anonymisedResults = await ctx.db.execute(sql`
+    update free_assessment_results
+    set email = 'redacted-' || id || '@samakose.invalid', full_name = 'Redacted'
+    where created_at < ${anonymiseCutoff.toISOString()} and email <> 'redacted-' || id || '@samakose.invalid'`);
+  await ctx.db.execute(sql`
+    update inquiries set name = 'Redacted', email = 'redacted-' || public_assessment_id || '@samakose.invalid', organisation = null
+    where kind = 'assessment' and public_assessment_id in (
+      select id from free_assessment_results where created_at < ${anonymiseCutoff.toISOString()}
+    ) and name <> 'Redacted'`);
+
+  const anonymisedLegacy = await ctx.db.execute(sql`
+    update public_assessments
+    set email = 'redacted-' || id || '@samakose.invalid', normalised_email = 'redacted-' || id || '@samakose.invalid',
+        full_name = 'Redacted', business_name = null, ip_hash = null
+    where status = 'Completed' and completed_at < ${anonymiseCutoff.toISOString()} and full_name <> 'Redacted'`);
+  await ctx.db.execute(sql`
+    update inquiries set name = 'Redacted', email = 'redacted-' || public_assessment_id || '@samakose.invalid', organisation = null
+    where kind = 'assessment' and public_assessment_id in (
+      select id from public_assessments where status = 'Completed' and completed_at < ${anonymiseCutoff.toISOString()}
+    ) and name <> 'Redacted'`);
+
+  const result = {
+    deletedAbandoned: deletedAbandoned.rowCount ?? 0,
+    anonymisedResults: anonymisedResults.rowCount ?? 0,
+    anonymisedLegacy: anonymisedLegacy.rowCount ?? 0
+  };
+  if (result.deletedAbandoned || result.anonymisedResults || result.anonymisedLegacy) {
+    await audit(ctx, 'free_assessment.retention_purge', 'free_assessment_results', null, undefined, result);
+  }
+  return result;
 }
