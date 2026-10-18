@@ -41,6 +41,20 @@ describe('framework versions', () => {
     expect(details.data.structured.questions.every((q: any) => q.status === 'Published')).toBe(true);
   });
 
+  it('lands the Business Health Architecture v2 bank as a Draft version 1 of the paid ESO360 framework, pending Amin\'s review', async () => {
+    const list = await frameworks();
+    const eso = list.find((f) => f.code === 'ESO360');
+    expect(eso.versions).toHaveLength(1);
+    const v = eso.versions[0];
+    expect(v.status).toBe('Draft');
+    expect(v.version).toBe(1);
+    const details = (await api(admin).get(`/settings/frameworks/versions/${v.id}`)).data;
+    expect(details.questions).toHaveLength(100);
+    expect(details.dimensions).toHaveLength(8);
+    expect(details.sources.length).toBeGreaterThan(0);
+    expect(details.meta?.subDimensions?.length).toBeGreaterThan(0);
+  });
+
   it('lets only an administrator approve, and others at most read', async () => {
     expect((await api(pm).get('/settings/frameworks')).status).toBe(200);
     expect((await api(pm).post('/settings/frameworks/SME360/versions', { fromBank: true })).status).toBe(403);

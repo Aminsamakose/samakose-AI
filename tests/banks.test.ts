@@ -130,6 +130,13 @@ describe('loading banks through the API', () => {
   beforeAll(async () => { await ensureReference(); admin = await makeUser('ADMIN'); });
   it.each([['SME360', 'sme360'], ['AGRIFOOD360', 'agrifood360'], ['ESO360', 'eso360']])('stores %s as a draft with its metadata, and a published version rejects meta edits', async (code, f) => {
     const b = load(f);
+    // ESO360 already carries a seeded Draft of this same Business Health Architecture v2 bank (see
+    // ensureEso360FullAssessmentDraft), and createDraft refuses a second open draft on one framework.
+    // Discard it first so this test can still exercise loading a fresh draft through the API, exactly
+    // as a reviewer would before reloading corrected content.
+    const existing = (await api(admin).get('/settings/frameworks')).data.find((x: any) => x.code === code);
+    const openDraft = existing?.versions.find((v: any) => v.status === 'Draft');
+    if (openDraft) await api(admin).del(`/settings/frameworks/versions/${openDraft.id}`);
     const d = await api(admin).post(`/settings/frameworks/${code}/versions`, b);
     expect(d.status).toBe(201);
     const got = (await api(admin).get(`/settings/frameworks/versions/${d.data.id}`)).data;

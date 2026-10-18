@@ -14,6 +14,7 @@ import type { FrameworkMeta, FrameworkQuestion, FrameworkSource } from '@/db/sch
 import { parseCondition } from '@/domain/bank';
 import { can } from '@/lib/rbac';
 import { allow, need } from './common';
+import eso360BankV1 from '../../docs/frameworks/drafts/eso360-bank-v1-loadable.json';
 
 export type VersionRow = typeof schema.frameworkVersions.$inferSelect;
 type Db = Ctx['db'];
@@ -737,4 +738,42 @@ export async function ensureEso360FreeAssessmentFramework(db: Db) {
     }],
     note: 'ESO360 free preliminary assessment, 25 questions across 6 dimensions -- Draft, pending Amin’s content review and approval (#126)', createdBy: null
   }).onConflictDoNothing();
+}
+
+/**
+ * Lands the Business Health Architecture v2 content bank (100 questions, 8 dimensions, full sub-dimension
+ * and readiness metadata, 32-item evidence trail) as version 1 of the paid/full ESO360 framework (code
+ * 'ESO360', orgType 'ESO', isDefault:false) -- the assessment ESOs actually register and pay for, distinct
+ * from the free 25-question ESO360_FREE preliminary bank above.
+ *
+ * Deliberately mirrors the paid SME360 framework, whose own Business Health Architecture v2 bank (code
+ * 'SME360', 100 questions SM-001..SM-100) is already Published in production -- discovered by checking
+ * production data directly while building the free assessment (see ensureSme360FreeAssessmentFramework's
+ * comment). ESO360's paid framework has no Published version yet, so unlike that one this function leaves
+ * its content as a Draft: pending Amin Yahaya's own domain-expert review and sign-off before anyone
+ * publishes it from the admin Settings screen, exactly as AgriFood360's and ESO360's free-assessment banks
+ * were left as Drafts above until reviewed.
+ *
+ * Idempotent and content-insensitive by design: if ESO360 already has any version at all -- Draft or
+ * Published, this seed's or an admin's own -- this is a no-op, so a reviewer's in-progress edits are never
+ * silently overwritten by a re-run of the seed.
+ */
+export async function ensureEso360FullAssessmentDraft(db: Db) {
+  const [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'ESO360')).limit(1);
+  if (!f) return; // Seeded by migration 0011; absent only on an incompletely migrated database.
+  const [haveAny] = await db.select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions)
+    .where(eq(schema.frameworkVersions.frameworkId, f.id)).limit(1);
+  if (haveAny) return;
+
+  const bank = eso360BankV1 as unknown as {
+    questions: FrameworkQuestion[]; dimensions: string[]; rules: Record<string, string | number> | null;
+    sources: FrameworkSource[]; meta: FrameworkMeta; note: string;
+  };
+  validateContent({ questions: bank.questions, dimensions: bank.dimensions, rules: bank.rules, meta: bank.meta });
+  const [draft] = await db.insert(schema.frameworkVersions).values({
+    frameworkId: f.id, version: 1, status: 'Draft', questions: bank.questions, dimensions: bank.dimensions,
+    rules: bank.rules, meta: bank.meta, sources: bank.sources, note: bank.note, createdBy: null
+  }).onConflictDoNothing().returning();
+  if (!draft) return;
+  await syncStructuredDraft(db, draft);
 }
