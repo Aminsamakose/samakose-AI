@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
 import { DEFAULT_RULES, freeAssessmentClassification, scoreFreeAssessment, type FreeAssessmentAnswer } from '@/domain/logic';
 import { SME360_ANSWER_OPTIONS, AGRIFOOD360_ANSWER_OPTIONS, ESO360_ANSWER_OPTIONS } from '@/services/frameworks';
@@ -189,6 +189,32 @@ describe('browser-scored free assessment storage and result download', () => {
     // Downloading is a client-requested action and does not create a stored action/progress record.
     const again = await post(`/public/assessments/${id}/actions/download`, {});
     expect(again.status).toBe(200);
+  });
+
+  it('the email action sends the same A4 PDF as an attachment, not a plain-text score dump', async () => {
+    const mail = await import('@/lib/mail');
+    const spy = vi.spyOn(mail, 'sendMail');
+    const email = `pdf-email-${Date.now()}@test.samakose.test`;
+    const complete = await post('/public/assessments/complete', {
+      email, fullName: 'PDF Email Test', platform: 'SME360',
+      result: sme360Result(100)
+    });
+    const { id } = (await complete.json()).data;
+    const res = await post(`/public/assessments/${id}/actions/email`, {});
+    expect(res.status).toBe(200);
+    expect((await res.json()).data.ok).toBe(true);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    const [to, subject, , attachments] = spy.mock.calls[0];
+    expect(to).toBe(email);
+    expect(subject).toMatch(/SME360 Business Health result/);
+    expect(attachments).toHaveLength(1);
+    expect(attachments![0].filename).toBe('SME360-result.pdf');
+    expect(attachments![0].contentType).toBe('application/pdf');
+    expect(Buffer.from(attachments![0].content.slice(0, 5)).toString('latin1')).toBe('%PDF-');
+    const pdf = await PDFDocument.load(attachments![0].content);
+    expect(pdf.getPageCount()).toBe(1);
+    spy.mockRestore();
   });
 });
 
