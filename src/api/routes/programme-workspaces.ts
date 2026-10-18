@@ -3,6 +3,7 @@ import { defineRoute, status } from '../framework';
 import * as ws from '@/services/programme-workspaces';
 import * as configService from '@/services/programme-workspace-configuration';
 import * as participants from '@/services/programme-participant-lifecycle';
+import * as people from '@/services/participant-people';
 import { WORKSPACE_ROLES } from '@/domain/programme-workspace';
 
 const W = 'Programme workspace';
@@ -49,3 +50,11 @@ defineRoute({ method: 'POST', path: '/programme-workspaces/:id/participants/:par
 defineRoute({ method: 'POST', path: '/programme-workspaces/:id/participants/:participantId/onboard', tag: W, summary: 'Complete participant onboarding', permission: ['programme_workspaces', 'edit'], handler: ({ ctx, params }) => participants.onboard(ctx, params.id, params.participantId) });
 defineRoute({ method: 'POST', path: '/programme-workspaces/:id/participants/:participantId/cohort', tag: W, summary: 'Assign an onboarded participant to a programme cohort', permission: ['programme_workspaces', 'edit'], body: z.object({ cohortId: z.string().uuid() }), handler: ({ ctx, params, body }) => participants.assignCohort(ctx, params.id, params.participantId, body.cohortId) });
 defineRoute({ method: 'POST', path: '/programme-workspaces/:id/participants/:participantId/activate', tag: W, summary: 'Activate a cohort-assigned participant', permission: ['programme_workspaces', 'edit'], handler: ({ ctx, params }) => participants.activate(ctx, params.id, params.participantId) });
+
+// The individual people behind one enrolment -- GAP 02 (participant/enterprise linkage). :participantId
+// here is the enrolment id (programme_participants.id), same as every route above; "people" is this
+// enrolment's actual human beings, since an enterprise can put forward more than one and the same
+// person may appear on more than one enterprise's enrolment.
+defineRoute({ method: 'GET', path: '/programme-workspaces/:id/participants/:participantId/people', tag: W, summary: 'List the people behind one enrolment', permission: ['programme_workspaces', 'read'], handler: ({ ctx, params }) => people.listPeople(ctx, params.participantId) });
+defineRoute({ method: 'POST', path: '/programme-workspaces/:id/participants/:participantId/people', tag: W, summary: 'Add a person to one enrolment, new or already on another enterprise', permission: ['programme_workspaces', 'edit'], body: z.object({ participantId: z.string().uuid().optional(), fullName: z.string().trim().min(2).max(160).optional(), phone: z.string().trim().max(40).nullish(), email: z.string().trim().email().max(200).nullish(), role: z.enum(['OWNER', 'MANAGER', 'DELEGATE', 'OTHER']).optional(), isPrimary: z.boolean().optional() }), handler: async ({ ctx, params, body }) => status(201, await people.addPerson(ctx, params.participantId, body)) });
+defineRoute({ method: 'DELETE', path: '/programme-workspaces/:id/participants/:participantId/people/:linkId', tag: W, summary: 'Remove a person from one enrolment', permission: ['programme_workspaces', 'edit'], handler: ({ ctx, params }) => people.removePerson(ctx, params.participantId, params.linkId) });
