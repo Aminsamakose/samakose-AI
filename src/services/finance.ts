@@ -14,6 +14,7 @@ import { allow, need, respondList, today } from './common';
 import { contractScope } from './contracts';
 import { postLedgerEntries } from './ledger';
 import { bust as bustSiteContent } from './content';
+import { unlockAssessmentForPurchase } from './case-unlock';
 
 const con = schema.contracts, inv = schema.invoices, pay = schema.payments, pl = schema.plans, o = schema.organisations;
 const CONTRACT_MOVES: Record<string, string[]> = { Draft: ['Active', 'Cancelled'], Active: ['Expired', 'Cancelled'], Expired: [], Cancelled: [] };
@@ -271,6 +272,25 @@ export async function settle(ctx: Ctx, paymentId: string, payload: unknown) {
   await emitEvent(ctx, 'PaymentReceived', { orgId: i.orgId, payload: { invoice: i.code, amount: p.amountGhs } });
   const owners = await ctx.db.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.orgId, i.orgId), eq(schema.users.role, 'OWNER')));
   await notifyUsers(ctx, owners.map((x) => x.id), { kind: 'PaymentReceipt', title: `Payment received for ${i.code}`, body: `GHS ${p.amountGhs}. Thank you.`, link: '/finance/invoices', email: true });
+
+  // Fulfilment: if this invoice's contract carries a plan that grants 'full_assessment', open (or
+  // reuse) a case so the paying organisation can start their purchased assessment immediately. See
+  // case-unlock.ts for why this lives here (the one place every settlement path -- webhook, manual
+  // verify, mock, manual payment -- converges) and why it never throws: a bug here must never undo
+  // or retry an already-succeeded payment.
+  try {
+    if (i.contractId) {
+      const [contract] = await ctx.db.select({ planId: con.planId }).from(con).where(eq(con.id, i.contractId)).limit(1);
+      if (contract?.planId) {
+        const unlock = await unlockAssessmentForPurchase(ctx, { orgId: i.orgId, planId: contract.planId, invoiceId: i.id });
+        if (unlock.unlocked) await notifyUsers(ctx, owners.map((x) => x.id), { kind: 'PaymentReceipt', title: 'Your assessment is ready', body: `Case ${unlock.caseCode} is open. You can start your purchased assessment now.`, link: '/diagnostics', email: true });
+      }
+    }
+  } catch (err) {
+    console.error('[case-unlock] failed to unlock assessment after payment', { paymentId: p.id, invoiceId: i.id, error: err instanceof Error ? err.message : err });
+    await audit(ctx, 'case.unlock_failed', 'payment', p.id, undefined, { invoiceId: i.id, error: err instanceof Error ? err.message : String(err) });
+  }
+
   return { status: 'Succeeded' as const, already: false };
 }
 
