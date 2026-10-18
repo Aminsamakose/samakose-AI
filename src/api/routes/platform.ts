@@ -13,6 +13,7 @@ import * as kobo from '@/services/kobo';
 import * as dash from '@/services/dashboards';
 import * as adm from '@/services/admin';
 import * as fw from '@/services/frameworks';
+import * as fwImport from '@/services/framework-import';
 import * as asst from '@/services/assistant';
 import * as ins from '@/services/insights';
 import * as ag from '@/services/agents';
@@ -179,6 +180,7 @@ const fwDraft = z.object({ questions: z.array(fwQuestion).min(1).max(120), dimen
 defineRoute({ method: 'GET', path: '/settings/frameworks', tag: AD, summary: 'Frameworks and their versions', permission: ['frameworks', 'read'], handler: ({ ctx }) => fw.listFrameworks(ctx) });
 defineRoute({ method: 'GET', path: '/settings/frameworks/versions/:id', tag: AD, summary: 'One framework version with its evidence trail', permission: ['frameworks', 'read'], handler: ({ ctx, params }) => fw.getVersion(ctx, params.id) });
 defineRoute({ method: 'POST', path: '/settings/frameworks/:code/versions', tag: AD, summary: 'Start a draft version', permission: ['frameworks', 'create'], body: fwDraft.partial().extend({ fromBank: z.boolean().optional() }), handler: async ({ ctx, params, body }) => status(201, await fw.createDraft(ctx, params.code, body as never)) });
+defineRoute({ method: 'POST', path: '/settings/frameworks/:code/versions/import', tag: AD, summary: 'Start a draft version from an uploaded CSV (multipart: file)', permission: ['frameworks', 'create'], multipart: true, handler: async ({ ctx, params, req }) => { let form: FormData; try { form = await req.formData(); } catch { throw badRequest('Send the file as multipart form data'); } return status(201, await fwImport.importFrameworkCsv(ctx, params.code, form)); } });
 defineRoute({ method: 'PATCH', path: '/settings/frameworks/versions/:id', tag: AD, summary: 'Edit a draft version or its evidence trail', permission: ['frameworks', 'edit'], body: fwDraft.partial(), handler: ({ ctx, params, body }) => fw.updateDraft(ctx, params.id, body as never) });
 defineRoute({ method: 'DELETE', path: '/settings/frameworks/versions/:id', tag: AD, summary: 'Discard a draft version', permission: ['frameworks', 'edit'], handler: ({ ctx, params }) => fw.discardDraft(ctx, params.id) });
 defineRoute({ method: 'POST', path: '/settings/frameworks/versions/:id/publish', tag: AD, summary: 'Approve and publish a draft version', permission: ['frameworks', 'approve'], body: z.object({ note: text(5, 600) }), handler: ({ ctx, params, body }) => fw.publishVersion(ctx, params.id, body.note) });
