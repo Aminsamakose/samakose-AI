@@ -449,6 +449,13 @@
       "when": 1792323989479,
       "tag": "0064_participant_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1792326784904,
+      "tag": "0065_outcome_verification",
+      "breakpoints": true
     }
   ]
 }

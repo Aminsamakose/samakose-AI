@@ -13,4 +13,5 @@ import './delivery-coordination';
 import './programme-calendar';
 import './provider-assignments';
 import './library';
+import './outcome-verification';
 export { routes } from '../framework';
