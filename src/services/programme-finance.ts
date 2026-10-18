@@ -5,7 +5,7 @@ import { audit } from '@/lib/audit';
 import { conflict, fieldError, notFound } from '@/lib/errors';
 import { assertProgramme } from '@/domain/scope';
 import { budgetPosition, round2 } from '@/domain/logframe';
-import { allow, need } from './common';
+import { allow, lockCapacityScope, need } from './common';
 
 const L = schema.programmeBudgetLines, T = schema.programmeTranches;
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
@@ -39,6 +39,10 @@ function ceiling(budget: number | null, others: number, amount: number, what: st
 export async function addLine(ctx: Ctx, programmeId: string, b: { category: string; description?: string | null; amountGhs: number }) {
   allow(ctx, 'programmes', 'edit');
   const p = await assertProgramme(ctx, programmeId);
+  // Serialize against any other check-then-act write against this programme's budget lines (another
+  // addLine/updateLine), so two concurrent lines can't both pass the ceiling check below before either
+  // commits -- the same race lockCapacityScope already closes for cohort capacity elsewhere.
+  await lockCapacityScope(ctx, `budget-lines:${programmeId}`);
   ceiling(num(p.budgetGhs), await sumOf(ctx, 'l', programmeId), b.amountGhs, 'These budget lines');
   try {
     const [r] = await ctx.db.insert(L).values({ programmeId, category: b.category.trim(), description: b.description?.trim() || null, amountGhs: String(b.amountGhs), createdBy: need(ctx).user.id }).returning({ id: L.id });
@@ -54,7 +58,10 @@ async function loadLine(ctx: Ctx, id: string) {
 export async function updateLine(ctx: Ctx, id: string, b: Partial<{ category: string; description: string | null; amountGhs: number }>) {
   allow(ctx, 'programmes', 'edit');
   const { row, p } = await loadLine(ctx, id);
-  if (b.amountGhs !== undefined) ceiling(num(p.budgetGhs), await sumOf(ctx, 'l', row.programmeId, id), b.amountGhs, 'These budget lines');
+  if (b.amountGhs !== undefined) {
+    await lockCapacityScope(ctx, `budget-lines:${row.programmeId}`);
+    ceiling(num(p.budgetGhs), await sumOf(ctx, 'l', row.programmeId, id), b.amountGhs, 'These budget lines');
+  }
   try {
     await ctx.db.update(L).set({ ...(b.category ? { category: b.category.trim() } : {}), ...(b.description !== undefined ? { description: b.description?.trim() || null } : {}), ...(b.amountGhs !== undefined ? { amountGhs: String(b.amountGhs) } : {}), updatedAt: new Date() }).where(eq(L.id, id));
   } catch (e) { if (isUnique(e)) throw conflict('This programme already has a budget line with that category'); throw e; }
@@ -72,6 +79,9 @@ export async function removeLine(ctx: Ctx, id: string) {
 export async function addTranche(ctx: Ctx, programmeId: string, b: { label: string; amountGhs: number; dueDate?: string | null; note?: string | null }) {
   allow(ctx, 'programmes', 'edit');
   const p = await assertProgramme(ctx, programmeId);
+  // Same check-then-act race as addLine above, closed the same way: serialize against any other
+  // concurrent tranche write for this programme before summing and checking the ceiling.
+  await lockCapacityScope(ctx, `tranches:${programmeId}`);
   ceiling(num(p.budgetGhs), await sumOf(ctx, 't', programmeId), b.amountGhs, 'This payment schedule');
   try {
     const [r] = await ctx.db.insert(T).values({ programmeId, label: b.label.trim(), amountGhs: String(b.amountGhs), dueDate: b.dueDate ?? null, note: b.note?.trim() || null, createdBy: need(ctx).user.id }).returning({ id: T.id });
@@ -88,7 +98,10 @@ export async function updateTranche(ctx: Ctx, id: string, b: Partial<{ label: st
   allow(ctx, 'programmes', 'edit');
   const { row, p } = await loadTranche(ctx, id);
   if (row.status === 'Received') throw conflict('A tranche that has been received is a record of money in and cannot be edited');
-  if (b.amountGhs !== undefined) ceiling(num(p.budgetGhs), await sumOf(ctx, 't', row.programmeId, id), b.amountGhs, 'This payment schedule');
+  if (b.amountGhs !== undefined) {
+    await lockCapacityScope(ctx, `tranches:${row.programmeId}`);
+    ceiling(num(p.budgetGhs), await sumOf(ctx, 't', row.programmeId, id), b.amountGhs, 'This payment schedule');
+  }
   try {
     await ctx.db.update(T).set({ ...(b.label ? { label: b.label.trim() } : {}), ...(b.amountGhs !== undefined ? { amountGhs: String(b.amountGhs) } : {}), ...(b.dueDate !== undefined ? { dueDate: b.dueDate } : {}), ...(b.note !== undefined ? { note: b.note?.trim() || null } : {}), updatedAt: new Date() }).where(eq(T.id, id));
   } catch (e) { if (isUnique(e)) throw conflict('This programme already has a tranche with that label'); throw e; }
