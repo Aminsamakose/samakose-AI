@@ -275,6 +275,9 @@ registerJob('message_retention', async () => tx(async (t) => (await import('@/se
 
 registerJob('kobo_pull', async () => koboPull());
 
+/** #128: keep free_assessment_results.matchedOrgId current as new free assessments and registrations come in. */
+registerJob('assessment_match_scan', async () => tx(async (t) => (await import('@/services/assessment-validity')).matchPublicAssessmentsToOrganisations(systemCtx(t, 'scan'))));
+
 /** Website items whose scheduled time has passed go live, and the public pages refresh. */
 registerJob('content_scan', async () => {
   const { promoteDue } = await import('@/services/content');
