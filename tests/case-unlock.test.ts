@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { api, ensureReference, makeUser, uniq, type Session } from './helpers';
 
@@ -117,12 +117,26 @@ describe('self-serve plan purchase unlocks the purchased assessment', () => {
 });
 
 describe('product readiness: checkout is blocked for an assessment the system cannot deliver yet', () => {
-  it('refuses checkout for a platform whose paid framework has no Published version (AgriFood360, ESO360)', async () => {
+  /** Whether a Published 'full' framework currently exists for this orgType -- queried live rather
+   *  than assumed, because other test files (frameworks.test.ts's purpose-filter test, #133) publish
+   *  a throwaway test framework for ESO as part of their own setup, in the one shared test database
+   *  every file in a run uses. Asserting a fixed AgriFood360/ESO360 Draft state here would make this
+   *  test's result depend on file execution order instead of on checkPlanReadiness's actual contract. */
+  async function hasPublishedFullFramework(orgType: 'SME' | 'AGRIFOOD' | 'ESO') {
+    const [row] = await db().select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions)
+      .innerJoin(schema.frameworks, eq(schema.frameworks.id, schema.frameworkVersions.frameworkId))
+      .where(and(eq(schema.frameworks.orgType, orgType), eq(schema.frameworks.purpose, 'full'), eq(schema.frameworkVersions.status, 'Published')))
+      .limit(1);
+    return !!row;
+  }
+
+  it('reflects live framework readiness at checkout for AgriFood360 and ESO360, whichever way it currently stands', async () => {
     const planId = await publishedPlan();
     for (const type of ['AGRIFOOD', 'ESO'] as const) {
       const { owner } = await ownerWithOrg(type);
       const r = await api(owner).post(`/plans/${planId}/purchase`, {});
-      expect(r.status).toBe(422);
+      const ready = await hasPublishedFullFramework(type);
+      expect(r.status).toBe(ready ? 200 : 422);
     }
   });
 
