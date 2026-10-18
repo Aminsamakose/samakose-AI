@@ -1,13 +1,20 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { and, eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { api, ensureReference, makeUser, uniq, type Session } from './helpers';
 
 /**
  * The missing link between a verified paid-plan purchase and actual assessment access:
- * startPlanPurchase (self-serve) -> Paystack/mock payment -> finance.ts settle() -> case-unlock.ts.
- * Before case-unlock.ts existed, a business owner could pay for a plan and never get a case to run
- * their purchased assessment against (cases:create is staff-only; OWNER only holds cases:[R]).
+ * startPlanPurchase (self-serve) -> product-readiness gate -> Paystack/mock payment ->
+ * finance.ts settle() -> case-unlock.ts. Before case-unlock.ts existed, a business owner could pay
+ * for a plan and never get a case to run their purchased assessment against (cases:create is
+ * staff-only; OWNER only holds cases:[R]). Before the readiness gate existed, a customer could pay
+ * for an assessment on a platform (AgriFood360, ESO360) whose paid framework is still Draft -- see
+ * frameworks.test.ts for that Draft-vs-Published state -- and have nothing to show for it.
+ *
+ * Only SME organisations are used for the "succeeds" paths here: SME360 is the one paid framework
+ * with a Published version in this environment. AgriFood360 and ESO360 purchases are exercised
+ * through the readiness-gate tests below, which expect checkout itself to refuse them.
  */
 let finance: Session, admin: Session;
 beforeAll(async () => { await ensureReference(); finance = await makeUser('FINANCE'); admin = await makeUser('ADMIN'); });
@@ -61,7 +68,7 @@ describe('self-serve plan purchase unlocks the purchased assessment', () => {
 
   it('is idempotent: retrying settlement (e.g. a webhook replay) never opens a second case', async () => {
     const planId = await publishedPlan();
-    const { org, owner } = await ownerWithOrg('AGRIFOOD');
+    const { org, owner } = await ownerWithOrg();
     const r = await api(owner).post(`/plans/${planId}/purchase`, {});
     const reference = r.data.reference as string;
     await api(owner).post(`/payments/${reference}/mock-complete`, {});
@@ -82,17 +89,9 @@ describe('self-serve plan purchase unlocks the purchased assessment', () => {
     expect(cases).toHaveLength(0);
   });
 
-  it('does not open a case when the plan is scoped to a different platform than the buying organisation', async () => {
-    const planId = await publishedPlan({ platforms: ['ESO'] });
-    const { org, owner } = await ownerWithOrg('SME');
-    await payViaMock(owner, planId);
-    const cases = await db().select().from(schema.cases).where(eq(schema.cases.orgId, org.id));
-    expect(cases).toHaveLength(0);
-  });
-
   it('reuses an already-open case rather than opening a second one for a repeat or upgrade purchase', async () => {
     const planId = await publishedPlan();
-    const { org, owner } = await ownerWithOrg('ESO');
+    const { org, owner } = await ownerWithOrg();
     await payViaMock(owner, planId);
     const firstCase = await db().select().from(schema.cases).where(eq(schema.cases.orgId, org.id));
     expect(firstCase).toHaveLength(1);
@@ -104,15 +103,40 @@ describe('self-serve plan purchase unlocks the purchased assessment', () => {
     expect(stillOne[0].id).toBe(firstCase[0].id);
   });
 
-  it('never blocks the payment itself even if unlocking fails (invoice is still marked Paid)', async () => {
-    // A plan with full_assessment but no platforms restriction still unlocks normally; this test
-    // instead verifies the payment/invoice side is authoritative and independent of unlock outcome
-    // by checking the failing-platform case above still leaves the payment Succeeded.
+  it('leaves the payment Succeeded even when unlocking fails (e.g. consent missing) -- a bug in unlock must never undo a real payment', async () => {
+    const planId = await publishedPlan();
+    const { org, owner } = await ownerWithOrg();
+    // Simulate a precondition slipping after the org was created (consent withdrawn, say) -- something
+    // checkPlanReadiness at checkout time cannot see, so this can only surface at settlement.
+    await db().update(schema.organisations).set({ consentAt: null }).where(eq(schema.organisations.id, org.id));
+    const done = await payViaMock(owner, planId);
+    expect(done.status).toBe('Succeeded');
+    const cases = await db().select().from(schema.cases).where(eq(schema.cases.orgId, org.id));
+    expect(cases).toHaveLength(0); // unlock declined (org_consent_missing), but the money still moved
+  });
+});
+
+describe('product readiness: checkout is blocked for an assessment the system cannot deliver yet', () => {
+  it('refuses checkout for a platform whose paid framework has no Published version (AgriFood360, ESO360)', async () => {
+    const planId = await publishedPlan();
+    for (const type of ['AGRIFOOD', 'ESO'] as const) {
+      const { owner } = await ownerWithOrg(type);
+      const r = await api(owner).post(`/plans/${planId}/purchase`, {});
+      expect(r.status).toBe(422);
+    }
+  });
+
+  it('refuses checkout when the plan is scoped to a platform other than the buying organisation\'s', async () => {
     const planId = await publishedPlan({ platforms: ['ESO'] });
     const { owner } = await ownerWithOrg('SME');
     const r = await api(owner).post(`/plans/${planId}/purchase`, {});
-    const done = await api(owner).post(`/payments/${r.data.reference}/mock-complete`, {});
-    expect(done.status).toBe(200);
-    expect(done.data.status).toBe('Succeeded');
+    expect(r.status).toBe(422);
+  });
+
+  it('allows checkout for a plan with no full_assessment entitlement regardless of platform readiness', async () => {
+    const planId = await publishedPlan({ entitlements: [{ key: 'ai_assisted_report', enabled: true }] });
+    const { owner } = await ownerWithOrg('ESO');
+    const r = await api(owner).post(`/plans/${planId}/purchase`, {});
+    expect(r.status).toBe(200);
   });
 });
