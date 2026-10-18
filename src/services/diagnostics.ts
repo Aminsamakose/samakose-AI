@@ -59,9 +59,14 @@ export async function computeScore(ctx: Ctx, caseId: string, diagnosticId: strin
   const conf = confidenceClass(s.evidenceShare, ruleChecksPassed, true, rules);
   const [prev] = await ctx.db.select().from(schema.healthScores).where(eq(schema.healthScores.caseId, caseId)).orderBy(desc(schema.healthScores.createdAt)).limit(1);
   const [runRow] = await ctx.db.select({ n: sql<number>`coalesce(max(run),0)::int` }).from(schema.healthScores).where(eq(schema.healthScores.diagnosticId, diagnosticId));
+  const [caseRow] = await ctx.db.select({ status: schema.cases.status }).from(schema.cases).where(eq(schema.cases.id, caseId)).limit(1);
+  // The case's own lifecycle state at the moment of scoring decides the phase, not the run number --
+  // a re-diagnostic mid-MONITORING should never be mistaken for a baseline or endline just because it
+  // happens to be the first or latest run.
+  const phase: typeof schema.healthScores.$inferInsert.phase = !prev ? 'BASELINE' : caseRow?.status === 'MIDLINE' ? 'MIDLINE' : caseRow?.status === 'ENDLINE' ? 'ENDLINE' : 'OTHER';
   const [row] = await ctx.db.insert(schema.healthScores).values({
     diagnosticId, caseId, run: Number(runRow.n) + 1, overall: s.overall.toFixed(1), maturity: s.maturity, confidenceClass: conf,
-    dimensions: s.dimensions, evidenceShare: s.evidenceShare, rulesSnapshot: rules as any, frameworkVersionId: fv.id, extras: extras as any
+    dimensions: s.dimensions, evidenceShare: s.evidenceShare, rulesSnapshot: rules as any, frameworkVersionId: fv.id, extras: extras as any, phase
   }).returning();
   await audit(ctx, 'score.computed', 'health_score', row.id, undefined, { overall: s.overall, maturity: s.maturity, confidence: conf, run: row.run }, caseId);
   await emitEvent(ctx, 'HealthScoreChanged', { caseId, payload: { overall: s.overall, maturity: s.maturity, confidence_class: conf } });
@@ -219,8 +224,8 @@ export async function caseScores(ctx: Ctx, caseId: string) {
     answers = rs.map((r) => { const q = qs.find((x) => x.code === r.questionCode); const e = evBy.get(r.id); return { questionCode: r.questionCode, dimension: q?.dimension, text: q?.text, value: r.value, notApplicable: r.notApplicable, evidenceClass: e?.class ?? r.evidenceClass, evidenceId: e?.code ?? null }; });
   }
   return {
-    history: history.map((h) => ({ id: h.id, run: h.run, frameworkVersionId: h.frameworkVersionId, overall: Number(h.overall), maturity: h.maturity, confidenceClass: h.confidenceClass, at: h.createdAt })),
-    latest: last ? { overall: Number(last.overall), maturity: last.maturity, confidenceClass: last.confidenceClass, dimensions: last.dimensions, evidenceShare: last.evidenceShare, extras: last.extras ?? null, at: last.createdAt } : null,
+    history: history.map((h) => ({ id: h.id, run: h.run, phase: h.phase, frameworkVersionId: h.frameworkVersionId, overall: Number(h.overall), maturity: h.maturity, confidenceClass: h.confidenceClass, at: h.createdAt })),
+    latest: last ? { phase: last.phase, overall: Number(last.overall), maturity: last.maturity, confidenceClass: last.confidenceClass, dimensions: last.dimensions, evidenceShare: last.evidenceShare, extras: last.extras ?? null, at: last.createdAt } : null,
     answers
   };
 }
