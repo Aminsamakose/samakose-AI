@@ -158,7 +158,7 @@ export async function updateAssignmentStatus(ctx: Ctx, id: string, status: Assig
       const start = new Date(Date.now() + 24 * 60 * 60 * 1000); // default: tomorrow, same time, 30 minutes
       const end = new Date(start.getTime() + 30 * 60 * 1000);
       try {
-        const meeting = await createVideoMeeting(provider, { title: `Provider kickoff: ${provUser[0]?.name ?? 'provider'}`, startsAt: start, endsAt: end });
+        const meeting = await createVideoMeeting(ctx, provider, { title: `Provider kickoff: ${provUser[0]?.name ?? 'provider'}`, startsAt: start, endsAt: end });
         metadata = { ...metadata, videoProvider: provider, kickoffMeetingUrl: meeting.joinUrl, kickoffExternalMeetingId: meeting.externalId };
       } catch (e) {
         metadata = { ...metadata, kickoffMeetingError: String((e as Error).message ?? e) };

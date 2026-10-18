@@ -1013,6 +1013,17 @@ export const rules = pgTable('rules', {
   updatedAt: updated()
 });
 
+/** Admin-settable Zoom/Google Meet credentials (see services/integration-credentials.ts). `value` is
+ * always an AES-256-GCM-encrypted blob, never plaintext -- including for non-secret fields like an
+ * account ID, so this table never has to distinguish secret from non-secret columns at the DB layer. */
+export const integrationCredentials = pgTable('integration_credentials', {
+  integration: text('integration').notNull(), // 'zoom' | 'google_meet'
+  field: text('field').notNull(), // e.g. 'accountId', 'clientId', 'clientSecret', 'refreshToken', 'calendarId'
+  value: text('value').notNull(),
+  updatedBy: uuid('updated_by'),
+  updatedAt: updated()
+}, (t) => [primaryKey({ columns: [t.integration, t.field] })]);
+
 export const jobs = pgTable('jobs', {
   id: id(),
   kind: text('kind').notNull(),

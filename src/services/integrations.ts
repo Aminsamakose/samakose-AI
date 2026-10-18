@@ -10,11 +10,18 @@
  * AI settings screen uses), and a "test connection" action that makes one real, read-only
  * call to the provider's API using whatever credentials are currently set.
  *
- * None of the actual send/create actions (book a Zoom meeting, send a WhatsApp message, send
- * an SMS, send a document for signature, push an invoice to QuickBooks/Xero) are implemented
- * here -- this module is configuration and connectivity verification only. Building the real
- * send/sync flows is separate, substantial work per provider and needs an explicit decision on
- * scope before it's built against invented assumptions about how each will be used.
+ * Zoom and Google Meet are the one exception to "environment variables only": an administrator
+ * can also set their credentials directly from this Settings screen, stored encrypted in the
+ * database via services/integration-credentials.ts (see that file's doc comment for why, and the
+ * precedence rule -- a database value always wins over the matching environment variable). Every
+ * other integration here keeps the original env-var-only pattern.
+ *
+ * None of the actual send/create actions (send a WhatsApp message, send an SMS, send a document
+ * for signature, push an invoice to QuickBooks/Xero) are implemented here -- this module is
+ * configuration and connectivity verification only (Zoom/Google Meet's actual meeting-creation
+ * calls live in services/meetings.ts). Building the real send/sync flows for the others is
+ * separate, substantial work per provider and needs an explicit decision on scope before it's
+ * built against invented assumptions about how each will be used.
  */
 import { eq, inArray } from 'drizzle-orm';
 import { schema } from '@/db/client';
@@ -24,10 +31,13 @@ import { fieldError } from '@/lib/errors';
 import { env } from '@/lib/env';
 import { allow, need } from './common';
 import { getZoomAccessToken, getGoogleCalendarAccessToken } from './meetings';
+import { resolveZoomCredentials, resolveGoogleCredentials, listSetFields, saveCredentials, type CredentialIntegration } from './integration-credentials';
 
 export type IntegrationId = 'zoom' | 'google_meet' | 'video' | 'teams' | 'whatsapp' | 'sms' | 'esignature' | 'accounting';
 
 type EnvVarRef = { name: string; secret: boolean };
+/** A field an administrator can set directly from Settings instead of (or on top of) an env var. */
+export type CredentialFieldDescriptor = { key: string; label: string; secret: boolean; envVarName: string };
 interface Descriptor {
   id: IntegrationId;
   label: string;
@@ -35,11 +45,14 @@ interface Descriptor {
   docsHint: string;
   /** Env vars this integration reads. `secret: false` entries (ids, not keys) are safe to echo back. */
   envVars: EnvVarRef[];
+  /** Admin-settable fields for this integration (database-stored, see integration-credentials.ts),
+   * or undefined for integrations that keep the env-var-only pattern. */
+  credentialFields?: CredentialFieldDescriptor[];
   /** Provider sub-choice stored in the `rules` table (e.g. which SMS gateway), or null if there isn't one. */
   providerChoiceKey: string | null;
   providerOptions: readonly string[] | null;
-  configured(choice: string | null): boolean;
-  test(choice: string | null): Promise<{ ok: boolean; message: string }>;
+  configured(ctx: Ctx, choice: string | null): Promise<boolean>;
+  test(ctx: Ctx, choice: string | null): Promise<{ ok: boolean; message: string }>;
 }
 
 const RULE_KEY = (id: IntegrationId) => `integrations.${id}.provider`;
@@ -58,13 +71,18 @@ async function fetchJson(url: string, init: RequestInit, timeoutMs = 15_000) {
 const DESCRIPTORS: Descriptor[] = [
   {
     id: 'zoom', label: 'Zoom', category: 'Virtual delivery', providerChoiceKey: null, providerOptions: null,
-    docsHint: 'Zoom Marketplace -> Build App -> Server-to-Server OAuth. Grant the meeting:write:admin scope.',
+    docsHint: 'Zoom Marketplace -> Build App -> Server-to-Server OAuth. Grant the meeting:write:admin scope. Enter the Account ID, Client ID and Client Secret below, or set them as ZOOM_ACCOUNT_ID/ZOOM_CLIENT_ID/ZOOM_CLIENT_SECRET environment variables.',
     envVars: [{ name: 'ZOOM_ACCOUNT_ID', secret: false }, { name: 'ZOOM_CLIENT_ID', secret: false }, { name: 'ZOOM_CLIENT_SECRET', secret: true }],
-    configured: () => !!(env.zoomAccountId && env.zoomClientId && env.zoomClientSecret),
-    async test() {
-      if (!(env.zoomAccountId && env.zoomClientId && env.zoomClientSecret)) return { ok: false, message: 'Zoom is not configured. Set ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET.' };
+    credentialFields: [
+      { key: 'accountId', label: 'Account ID', secret: false, envVarName: 'ZOOM_ACCOUNT_ID' },
+      { key: 'clientId', label: 'Client ID', secret: false, envVarName: 'ZOOM_CLIENT_ID' },
+      { key: 'clientSecret', label: 'Client Secret', secret: true, envVarName: 'ZOOM_CLIENT_SECRET' },
+    ],
+    configured: async (ctx) => !!(await resolveZoomCredentials(ctx)),
+    async test(ctx) {
+      if (!(await resolveZoomCredentials(ctx))) return { ok: false, message: 'Zoom is not configured. Set the Account ID, Client ID and Client Secret below, or as environment variables.' };
       let accessToken: string;
-      try { accessToken = await getZoomAccessToken(); } catch (e) { return { ok: false, message: String((e as Error).message ?? e) }; }
+      try { accessToken = await getZoomAccessToken(ctx); } catch (e) { return { ok: false, message: String((e as Error).message ?? e) }; }
       const me = await fetchJson('https://api.zoom.us/v2/users/me', { headers: { authorization: `Bearer ${accessToken}` } });
       if (!me.ok) return { ok: false, message: `Connected to Zoom but could not read the account (HTTP ${me.status}).` };
       const email = (me.json as { email?: string })?.email;
@@ -73,15 +91,22 @@ const DESCRIPTORS: Descriptor[] = [
   },
   {
     id: 'google_meet', label: 'Google Meet', category: 'Virtual delivery', providerChoiceKey: null, providerOptions: null,
-    docsHint: 'Google Cloud Console -> APIs & Services -> OAuth consent + Calendar API enabled, then complete the authorization-code flow once (access_type=offline, scope https://www.googleapis.com/auth/calendar) to obtain a refresh token. Reuses GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET already used for sign-in.',
+    docsHint: 'Google Cloud Console -> APIs & Services -> OAuth consent + Calendar API enabled, then complete the authorization-code flow once (access_type=offline, scope https://www.googleapis.com/auth/calendar) to obtain a refresh token. Enter the OAuth Client ID/Secret and refresh token below, or set them as environment variables (GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET are also reused for sign-in if already set that way).',
     envVars: [{ name: 'GOOGLE_CLIENT_ID', secret: false }, { name: 'GOOGLE_CLIENT_SECRET', secret: true }, { name: 'GOOGLE_CALENDAR_REFRESH_TOKEN', secret: true }, { name: 'GOOGLE_CALENDAR_ID', secret: false }],
-    configured: () => !!(env.googleClientId && env.googleClientSecret && env.googleCalendarRefreshToken),
-    async test() {
-      if (!(env.googleClientId && env.googleClientSecret && env.googleCalendarRefreshToken)) return { ok: false, message: 'Google Meet is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_CALENDAR_REFRESH_TOKEN.' };
+    credentialFields: [
+      { key: 'clientId', label: 'OAuth Client ID', secret: false, envVarName: 'GOOGLE_CLIENT_ID' },
+      { key: 'clientSecret', label: 'OAuth Client Secret', secret: true, envVarName: 'GOOGLE_CLIENT_SECRET' },
+      { key: 'refreshToken', label: 'Calendar Refresh Token', secret: true, envVarName: 'GOOGLE_CALENDAR_REFRESH_TOKEN' },
+      { key: 'calendarId', label: 'Calendar ID', secret: false, envVarName: 'GOOGLE_CALENDAR_ID' },
+    ],
+    configured: async (ctx) => !!(await resolveGoogleCredentials(ctx)),
+    async test(ctx) {
+      const creds = await resolveGoogleCredentials(ctx);
+      if (!creds) return { ok: false, message: 'Google Meet is not configured. Set the OAuth Client ID/Secret and Calendar Refresh Token below, or as environment variables.' };
       let accessToken: string;
-      try { accessToken = await getGoogleCalendarAccessToken(); } catch (e) { return { ok: false, message: String((e as Error).message ?? e) }; }
-      const cal = await fetchJson(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(env.googleCalendarId)}`, { headers: { authorization: `Bearer ${accessToken}` } });
-      if (!cal.ok) return { ok: false, message: `Connected to Google but could not read GOOGLE_CALENDAR_ID (HTTP ${cal.status}). Check the calendar id and that the consented account has access to it.` };
+      try { accessToken = await getGoogleCalendarAccessToken(ctx); } catch (e) { return { ok: false, message: String((e as Error).message ?? e) }; }
+      const cal = await fetchJson(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(creds.calendarId)}`, { headers: { authorization: `Bearer ${accessToken}` } });
+      if (!cal.ok) return { ok: false, message: `Connected to Google but could not read the configured calendar (HTTP ${cal.status}). Check the calendar id and that the consented account has access to it.` };
       const summary = (cal.json as { summary?: string })?.summary;
       return { ok: true, message: `Connected to Google Calendar${summary ? ` ("${summary}")` : ''}. Live Meet-link creation is available for Calendar, provider assignment and delivery coordination.` };
     },
@@ -90,13 +115,13 @@ const DESCRIPTORS: Descriptor[] = [
     id: 'video', label: 'Default video provider', category: 'Virtual delivery', providerChoiceKey: RULE_KEY('video'), providerOptions: ['zoom', 'google_meet'],
     docsHint: 'Choose which configured provider Calendar, provider assignment and delivery coordination use to create real meeting links. Configure Zoom and/or Google Meet above first.',
     envVars: [],
-    configured: (choice) => choice === 'zoom' ? !!(env.zoomAccountId && env.zoomClientId && env.zoomClientSecret)
-      : choice === 'google_meet' ? !!(env.googleClientId && env.googleClientSecret && env.googleCalendarRefreshToken) : false,
-    async test(choice) {
+    configured: async (ctx, choice) => choice === 'zoom' ? !!(await resolveZoomCredentials(ctx))
+      : choice === 'google_meet' ? !!(await resolveGoogleCredentials(ctx)) : false,
+    async test(ctx, choice) {
       if (!choice) return { ok: false, message: 'Choose a default video provider (Zoom or Google Meet) first.' };
       const d = choice === 'zoom' ? byId.get('zoom') : choice === 'google_meet' ? byId.get('google_meet') : null;
       if (!d) return { ok: false, message: 'Unknown video provider.' };
-      const r = await d.test(null);
+      const r = await d.test(ctx, null);
       return { ok: r.ok, message: r.ok ? `Default video provider is ${choice === 'zoom' ? 'Zoom' : 'Google Meet'}. ${r.message}` : r.message };
     },
   },
@@ -104,8 +129,8 @@ const DESCRIPTORS: Descriptor[] = [
     id: 'teams', label: 'Microsoft Teams', category: 'Virtual delivery', providerChoiceKey: null, providerOptions: null,
     docsHint: 'Azure AD -> App registrations -> New registration. Grant the OnlineMeetings.ReadWrite.All application permission with admin consent.',
     envVars: [{ name: 'MS_TEAMS_TENANT_ID', secret: false }, { name: 'MS_TEAMS_CLIENT_ID', secret: false }, { name: 'MS_TEAMS_CLIENT_SECRET', secret: true }, { name: 'MS_TEAMS_ORGANIZER_USER_ID', secret: false }],
-    configured: () => !!(env.teamsTenantId && env.teamsClientId && env.teamsClientSecret),
-    async test() {
+    configured: async () => !!(env.teamsTenantId && env.teamsClientId && env.teamsClientSecret),
+    async test(_ctx) {
       if (!(env.teamsTenantId && env.teamsClientId && env.teamsClientSecret)) return { ok: false, message: 'Microsoft Teams is not configured. Set MS_TEAMS_TENANT_ID, MS_TEAMS_CLIENT_ID and MS_TEAMS_CLIENT_SECRET.' };
       const body = new URLSearchParams({ grant_type: 'client_credentials', client_id: env.teamsClientId, client_secret: env.teamsClientSecret, scope: 'https://graph.microsoft.com/.default' });
       const tok = await fetchJson(`https://login.microsoftonline.com/${encodeURIComponent(env.teamsTenantId)}/oauth2/v2.0/token`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body });
@@ -123,8 +148,8 @@ const DESCRIPTORS: Descriptor[] = [
     id: 'whatsapp', label: 'WhatsApp Business', category: 'Messaging', providerChoiceKey: null, providerOptions: null,
     docsHint: 'Meta for Developers -> WhatsApp -> API Setup. Use a permanent system-user access token, not the 24-hour temporary one.',
     envVars: [{ name: 'WHATSAPP_PHONE_NUMBER_ID', secret: false }, { name: 'WHATSAPP_BUSINESS_ACCOUNT_ID', secret: false }, { name: 'WHATSAPP_ACCESS_TOKEN', secret: true }],
-    configured: () => !!(env.whatsappPhoneNumberId && env.whatsappAccessToken),
-    async test() {
+    configured: async () => !!(env.whatsappPhoneNumberId && env.whatsappAccessToken),
+    async test(_ctx) {
       if (!(env.whatsappPhoneNumberId && env.whatsappAccessToken)) return { ok: false, message: 'WhatsApp Business is not configured. Set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN.' };
       const r = await fetchJson(`https://graph.facebook.com/v19.0/${encodeURIComponent(env.whatsappPhoneNumberId)}?fields=verified_name,display_phone_number,quality_rating`, { headers: { authorization: `Bearer ${env.whatsappAccessToken}` } });
       if (!r.ok) return { ok: false, message: `Meta rejected the request (HTTP ${r.status}). Check the phone number ID and access token, and that the token has not expired.` };
@@ -136,9 +161,9 @@ const DESCRIPTORS: Descriptor[] = [
     id: 'sms', label: 'SMS', category: 'Messaging', providerChoiceKey: RULE_KEY('sms'), providerOptions: ['twilio', 'arkesel'],
     docsHint: 'Twilio: console.twilio.com -> Account SID and Auth Token. Arkesel (Ghana): sms.arkesel.com -> SMS API -> API key.',
     envVars: [{ name: 'TWILIO_ACCOUNT_SID', secret: false }, { name: 'TWILIO_AUTH_TOKEN', secret: true }, { name: 'TWILIO_FROM_NUMBER', secret: false }, { name: 'ARKESEL_API_KEY', secret: true }, { name: 'ARKESEL_SENDER_ID', secret: false }],
-    configured: (choice) => choice === 'twilio' ? !!(env.twilioAccountSid && env.twilioAuthToken && env.twilioFromNumber)
+    configured: async (_ctx, choice) => choice === 'twilio' ? !!(env.twilioAccountSid && env.twilioAuthToken && env.twilioFromNumber)
       : choice === 'arkesel' ? !!env.arkeselApiKey : false,
-    async test(choice) {
+    async test(_ctx, choice) {
       if (choice === 'twilio') {
         if (!(env.twilioAccountSid && env.twilioAuthToken)) return { ok: false, message: 'Twilio is not configured. Set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.' };
         const basic = Buffer.from(`${env.twilioAccountSid}:${env.twilioAuthToken}`).toString('base64');
@@ -163,8 +188,8 @@ const DESCRIPTORS: Descriptor[] = [
     id: 'esignature', label: 'E-signature (DocuSign)', category: 'Documents', providerChoiceKey: null, providerOptions: null,
     docsHint: 'DocuSign Developer Center -> create an Integration Key. Production server integrations normally use a JWT grant with a consented user; DOCUSIGN_ACCESS_TOKEN here is for connectivity testing with a short-lived token obtained via DocuSign\'s own OAuth flow.',
     envVars: [{ name: 'DOCUSIGN_INTEGRATION_KEY', secret: false }, { name: 'DOCUSIGN_CLIENT_SECRET', secret: true }, { name: 'DOCUSIGN_ACCOUNT_ID', secret: false }, { name: 'DOCUSIGN_BASE_URL', secret: false }, { name: 'DOCUSIGN_ACCESS_TOKEN', secret: true }],
-    configured: () => !!(env.docusignIntegrationKey && env.docusignClientSecret && env.docusignAccountId),
-    async test() {
+    configured: async () => !!(env.docusignIntegrationKey && env.docusignClientSecret && env.docusignAccountId),
+    async test(_ctx) {
       if (!(env.docusignIntegrationKey && env.docusignClientSecret && env.docusignAccountId)) return { ok: false, message: 'DocuSign is not configured. Set DOCUSIGN_INTEGRATION_KEY, DOCUSIGN_CLIENT_SECRET and DOCUSIGN_ACCOUNT_ID.' };
       if (!env.docusignAccessToken) return { ok: false, message: 'App credentials are set, but no DOCUSIGN_ACCESS_TOKEN is present to verify connectivity. Full server-to-server access needs a JWT consent grant, which is separate setup work.' };
       const host = env.docusignBaseUrl.includes('demo') ? 'https://account-d.docusign.com' : 'https://account.docusign.com';
@@ -179,9 +204,9 @@ const DESCRIPTORS: Descriptor[] = [
     id: 'accounting', label: 'Accounting sync', category: 'Finance', providerChoiceKey: RULE_KEY('accounting'), providerOptions: ['quickbooks', 'xero'],
     docsHint: 'QuickBooks Online: developer.intuit.com -> create an app, complete the OAuth2 authorization-code flow once to get a refresh token. Xero: developer.xero.com -> create an app, same one-time refresh-token setup.',
     envVars: [{ name: 'QUICKBOOKS_CLIENT_ID', secret: false }, { name: 'QUICKBOOKS_CLIENT_SECRET', secret: true }, { name: 'QUICKBOOKS_REALM_ID', secret: false }, { name: 'QUICKBOOKS_REFRESH_TOKEN', secret: true }, { name: 'XERO_CLIENT_ID', secret: false }, { name: 'XERO_CLIENT_SECRET', secret: true }, { name: 'XERO_TENANT_ID', secret: false }, { name: 'XERO_REFRESH_TOKEN', secret: true }],
-    configured: (choice) => choice === 'quickbooks' ? !!(env.quickbooksClientId && env.quickbooksClientSecret && env.quickbooksRealmId && env.quickbooksRefreshToken)
+    configured: async (_ctx, choice) => choice === 'quickbooks' ? !!(env.quickbooksClientId && env.quickbooksClientSecret && env.quickbooksRealmId && env.quickbooksRefreshToken)
       : choice === 'xero' ? !!(env.xeroClientId && env.xeroClientSecret && env.xeroTenantId && env.xeroRefreshToken) : false,
-    async test(choice) {
+    async test(_ctx, choice) {
       if (choice === 'quickbooks') {
         if (!(env.quickbooksClientId && env.quickbooksClientSecret && env.quickbooksRealmId && env.quickbooksRefreshToken)) return { ok: false, message: 'QuickBooks Online is not configured. Set QUICKBOOKS_CLIENT_ID, QUICKBOOKS_CLIENT_SECRET, QUICKBOOKS_REALM_ID and QUICKBOOKS_REFRESH_TOKEN.' };
         const basic = Buffer.from(`${env.quickbooksClientId}:${env.quickbooksClientSecret}`).toString('base64');
@@ -218,15 +243,20 @@ export async function readIntegrationSettings(ctx: Ctx) {
   allow(ctx, 'integrations', 'read');
   const rows = await ctx.db.select().from(schema.rules).where(inArray(schema.rules.key, INTEGRATION_RULE_KEYS));
   const choices = new Map(rows.map((r) => [r.key, r.value]));
-  return DESCRIPTORS.map((d) => {
+  return Promise.all(DESCRIPTORS.map(async (d) => {
     const choice = d.providerChoiceKey ? choices.get(d.providerChoiceKey) ?? null : null;
+    const dbSet = d.credentialFields ? await listSetFields(ctx, d.id as CredentialIntegration) : null;
     return {
       id: d.id, label: d.label, category: d.category, docsHint: d.docsHint,
       providerOptions: d.providerOptions, providerChoice: choice,
       envVars: d.envVars.map((v) => ({ name: v.name, set: !!process.env[v.name]?.trim(), secret: v.secret })),
-      configured: d.configured(choice),
+      credentialFields: d.credentialFields?.map((f) => ({
+        key: f.key, label: f.label, secret: f.secret,
+        source: dbSet?.has(f.key) ? 'database' as const : (process.env[f.envVarName]?.trim() ? 'environment' as const : 'none' as const),
+      })),
+      configured: await d.configured(ctx, choice),
     };
-  });
+  }));
 }
 
 export async function saveIntegrationChoice(ctx: Ctx, id: IntegrationId, body: { provider: string }) {
@@ -252,7 +282,7 @@ export async function testIntegration(ctx: Ctx, id: IntegrationId) {
   }
   const started = Date.now();
   try {
-    const result = await d.test(choice);
+    const result = await d.test(ctx, choice);
     await audit(ctx, 'settings.integration_tested', 'settings', null, undefined, { integration: id, ok: result.ok });
     return { ...result, tookMs: Date.now() - started };
   } catch (e) {
@@ -273,6 +303,31 @@ export async function resolveVideoProvider(ctx: Ctx): Promise<'zoom' | 'google_m
   const choice = row?.value;
   if (choice !== 'zoom' && choice !== 'google_meet') return null;
   const d = byId.get(choice);
-  if (!d || !d.configured(null)) return null;
+  if (!d || !(await d.configured(ctx, null))) return null;
   return choice;
+}
+
+/** Admin-only: which fields are admin-settable for this integration, and whether each currently
+ * has a value from the database or an environment variable (never the value itself). */
+export async function readIntegrationCredentialFields(ctx: Ctx, id: IntegrationId) {
+  allow(ctx, 'integrations', 'read');
+  const d = byId.get(id);
+  if (!d || !d.credentialFields) throw fieldError({ id: 'This integration has no admin-settable credential fields' });
+  const dbSet = await listSetFields(ctx, id as CredentialIntegration);
+  return d.credentialFields.map((f) => ({
+    key: f.key, label: f.label, secret: f.secret,
+    source: dbSet.has(f.key) ? 'database' as const : (process.env[f.envVarName]?.trim() ? 'environment' as const : 'none' as const),
+  }));
+}
+
+/** Admin-only: set (or, with an empty string, clear) one or more of this integration's
+ * database-stored credential fields. See integration-credentials.ts for storage/precedence. */
+export async function saveIntegrationCredentials(ctx: Ctx, id: IntegrationId, fields: Record<string, string>) {
+  const d = byId.get(id);
+  if (!d || !d.credentialFields) throw fieldError({ id: 'This integration has no admin-settable credential fields' });
+  const allowedKeys = new Set(d.credentialFields.map((f) => f.key));
+  const unknown = Object.keys(fields).filter((k) => !allowedKeys.has(k));
+  if (unknown.length) throw fieldError({ fields: `Unknown field(s): ${unknown.join(', ')}` });
+  await saveCredentials(ctx, id as CredentialIntegration, fields);
+  return readIntegrationCredentialFields(ctx, id);
 }

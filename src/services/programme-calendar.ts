@@ -26,7 +26,7 @@ async function tryCreateLiveMeeting(ctx: Ctx, input: { title: string; descriptio
   const provider = await resolveVideoProvider(ctx);
   if (!provider) return null;
   try {
-    const meeting = await createVideoMeeting(provider, { title: input.title, description: input.description ?? null, startsAt: input.startsAt, endsAt: input.endsAt, timezone: input.timezone });
+    const meeting = await createVideoMeeting(ctx, provider, { title: input.title, description: input.description ?? null, startsAt: input.startsAt, endsAt: input.endsAt, timezone: input.timezone });
     return { ok: true, meeting, provider };
   } catch (e) {
     // Honest failure: no meeting URL is fabricated. The calendar event is still created, with
@@ -183,7 +183,7 @@ export async function rescheduleEvent(ctx: Ctx, id: string, input: { startsAt: s
 
   if (meta?.videoProvider && meta?.externalMeetingId) {
     try {
-      await updateVideoMeeting(meta.videoProvider, meta.externalMeetingId, { title: row.title, description: row.description, startsAt, endsAt, timezone: input.timezone ?? row.timezone });
+      await updateVideoMeeting(ctx, meta.videoProvider, meta.externalMeetingId, { title: row.title, description: row.description, startsAt, endsAt, timezone: input.timezone ?? row.timezone });
       // Same meeting, same join link -- meetingUrl/provider/metadata are unchanged.
     } catch {
       // The provider meeting is gone (deleted manually, expired) or unreachable: fall back to
@@ -223,7 +223,7 @@ export async function cancelEvent(ctx: Ctx, id: string) {
   if (meta?.videoProvider && meta?.externalMeetingId) {
     // Best-effort: cancelling the live meeting must never block cancelling the calendar record,
     // which is the source of truth participants and providers actually see.
-    try { await cancelVideoMeeting(meta.videoProvider, meta.externalMeetingId); } catch { /* already gone, or provider unreachable -- the calendar event is cancelled regardless */ }
+    try { await cancelVideoMeeting(ctx, meta.videoProvider, meta.externalMeetingId); } catch { /* already gone, or provider unreachable -- the calendar event is cancelled regardless */ }
   }
   await ctx.db.update(events).set({ status: 'CANCELLED', updatedAt: new Date() }).where(eq(events.id, id));
   await audit(ctx, 'calendar.event.cancelled', 'calendar_event', id, { status: row.status }, { status: 'CANCELLED' });
