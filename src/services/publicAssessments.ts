@@ -141,17 +141,21 @@ export async function useReportAction(ctx: Ctx, id: string, action: 'email' | 'd
   const result = await getFreeAssessment(ctx, id);
   const [row] = await ctx.db.select().from(schema.freeAssessmentResults).where(eq(schema.freeAssessmentResults.id, id)).limit(1);
   if (!row) throw notFound('Assessment result not found');
-  if (action === 'email') {
-    await sendMail(row.email, `Your free ${result.platform} Business Health result`, [
-      `Hello ${result.fullName},`, '', `Your preliminary ${result.platform} result: ${result.overallScore}/100 (${result.classification}).`,
-      '', ...result.dimensionScores.map((d) => `${d.dimension}: ${d.score}/100`), '',
-      'This is a preliminary assessment, not a certified diagnosis or investment-readiness determination.'
-    ].join('\n'));
-    return { ok: true };
-  }
+  // Same A4 PDF either way - "email" and "download" are two delivery routes for one document, not
+  // two different results. Emailing only a plain-text score dump was a regression: the person loses
+  // the formatted report (dimension chart, branding, reference number) the moment they choose email
+  // over download, for no reason tied to either delivery route's actual capability.
   const pdf = await buildFreeAssessmentPdf({
     id: result.id, platform: result.platform, fullName: result.fullName, email: row.email, businessName: null,
     overallScore: result.overallScore, classification: result.classification, dimensionScores: result.dimensionScores, completedAt: result.completedAt
   });
+  if (action === 'email') {
+    await sendMail(row.email, `Your free ${result.platform} Business Health result`, [
+      `Hello ${result.fullName},`, '', `Your preliminary ${result.platform} result: ${result.overallScore}/100 (${result.classification}).`,
+      '', 'The full result, with your scores by dimension, is attached as a PDF.', '',
+      'This is a preliminary assessment, not a certified diagnosis or investment-readiness determination.'
+    ].join('\n'), [{ filename: `${result.platform}-result.pdf`, content: pdf, contentType: 'application/pdf' }]);
+    return { ok: true };
+  }
   return fileResponse(`${result.platform}-result.pdf`, 'application/pdf', pdf);
 }
