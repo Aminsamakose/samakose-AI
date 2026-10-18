@@ -477,6 +477,13 @@
       "when": 1792339695823,
       "tag": "0068_programme_version",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1792339695824,
+      "tag": "0069_integration_credentials",
+      "breakpoints": true
     }
   ]
 }

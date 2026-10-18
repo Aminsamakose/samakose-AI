@@ -2,10 +2,12 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { api, ensureReference, makeUser, uniq, type Session } from './helpers';
 import { db, schema } from '@/db/client';
 import { eq, inArray } from 'drizzle-orm';
+import type { Ctx } from '@/lib/context';
 
 let admin: Session;
 const ENV_KEYS = ['ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALENDAR_REFRESH_TOKEN', 'GOOGLE_CALENDAR_ID'];
 const saved = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
+const fakeCtx = { db: db(), user: null, ip: '127.0.0.1', requestId: 'test', after: () => {} } as unknown as Ctx;
 
 beforeAll(async () => { await ensureReference(); admin = await makeUser('ADMIN'); });
 
@@ -13,6 +15,7 @@ afterEach(async () => {
   for (const k of ENV_KEYS) { if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k]; }
   vi.unstubAllGlobals();
   await db().delete(schema.rules).where(inArray(schema.rules.key, ['integrations.video.provider']));
+  await db().delete(schema.integrationCredentials).where(inArray(schema.integrationCredentials.integration, ['zoom', 'google_meet']));
 });
 
 /** A fetch stub that answers Zoom's OAuth-token and meeting-create endpoints, and nothing else. */
@@ -86,39 +89,39 @@ describe('meetings.ts: live Zoom/Google Meet creation (mocked transport)', () =>
     await setZoomEnv();
     stubZoomFetch({ joinUrl: 'https://zoom.us/j/1112223333' });
     const start = new Date(); const end = new Date(start.getTime() + 45 * 60_000);
-    const m = await createZoomMeeting({ title: 'Kickoff', startsAt: start, endsAt: end });
+    const m = await createZoomMeeting(fakeCtx, { title: 'Kickoff', startsAt: start, endsAt: end });
     expect(m.joinUrl).toBe('https://zoom.us/j/1112223333');
     expect(m.provider).toBe('zoom');
 
     stubZoomFetch({ tokenFails: true });
-    await expect(createZoomMeeting({ title: 'Kickoff', startsAt: start, endsAt: end })).rejects.toThrow(/rejected the Server-to-Server OAuth/);
+    await expect(createZoomMeeting(fakeCtx, { title: 'Kickoff', startsAt: start, endsAt: end })).rejects.toThrow(/rejected the Server-to-Server OAuth/);
   });
 
   it('createZoomMeeting refuses to fabricate a join link when Zoom accepts the token but the create call fails', async () => {
     const { createZoomMeeting } = await import('@/services/meetings');
     await setZoomEnv();
     stubZoomFetch({ createFails: true });
-    await expect(createZoomMeeting({ title: 'Kickoff', startsAt: new Date(), endsAt: new Date(Date.now() + 1800_000) })).rejects.toThrow(/could not create the meeting/);
+    await expect(createZoomMeeting(fakeCtx, { title: 'Kickoff', startsAt: new Date(), endsAt: new Date(Date.now() + 1800_000) })).rejects.toThrow(/could not create the meeting/);
   });
 
   it('createGoogleMeetEvent returns a real Meet hangoutLink and surfaces a clean error on a bad refresh token', async () => {
     const { createGoogleMeetEvent } = await import('@/services/meetings');
     await setGoogleEnv();
     stubGoogleFetch({ joinUrl: 'https://meet.google.com/xyz-abcd-efg' });
-    const m = await createGoogleMeetEvent({ title: 'Delivery session', startsAt: new Date(), endsAt: new Date(Date.now() + 3600_000) });
+    const m = await createGoogleMeetEvent(fakeCtx, { title: 'Delivery session', startsAt: new Date(), endsAt: new Date(Date.now() + 3600_000) });
     expect(m.joinUrl).toBe('https://meet.google.com/xyz-abcd-efg');
     expect(m.provider).toBe('google_meet');
 
     stubGoogleFetch({ tokenFails: true });
-    await expect(createGoogleMeetEvent({ title: 'Delivery session', startsAt: new Date(), endsAt: new Date(Date.now() + 3600_000) })).rejects.toThrow(/rejected the Calendar refresh token/);
+    await expect(createGoogleMeetEvent(fakeCtx, { title: 'Delivery session', startsAt: new Date(), endsAt: new Date(Date.now() + 3600_000) })).rejects.toThrow(/rejected the Calendar refresh token/);
   });
 
   it('neither provider is configured until every required credential is present', async () => {
     const { isVideoProviderConfigured } = await import('@/services/meetings');
-    expect(isVideoProviderConfigured('zoom')).toBe(false);
-    expect(isVideoProviderConfigured('google_meet')).toBe(false);
+    expect(await isVideoProviderConfigured(fakeCtx, 'zoom')).toBe(false);
+    expect(await isVideoProviderConfigured(fakeCtx, 'google_meet')).toBe(false);
     await setZoomEnv();
-    expect(isVideoProviderConfigured('zoom')).toBe(true);
+    expect(await isVideoProviderConfigured(fakeCtx, 'zoom')).toBe(true);
   });
 });
 

@@ -99,7 +99,7 @@ export async function createSession(ctx: Ctx, activityId: string, input: {
     const provider = await resolveVideoProvider(ctx);
     if (provider) {
       try {
-        const meeting = await createVideoMeeting(provider, { title: activity.name, description: activity.description, startsAt, endsAt });
+        const meeting = await createVideoMeeting(ctx, provider, { title: activity.name, description: activity.description, startsAt, endsAt });
         meetingUrl = meeting.joinUrl;
         metadata = { ...metadata, videoProvider: provider, externalMeetingId: meeting.externalId };
       } catch (e) {

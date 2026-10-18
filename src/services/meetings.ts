@@ -4,14 +4,15 @@
  * `test()` functions deliberately stop short of -- those only verify credentials. This module
  * makes the actual "create a meeting" API call and returns a real join link.
  *
- * Same security pattern as everywhere else in this codebase: all credentials come from
- * environment variables (src/lib/env.ts) only. Nothing here writes a secret to the database.
- * Which provider is used by default is an administrator choice, stored as a non-secret value in
- * the `rules` table via integrations.ts (RULE_KEY('video')), exposed through the admin Settings
- * screen -- never hardcoded here.
+ * Credentials are resolved by services/integration-credentials.ts, which checks the database
+ * (an administrator's own Settings-screen entry) before falling back to the matching environment
+ * variable. Which provider is used by default is a separate administrator choice, stored as a
+ * non-secret value in the `rules` table via integrations.ts (RULE_KEY('video')), exposed through
+ * the admin Settings screen -- never hardcoded here.
  */
-import { env } from '@/lib/env';
+import type { Ctx } from '@/lib/context';
 import { ApiError } from '@/lib/errors';
+import { resolveZoomCredentials, resolveGoogleCredentials } from './integration-credentials';
 
 export type VideoProvider = 'zoom' | 'google_meet';
 
@@ -33,19 +34,20 @@ async function fetchJson(url: string, init: RequestInit, timeoutMs = 15_000) {
 
 /** Server-to-Server OAuth token fetch. Reused by integrations.ts's connectivity test and here, so the
  * credential-exchange logic has exactly one implementation. */
-export async function getZoomAccessToken(): Promise<string> {
-  if (!(env.zoomAccountId && env.zoomClientId && env.zoomClientSecret)) {
-    throw new MeetingProviderError('Zoom is not configured. Set ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET in Settings.');
+export async function getZoomAccessToken(ctx: Ctx): Promise<string> {
+  const creds = await resolveZoomCredentials(ctx);
+  if (!creds) {
+    throw new MeetingProviderError('Zoom is not configured. Set the account ID, client ID and client secret in Settings -> Integrations, or ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET as environment variables.');
   }
-  const basic = Buffer.from(`${env.zoomClientId}:${env.zoomClientSecret}`).toString('base64');
-  const tok = await fetchJson(`https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${encodeURIComponent(env.zoomAccountId)}`, { method: 'POST', headers: { authorization: `Basic ${basic}` } });
+  const basic = Buffer.from(`${creds.clientId}:${creds.clientSecret}`).toString('base64');
+  const tok = await fetchJson(`https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${encodeURIComponent(creds.accountId)}`, { method: 'POST', headers: { authorization: `Basic ${basic}` } });
   const accessToken = (tok.json as { access_token?: string } | null)?.access_token;
   if (!tok.ok || !accessToken) throw new MeetingProviderError(`Zoom rejected the Server-to-Server OAuth credentials (HTTP ${tok.status}).`);
   return accessToken;
 }
 
-export async function createZoomMeeting(req: MeetingRequest): Promise<MeetingResult> {
-  const accessToken = await getZoomAccessToken();
+export async function createZoomMeeting(ctx: Ctx, req: MeetingRequest): Promise<MeetingResult> {
+  const accessToken = await getZoomAccessToken(ctx);
   const durationMinutes = Math.max(1, Math.round((req.endsAt.getTime() - req.startsAt.getTime()) / 60_000));
   const body = {
     topic: req.title.slice(0, 200),
@@ -68,8 +70,8 @@ export async function createZoomMeeting(req: MeetingRequest): Promise<MeetingRes
 }
 
 /** Updates an existing Zoom meeting's time/duration in place, keeping the same join URL and meeting ID. */
-export async function updateZoomMeeting(externalId: string, req: MeetingRequest): Promise<void> {
-  const accessToken = await getZoomAccessToken();
+export async function updateZoomMeeting(ctx: Ctx, externalId: string, req: MeetingRequest): Promise<void> {
+  const accessToken = await getZoomAccessToken(ctx);
   const durationMinutes = Math.max(1, Math.round((req.endsAt.getTime() - req.startsAt.getTime()) / 60_000));
   const body = { topic: req.title.slice(0, 200), start_time: req.startsAt.toISOString(), duration: durationMinutes, timezone: 'UTC', agenda: req.description?.slice(0, 2000) ?? undefined };
   const r = await fetchJson(`https://api.zoom.us/v2/meetings/${encodeURIComponent(externalId)}`, {
@@ -84,8 +86,8 @@ export async function updateZoomMeeting(externalId: string, req: MeetingRequest)
   if (r.status === 404) throw new MeetingProviderError('Zoom meeting no longer exists; a new meeting must be created.');
 }
 
-export async function cancelZoomMeeting(externalId: string): Promise<void> {
-  const accessToken = await getZoomAccessToken();
+export async function cancelZoomMeeting(ctx: Ctx, externalId: string): Promise<void> {
+  const accessToken = await getZoomAccessToken(ctx);
   await fetchJson(`https://api.zoom.us/v2/meetings/${encodeURIComponent(externalId)}`, { method: 'DELETE', headers: { authorization: `Bearer ${accessToken}` } });
   // Zoom returns 204/404 either way for an already-gone meeting; cancellation here is best-effort
   // and must never block the calendar-side cancellation that triggered it.
@@ -93,28 +95,37 @@ export async function cancelZoomMeeting(externalId: string): Promise<void> {
 
 /* ------------------------------- Google Meet ------------------------------- */
 
-/** Exchanges the administrator's one-time-consent refresh token for a short-lived access token. */
-export async function getGoogleCalendarAccessToken(): Promise<string> {
-  if (!(env.googleClientId && env.googleClientSecret && env.googleCalendarRefreshToken)) {
-    throw new MeetingProviderError('Google Meet is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_CALENDAR_REFRESH_TOKEN in Settings.');
+/** Exchanges the administrator's one-time-consent refresh token for a short-lived access token.
+ * Returns the calendar ID alongside it, resolved from the same credential source, so callers never
+ * resolve credentials twice (and never risk acting on a stale calendar ID if the configured value
+ * changes between two separate resolutions). */
+async function getGoogleCalendarAuth(ctx: Ctx): Promise<{ accessToken: string; calendarId: string }> {
+  const creds = await resolveGoogleCredentials(ctx);
+  if (!creds) {
+    throw new MeetingProviderError('Google Meet is not configured. Set the OAuth client ID/secret and calendar refresh token in Settings -> Integrations, or GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_CALENDAR_REFRESH_TOKEN as environment variables.');
   }
   const r = await fetchJson('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
-      refresh_token: env.googleCalendarRefreshToken,
-      client_id: env.googleClientId,
-      client_secret: env.googleClientSecret,
+      refresh_token: creds.refreshToken,
+      client_id: creds.clientId,
+      client_secret: creds.clientSecret,
     }),
   });
   const accessToken = (r.json as { access_token?: string } | null)?.access_token;
   if (!r.ok || !accessToken) throw new MeetingProviderError(`Google rejected the Calendar refresh token (HTTP ${r.status}). It may have been revoked and need re-authorizing.`);
-  return accessToken;
+  return { accessToken, calendarId: creds.calendarId };
 }
 
-export async function createGoogleMeetEvent(req: MeetingRequest): Promise<MeetingResult> {
-  const accessToken = await getGoogleCalendarAccessToken();
+/** Exposed for integrations.ts's connectivity test, which only needs the token. */
+export async function getGoogleCalendarAccessToken(ctx: Ctx): Promise<string> {
+  return (await getGoogleCalendarAuth(ctx)).accessToken;
+}
+
+export async function createGoogleMeetEvent(ctx: Ctx, req: MeetingRequest): Promise<MeetingResult> {
+  const { accessToken, calendarId: rawCalendarId } = await getGoogleCalendarAuth(ctx);
   const requestId = `samakose-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   const body = {
     summary: req.title.slice(0, 200),
@@ -123,7 +134,7 @@ export async function createGoogleMeetEvent(req: MeetingRequest): Promise<Meetin
     end: { dateTime: req.endsAt.toISOString(), timeZone: req.timezone ?? 'UTC' },
     conferenceData: { createRequest: { requestId, conferenceSolutionKey: { type: 'hangoutsMeet' } } },
   };
-  const calendarId = encodeURIComponent(env.googleCalendarId);
+  const calendarId = encodeURIComponent(rawCalendarId);
   const r = await fetchJson(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?conferenceDataVersion=1`, {
     method: 'POST',
     headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
@@ -137,9 +148,9 @@ export async function createGoogleMeetEvent(req: MeetingRequest): Promise<Meetin
 }
 
 /** Updates an existing Google Calendar event's time in place, preserving its conferenceData/Meet link. */
-export async function updateGoogleMeetEvent(externalId: string, req: MeetingRequest): Promise<void> {
-  const accessToken = await getGoogleCalendarAccessToken();
-  const calendarId = encodeURIComponent(env.googleCalendarId);
+export async function updateGoogleMeetEvent(ctx: Ctx, externalId: string, req: MeetingRequest): Promise<void> {
+  const { accessToken, calendarId: rawCalendarId } = await getGoogleCalendarAuth(ctx);
+  const calendarId = encodeURIComponent(rawCalendarId);
   const body = {
     summary: req.title.slice(0, 200),
     description: req.description ?? undefined,
@@ -155,36 +166,36 @@ export async function updateGoogleMeetEvent(externalId: string, req: MeetingRequ
   if (!r.ok) throw new MeetingProviderError(`Google Calendar could not reschedule the event (HTTP ${r.status}): ${String((r.json as { error?: { message?: string } } | null)?.error?.message ?? r.text).slice(0, 300)}`);
 }
 
-export async function cancelGoogleMeetEvent(externalId: string): Promise<void> {
-  const accessToken = await getGoogleCalendarAccessToken();
-  const calendarId = encodeURIComponent(env.googleCalendarId);
+export async function cancelGoogleMeetEvent(ctx: Ctx, externalId: string): Promise<void> {
+  const { accessToken, calendarId: rawCalendarId } = await getGoogleCalendarAuth(ctx);
+  const calendarId = encodeURIComponent(rawCalendarId);
   await fetchJson(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${encodeURIComponent(externalId)}`, { method: 'DELETE', headers: { authorization: `Bearer ${accessToken}` } });
 }
 
 /* --------------------------------- Dispatch --------------------------------- */
 
-export async function createVideoMeeting(provider: VideoProvider, req: MeetingRequest): Promise<MeetingResult> {
-  if (provider === 'zoom') return createZoomMeeting(req);
-  if (provider === 'google_meet') return createGoogleMeetEvent(req);
+export async function createVideoMeeting(ctx: Ctx, provider: VideoProvider, req: MeetingRequest): Promise<MeetingResult> {
+  if (provider === 'zoom') return createZoomMeeting(ctx, req);
+  if (provider === 'google_meet') return createGoogleMeetEvent(ctx, req);
   throw new MeetingProviderError(`Unknown video provider: ${String(provider)}`);
 }
 
-export async function cancelVideoMeeting(provider: VideoProvider, externalId: string): Promise<void> {
-  if (provider === 'zoom') return cancelZoomMeeting(externalId);
-  if (provider === 'google_meet') return cancelGoogleMeetEvent(externalId);
+export async function cancelVideoMeeting(ctx: Ctx, provider: VideoProvider, externalId: string): Promise<void> {
+  if (provider === 'zoom') return cancelZoomMeeting(ctx, externalId);
+  if (provider === 'google_meet') return cancelGoogleMeetEvent(ctx, externalId);
 }
 
 /** Reschedules an existing meeting in place (same join URL, same external ID). Throws MeetingProviderError
  * if the provider rejects it or the meeting no longer exists on the provider's side -- the caller is
  * expected to fall back to creating a fresh meeting in that case, not to leave the session unscheduled. */
-export async function updateVideoMeeting(provider: VideoProvider, externalId: string, req: MeetingRequest): Promise<void> {
-  if (provider === 'zoom') return updateZoomMeeting(externalId, req);
-  if (provider === 'google_meet') return updateGoogleMeetEvent(externalId, req);
+export async function updateVideoMeeting(ctx: Ctx, provider: VideoProvider, externalId: string, req: MeetingRequest): Promise<void> {
+  if (provider === 'zoom') return updateZoomMeeting(ctx, externalId, req);
+  if (provider === 'google_meet') return updateGoogleMeetEvent(ctx, externalId, req);
   throw new MeetingProviderError(`Unknown video provider: ${String(provider)}`);
 }
 
-export function isVideoProviderConfigured(provider: VideoProvider): boolean {
-  if (provider === 'zoom') return !!(env.zoomAccountId && env.zoomClientId && env.zoomClientSecret);
-  if (provider === 'google_meet') return !!(env.googleClientId && env.googleClientSecret && env.googleCalendarRefreshToken);
+export async function isVideoProviderConfigured(ctx: Ctx, provider: VideoProvider): Promise<boolean> {
+  if (provider === 'zoom') return !!(await resolveZoomCredentials(ctx));
+  if (provider === 'google_meet') return !!(await resolveGoogleCredentials(ctx));
   return false;
 }
