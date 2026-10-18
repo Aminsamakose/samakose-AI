@@ -46,6 +46,15 @@ export const rulesFor = (v: Pick<VersionRow, 'rules'>, global: Rules): Rules => 
  * score a real paying client's diagnostic against the free 25-question bank. SME360 was never at risk
  * of this specific collision (its paid framework is the one isDefault:true framework), but every other
  * platform was, so the filter is applied unconditionally rather than only where a collision is known.
+ *
+ * Critical: once orgType is known, the isDefault fallback below must never fire for it. AgriFood360
+ * and ESO360's paid frameworks can sit as Draft for a long time (pending Amin's own domain-expert
+ * review) while SME360's paid framework is Published -- without this guard, an AgriFood or ESO
+ * organisation's diagnostic would silently score against SME360's SME-specific question bank the
+ * moment case-unlock.ts or any other path opened a case for one of them, which is exactly the
+ * "do not silently substitute another platform's framework" failure mode. The isDefault fallback
+ * exists only for the orgType-unknown, no-case-yet preview path (diagnostics.ts's activeQuestions()
+ * with no caseId), never as a stand-in for a real but unready platform.
  */
 export async function resolveVersion(db: Db, orgType?: string | null): Promise<VersionRow> {
   if (orgType) {
@@ -54,6 +63,7 @@ export async function resolveVersion(db: Db, orgType?: string | null): Promise<V
       .where(and(eq(schema.frameworks.orgType, orgType as 'SME'), eq(schema.frameworks.isDefault, false), eq(schema.frameworks.purpose, 'full'), eq(schema.frameworkVersions.status, 'Published')))
       .orderBy(desc(schema.frameworkVersions.version)).limit(1);
     if (s) return s.v;
+    throw unprocessable(`No published Business Health framework is available yet for ${orgType} organisations`);
   }
   const [d] = await db.select({ v: schema.frameworkVersions }).from(schema.frameworkVersions)
     .innerJoin(schema.frameworks, eq(schema.frameworks.id, schema.frameworkVersions.frameworkId))

@@ -10,6 +10,15 @@
  * Once a Sent invoice exists, payment itself goes through the real, already-audited Paystack
  * pipeline in finance.ts (startPayment) exactly as any staff-invoiced payment would - owners
  * already hold `payments: [create]`, so nothing new is needed there.
+ *
+ * Product readiness (master-prompt Phase 3): a customer must not be charged for an assessment the
+ * system cannot deliver. Before this file's checkPlanReadiness existed, nothing here checked that
+ * (a) the plan is actually sold to this organisation's platform, or (b) when the plan grants
+ * full_assessment, that platform's paid framework has a Published version to score the diagnostic
+ * against. AgriFood360 and ESO360's paid frameworks can sit as Draft for a long time pending Amin's
+ * own review (see frameworks.ts's resolveVersion, which now refuses to silently substitute SME360's
+ * bank for them); without this gate, an AgriFood or ESO owner could pay in full for an assessment
+ * that would then be undeliverable, or impossible to score correctly, the moment they tried to take it.
  */
 import { and, eq, inArray } from 'drizzle-orm';
 import { schema } from '@/db/client';
@@ -19,10 +28,28 @@ import { forbidden, notFound, unprocessable } from '@/lib/errors';
 import { need, today } from './common';
 import { postLedgerEntries } from './ledger';
 import { startPayment } from './finance';
+import { resolveVersion } from './frameworks';
 
-const pl = schema.plans, con = schema.contracts, inv = schema.invoices;
+const pl = schema.plans, con = schema.contracts, inv = schema.invoices, o = schema.organisations;
 const dec = (n: number) => n.toFixed(2);
 const addDays = (d: string, n: number) => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+
+/**
+ * Blocks checkout (rather than charging for something undeliverable) when the plan is not sold to
+ * this organisation's platform, or when it grants full_assessment but that platform has no Published
+ * framework to score it against yet. Read-only: raises unprocessable() rather than returning a
+ * boolean, since every caller's correct response to a readiness failure is the same -- stop and
+ * explain, never silently proceed.
+ */
+async function checkPlanReadiness(ctx: Ctx, plan: typeof schema.plans.$inferSelect, orgType: string) {
+  const platforms = (plan.platforms ?? []) as string[];
+  if (platforms.length && !platforms.includes(orgType)) throw unprocessable('This plan is not offered for your kind of organisation.');
+  const entitlements = (plan.entitlements ?? []) as { key: string; enabled: boolean }[];
+  if (entitlements.some((e) => e.key === 'full_assessment' && e.enabled)) {
+    try { await resolveVersion(ctx.db, orgType); }
+    catch { throw unprocessable('This plan\'s full assessment is not available for your kind of organisation yet. Please check back soon or send an enquiry.'); }
+  }
+}
 
 /** Finds (or creates) the Draft contract this purchase belongs to, and the Sent invoice for its
  *  full amount, then hands off to the ordinary payment pipeline. Idempotent: calling it twice for
@@ -35,6 +62,10 @@ export async function startPlanPurchase(ctx: Ctx, planId: string) {
   const [p] = await ctx.db.select().from(pl).where(eq(pl.id, planId)).limit(1);
   if (!p || p.publicationStatus !== 'published') throw notFound('Plan not found');
   if (p.pricingModel !== 'fixed' || !p.priceConfirmed) throw unprocessable('This plan is not yet available for online purchase. Send an enquiry instead.');
+
+  const [org] = await ctx.db.select({ type: o.type }).from(o).where(eq(o.id, u.orgId)).limit(1);
+  if (!org) throw notFound('Organisation not found');
+  await checkPlanReadiness(ctx, p, org.type);
 
   let [c] = await ctx.db.select().from(con).where(and(eq(con.orgId, u.orgId), eq(con.planId, planId), eq(con.status, 'Draft'))).limit(1);
   if (!c) {

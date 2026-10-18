@@ -31,12 +31,13 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { autoAssignCoach, autoAssignReviewer } from './assignments';
+import { resolveVersion } from './frameworks';
 
 const c = schema.cases, o = schema.organisations, pl = schema.plans;
 
 export type UnlockReason =
   | 'no_plan' | 'plan_not_found' | 'plan_has_no_full_assessment' | 'plan_not_for_platform'
-  | 'org_not_found' | 'org_consent_missing';
+  | 'org_not_found' | 'org_consent_missing' | 'framework_not_ready';
 export type UnlockResult =
   | { unlocked: true; caseId: string; caseCode: string; created: boolean }
   | { unlocked: false; reason: UnlockReason };
@@ -58,6 +59,13 @@ export async function unlockAssessmentForPurchase(ctx: Ctx, b: { orgId: string; 
   if (!org) return { unlocked: false, reason: 'org_not_found' };
   const platforms = (plan.platforms ?? []) as string[];
   if (platforms.length && !platforms.includes(org.type)) return { unlocked: false, reason: 'plan_not_for_platform' };
+
+  // Defense in depth: plan-purchases.ts's checkPlanReadiness already refuses checkout for a platform
+  // with no Published framework, but settlement can land well after checkout (Paystack redirect,
+  // webhook delay, reconciliation retry) -- re-check now so a framework unpublished in between never
+  // produces a false "your assessment is ready" notification or a case nobody can actually diagnose.
+  try { await resolveVersion(ctx.db, org.type); }
+  catch { return { unlocked: false, reason: 'framework_not_ready' }; }
 
   const [existing] = await ctx.db.select({ id: c.id, code: c.code }).from(c)
     .where(and(eq(c.orgId, b.orgId), sql`${c.status} <> 'GRADUATED'`)).limit(1);

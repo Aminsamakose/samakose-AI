@@ -57,8 +57,16 @@ export async function login(email: string, password = PASSWORD): Promise<Session
   return { cookie, userId: r.data.user.id, email, role: r.data.user.role };
 }
 
-export async function makeOrg(admin: Session, region = 'Northern') {
-  const r = await api(admin).post('/organisations', { name: `Org ${uniq()}`, type: 'AGRIFOOD', sector: 'Grains', region, district: 'Tamale', consent: true, consentBy: 'Test Owner' });
+/**
+ * Generic test organisation for case/evidence/team/diagnostic plumbing that doesn't care which
+ * platform it runs under. Defaults to type 'SME': SME360 is the only paid ('full') framework with a
+ * Published version (AgriFood360 and ESO360's are Draft, pending Amin's own review), and
+ * frameworks.ts's resolveVersion() now correctly refuses to silently substitute SME360's bank for an
+ * org of a different type that has no Published framework of its own. A test that specifically needs
+ * an AgriFood or ESO organisation passes type explicitly via the /organisations API instead.
+ */
+export async function makeOrg(admin: Session, region = 'Northern', type: 'SME' | 'AGRIFOOD' | 'ESO' = 'SME') {
+  const r = await api(admin).post('/organisations', { name: `Org ${uniq()}`, type, sector: type === 'AGRIFOOD' ? 'Grains' : type === 'ESO' ? 'Accelerator' : 'Retail', region, district: 'Tamale', consent: true, consentBy: 'Test Owner' });
   if (r.status !== 201) throw new Error('org ' + r.text);
   return r.data as { id: string; code: string };
 }
