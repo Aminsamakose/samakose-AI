@@ -1,6 +1,6 @@
 import {
   pgTable, pgSequence, pgEnum, uuid, text, integer, numeric, boolean, timestamp, date, jsonb, bigserial, bigint,
-  index, uniqueIndex, primaryKey
+  index, uniqueIndex, primaryKey, check
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -337,6 +337,8 @@ export const evidence = pgTable('evidence', {
   createdAt: created(), updatedAt: updated()
 }, (t) => [index('ev_case_idx').on(t.caseId)]);
 
+export const HEALTH_SCORE_PHASES = ['BASELINE', 'MIDLINE', 'ENDLINE', 'OTHER'] as const;
+export type HealthScorePhase = (typeof HEALTH_SCORE_PHASES)[number];
 export const healthScores = pgTable('health_scores', {
   id: id(),
   diagnosticId: uuid('diagnostic_id').notNull().references(() => diagnostics.id),
@@ -351,8 +353,15 @@ export const healthScores = pgTable('health_scores', {
   frameworkVersionId: uuid('framework_version_id').references((): any => frameworkVersions.id),
   /** Sub-dimension scores, readiness levels, risks and priorities for banks that define them. Null for version 1 scoring. */
   extras: jsonb('extras').$type<Record<string, unknown>>(),
+  /** BASELINE/MIDLINE/ENDLINE/OTHER -- set once at scoring time from the case's lifecycle state
+   *  (computeScore in diagnostics.ts), not inferred positionally from run number. The first score a
+   *  case ever gets is always BASELINE; a score taken while the case sits in MIDLINE or ENDLINE
+   *  carries that label; anything else (a re-diagnostic during ordinary MONITORING, say) is OTHER.
+   *  Funder reporting can then ask for "the baseline score" and "the endline score" directly instead
+   *  of guessing from run=1/run=latest, which breaks the moment a round is skipped or repeated. */
+  phase: text('phase').notNull().default('OTHER'),
   createdAt: created()
-}, (t) => [index('score_case_idx').on(t.caseId)]);
+}, (t) => [index('score_case_idx').on(t.caseId), check('score_phase_ck', sql`${t.phase} in ('BASELINE','MIDLINE','ENDLINE','OTHER')`)]);
 
 /* ------------------- diagnosis, prescription, delivery ---------------- */
 export const aiRequests = pgTable('ai_requests', {
