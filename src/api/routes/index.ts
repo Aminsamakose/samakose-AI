@@ -14,4 +14,5 @@ import './programme-calendar';
 import './provider-assignments';
 import './library';
 import './outcome-verification';
+import './programme-expenditure';
 export { routes } from '../framework';
