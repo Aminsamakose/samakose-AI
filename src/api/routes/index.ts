@@ -15,4 +15,5 @@ import './provider-assignments';
 import './library';
 import './outcome-verification';
 import './programme-expenditure';
+import './programme-version';
 export { routes } from '../framework';
