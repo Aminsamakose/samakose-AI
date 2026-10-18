@@ -1266,7 +1266,14 @@ export const freeAssessmentResults = pgTable('free_assessment_results', {
     classification: string;
     dimensionScores: { dimension: string; score: number }[];
     completedAt: string;
-  }>()
+  }>(),
+  /**
+   * The organisation this free-assessment respondent later registered as, matched by normalised email
+   * (see match_public_assessments_to_organisations() in migration 0070). Supports #127's convergent-validity
+   * check: comparing this row's classification against the matched organisation's own full diagnostic.
+   * Left null on an ambiguous match (more than one organisation shares the email) rather than guessed at.
+   */
+  matchedOrgId: uuid('matched_org_id').references(() => organisations.id)
 }, (t) => [
   uniqueIndex('free_assessment_results_email_platform_uq').on(sql`lower(btrim(${t.email}))`, t.platform)
 ]);

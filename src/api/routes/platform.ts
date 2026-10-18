@@ -27,6 +27,7 @@ import * as inq from '@/services/inquiries';
 import * as fa from '@/services/publicAssessments';
 import * as rc from '@/services/registration-config';
 import * as planPurchases from '@/services/plan-purchases';
+import * as avalid from '@/services/assessment-validity';
 import { PLAN_SERVICE_TIERS, PLAN_PLATFORMS, PLAN_ENTITLEMENTS } from '@/domain/plan-catalog';
 import { getJob } from '@/domain/jobs';
 import { need } from '@/services/common';
@@ -148,6 +149,8 @@ defineRoute({ method: 'GET', path: '/audit', tag: AD, summary: 'Audit log', perm
 defineRoute({ method: 'GET', path: '/events', tag: AD, summary: 'Event stream', permission: ['audit', 'read'], query: listQuery.extend({ type: z.string().optional() }), handler: ({ ctx, query }) => adm.listEvents(ctx, query) });
 defineRoute({ method: 'GET', path: '/settings/rules', tag: AD, summary: 'Scoring and workflow rules', permission: ['settings', 'read'], handler: ({ ctx }) => adm.getRules(ctx) });
 defineRoute({ method: 'GET', path: '/settings/switches', tag: AD, summary: 'Workflow and registration switches', permission: ['settings', 'read'], handler: ({ ctx }) => sw.listSwitches(ctx) });
+defineRoute({ method: 'GET', path: '/settings/frameworks/convergent-validity', tag: AD, summary: "#127/#128: every free assessment result matched to the organisation that later took the paid diagnostic, with both sides' scores, for validating the free assessment's classification bands", permission: ['frameworks', 'read'], handler: ({ ctx }) => avalid.convergentValidityPairs(ctx) });
+defineRoute({ method: 'POST', path: '/settings/frameworks/convergent-validity/match', tag: AD, summary: '#128: (re)run the email match between free assessment results and organisations. Idempotent; only fills in rows not already matched', permission: ['frameworks', 'edit'], body: z.object({}).optional(), handler: ({ ctx }) => avalid.matchPublicAssessmentsToOrganisations(ctx) });
 defineRoute({ method: 'GET', path: '/insights/snapshot', tag: AD, summary: 'Read-only aggregate snapshot of the platform (case counts, overdue invoices, pending approvals, revenue this month)', permission: ['insights', 'read'], handler: () => ins.snapshot() });
 defineRoute({ method: 'POST', path: '/insights/ask', tag: AD, summary: 'Ask the Management Insights Assistant a question. Answers come from aggregate figures only - never an individual case, client or personal record', permission: ['insights', 'read'],
   rateLimit: { key: 'insights:ip:{ip}', limit: 20, windowSec: 900 },
