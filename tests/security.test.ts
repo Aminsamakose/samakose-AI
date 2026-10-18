@@ -12,6 +12,10 @@ const NIL = '00000000-0000-4000-8000-000000000000';
 const fill = (p: string) => p.replace(/:reference/g, 'nothing').replace(/:[a-zA-Z]+/g, NIL);
 // The route allows the role, but the service narrows it further by design (documented in ARCHITECTURE.md).
 const NARROWED = new Set(['POST /organisations/:id/opportunities/:opportunityId/suggest:OWNER', 'GET /referrals:OWNER', 'GET /unlock/summary:OWNER', 'PATCH /practitioners/:id:EXPERT', 'POST /practitioners/:id/submit:EXPERT', 'POST /practitioners/:id/submit:ADMIN', 'GET /practitioners/:id/conflicts:EXPERT', 'GET /practitioners/:id/performance:EXPERT', 'GET /practitioners/:id/performance:PROGRAMME_MANAGER', 'POST /invoices/:id/manual-payment:OWNER', 'POST /payments/:reference/mock-complete:OWNER', 'POST /kpis/:id/readings:OWNER', 'POST /programme-workspaces/:id/configurations/:version/approve:PROGRAMME_MANAGER', 'POST /cohorts/:id/configurations/:version/approve:PROGRAMME_MANAGER', 'POST /cohorts/:id/configurations/:version/reject:PROGRAMME_MANAGER',
+  // Programme version approval is restricted to ADMIN/EXECUTIVE in assertApprover (services/programme-version.ts);
+  // PROGRAMME_MANAGER and FUNDER have the 'programmes'/'read' permission the route is gated on, but not this narrower role check.
+  'POST /programmes/:id/versions/:version/approve:PROGRAMME_MANAGER', 'POST /programmes/:id/versions/:version/approve:FUNDER',
+  'POST /programmes/:id/versions/:version/reject:PROGRAMME_MANAGER', 'POST /programmes/:id/versions/:version/reject:FUNDER',
   // An expert's 'cases'/'assign' grant exists only to let a coach staff their own case (isCaseCoach() in
   // assignments.ts), and caseloadOf/transferCaseload stay administrator/programme-manager only.
   'POST /cases/:id/assign:EXPERT', 'GET /practitioners/:id/caseload:EXPERT', 'DELETE /cases/:id/specialists/:userId:EXPERT']);
