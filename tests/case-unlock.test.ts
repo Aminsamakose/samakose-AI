@@ -13,7 +13,12 @@ let finance: Session, admin: Session;
 beforeAll(async () => { await ensureReference(); finance = await makeUser('FINANCE'); admin = await makeUser('ADMIN'); });
 
 async function publishedPlan(o: Record<string, unknown> = {}) {
-  const c = await api(finance).post('/plans', { name: `Plan ${uniq()}`, audience: 'Owners', serviceTier: 'growth', entitlements: [{ key: 'full_assessment', enabled: true }], priceGhs: 500, intervalMonths: 12, ...o });
+  // serviceTier is deliberately omitted (left null): pricing.test.ts asserts on specific tiers
+  // such as 'growth' via loadForTest()'s public pricing card, which does a plain find() by tier --
+  // a same-tier plan created here while that file's tests run in a parallel worker would collide
+  // with its lookup. This plan only needs to be published and priceConfirmed for startPlanPurchase;
+  // it has no need to appear correctly tiered on the public pricing page.
+  const c = await api(finance).post('/plans', { name: `Plan ${uniq()}`, audience: 'Owners', entitlements: [{ key: 'full_assessment', enabled: true }], priceGhs: 500, intervalMonths: 12, ...o });
   expect(c.status).toBe(201);
   const r = await api(finance).patch(`/plans/${c.data.id}`, { publicationStatus: 'published', priceConfirmed: true });
   expect(r.status).toBe(200);
