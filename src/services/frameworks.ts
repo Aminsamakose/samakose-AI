@@ -46,6 +46,17 @@ export const rulesFor = (v: Pick<VersionRow, 'rules'>, global: Rules): Rules => 
  * score a real paying client's diagnostic against the free 25-question bank. SME360 was never at risk
  * of this specific collision (its paid framework is the one isDefault:true framework), but every other
  * platform was, so the filter is applied unconditionally rather than only where a collision is known.
+ *
+ * Critical: once orgType is known, the isDefault framework must only be used as a fallback for its
+ * OWN orgType, never substituted for a genuinely different platform. SME360 is itself the one
+ * isDefault:true framework, so a lookup for orgType 'SME' legitimately lands on it via this same
+ * fallback query (there is no second, isDefault:false SME framework to find first) -- that is not a
+ * substitution, it is SME360 serving its own organisations. What must never happen is an AgriFood or
+ * ESO lookup silently receiving SME360's framework just because AgriFood360/ESO360's own paid
+ * frameworks are still Draft (pending Amin's own domain-expert review): that would be exactly the
+ * "do not silently substitute another platform's framework" failure mode, so the fallback is only
+ * accepted when its own orgType matches the one requested, or when no orgType was given at all
+ * (the orgType-unknown, no-case-yet preview path -- diagnostics.ts's activeQuestions() with no caseId).
  */
 export async function resolveVersion(db: Db, orgType?: string | null): Promise<VersionRow> {
   if (orgType) {
@@ -55,11 +66,12 @@ export async function resolveVersion(db: Db, orgType?: string | null): Promise<V
       .orderBy(desc(schema.frameworkVersions.version)).limit(1);
     if (s) return s.v;
   }
-  const [d] = await db.select({ v: schema.frameworkVersions }).from(schema.frameworkVersions)
+  const [d] = await db.select({ v: schema.frameworkVersions, orgType: schema.frameworks.orgType }).from(schema.frameworkVersions)
     .innerJoin(schema.frameworks, eq(schema.frameworks.id, schema.frameworkVersions.frameworkId))
     .where(and(eq(schema.frameworks.isDefault, true), eq(schema.frameworks.purpose, 'full'), eq(schema.frameworkVersions.status, 'Published')))
     .orderBy(desc(schema.frameworkVersions.version)).limit(1);
   if (!d) throw unprocessable('No published Business Health framework is available');
+  if (orgType && d.orgType && d.orgType !== orgType) throw unprocessable(`No published Business Health framework is available yet for ${orgType} organisations`);
   return d.v;
 }
 

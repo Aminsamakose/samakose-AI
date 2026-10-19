@@ -1,12 +1,26 @@
 /** The case lifecycle through the real UI: open case, diagnose, score, AI drafts, four-eyes approval, actions. */
 import { check, launch, login, problems, tally } from './lib';
 import type { Page } from 'playwright-core';
+import pg from 'pg';
 
 const seen = async (page: Page, text: string | RegExp, ms = 20000) => page.getByText(text).first().waitFor({ timeout: ms }).then(() => true).catch(() => false);
 const dialogConfirm = async (page: Page) => { const d = page.locator('dialog[open]'); if (await d.waitFor({ timeout: 4000 }).then(() => true).catch(() => false)) await d.locator('.btn.primary, .btn.danger').last().click(); };
 const tab = async (page: Page, name: string) => { await page.getByRole('tab', { name }).click(); await page.waitForLoadState('networkidle').catch(() => {}); };
 
 (async () => {
+  // A fresh SME organisation, created the same way network.ts creates its own test org: the seeded
+  // demo organisation (Bagabaga Shea Cooperative) is AgriFood-typed, and AgriFood360's paid framework
+  // is genuinely still Draft pending Amin's own review -- resolveVersion() now correctly refuses to
+  // silently substitute SME360's question bank for it (frameworks.ts). This lifecycle walkthrough is
+  // about the case/diagnostic/review/action machinery, not about which platform is being diagnosed, so
+  // it runs against SME360, the one platform guaranteed to have a Published full framework.
+  const db = new pg.Client({ connectionString: process.env.DATABASE_URL ?? 'postgres://postgres@localhost:5433/samakose_dev' });
+  await db.connect();
+  const orgName = `Lifecycle Test SME ${Date.now()}`;
+  await db.query("insert into organisations (name,type,sector,region,district,size,contact_name,contact_email,consent_at,consent_by,created_by) select $1,'SME','Services','Northern','Tamale','11-50','Test Owner','owner@demo.samakose.test',now(),'Test Owner',(select id from users where email='admin@demo.samakose.test')", [orgName]);
+  const orgId = (await db.query('select id from organisations where name=$1', [orgName])).rows[0].id as string;
+  await db.end();
+
   const b = await launch();
   const { page } = await login(b, 'consultant@demo.samakose.test');
   console.log('Administrator opens a case and assigns the lead expert');
@@ -15,7 +29,7 @@ const tab = async (page: Page, name: string) => { await page.getByRole('tab', { 
   // admin hand-off and then continue the lifecycle as the assigned expert.
   const { page: ap } = await login(b, 'admin@demo.samakose.test');
   await ap.goto('/cases/new');
-  await ap.getByLabel('Organisation *').selectOption({ index: 1 });
+  await ap.getByLabel('Organisation *').selectOption({ value: orgId });
   await ap.getByRole('button', { name: 'Open case' }).click();
   await ap.waitForURL(/\/cases\/[0-9a-f-]{36}/);
 

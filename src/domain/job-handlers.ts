@@ -17,6 +17,7 @@ import { mockBrief, mockDiagnosis, mockPrescription, mockReport, type BriefConte
 import { koboPull } from '@/services/kobo';
 import { runScout } from '@/services/scout';
 import { questionsOf, versionForRow } from '@/services/frameworks';
+import { unlockAssessmentForPurchase } from '@/services/case-unlock';
 
 async function fail(caseId: string | null, requestedBy: string | null, what: string, e: unknown) {
   await tx(async (t) => {
@@ -214,6 +215,45 @@ registerJob('invoice_scan', async () => {
     const ended = await t.update(schema.contracts).set({ status: 'Expired', updatedAt: new Date() }).where(and(eq(schema.contracts.status, 'Active'), sql`${schema.contracts.endDate} < current_date`)).returning({ id: schema.contracts.id });
     for (const c of ended) await audit(ctx, 'contract.expired', 'contract', c.id, { status: 'Active' }, { status: 'Expired', reason: 'End date passed' });
     return { overdue: upd.length, expiringAlerts: alerts, expired: ended.length };
+  });
+});
+
+/**
+ * Reconciliation for interrupted fulfilment. settle() (finance.ts) already calls
+ * unlockAssessmentForPurchase in a try/catch so a bug there can never undo or retry the payment
+ * itself -- but a try/catch only runs if settle() actually finishes reaching it. A process crash
+ * between the payment/invoice writes and that line, a webhook that never arrives after Paystack's
+ * redirect already confirmed success to the owner, or a framework that was Draft at settlement time
+ * and has since been Published, all leave a Paid invoice with no case to show for it and nothing that
+ * will ever retry on its own. unlockAssessmentForPurchase is safe to call any number of times: it is
+ * idempotent (reuses any existing non-GRADUATED case rather than opening a second one) and never
+ * touches the payment or invoice records, so a retry here can never double-charge or double-unlock.
+ * Scoped to the last 30 days so a purchase that is permanently out of scope (wrong platform, no
+ * full_assessment entitlement) is not re-attempted forever once its window has passed; a human
+ * reviewing finance.ts's own 'case.unlock_failed' audit trail can still unlock an older one by hand.
+ */
+registerJob('fulfilment_reconciliation_scan', async () => {
+  return tx(async (t) => {
+    const ctx = systemCtx(t, 'scan');
+    const rows = await t.select({ invoiceId: schema.invoices.id, invoiceCode: schema.invoices.code, orgId: schema.invoices.orgId, contractId: schema.invoices.contractId, planId: schema.contracts.planId })
+      .from(schema.invoices)
+      .innerJoin(schema.contracts, eq(schema.contracts.id, schema.invoices.contractId))
+      .where(and(
+        eq(schema.invoices.status, 'Paid'),
+        sql`${schema.invoices.paidAt} > now() - interval '30 days'`,
+        sql`not exists (select 1 from cases where cases.org_id = ${schema.invoices.orgId} and cases.status <> 'GRADUATED')`
+      ));
+    let reconciled = 0, stillBlocked = 0;
+    for (const i of rows) {
+      if (!i.planId) continue;
+      const unlock = await unlockAssessmentForPurchase(ctx, { orgId: i.orgId, planId: i.planId, invoiceId: i.invoiceId });
+      if (!unlock.unlocked) { stillBlocked++; continue; }
+      reconciled++;
+      await audit(ctx, 'case.reconciled_after_interrupted_fulfilment', 'case', unlock.caseId, undefined, { invoiceId: i.invoiceId, invoiceCode: i.invoiceCode });
+      const owners = await t.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.orgId, i.orgId), eq(schema.users.role, 'OWNER')));
+      await notifyUsers(ctx, owners.map((x) => x.id), { kind: 'PaymentReceipt', title: 'Your assessment is ready', body: `Case ${unlock.caseCode} is open. You can start your purchased assessment now.`, link: '/diagnostics', email: true });
+    }
+    return { reconciled, stillBlocked };
   });
 });
 
