@@ -266,6 +266,11 @@ export async function markPayable(ctx: Ctx, id: string) {
   return { ok: true };
 }
 
+export async function listPayoutHolds(ctx: Ctx, payoutId: string) {
+  allow(ctx, 'payouts', 'read');
+  return ctx.db.select().from(ph).where(eq(ph.payoutId, payoutId)).orderBy(ph.createdAt);
+}
+
 /** A human-created hold (AI may flag a candidate but never creates one itself) blocks Payable -> Payment initiated only. */
 export async function createPayoutHold(ctx: Ctx, payoutId: string, reason: string) {
   allow(ctx, 'payouts', 'edit');

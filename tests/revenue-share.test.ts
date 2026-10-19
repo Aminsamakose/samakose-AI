@@ -127,7 +127,15 @@ describe('professional payout lifecycle', () => {
 
     const hold = (await api(finance).post(`/payouts/${payoutId}/hold`, { reason: 'Awaiting a signed delivery note' })).data;
     expect((await api(finance).post(`/payouts/${payoutId}/initiate`, { payoutMethod: 'bank' })).status).toBe(409); // blocked by the open hold
+
+    const holdsBefore = await api(finance).get(`/payouts/${payoutId}/holds`);
+    expect(holdsBefore.status).toBe(200);
+    expect(holdsBefore.data.find((h: any) => h.id === hold.id)?.resolvedAt).toBeFalsy();
+
     expect((await api(finance).post(`/payout-holds/${hold.id}/resolve`, { resolutionNote: 'Received' })).status).toBe(200);
+
+    const holdsAfter = await api(finance).get(`/payouts/${payoutId}/holds`);
+    expect(holdsAfter.data.find((h: any) => h.id === hold.id)?.resolvedAt).toBeTruthy();
     expect((await api(finance).post(`/payouts/${payoutId}/initiate`, { payoutMethod: 'bank' })).status).toBe(200);
     expect((await api(finance).post(`/payouts/${payoutId}/paid`, { paymentReference: `PAY-${uniq()}` })).status).toBe(200);
     expect((await api(finance).post(`/payouts/${payoutId}/reconcile`, {})).status).toBe(200);
