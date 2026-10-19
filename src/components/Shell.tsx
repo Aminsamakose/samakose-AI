@@ -32,27 +32,33 @@ const GROUPS: Group[] = [
     { icon: 'programmes', href: '/admin/opportunities', label: 'Opportunities', need: ['opportunities', 'create'] },
     { icon: 'programmes', href: '/programmes', label: 'Programmes', need: ['programmes', 'read'] }
   ] },
-  { title: 'Finance', items: [
+  { title: 'Billing', items: [
     { icon: 'invoices', href: '/finance/invoices', label: 'Invoices', need: ['invoices', 'read'] },
     { icon: 'payments', href: '/finance/payments', label: 'Payments', need: ['payments', 'read'] },
     { icon: 'contracts', href: '/finance/contracts', label: 'Contracts', need: ['contracts', 'read'] },
     { icon: 'plans', href: '/finance/plans', label: 'Plans', need: ['plans', 'read'] },
-    { icon: 'discounts', href: '/finance/discounts', label: 'Discounts & promos', need: ['discounts', 'read'] },
+    { icon: 'discounts', href: '/finance/discounts', label: 'Discounts & promos', need: ['discounts', 'read'] }
+  ] },
+  { title: 'Payouts & compliance', items: [
     { icon: 'payouts', href: '/finance/payouts', label: 'Payouts', need: ['payouts', 'read'] },
     { icon: 'refunds', href: '/finance/refunds', label: 'Refunds', need: ['refunds', 'read'] },
     { icon: 'chargebacks', href: '/finance/chargebacks', label: 'Chargebacks', need: ['refunds', 'read'] },
     { icon: 'tax_rules', href: '/finance/tax-rules', label: 'Tax rules', need: ['tax_rules', 'read'] }
   ] },
-  { title: 'Administration', items: [
+  { title: 'People & access', items: [
     { icon: 'dashboard', href: '/admin', label: 'Command Centre', need: ['users', 'create'] },
     { icon: 'users', href: '/admin/users', label: 'Users', need: ['users', 'create'] },
     { icon: 'users', href: '/admin/practitioners', label: 'Experts and coaches', need: ['practitioners', 'approve'] },
-    { icon: 'users', href: '/admin/registrations', label: 'Pending approvals', need: ['users', 'edit'] },
-    { icon: 'system', href: '/admin/agents', label: 'AI workforce', need: ['agents', 'read'] },
-    { icon: 'settings', href: '/admin/registration', label: 'Registration settings', need: ['consent', 'read'] },
+    { icon: 'users', href: '/admin/registrations', label: 'Pending approvals', need: ['users', 'edit'] }
+  ] },
+  { title: 'Content', items: [
     { icon: 'inbox', href: '/admin/website', label: 'Website', need: ['content', 'read'] },
     { icon: 'inbox', href: '/admin/library', label: 'Resource Library', need: ['library_resources', 'read'] },
-    { icon: 'inbox', href: '/admin/feedback', label: 'Feedback', need: ['feedback', 'read'] },
+    { icon: 'inbox', href: '/admin/feedback', label: 'Feedback', need: ['feedback', 'read'] }
+  ] },
+  { title: 'Platform', items: [
+    { icon: 'system', href: '/admin/agents', label: 'AI workforce', need: ['agents', 'read'] },
+    { icon: 'settings', href: '/admin/registration', label: 'Registration settings', need: ['consent', 'read'] },
     { icon: 'audit', href: '/admin/audit', label: 'Audit trail', need: ['audit', 'read'] },
     { icon: 'settings', href: '/admin/settings', label: 'Settings', need: ['settings', 'read'] },
     { icon: 'system', href: '/admin/system', label: 'System', need: ['integrations', 'read'] }
