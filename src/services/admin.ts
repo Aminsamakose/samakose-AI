@@ -1,4 +1,5 @@
 import { agentsSummary } from './agents';
+import { schemaStatus } from '@/db/schema-status';
 import { and, asc, desc, eq, gte, lte, sql } from 'drizzle-orm';
 import { storage as fileStorage } from '@/lib/storage';
 import { db, schema } from '@/db/client';
@@ -156,7 +157,8 @@ export async function retryJob(ctx: Ctx, id: string) {
 export async function health() {
   const t0 = Date.now();
   await db().execute(sql`select 1`);
-  return { ok: true, db: 'up', latencyMs: Date.now() - t0 };
+  const schema = await schemaStatus();
+  return { ok: schema.ok, db: 'up', latencyMs: Date.now() - t0, schema };
 }
 
 /* ------------------------------ notifications -------------------------- */
