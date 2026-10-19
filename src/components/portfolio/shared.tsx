@@ -35,3 +35,20 @@ export function UserSelect({ id, name, value, onChange, invalid, describedBy }: 
     {st.error && <span className="err" role="alert">{st.error}</span>}
   </div>;
 }
+
+export type OrgRow = { id: string; name: string; code: string };
+/** Searchable organisation picker backed by GET /organisations. */
+export function OrgSelect({ id, name, value, onChange, invalid, describedBy }: { id: string; name: string; value: string; onChange: (v: string) => void; invalid?: boolean; describedBy?: string }) {
+  const [q, setQ] = useState(''); const [dq, setDq] = useState('');
+  useEffect(() => { const t = setTimeout(() => setDq(q), 300); return () => clearTimeout(t); }, [q]);
+  const st = useApi<{ items: OrgRow[] }>('/organisations' + qs({ q: dq, pageSize: 50, sort: 'name', dir: 'asc' }));
+  const items = st.data?.items ?? [];
+  return <div className="stack" style={{ gap: 6 }}>
+    <input type="search" aria-label="Search organisations" placeholder="Search organisations" value={q} onChange={(e) => setQ(e.target.value)} />
+    <select id={id} name={name} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid ? true : undefined} aria-describedby={describedBy}>
+      <option value="">{st.loading && !st.data ? 'Loading organisations' : items.length ? 'Choose an organisation' : 'No organisations found'}</option>
+      {items.map((o) => <option key={o.id} value={o.id}>{o.name} ({o.code})</option>)}
+    </select>
+    {st.error && <span className="err" role="alert">{st.error}</span>}
+  </div>;
+}

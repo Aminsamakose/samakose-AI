@@ -88,9 +88,9 @@ function WorkspaceDetail({ ws, canManage, onReload }: { ws: Workspace; canManage
   const [rejectingVersion, setRejectingVersion] = useState<number | null>(null);
   const [busyVersion, setBusyVersion] = useState<number | null>(null);
 
-  const members = useApi<{ items: Member[] }>(`/programme-workspaces/${ws.id}/members`);
+  const members = useApi<Member[]>(`/programme-workspaces/${ws.id}/members`);
   const entitlements = useApi<Entitlements>(`/programme-workspaces/${ws.id}/team-entitlements`);
-  const configs = useApi<{ items: ConfigVersion[] }>(`/programme-workspaces/${ws.id}/configurations`);
+  const configs = useApi<ConfigVersion[]>(`/programme-workspaces/${ws.id}/configurations`);
 
   const runAction = async (version: number, action: 'submit' | 'approve' | 'revise', body?: unknown) => {
     setBusyVersion(version);
@@ -122,9 +122,9 @@ function WorkspaceDetail({ ws, canManage, onReload }: { ws: Workspace; canManage
 
     <Card title="Team" actions={canManage && !addingMember ? <Button size="sm" onClick={() => setAddingMember(true)}>Add member</Button> : undefined}>
       {addingMember && <AddMemberForm workspaceId={ws.id} onDone={() => { setAddingMember(false); members.reload(); entitlements.reload(); }} onCancel={() => setAddingMember(false)} />}
-      <Async state={members}>{(m) => m.items.length === 0 ? <Empty title="No team members yet" /> :
+      <Async state={members}>{(m) => m.length === 0 ? <Empty title="No team members yet" /> :
         <div className="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Joined</th>{canManage && <th><span className="sr">Actions</span></th>}</tr></thead><tbody>
-          {m.items.map((mem) => <tr key={`${mem.userId}-${mem.role}`}>
+          {m.map((mem) => <tr key={`${mem.userId}-${mem.role}`}>
             <td>{mem.name}<div className="muted small">{mem.email}</div></td><td>{mem.role}</td>
             <td><Badge tone={mem.active ? 'ok' : ''}>{mem.active ? 'Active' : 'Inactive'}</Badge></td>
             <td>{new Date(mem.joinedAt).toLocaleDateString()}</td>
@@ -149,9 +149,9 @@ function WorkspaceDetail({ ws, canManage, onReload }: { ws: Workspace; canManage
     <Card title="Configuration versions" actions={canManage && !draftingConfig ? <Button size="sm" onClick={() => setDraftingConfig('new')}>New draft</Button> : undefined}>
       {draftingConfig === 'new' && <ConfigurationDraftForm workspaceId={ws.id} onDone={() => { setDraftingConfig(false); configs.reload(); onReload(); }} onCancel={() => setDraftingConfig(false)} />}
       {draftingConfig && draftingConfig !== 'new' && <ConfigurationDraftForm workspaceId={ws.id} initial={draftingConfig} onDone={() => { setDraftingConfig(false); configs.reload(); onReload(); }} onCancel={() => setDraftingConfig(false)} />}
-      <Async state={configs}>{(c) => c.items.length === 0 ? <Empty title="No configuration drafts yet" /> :
+      <Async state={configs}>{(c) => c.length === 0 ? <Empty title="No configuration drafts yet" /> :
         <div className="table-wrap"><table><thead><tr><th>Version</th><th>Status</th><th>Change reason</th><th>Updated</th>{canManage && <th><span className="sr">Actions</span></th>}</tr></thead><tbody>
-          {c.items.map((cv) => <tr key={cv.id}>
+          {c.map((cv) => <tr key={cv.id}>
             <td>v{cv.version}</td><td><Badge tone={CONFIG_TONE[cv.status] ?? ''}>{cv.status}</Badge></td>
             <td className="small">{cv.status === 'REJECTED' && cv.rejectionReason ? cv.rejectionReason : cv.changeReason ?? '-'}</td>
             <td>{new Date(cv.updatedAt).toLocaleDateString()}</td>
