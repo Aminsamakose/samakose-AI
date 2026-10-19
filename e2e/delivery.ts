@@ -1,6 +1,7 @@
 /** Delivery through the UI: KPI reading, coaching session, report draft and reviewer release. Runs after journey.ts. */
 import { check, launch, login, problems, tally } from './lib';
 import type { Page } from 'playwright-core';
+import pg from 'pg';
 const dialogConfirm = async (page: Page) => { const d = page.locator('dialog[open]'); if (await d.waitFor({ timeout: 4000 }).then(() => true).catch(() => false)) await d.locator('.btn.primary, .btn.danger').last().click(); };
 const seen = (page: Page, t: string | RegExp, ms = 15000) => page.getByText(t).first().waitFor({ timeout: ms }).then(() => true).catch(() => false);
 
@@ -41,6 +42,16 @@ const seen = (page: Page, t: string | RegExp, ms = 15000) => page.getByText(t).f
   await rp.goto(rurl); await rp.waitForLoadState('networkidle');
   await rp.getByRole('button', { name: /Release/i }).first().click(); await dialogConfirm(rp);
   check(await seen(rp, /Released/i, 10000), 'reviewer released the report');
+  // The seeded demo owner (owner@demo.samakose.test) belongs to the seeded demo organisation, which is
+  // no longer necessarily the org this delivery check is running against -- journey.ts now opens its
+  // own fresh organisation for its lifecycle walkthrough (see journey.ts's own comment on why: SME360
+  // is the one platform guaranteed to have a Published full framework). Reassign that demo owner to
+  // the in-execution case's actual org for this one check, rather than assuming they already match.
+  const caseId = caseUrl.match(/\/cases\/([0-9a-f-]{36})/)![1];
+  const db = new pg.Client({ connectionString: process.env.DATABASE_URL ?? 'postgres://postgres@localhost:5433/samakose_dev' });
+  await db.connect();
+  await db.query("update users set org_id = (select org_id from cases where id = $1) where email = 'owner@demo.samakose.test'", [caseId]);
+  await db.end();
   const { page: op } = await login(b, 'owner@demo.samakose.test');
   await op.goto('/my-case'); await op.waitForLoadState('networkidle');
   check(await op.getByText(/RPT-|report/i).first().isVisible().catch(() => false), 'owner sees the released report');
