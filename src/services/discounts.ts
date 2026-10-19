@@ -48,6 +48,10 @@ export async function approveDiscountRule(ctx: Ctx, id: string) {
 }
 
 /* ----------------------------- campaigns ------------------------------- */
+export async function listPromoCampaigns(ctx: Ctx) {
+  allow(ctx, 'discounts', 'read');
+  return ctx.db.select().from(pcamp).orderBy(pcamp.createdAt);
+}
 export async function createPromoCampaign(ctx: Ctx, b: { name: string; discountRuleId: string; startDate?: string | null; endDate?: string | null }) {
   allow(ctx, 'discounts', 'create');
   const [rule] = await ctx.db.select().from(dr).where(eq(dr.id, b.discountRuleId)).limit(1);
@@ -59,6 +63,17 @@ export async function createPromoCampaign(ctx: Ctx, b: { name: string; discountR
 }
 
 /* ------------------------------- codes --------------------------------- */
+export async function listPromoCodes(ctx: Ctx, campaignId?: string) {
+  allow(ctx, 'discounts', 'read');
+  const rows = campaignId
+    ? await ctx.db.select().from(pcode).where(eq(pcode.campaignId, campaignId)).orderBy(pcode.createdAt)
+    : await ctx.db.select().from(pcode).orderBy(pcode.createdAt);
+  const withCounts = await Promise.all(rows.map(async (r) => {
+    const [{ n }] = await ctx.db.select({ n: countOf }).from(pred).where(eq(pred.promoCodeId, r.id));
+    return { ...r, redemptions: Number(n) };
+  }));
+  return withCounts;
+}
 /** The code itself is always generated here, never taken from the caller - it must stay unguessable. */
 export async function createPromoCode(ctx: Ctx, b: { campaignId: string; prefix?: string; maxRedemptions?: number | null; perCustomerLimit?: number | null; minPurchaseGhs?: number | null; maxDiscountGhs?: number | null; expiresAt?: string | null }) {
   allow(ctx, 'discounts', 'create');

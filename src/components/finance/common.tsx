@@ -4,7 +4,7 @@ import { api, ApiFail, qs } from '@/lib/client/api';
 import { useApi } from '@/components/ui';
 
 export type Perms = Record<string, string[] | undefined>;
-export type Me = { user: { role: string; email: string; name: string }; permissions: Perms };
+export type Me = { user: { id: string; role: string; email: string; name: string }; permissions: Perms };
 
 /** Current user and what they may do. `can(resource, action)` is false until loaded. */
 export function useMe() {
