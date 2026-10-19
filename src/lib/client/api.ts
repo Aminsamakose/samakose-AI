@@ -16,6 +16,8 @@ async function call<T>(method: string, path: string, body?: unknown, signal?: Ab
   try { json = await res.json(); } catch { /* no body */ }
   if (!res.ok) {
     const e = json?.error;
+    // Vercel rejects oversized bodies with a plain-text 413 before the app can answer.
+    if (res.status === 413 && !e) throw new ApiFail(413, 'payload_too_large', 'That file is too large to upload. Choose a smaller file (4 MB or less).');
     if (typeof window !== 'undefined') {
       if (res.status === 401 && !path.startsWith('/auth/login') && !window.location.pathname.match(/^\/(login|forgot|reset|accept)/)) window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
       if (e?.code && GATES[e.code] && window.location.pathname !== GATES[e.code]) window.location.href = GATES[e.code];

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { api, errText, qs, dateFmt } from '@/lib/client/api';
+import { MEDIA_MAX_BYTES, MEDIA_MAX_MB } from '@/lib/upload-limits';
 import { Async, Badge, Button, Card, ConfirmButton, Empty, Field, FormError, Modal, useApi, useToast } from '@/components/ui';
 import type { useMe } from '@/components/admin/common';
 
@@ -39,12 +40,16 @@ export function MediaLibrary({ me }: { me: Me }) {
 function UploadForm({ categories, onDone }: { categories: string[]; onDone: () => void }) {
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null); const [fe, setFe] = useState<Record<string, string>>({});
   return <form className="stack" noValidate onSubmit={async (e) => {
-    e.preventDefault(); setBusy(true); setErr(null); setFe({});
-    try { await api.upload('/admin/media', new FormData(e.currentTarget)); onDone(); }
+    e.preventDefault(); setErr(null); setFe({});
+    const fd = new FormData(e.currentTarget);
+    const f = fd.get('file');
+    if (f instanceof File && f.size > MEDIA_MAX_BYTES) { setFe({ file: `This file is ${kb(f.size)}. Files can be at most ${MEDIA_MAX_MB} MB. Compress or resize it and try again.` }); return; }
+    setBusy(true);
+    try { await api.upload('/admin/media', fd); onDone(); }
     catch (x: any) { setFe(x?.fields ?? {}); setErr(errText(x)); } finally { setBusy(false); }
   }}>
     <FormError message={err} />
-    <Field label="File" name="file" required hint="PNG, JPG, WebP or PDF, up to 8 MB." error={fe.file}>{(p) => <input {...p} type="file" accept=".png,.jpg,.jpeg,.webp,.pdf" />}</Field>
+    <Field label="File" name="file" required hint={`PNG, JPG, WebP or PDF, up to ${MEDIA_MAX_MB} MB.`} error={fe.file}>{(p) => <input {...p} type="file" accept=".png,.jpg,.jpeg,.webp,.pdf" />}</Field>
     <Field label="Name" name="name" hint="Leave empty to use the file name.">{(p) => <input {...p} maxLength={120} />}</Field>
     <Field label="Description for screen readers" name="altText" hint="Required for images. Say what the picture shows." error={fe.altText}>{(p) => <input {...p} maxLength={200} />}</Field>
     <Field label="Category" name="category" error={fe.category}>{(p) => <select {...p} defaultValue="Image">{categories.map((c) => <option key={c}>{c}</option>)}</select>}</Field>

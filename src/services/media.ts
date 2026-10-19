@@ -5,6 +5,7 @@ import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { sha256 } from '@/lib/crypto';
 import { env } from '@/lib/env';
+import { MEDIA_MAX_BYTES, MEDIA_MAX_MB } from '@/lib/upload-limits';
 import { storage } from '@/lib/storage';
 import { fieldError, notFound, unprocessable } from '@/lib/errors';
 import { allow, need } from './common';
@@ -33,7 +34,7 @@ export async function uploadMedia(ctx: Ctx, form: FormData) {
   allow(ctx, 'media', 'create');
   const file = form.get('file');
   if (!(file instanceof File) || !file.size) throw fieldError({ file: 'Choose a file to upload' });
-  if (file.size > Math.min(env.maxUploadBytes, 8 * 1048576)) throw fieldError({ file: 'Files can be at most 8 MB' });
+  if (file.size > Math.min(env.maxUploadBytes, MEDIA_MAX_BYTES)) throw fieldError({ file: `Files can be at most ${MEDIA_MAX_MB} MB` });
   const filename = safeName(file.name);
   const type = TYPES[filename.split('.').pop()?.toLowerCase() ?? ''];
   if (!type) throw fieldError({ file: 'Use a PNG, JPG, WebP or PDF file' });
