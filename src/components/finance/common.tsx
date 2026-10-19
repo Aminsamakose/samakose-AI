@@ -45,6 +45,23 @@ export function OrgSelect({ id, name, value, onChange, invalid, describedBy }: {
   </div>;
 }
 
+export type PaymentRow = { id: string; code: string; invoice: string; org: string; amountGhs: string; status: string };
+/** Searchable picker for a succeeded payment, backed by GET /payments. Used to pick the payment a refund or chargeback is against. */
+export function PaymentSelect({ id, name, value, onChange, invalid, describedBy, status }: { id: string; name: string; value: string; onChange: (v: string) => void; invalid?: boolean; describedBy?: string; status?: string }) {
+  const [q, setQ] = useState(''); const [dq, setDq] = useState('');
+  useEffect(() => { const t = setTimeout(() => setDq(q), 300); return () => clearTimeout(t); }, [q]);
+  const st = useApi<{ items: PaymentRow[] }>('/payments' + qs({ q: dq, status, pageSize: 50, sort: 'created', dir: 'desc' }));
+  const items = st.data?.items ?? [];
+  return <div className="stack" style={{ gap: 6 }}>
+    <input type="search" aria-label="Search payments" placeholder="Search by payment code, reference or invoice" value={q} onChange={(e) => setQ(e.target.value)} />
+    <select id={id} name={name} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid ? true : undefined} aria-describedby={describedBy}>
+      <option value="">{st.loading && !st.data ? 'Loading payments' : items.length ? 'Choose a payment' : 'No payments found'}</option>
+      {items.map((p) => <option key={p.id} value={p.id}>{p.code} — {p.org} — GHS {Number(p.amountGhs).toFixed(2)} ({p.invoice})</option>)}
+    </select>
+    {st.error && <span className="err" role="alert">{st.error}</span>}
+  </div>;
+}
+
 /** Status filter select for list toolbars. */
 export function StatusFilter({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
   return <div className="row" style={{ gap: 6 }}>
