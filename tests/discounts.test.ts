@@ -83,4 +83,27 @@ describe('discounts & promo codes', () => {
     const inv = (await api(finance).post('/invoices', { orgId, amountGhs: 100, dueDate: '2099-01-01' })).data;
     expect((await api(finance).post(`/invoices/${inv.id}/apply-promo`, { code: code.code, customerId: finance.userId })).status).toBe(400);
   });
+
+  it('lists promo campaigns and promo codes with a running redemption count', async () => {
+    const { campaign, code } = await approvedPercentCampaign(10);
+    const campaigns = await api(finance).get('/promo-campaigns');
+    expect(campaigns.status).toBe(200);
+    expect(campaigns.data.find((c: any) => c.id === campaign.id)).toBeTruthy();
+
+    const codesBefore = await api(finance).get(`/promo-codes?campaignId=${campaign.id}`);
+    expect(codesBefore.status).toBe(200);
+    const before = codesBefore.data.find((c: any) => c.id === code.id);
+    expect(before.redemptions).toBe(0);
+
+    const inv = (await api(finance).post('/invoices', { orgId, amountGhs: 500, dueDate: '2099-01-01' })).data;
+    expect((await api(finance).post(`/invoices/${inv.id}/apply-promo`, { code: code.code, customerId: owner.userId })).status).toBe(200);
+
+    const codesAfter = await api(finance).get(`/promo-codes?campaignId=${campaign.id}`);
+    const after = codesAfter.data.find((c: any) => c.id === code.id);
+    expect(after.redemptions).toBe(1);
+
+    const allCodes = await api(finance).get('/promo-codes');
+    expect(allCodes.status).toBe(200);
+    expect(allCodes.data.find((c: any) => c.id === code.id)).toBeTruthy();
+  });
 });

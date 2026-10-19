@@ -36,7 +36,8 @@ const GROUPS: Group[] = [
     { icon: 'invoices', href: '/finance/invoices', label: 'Invoices', need: ['invoices', 'read'] },
     { icon: 'payments', href: '/finance/payments', label: 'Payments', need: ['payments', 'read'] },
     { icon: 'contracts', href: '/finance/contracts', label: 'Contracts', need: ['contracts', 'read'] },
-    { icon: 'plans', href: '/finance/plans', label: 'Plans', need: ['plans', 'read'] }
+    { icon: 'plans', href: '/finance/plans', label: 'Plans', need: ['plans', 'read'] },
+    { icon: 'discounts', href: '/finance/discounts', label: 'Discounts & promos', need: ['discounts', 'read'] }
   ] },
   { title: 'Administration', items: [
     { icon: 'dashboard', href: '/admin', label: 'Command Centre', need: ['users', 'create'] },
