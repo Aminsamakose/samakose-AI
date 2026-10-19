@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
-import { api, ensureReference, makeUser, uniq, type Session } from './helpers';
+import { api, drain, ensureReference, makeUser, uniq, type Session } from './helpers';
 
 /**
  * The missing link between a verified paid-plan purchase and actual assessment access:
@@ -152,5 +152,66 @@ describe('product readiness: checkout is blocked for an assessment the system ca
     const { owner } = await ownerWithOrg('ESO');
     const r = await api(owner).post(`/plans/${planId}/purchase`, {});
     expect(r.status).toBe(200);
+  });
+});
+
+describe('reconciliation: fulfilment_reconciliation_scan heals a payment that settled but never unlocked', () => {
+  /**
+   * Builds the DB state settle() would have left behind had the process died (or the webhook never
+   * arrived) after marking the invoice Paid but before reaching its own try/catch around
+   * unlockAssessmentForPurchase (finance.ts) -- a Paid invoice, on a contract carrying a
+   * full_assessment plan, with no case for the org. Constructed directly rather than through
+   * payViaMock/settle(), which would unlock immediately and defeat the point of the test.
+   */
+  async function paidInvoiceWithNoCase(orgId: string, planId: string) {
+    const [contract] = await db().insert(schema.contracts).values({ orgId, planId, status: 'Active', amountGhs: '500.00' }).returning({ id: schema.contracts.id });
+    const [invoice] = await db().insert(schema.invoices).values({ contractId: contract.id, orgId, amountGhs: '500.00', status: 'Paid', dueDate: new Date().toISOString().slice(0, 10), paidAt: new Date() }).returning({ id: schema.invoices.id, code: schema.invoices.code });
+    return invoice;
+  }
+
+  it('opens the case on the next scan, and never again once a human has reviewed the case', async () => {
+    const planId = await publishedPlan();
+    const { org, owner } = await ownerWithOrg('SME');
+    const invoice = await paidInvoiceWithNoCase(org.id, planId);
+    const before = await db().select().from(schema.cases).where(eq(schema.cases.orgId, org.id));
+    expect(before).toHaveLength(0);
+
+    await db().insert(schema.jobs).values({ kind: 'fulfilment_reconciliation_scan' });
+    await drain();
+
+    const after = await db().select().from(schema.cases).where(eq(schema.cases.orgId, org.id));
+    expect(after).toHaveLength(1);
+    expect(after[0].status).toBe('PROFILED');
+    const mine = await api(owner).get(`/cases/${after[0].id}`);
+    expect(mine.status).toBe(200);
+
+    // Idempotent: a second scan with the case already open must never open (or touch) a second one.
+    await db().insert(schema.jobs).values({ kind: 'fulfilment_reconciliation_scan' });
+    await drain();
+    const stillOne = await db().select().from(schema.cases).where(eq(schema.cases.orgId, org.id));
+    expect(stillOne).toHaveLength(1);
+    expect(stillOne[0].id).toBe(after[0].id);
+    void invoice;
+  });
+
+  it('reflects live framework readiness for a platform other than SME360, without crashing the scan', async () => {
+    // Live-checked rather than assumed, for the same reason as the checkout-readiness test above:
+    // frameworks.test.ts's own purpose-filter test (#133) may have published a throwaway AGRIFOOD
+    // framework in the one shared test database this run uses, depending on file execution order.
+    const [row] = await db().select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions)
+      .innerJoin(schema.frameworks, eq(schema.frameworks.id, schema.frameworkVersions.frameworkId))
+      .where(and(eq(schema.frameworks.orgType, 'AGRIFOOD'), eq(schema.frameworks.purpose, 'full'), eq(schema.frameworkVersions.status, 'Published')))
+      .limit(1);
+    const ready = !!row;
+
+    const planId = await publishedPlan();
+    const { org } = await ownerWithOrg('AGRIFOOD');
+    await paidInvoiceWithNoCase(org.id, planId);
+
+    await db().insert(schema.jobs).values({ kind: 'fulfilment_reconciliation_scan' });
+    await drain();
+
+    const cases = await db().select().from(schema.cases).where(eq(schema.cases.orgId, org.id));
+    expect(cases).toHaveLength(ready ? 1 : 0); // never silently substituted for SME360's bank either way
   });
 });
