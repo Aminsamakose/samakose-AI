@@ -8,6 +8,7 @@ import { CohortForm, ProgrammeForm, type Cohort, type Programme } from '@/compon
 import { IndicatorsPanel } from '@/components/portfolio/IndicatorsPanel';
 import { BudgetPanel } from '@/components/portfolio/BudgetPanel';
 import { ProgrammeDashboard } from '@/components/portfolio/ProgrammeDashboard';
+import { WorkspacePanel } from '@/components/portfolio/WorkspacePanel';
 import { usePerms, useTitle } from '@/components/portfolio/shared';
 
 type Detail = Programme & { cohorts: Cohort[] };
@@ -28,6 +29,7 @@ export default function ProgrammePage() {
     ...(can('cases', 'read') ? [{ id: 'cases', label: 'Cases' }] : []),
     ...(can('dashboard', 'read') && !funder ? [{ id: 'targets', label: 'Targets' }] : []),
     ...(can('dashboard', 'read') ? [{ id: 'budget', label: 'Budget' }] : []),
+    ...(can('programme_workspaces', 'read') ? [{ id: 'workspace', label: 'Workspace' }] : []),
     ...(can('dashboard', 'read') ? [{ id: 'dashboard', label: 'Dashboard' }] : [])
   ];
   useEffect(() => { if (ready && tab === null) setTab(funder ? 'dashboard' : 'overview'); }, [ready, tab, funder]);
@@ -60,6 +62,7 @@ export default function ProgrammePage() {
       {active === 'cases' && <Card title="Cases in this programme"><DataTable<CaseRow> endpoint="/cases" params={{ programmeId: id }} columns={caseCols} rowHref={(r) => `/cases/${r.id}`} exportable={can('cases', 'export')} refreshKey={caseKey} placeholder="Search case or organisation" empty={{ title: 'No cases in this programme yet', hint: 'Open a case from an organisation and assign it to this programme.' }} /></Card>}
       {active === 'budget' && <BudgetPanel programmeId={id} canEdit={can('programmes', 'edit') && !closed} />}
       {active === 'targets' && <IndicatorsPanel programmeId={id} canEdit={can('programmes', 'edit') && !closed} />}
+      {active === 'workspace' && <WorkspacePanel programmeId={id} />}
       {active === 'dashboard' && <ProgrammeDashboard id={id} canExport={can('dashboard', 'export')} />}
       </div>
       <Modal open={cohortModal !== null} onClose={() => setCohortModal(null)} title={cohortModal === 'new' ? 'Add cohort' : 'Edit cohort'}>
