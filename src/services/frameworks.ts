@@ -15,6 +15,7 @@ import { parseCondition } from '@/domain/bank';
 import { can } from '@/lib/rbac';
 import { allow, need } from './common';
 import eso360BankV1 from '../../docs/frameworks/drafts/eso360-bank-v1-loadable.json';
+import agriFood360BankV1 from '../../docs/frameworks/drafts/agrifood360-bank-v1-loadable.json';
 
 export type VersionRow = typeof schema.frameworkVersions.$inferSelect;
 type Db = Ctx['db'];
@@ -778,6 +779,36 @@ export async function ensureEso360FullAssessmentDraft(db: Db) {
   if (haveAny) return;
 
   const bank = eso360BankV1 as unknown as {
+    questions: FrameworkQuestion[]; dimensions: string[]; rules: Record<string, string | number> | null;
+    sources: FrameworkSource[]; meta: FrameworkMeta; note: string;
+  };
+  validateContent({ questions: bank.questions, dimensions: bank.dimensions, rules: bank.rules, meta: bank.meta });
+  const [draft] = await db.insert(schema.frameworkVersions).values({
+    frameworkId: f.id, version: 1, status: 'Draft', questions: bank.questions, dimensions: bank.dimensions,
+    rules: bank.rules, meta: bank.meta, sources: bank.sources, note: bank.note, createdBy: null
+  }).onConflictDoNothing().returning();
+  if (!draft) return;
+  await syncStructuredDraft(db, draft);
+}
+
+/**
+ * AgriFood360's full (paid) 100-question draft was authored and evidenced alongside ESO360's
+ * (see docs/frameworks/drafts/agrifood360-bank-v1-loadable.json, -draft-v1.json and
+ * -evidence-trail.json), but unlike ESO360 it was never actually loaded into the database: the
+ * AGRIFOOD360 framework row (seeded by migration 0011) has had zero versions since, Draft or
+ * otherwise. In the admin Frameworks panel this renders as "No versions yet" for AgriFood360 --
+ * there was nothing for Amin to see or review, which is the gap this closes. Mirrors
+ * ensureEso360FullAssessmentDraft exactly: loads the already-authored content as a single Draft
+ * version, never Published, so Amin can review and sign it off in the admin panel himself.
+ */
+export async function ensureAgriFood360FullAssessmentDraft(db: Db) {
+  const [f] = await db.select().from(schema.frameworks).where(eq(schema.frameworks.code, 'AGRIFOOD360')).limit(1);
+  if (!f) return; // Seeded by migration 0011; absent only on an incompletely migrated database.
+  const [haveAny] = await db.select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions)
+    .where(eq(schema.frameworkVersions.frameworkId, f.id)).limit(1);
+  if (haveAny) return;
+
+  const bank = agriFood360BankV1 as unknown as {
     questions: FrameworkQuestion[]; dimensions: string[]; rules: Record<string, string | number> | null;
     sources: FrameworkSource[]; meta: FrameworkMeta; note: string;
   };

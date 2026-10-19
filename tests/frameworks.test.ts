@@ -55,6 +55,20 @@ describe('framework versions', () => {
     expect(details.meta?.subDimensions?.length).toBeGreaterThan(0);
   });
 
+  it('lands the AgriFood360 bank as a Draft version 1 of the paid AgriFood360 framework, pending Amin\'s review', async () => {
+    const list = await frameworks();
+    const agri = list.find((f) => f.code === 'AGRIFOOD360');
+    expect(agri.versions).toHaveLength(1);
+    const v = agri.versions[0];
+    expect(v.status).toBe('Draft');
+    expect(v.version).toBe(1);
+    const details = (await api(admin).get(`/settings/frameworks/versions/${v.id}`)).data;
+    expect(details.questions).toHaveLength(100);
+    expect(details.dimensions).toHaveLength(8);
+    expect(details.sources.length).toBeGreaterThan(0);
+    expect(details.meta?.subDimensions?.length).toBeGreaterThan(0);
+  });
+
   it('lets only an administrator approve, and others at most read', async () => {
     expect((await api(pm).get('/settings/frameworks')).status).toBe(200);
     expect((await api(pm).post('/settings/frameworks/SME360/versions', { fromBank: true })).status).toBe(403);
@@ -71,6 +85,12 @@ describe('framework versions', () => {
   });
 
   it('will not publish a specialised framework until every source is approved', async () => {
+    // AGRIFOOD360 now ships with a seeded Draft version (ensureAgriFood360FullAssessmentDraft, mirroring
+    // ESO360 -- see this file's first test), and createDraft refuses a second open draft on the same
+    // framework. Discard the seeded one first so this test keeps exercising its own actual subject: the
+    // publish-time evidence-trail gate, not whatever happens to be seeded.
+    const seeded = (await frameworks()).find((f) => f.code === 'AGRIFOOD360').versions.find((v: any) => v.status === 'Draft');
+    if (seeded) expect((await api(admin).del(`/settings/frameworks/versions/${seeded.id}`)).status).toBe(200);
     const qs = [{ code: 'AG01', dimension: 'Production', text: 'Do you record yields each season?', weight: 3 }];
     const bad = await api(admin).post('/settings/frameworks/AGRIFOOD360/versions', { questions: qs, dimensions: ['Production'] });
     expect(bad.status).toBe(201);
