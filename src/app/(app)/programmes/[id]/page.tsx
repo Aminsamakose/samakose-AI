@@ -11,6 +11,7 @@ import { ProgrammeDashboard } from '@/components/portfolio/ProgrammeDashboard';
 import { WorkspacePanel } from '@/components/portfolio/WorkspacePanel';
 import { ParticipantsPanel } from '@/components/portfolio/ParticipantsPanel';
 import { ProvidersPanel } from '@/components/portfolio/ProvidersPanel';
+import { DeliveryPanel } from '@/components/portfolio/DeliveryPanel';
 import { usePerms, useTitle } from '@/components/portfolio/shared';
 
 type Detail = Programme & { cohorts: Cohort[] };
@@ -31,7 +32,7 @@ export default function ProgrammePage() {
     ...(can('cases', 'read') ? [{ id: 'cases', label: 'Cases' }] : []),
     ...(can('dashboard', 'read') && !funder ? [{ id: 'targets', label: 'Targets' }] : []),
     ...(can('dashboard', 'read') ? [{ id: 'budget', label: 'Budget' }] : []),
-    ...(can('programme_workspaces', 'read') ? [{ id: 'workspace', label: 'Workspace' }, { id: 'participants', label: 'Participants' }, { id: 'providers', label: 'Providers' }] : []),
+    ...(can('programme_workspaces', 'read') ? [{ id: 'workspace', label: 'Workspace' }, { id: 'participants', label: 'Participants' }, { id: 'providers', label: 'Providers' }, { id: 'delivery', label: 'Delivery' }] : []),
     ...(can('dashboard', 'read') ? [{ id: 'dashboard', label: 'Dashboard' }] : [])
   ];
   useEffect(() => { if (ready && tab === null) setTab(funder ? 'dashboard' : 'overview'); }, [ready, tab, funder]);
@@ -67,6 +68,7 @@ export default function ProgrammePage() {
       {active === 'workspace' && <WorkspacePanel programmeId={id} />}
       {active === 'participants' && <ParticipantsPanel programmeId={id} cohorts={p.cohorts} />}
       {active === 'providers' && <ProvidersPanel programmeId={id} cohorts={p.cohorts} />}
+      {active === 'delivery' && <DeliveryPanel programmeId={id} cohorts={p.cohorts} />}
       {active === 'dashboard' && <ProgrammeDashboard id={id} canExport={can('dashboard', 'export')} />}
       </div>
       <Modal open={cohortModal !== null} onClose={() => setCohortModal(null)} title={cohortModal === 'new' ? 'Add cohort' : 'Edit cohort'}>

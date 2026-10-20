@@ -67,7 +67,7 @@ function AddPersonForm({ workspaceId, participantId, onDone, onCancel }: { works
   </form>;
 }
 
-function OrgNameCell({ organisationId }: { organisationId: string }) {
+export function OrgNameCell({ organisationId }: { organisationId: string }) {
   const org = useApi<{ name: string; code: string }>(`/organisations/${organisationId}`);
   return <>{org.loading && !org.data ? '…' : org.data ? `${org.data.name} (${org.data.code})` : organisationId}</>;
 }
