@@ -267,7 +267,7 @@ function Form({ caseId, questions, role, docs, canUpload, onDocsChanged, stateOk
             {a.value !== '' && !a.na && q.anchors[Number(a.value)] && <p className="small" style={{ margin: '6px 0 0' }}><strong>{a.value}:</strong> {q.anchors[Number(a.value)]}</p>}
             <details className="small muted" style={{ marginTop: 4 }}><summary>What each rating means</summary>
               <ol start={0} style={{ margin: '4px 0 0', paddingLeft: 22 }}>{q.anchors.map((t, i) => t ? <li key={i} value={i}>{t}</li> : null)}</ol></details></>}
-          {q.evidence && <p className="small muted" style={{ margin: '6px 0 0' }}><strong>Evidence to look for ({q.evidence.method}):</strong> {q.evidence.requirement}{q.evidence.examples?.length ? ` For example: ${q.evidence.examples.join('; ')}.` : ''}</p>}
+          {a.value !== '' && !a.na && q.evidence && <p className="small muted" style={{ margin: '6px 0 0' }}><strong>Evidence to look for ({q.evidence.method}):</strong> {q.evidence.requirement}{q.evidence.examples?.length ? ` For example: ${q.evidence.examples.join('; ')}.` : ''}</p>}
           {a.value !== '' && !a.na && <div className="form-grid" style={{ marginTop: 8 }}>
             <div className="field"><label htmlFor={`ev-${q.code}`}>Evidence type for {q.code}</label>
               <select id={`ev-${q.code}`} value={a.evidence} onChange={(e) => patch(q.code, { evidence: e.target.value, ref: '' })}>{classes.map((c) => <option key={c}>{c}</option>)}</select></div>
