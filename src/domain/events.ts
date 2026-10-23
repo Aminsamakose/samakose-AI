@@ -1,7 +1,7 @@
 /**
- * The event bus. One catalogue of 27 events (design: event bus).
+ * The event bus. One catalogue of 29 events (design: event bus).
  * An event is written in the caller's transaction, then its handler creates notifications.
- * State changes are audited instead of being events, so the catalogue stays at 27.
+ * State changes are audited instead of being events, so the catalogue stays closed.
  */
 import { and, eq, inArray } from 'drizzle-orm';
 import { schema } from '@/db/client';
@@ -13,7 +13,7 @@ export const EVENT_TYPES = [
   'PrescriptionGenerated', 'PrescriptionApproved', 'InterventionAssigned', 'ActionCreated', 'ActionCompleted', 'ActionOverdue',
   'KPIUpdated', 'CoachingCompleted', 'CoachingMissed', 'OpportunityMatched', 'PaymentReceived', 'PaymentFailed', 'SystemError',
   'DocumentUploaded', 'ProgrammeMilestoneReached', 'ProgrammeDeadlineApproaching', 'ContractExpiring', 'ClientInactive',
-  'HealthDeclined', 'HealthImproved', 'ProgrammeCompleted'
+  'HealthDeclined', 'HealthImproved', 'ProgrammeCompleted', 'CertificateExpiringSoon', 'CertificateExpired'
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
