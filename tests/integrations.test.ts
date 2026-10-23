@@ -292,6 +292,11 @@ describe('documents', () => {
     expect((await upload(owner, 'x.html', '<script>1</script>')).status).toBe(400);
     expect((await call('POST', '/documents', { cookie: owner.cookie, body: {} })).status).toBe(400);
   });
+  it('#92: rejects a PDF carrying embedded JavaScript, even though its magic bytes and extension are fine', async () => {
+    const r = await upload(owner, 'invoice.pdf', '%PDF-1.4\n1 0 obj << /OpenAction 2 0 R /JavaScript 3 0 R >> endobj');
+    expect(r.status).toBe(400);
+    expect(r.error.details.file).toMatch(/JavaScript|auto-launch|embedded file/i);
+  });
   it('sanitises hostile file names', async () => {
     const up = await upload(owner, '../../etc/passwd.pdf', '%PDF-1.4 x');
     expect(up.data.filename).toBe('passwd.pdf');
