@@ -12,12 +12,12 @@ import { Avatar } from '@/components/Avatar';
 import { Icon, type IconName } from './Icon';
 import { FeedbackLauncher } from './FeedbackLauncher';
 
-type Item = { icon: IconName; href: string; label: string; need?: [Resource, any]; roles?: Role[]; badge?: 'notifications' };
+type Item = { icon: IconName; href: string; label: string; need?: [Resource, any]; roles?: Role[]; badge?: 'notifications' | 'messages' };
 type Group = { title: string; items: Item[] };
 const GROUPS: Group[] = [
   { title: 'Work', items: [
     { icon: 'dashboard', href: '/dashboard', label: 'Dashboard', need: ['dashboard', 'read'] },
-    { icon: 'cases', href: '/cases', label: 'Cases', need: ['cases', 'read'] },
+    { icon: 'cases', href: '/cases', label: 'Cases', need: ['cases', 'read'], badge: 'messages' },
     { icon: 'business', href: '/my-case', label: 'My business', roles: ['OWNER'] },
     { icon: 'users', href: '/team', label: 'My team', need: ['team', 'read'] },
     { icon: 'actions', href: '/answer', label: 'My questions', roles: ['OWNER', 'RESPONDENT'] },
@@ -68,6 +68,9 @@ const GROUPS: Group[] = [
 export function Shell({ user, children }: { user: { name: string; role: Role; email: string; photoUrl?: string | null }; children: ReactNode }) {
   const path = usePathname(); const router = useRouter(); const [open, setOpen] = useState(false);
   const notes = useApi<{ unread: number }>('/notifications?pageSize=1');
+  // Gated statically on the role's permission table (never a runtime check), so this call is never made for a role that cannot read messages.
+  const canReadMessages = can(user.role, 'messages', 'read');
+  const msgs = useApi<{ unread: number }>(canReadMessages ? '/messages/unread' : null);
   const groups = GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => (i.roles ? i.roles.includes(user.role) : i.need ? can(user.role, i.need[0], i.need[1]) : true)) })).filter((g) => g.items.length);
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => { const h = (e: KeyboardEvent) => { const t = e.target as HTMLElement; if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(t.tagName) && !t.isContentEditable) { e.preventDefault(); searchRef.current?.focus(); } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
@@ -79,7 +82,7 @@ export function Shell({ user, children }: { user: { name: string; role: Role; em
       {open && <div className="scrim" onClick={() => setOpen(false)} />}
       <nav className={`nav ${open ? 'open' : ''}`} aria-label="Main">
         <div className="brand"><b>Business Doctor</b><span>by Samakose</span></div>
-        {groups.map((g) => <div key={g.title}><h4>{g.title}</h4>{g.items.map((i) => <Link key={i.href} className="item" href={i.href} aria-current={current(i.href) ? 'page' : undefined} onClick={() => setOpen(false)}><Icon name={i.icon} />{i.label}</Link>)}</div>)}
+        {groups.map((g) => <div key={g.title}><h4>{g.title}</h4>{g.items.map((i) => <Link key={i.href} className="item" href={i.href} aria-current={current(i.href) ? 'page' : undefined} onClick={() => setOpen(false)}><Icon name={i.icon} />{i.label}{i.badge === 'messages' && !!msgs.data?.unread && <span className="badge-n" aria-label={`${msgs.data.unread} unread messages`}>{msgs.data.unread}</span>}</Link>)}</div>)}
         <Link className="site-link" href="/">Back to the public website</Link>
       </nav>
       <div className="main">
