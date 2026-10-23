@@ -15,6 +15,7 @@ import { allow, need } from './common';
 import { computeScore } from './diagnostics';
 import { advanceCase, latestDiagnostic } from './common';
 import type { EvidenceClass } from '@/db/schema';
+import { extractDocument } from '@/lib/document-extract';
 
 const ev = schema.evidence;
 
@@ -126,6 +127,12 @@ export async function storeDocument(ctx: Ctx, form: FormData, orgId: string, cas
   const [row] = await ctx.db.insert(schema.documents).values({ orgId, caseId, filename: name, mime: type.mime, size: buf.length, sha256: sha256(buf), storageKey: key, uploadedBy: u.id }).returning({ id: schema.documents.id, code: schema.documents.code, filename: schema.documents.filename, size: schema.documents.size });
   await audit(ctx, 'document.uploaded', 'document', row.id, undefined, { filename: name, size: buf.length, sha256: sha256(buf) }, caseId);
   if (caseId) await emitEvent(ctx, 'DocumentUploaded', { caseId, payload: { filename: name } });
+  // First-pass classification/extraction, sitting in Pending until a human reviews it (services/document-intelligence.ts).
+  // Nothing here touches a score -- it only becomes evidence once accepted.
+  const extraction = extractDocument(name, ext, buf);
+  await ctx.db.insert(schema.documentExtractions).values({
+    documentId: row.id, caseId, orgId, kind: extraction.kind, extractedText: extraction.extractedText, facts: extraction.facts
+  });
   return row;
 }
 

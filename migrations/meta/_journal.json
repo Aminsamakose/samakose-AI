@@ -8,6 +8,13 @@
       "when": 1792791383081,
       "tag": "0000_baseline_squash",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792797410966,
+      "tag": "0001_document_extractions",
+      "breakpoints": true
     }
   ]
 }

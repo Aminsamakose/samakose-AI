@@ -119,7 +119,7 @@ export async function archiveOrg(ctx: Ctx, id: string) {
 /* ---------------------------- registry: duplicates, merge, unarchive ---------------------------- */
 
 /** Tables whose rows follow the business when two records are merged. */
-export const MOVES_ON_MERGE = ['area_assignments', 'assessment_rounds', 'cases', 'contracts', 'documents', 'feedback', 'invoices', 'opportunity_referrals', 'org_members', 'practitioner_conflicts', 'registration_answers', 'users'] as const;
+export const MOVES_ON_MERGE = ['area_assignments', 'assessment_rounds', 'cases', 'contracts', 'document_extractions', 'documents', 'feedback', 'invoices', 'opportunity_referrals', 'org_members', 'practitioner_conflicts', 'registration_answers', 'users'] as const;
 /** Append-only history. These rows keep the organisation they were written for, and the archived record points to the survivor through merged_into. */
 export const STAYS_ON_MERGE = ['consents', 'events', 'certificates'] as const;
 
