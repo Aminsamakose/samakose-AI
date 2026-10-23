@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 describe('normalized Business Doctor framework architecture', () => {
   it('defines the required governed component tables in the migration', async () => {
     const fs = await import('node:fs/promises');
-    const sql = await fs.readFile('migrations/0048_framework_architecture.sql', 'utf8');
+    const sql = await fs.readFile('migrations/_archive/0048_framework_architecture.sql', 'utf8');
 
     for (const table of [
       'framework_dimensions',
@@ -21,7 +21,7 @@ describe('normalized Business Doctor framework architecture', () => {
 
   it('enforces immutable published framework children at database level', async () => {
     const fs = await import('node:fs/promises');
-    const sql = await fs.readFile('migrations/0048_framework_architecture.sql', 'utf8');
+    const sql = await fs.readFile('migrations/_archive/0048_framework_architecture.sql', 'utf8');
 
     expect(sql).toContain('framework_version_is_published');
     expect(sql).toContain('reject_published_framework_change');
@@ -41,7 +41,7 @@ describe('normalized Business Doctor framework architecture', () => {
 
   it('preserves the existing versioned JSON model for backward compatibility', async () => {
     const fs = await import('node:fs/promises');
-    const sql = await fs.readFile('migrations/0011_framework_versions.sql', 'utf8');
+    const sql = await fs.readFile('migrations/_archive/0011_framework_versions.sql', 'utf8');
 
     expect(sql).toContain('CREATE TABLE "framework_versions"');
     expect(sql).toContain('"questions" jsonb NOT NULL');
@@ -50,7 +50,7 @@ describe('normalized Business Doctor framework architecture', () => {
 
   it('backfills legacy snapshots before it freezes normalized framework content', async () => {
     const fs = await import('node:fs/promises');
-    const sql = await fs.readFile('migrations/0048_framework_architecture.sql', 'utf8');
+    const sql = await fs.readFile('migrations/_archive/0048_framework_architecture.sql', 'utf8');
 
     expect(sql).toContain('Backfill normalized records from legacy snapshots');
     expect(sql).toContain('insert into public.framework_dimensions');
