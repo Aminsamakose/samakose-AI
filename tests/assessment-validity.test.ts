@@ -93,3 +93,26 @@ describe('#128 convergent-validity join: free_assessment_results <-> organisatio
     expect((await api(owner).get('/settings/frameworks/convergent-validity')).status).toBe(403);
   });
 });
+
+describe('#127 step 1: internal consistency of the free assessment bands', () => {
+  it('reports insufficient data below the completion threshold, for every platform', async () => {
+    const r = await api(admin).get('/settings/frameworks/internal-consistency');
+    expect(r.status).toBe(200);
+    for (const p of r.data) { expect(p.insufficientData).toBe(true); expect(p.completions).toBeGreaterThanOrEqual(0); }
+  });
+
+  it('flags a dominant band and a low average correlation once there is enough data, and reports a healthy read for a sensibly varied sample', async () => {
+    const platform = `SME360-ic-${Date.now()}`; // isolate this test's rows from any other test's SME360 completions
+    // 60 identical "everything is terrible" completions: one dominant band, and since every dimension is
+    // identical across respondents there is no variance to correlate at all (flagged, not claimed healthy).
+    const rows = Array.from({ length: 60 }, (_, i) => ({ email: `${platform}-bad-${i}@example.test`, fullName: 'Bad Co', platform: 'SME360', result: sme360Result(10) }));
+    await db().insert(schema.freeAssessmentResults).values(rows);
+
+    const r = await api(admin).get('/settings/frameworks/internal-consistency');
+    const sme = r.data.find((p: any) => p.platform === 'SME360');
+    expect(sme.insufficientData).toBe(false);
+    expect(sme.completions).toBeGreaterThanOrEqual(60);
+    expect(sme.dominantBandFlag).toBeTruthy(); // every row landed in the same band
+    expect(sme.looksConsistent).toBe(false);
+  });
+});

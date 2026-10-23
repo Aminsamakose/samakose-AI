@@ -4,6 +4,38 @@ import { api, dateFmt, errText } from '@/lib/client/api';
 import { Async, Badge, Button, ConfirmButton, Empty, useApi, useToast } from '@/components/ui';
 import { ImportBank, ReviewVersion } from './FrameworkReview';
 
+type Consistency = { platform: string; completions: number; insufficientData: boolean; minRequired?: number; bandDistribution?: { classification: string; count: number; share: number }[]; dominantBandFlag?: { classification: string; share: number } | null; averagePairwiseCorrelation?: number | null; looksConsistent?: boolean };
+type ConvergentPair = { resultId: string; platform: string; freeScore: number; freeClassification: string; orgCode: string; orgName: string; paidOverall: number | null; paidMaturity: string | null };
+
+/** #127: the free assessment's provisional classification bands, surfaced for whoever is deciding whether they're ready to call validated. See that issue for what each step means and the recommended sequencing. */
+export function AssessmentValidityPanel({ canEdit }: { canEdit: boolean }) {
+  const ic = useApi<Consistency[]>('/settings/frameworks/internal-consistency');
+  const cv = useApi<{ pairs: ConvergentPair[]; summary: { matched: number; withPaidScore: number; awaitingDiagnostic: number } }>('/settings/frameworks/convergent-validity');
+  const toast = useToast();
+  const rematch = async () => { try { const r = await api.post<{ matched: number }>('/settings/frameworks/convergent-validity/match', {}); toast(r.matched ? `${r.matched} new match(es) found` : 'No new matches'); cv.reload(); } catch (e) { toast(errText(e), 'bad'); } };
+  return <section className="card stack" aria-label="Free assessment band validation (#127)">
+    <div><b>Free assessment band validation</b><br /><span className="small muted">The Critical Attention / Needs Improvement / Developing / Strong Foundation bands are provisional, set by expert judgment. These checks are the cheap, data-available steps toward validating them -- not a verdict on their own.</span></div>
+    <h4>Internal consistency (step 1)</h4>
+    <Async state={ic} empty={(d) => d.length === 0}>{(list) => <div className="table-wrap"><table>
+      <thead><tr><th>Platform</th><th>Completions</th><th>Band distribution</th><th>Avg. dimension correlation</th><th>Read</th></tr></thead>
+      <tbody>{list.map((p) => <tr key={p.platform}>
+        <td>{p.platform}</td><td className="num">{p.completions}</td>
+        <td>{p.insufficientData ? <span className="small muted">Needs {p.minRequired}+ completions (have {p.completions})</span> : p.bandDistribution!.map((b) => `${b.classification}: ${Math.round(b.share * 100)}%`).join(', ')}</td>
+        <td className="num">{p.insufficientData ? '—' : p.averagePairwiseCorrelation === null ? '—' : p.averagePairwiseCorrelation!.toFixed(2)}</td>
+        <td>{p.insufficientData ? <Badge>Not enough data</Badge> : <Badge tone={p.looksConsistent ? 'ok' : 'warn'}>{p.looksConsistent ? 'Looks consistent' : 'Worth a closer look'}</Badge>}</td>
+      </tr>)}</tbody></table></div>}</Async>
+    <h4>Convergent validity against the paid diagnostic (step 2)</h4>
+    <Async state={cv} empty={(d) => d.pairs.length === 0}>{(d) => <div className="stack">
+      <p className="small muted">{d.summary.matched} business(es) matched by email to a free-assessment result; {d.summary.withPaidScore} have also been scored on the paid diagnostic.</p>
+      {d.pairs.filter((p) => p.paidOverall !== null).length > 0 && <div className="table-wrap"><table>
+        <thead><tr><th>Organisation</th><th>Free band</th><th>Free score</th><th>Paid maturity</th><th>Paid score</th></tr></thead>
+        <tbody>{d.pairs.filter((p) => p.paidOverall !== null).map((p) => <tr key={p.resultId}><td>{p.orgName} <span className="mono small">{p.orgCode}</span></td><td>{p.freeClassification}</td><td className="num">{p.freeScore}</td><td>{p.paidMaturity}</td><td className="num">{p.paidOverall}</td></tr>)}</tbody>
+      </table></div>}
+    </div>}</Async>
+    {canEdit && <Button size="sm" onClick={rematch}>Re-run email match</Button>}
+  </section>;
+}
+
 type Ver = { id: string; version: number; status: 'Draft' | 'Published' | 'Retired'; questions: number; dimensions: number; sources: number; sourcesApproved: number; note: string | null; publishedAt: string | null };
 type Fw = { id: string; code: string; name: string; orgType: string | null; description: string | null; isDefault: boolean; currentVersion: number | null; unpublishedBankChanges: boolean; versions: Ver[] };
 const tone = (s: string) => (s === 'Published' ? 'ok' : s === 'Draft' ? 'warn' : undefined);
@@ -42,5 +74,6 @@ export function FrameworksPanel({ canCreate, canEdit, canApprove }: { canCreate:
         {f.isDefault && <Button size="sm" onClick={() => draftFromBank(f.code)}>Create draft from question bank</Button>}
         <ImportBank code={f.code} onDone={st.reload} /></div>}
     </section>)}</>}</Async>
+    <AssessmentValidityPanel canEdit={canEdit} />
   </div>;
 }
