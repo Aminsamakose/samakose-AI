@@ -32,9 +32,13 @@ function ConnectForm({ base, onDone, onCancel }: { base?: Connection; onDone: ()
 
 /** Personal calendar connection, for the profile page. One connection per provider per user; no OAuth tokens are stored here. */
 export function CalendarConnectionCard() {
+  const { can, ready } = usePerms();
+  if (!ready || !can('programme_workspaces', 'read')) return null;
+  return <CalendarConnectionCardInner canManage={can('programme_workspaces', 'edit')} />;
+}
+
+function CalendarConnectionCardInner({ canManage }: { canManage: boolean }) {
   const st = useApi<Connection[]>('/calendar/connections');
-  const { can } = usePerms();
-  const canManage = can('programme_workspaces', 'edit');
   const toast = useToast();
   const [mode, setMode] = useState<null | 'new' | string>(null);
   const done = () => { setMode(null); st.reload(); };
