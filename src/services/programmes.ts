@@ -38,8 +38,21 @@ export async function getProgramme(ctx: Ctx, id: string) {
   allow(ctx, 'programmes', 'read');
   await assertProgramme(ctx, id);
   const [row] = await ctx.db.select(cols).from(p).where(eq(p.id, id)).limit(1);
-  const cohorts = await ctx.db.select({ id: ch.id, code: ch.code, name: ch.name, startDate: ch.startDate, endDate: ch.endDate, capacity: ch.capacity, status: ch.status,
+  // A cohort's businesses can be delivered through either the case-based pipeline (`cases`) or the
+  // newer workspace-participant lifecycle (`programme_participants`) -- #90 found the two were never
+  // reconciled, so this counted only `cases` and read 0 for a cohort delivered entirely through the
+  // workspace. Count both, excluding participants who dropped out (WITHDRAWN/REJECTED) rather than
+  // actually being delivered to.
+  const baseCohorts = await ctx.db.select({ id: ch.id, code: ch.code, name: ch.name, startDate: ch.startDate, endDate: ch.endDate, capacity: ch.capacity, status: ch.status,
     enrolled: sql<number>`(select count(*)::int from cases x where x.cohort_id = ${ch.id})` }).from(ch).where(eq(ch.programmeId, id)).orderBy(ch.createdAt);
+  const pt = schema.programmeParticipants;
+  const wsCounts = baseCohorts.length
+    ? await ctx.db.select({ cohortId: pt.cohortId, n: countOf }).from(pt)
+        .where(and(eq(pt.programmeId, id), sql`${pt.status} not in ('WITHDRAWN', 'REJECTED')`))
+        .groupBy(pt.cohortId)
+    : [];
+  const wsByCohort = new Map(wsCounts.map((w) => [w.cohortId, Number(w.n)]));
+  const cohorts = baseCohorts.map((c) => ({ ...c, enrolled: Number(c.enrolled) + (wsByCohort.get(c.id) ?? 0) }));
   const [r] = await hideSmall(ctx, [row], ['caseCount']);
   return { ...r, cohorts: await hideSmall(ctx, cohorts, ['enrolled']) };
 }
@@ -71,11 +84,21 @@ const CASE_STATES_IN_FLIGHT = ['ONBOARDING', 'PROFILED', 'DIAGNOSTIC', 'DIAGNOSE
  *      evidence of what was delivered, not just a status change.
  */
 async function assertCloseoutReady(ctx: Ctx, programmeId: string, code: string) {
-  const c = schema.cases, esc = schema.caseEscalations, rep = schema.reports, dx = schema.deliveryExceptions;
+  const c = schema.cases, esc = schema.caseEscalations, rep = schema.reports, dx = schema.deliveryExceptions, pt = schema.programmeParticipants;
 
   const [inFlight] = await ctx.db.select({ n: countOf }).from(c)
     .where(and(eq(c.programmeId, programmeId), sql`${c.status} in (${sql.join(CASE_STATES_IN_FLIGHT.map((s) => sql`${s}`), sql`, `)})`));
   if (Number(inFlight.n) > 0) throw unprocessable(`Programme ${code} cannot be completed: ${inFlight.n} case(s) are still in active delivery (not yet graduated, endline, or follow-up).`);
+
+  // This gate was built for the case-based delivery path and had no idea the newer workspace
+  // participant lifecycle existed (#90) -- a programme delivered entirely through
+  // programme_participants had zero `cases`, so every check above was vacuously satisfied and
+  // completion sailed through with businesses still ACTIVE mid-cohort. Block the same way here:
+  // any participant not yet at a terminal status (COMPLETED, WITHDRAWN, REJECTED) is still being
+  // delivered to.
+  const [wsInFlight] = await ctx.db.select({ n: countOf }).from(pt)
+    .where(and(eq(pt.programmeId, programmeId), sql`${pt.status} not in ('COMPLETED', 'WITHDRAWN', 'REJECTED')`));
+  if (Number(wsInFlight.n) > 0) throw unprocessable(`Programme ${code} cannot be completed: ${wsInFlight.n} workspace participant(s) are still being delivered to (not yet completed, withdrawn, or rejected).`);
 
   const [openEsc] = await ctx.db.select({ n: countOf }).from(esc)
     .innerJoin(c, eq(esc.caseId, c.id))
