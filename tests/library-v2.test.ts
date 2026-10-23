@@ -4,7 +4,7 @@ import path from 'node:path';
 import { ensureReference } from './helpers';
 import { pool } from '@/db/client';
 
-beforeAll(async () => { await ensureReference(); await pool().query(fs.readFileSync(path.resolve(process.cwd(), 'migrations/0027_intervention_library_v2.sql'), 'utf8')); });
+beforeAll(async () => { await ensureReference(); await pool().query(fs.readFileSync(path.resolve(process.cwd(), 'migrations/_archive/0027_intervention_library_v2.sql'), 'utf8')); });
 
 describe('intervention library aligned to the live framework', () => {
   it('has at least three items for each dimension of the SME360 framework, and none on an old name', async () => {
@@ -17,7 +17,7 @@ describe('intervention library aligned to the live framework', () => {
     expect(rows.every((r: any) => dims.includes(r.dimension))).toBe(true);
   });
   it('keeps the original codes and is safe to run twice', async () => {
-    await pool().query(fs.readFileSync(path.resolve(process.cwd(), 'migrations/0027_intervention_library_v2.sql'), 'utf8'));
+    await pool().query(fs.readFileSync(path.resolve(process.cwd(), 'migrations/_archive/0027_intervention_library_v2.sql'), 'utf8'));
     const { rows } = await pool().query(`select count(*)::int n from library_items where code ~ '^IVL-0(0[1-9]|1[0-9]|2[0-8])$'`);
     expect(rows[0].n).toBe(28);
   });

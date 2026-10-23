@@ -31,7 +31,7 @@ beforeAll(async () => {
   for (const [code, , dimension] of SEED_LIBRARY) await pool().query('update library_items set dimension=$2 where code=$1', [code, dimension]);
   W = await build();
 });
-afterAll(async () => { await pool().query(fs.readFileSync(path.resolve(process.cwd(), 'migrations/0027_intervention_library_v2.sql'), 'utf8')); });
+afterAll(async () => { await pool().query(fs.readFileSync(path.resolve(process.cwd(), 'migrations/_archive/0027_intervention_library_v2.sql'), 'utf8')); });
 
 describe('the full case lifecycle', () => {
   let caseId = '', caseCode = '', dgnId = '', rxId = '';

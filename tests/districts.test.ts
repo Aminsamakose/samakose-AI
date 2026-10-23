@@ -18,7 +18,7 @@ describe('Ghana districts', () => {
     expect((await call('GET', '/auth/districts')).status).toBe(400);
   });
   it('the migration is safe to run twice', async () => {
-    const sql = (await import('node:fs')).readFileSync('migrations/0020_ghana_districts.sql', 'utf8');
+    const sql = (await import('node:fs')).readFileSync('migrations/_archive/0020_ghana_districts.sql', 'utf8');
     await q(sql);
     expect((await q(`select count(*)::int n from geo_units where country_code='GH' and level=2`)).rows[0].n).toBe(261);
   });
