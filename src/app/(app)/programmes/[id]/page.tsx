@@ -7,6 +7,9 @@ import { dateFmt, ghs } from '@/lib/client/api';
 import { CohortForm, ProgrammeForm, type Cohort, type Programme } from '@/components/portfolio/ProgrammeForms';
 import { IndicatorsPanel } from '@/components/portfolio/IndicatorsPanel';
 import { BudgetPanel } from '@/components/portfolio/BudgetPanel';
+import { ExpenditurePanel } from '@/components/portfolio/ExpenditurePanel';
+import { VersionsPanel } from '@/components/portfolio/VersionsPanel';
+import { OutcomesPanel } from '@/components/portfolio/OutcomesPanel';
 import { ProgrammeDashboard } from '@/components/portfolio/ProgrammeDashboard';
 import { WorkspacePanel } from '@/components/portfolio/WorkspacePanel';
 import { ParticipantsPanel } from '@/components/portfolio/ParticipantsPanel';
@@ -31,7 +34,9 @@ export default function ProgrammePage() {
     { id: 'overview', label: 'Overview' }, { id: 'cohorts', label: 'Cohorts' },
     ...(can('cases', 'read') ? [{ id: 'cases', label: 'Cases' }] : []),
     ...(can('dashboard', 'read') && !funder ? [{ id: 'targets', label: 'Targets' }] : []),
+    ...(can('programmes', 'read') && !funder ? [{ id: 'outcomes', label: 'Outcomes' }] : []),
     ...(can('dashboard', 'read') ? [{ id: 'budget', label: 'Budget' }] : []),
+    { id: 'versions', label: 'Versions' },
     ...(can('programme_workspaces', 'read') ? [{ id: 'workspace', label: 'Workspace' }, { id: 'participants', label: 'Participants' }, { id: 'providers', label: 'Providers' }, { id: 'delivery', label: 'Delivery' }] : []),
     ...(can('dashboard', 'read') ? [{ id: 'dashboard', label: 'Dashboard' }] : [])
   ];
@@ -63,8 +68,13 @@ export default function ProgrammePage() {
             <tbody>{p.cohorts.map((c) => <tr key={c.id}><td>{c.name}</td><td className="mono">{c.code}</td><td>{dateFmt(c.startDate)} to {dateFmt(c.endDate)}</td><td className="r num">{c.capacity}</td>{!funder && <td className="r num">{c.enrolled}</td>}<td><Badge tone={c.status === 'Open' ? 'ok' : c.status === 'Closed' ? '' : 'info'}>{c.status}</Badge></td>{canCohortEdit && <td><Button size="sm" onClick={() => setCohortModal(c)} aria-label={`Edit ${c.name}`}>Edit</Button></td>}</tr>)}</tbody></table></div>}
       </Card>}
       {active === 'cases' && <Card title="Cases in this programme"><DataTable<CaseRow> endpoint="/cases" params={{ programmeId: id }} columns={caseCols} rowHref={(r) => `/cases/${r.id}`} exportable={can('cases', 'export')} refreshKey={caseKey} placeholder="Search case or organisation" empty={{ title: 'No cases in this programme yet', hint: 'Open a case from an organisation and assign it to this programme.' }} /></Card>}
-      {active === 'budget' && <BudgetPanel programmeId={id} canEdit={can('programmes', 'edit') && !closed} />}
+      {active === 'budget' && <div className="stack">
+        <BudgetPanel programmeId={id} canEdit={can('programmes', 'edit') && !closed} />
+        <ExpenditurePanel programmeId={id} canEdit={can('programmes', 'edit') && !closed} />
+      </div>}
       {active === 'targets' && <IndicatorsPanel programmeId={id} canEdit={can('programmes', 'edit') && !closed} />}
+      {active === 'versions' && <VersionsPanel programmeId={id} canEdit={can('programmes', 'edit') && !closed} canApprove={role === 'ADMIN' || role === 'EXECUTIVE'} />}
+      {active === 'outcomes' && <OutcomesPanel programmeId={id} canEdit={can('programmes', 'edit') && !closed} />}
       {active === 'workspace' && <WorkspacePanel programmeId={id} />}
       {active === 'participants' && <ParticipantsPanel programmeId={id} cohorts={p.cohorts} />}
       {active === 'providers' && <ProvidersPanel programmeId={id} cohorts={p.cohorts} />}
