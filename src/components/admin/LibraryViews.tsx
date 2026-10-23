@@ -2,8 +2,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { api, errText, ghs, dateFmt, qs } from '@/lib/client/api';
-import { useApi, Button, Badge, Loading, ErrorState, Empty, Field, useForm, FormError, useToast, ConfirmButton } from '@/components/ui';
+import { useApi, Button, Badge, Loading, ErrorState, Empty, Field, useForm, FormError, useToast, ConfirmButton, Modal } from '@/components/ui';
 import { DIMENSIONS, useMe } from '@/components/admin/common';
+import { UserSelect } from '@/components/portfolio/shared';
 
 type Me = ReturnType<typeof useMe>;
 
@@ -44,11 +45,55 @@ export function AuthorsPanel({ me }: { me: Me }) {
   </div>;
 }
 
+/* ------------------------------- entitlements ------------------------------- */
+type Entitlement = { id: string; userId: string; resourceId: string; grantedVia: 'purchase' | 'promo' | 'admin_grant'; invoiceId: string | null; grantedBy: string | null; grantedAt: string; revokedAt: string | null };
+
+function EntitlementsModal({ resource, me, onClose }: { resource: Resource; me: Me; onClose: () => void }) {
+  const st = useApi<Entitlement[]>(`/library/resources/${resource.id}/entitlements`);
+  const toast = useToast();
+  const canGrant = me.can('library_entitlements', 'create');
+  const canRevoke = me.can('library_entitlements', 'approve');
+  const [userId, setUserId] = useState('');
+  const [granting, setGranting] = useState(false);
+  const rows = (st.data ?? []).slice().sort((a, b) => (a.revokedAt ? 1 : 0) - (b.revokedAt ? 1 : 0));
+
+  const grant = async () => {
+    if (!userId) { toast('Choose a person to grant access to'); return; }
+    setGranting(true);
+    try { await api.post('/library/entitlements/grant', { userId, resourceId: resource.id }); toast('Access granted'); setUserId(''); st.reload(); }
+    catch (e) { toast(errText(e)); } finally { setGranting(false); }
+  };
+
+  return <Modal open onClose={onClose} title={`Entitlements — ${resource.title}`}>
+    <div className="stack">
+      {resource.isFree && <p className="small muted">This resource is free — everyone signed in may already read it. Entitlements only matter for premium resources.</p>}
+      {canGrant && <div className="row" style={{ gap: 8, alignItems: 'end' }}>
+        <div style={{ flex: 1 }}><UserSelect id="ent-user" name="userId" value={userId} onChange={setUserId} /></div>
+        <Button loading={granting} onClick={grant}>Grant access</Button>
+      </div>}
+      {st.error && !st.data ? <ErrorState message={st.error} retry={st.reload} /> : !st.data ? <Loading rows={3} /> : rows.length === 0 ? <Empty title="No one holds an entitlement yet" /> : (
+        <div className="table-wrap"><table>
+          <thead><tr><th>User</th><th>Via</th><th>Granted</th><th>Status</th>{canRevoke && <th></th>}</tr></thead>
+          <tbody>{rows.map((e) => <tr key={e.id} style={e.revokedAt ? { opacity: 0.6 } : undefined}>
+            <td className="mono small">{e.userId}</td>
+            <td className="small">{e.grantedVia.replace('_', ' ')}</td>
+            <td className="small muted">{dateFmt(e.grantedAt)}</td>
+            <td><Badge tone={e.revokedAt ? 'bad' : 'ok'}>{e.revokedAt ? 'Revoked' : 'Active'}</Badge></td>
+            {canRevoke && <td>{!e.revokedAt && <ConfirmButton size="sm" variant="danger" label="Revoke" message="Revoke this person's access to this resource?" onConfirm={async () => { try { await api.post(`/library/entitlements/${e.id}/revoke`, {}); toast('Entitlement revoked'); st.reload(); } catch (err) { toast(errText(err)); } }} />}</td>}
+          </tr>)}</tbody>
+        </table></div>
+      )}
+    </div>
+  </Modal>;
+}
+
 /* -------------------------------- resources list -------------------------------- */
 export function ResourcesPanel({ me }: { me: Me }) {
   const [status, setStatus] = useState('');
   const st = useApi<Resource[]>('/library/resources' + qs({ status }));
   const canCreate = me.can('library_resources', 'create');
+  const canSeeEntitlements = me.can('library_entitlements', 'read');
+  const [entitlementsFor, setEntitlementsFor] = useState<Resource | null>(null);
   return <div className="stack">
     <div className="toolbar">
       <h2 style={{ margin: 0 }}>Resources</h2>
@@ -62,7 +107,7 @@ export function ResourcesPanel({ me }: { me: Me }) {
       <Empty title="No resources match" hint={canCreate ? 'Create the first one.' : undefined} />
     ) : (
       <div className="table-wrap"><table>
-        <thead><tr><th>Title</th><th>Status</th><th>Dimension</th><th className="r">Price</th><th>File</th><th>Updated</th></tr></thead>
+        <thead><tr><th>Title</th><th>Status</th><th>Dimension</th><th className="r">Price</th><th>File</th><th>Updated</th>{canSeeEntitlements && <th></th>}</tr></thead>
         <tbody>{st.data.map((r) => <tr key={r.id}>
           <td><Link href={`/admin/library/${r.id}`}>{r.title}</Link></td>
           <td><Badge tone={statusTone(r.status)}>{r.status}</Badge></td>
@@ -70,9 +115,11 @@ export function ResourcesPanel({ me }: { me: Me }) {
           <td className="r num">{r.isFree ? 'Free' : ghs(r.priceGhs)}</td>
           <td>{r.hasFile ? 'Yes' : '-'}</td>
           <td>{dateFmt(r.updatedAt)}</td>
+          {canSeeEntitlements && <td>{!r.isFree && <Button size="sm" onClick={() => setEntitlementsFor(r)}>Entitlements</Button>}</td>}
         </tr>)}</tbody>
       </table></div>
     )}
+    {entitlementsFor && <EntitlementsModal resource={entitlementsFor} me={me} onClose={() => setEntitlementsFor(null)} />}
   </div>;
 }
 

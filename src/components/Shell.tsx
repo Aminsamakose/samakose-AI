@@ -40,6 +40,7 @@ const GROUPS: Group[] = [
     { icon: 'discounts', href: '/finance/discounts', label: 'Discounts & promos', need: ['discounts', 'read'] }
   ] },
   { title: 'Payouts & compliance', items: [
+    { icon: 'approvals', href: '/finance/approvals', label: 'Approvals', need: ['approvals', 'read'] },
     { icon: 'revenue_share', href: '/finance/revenue-share', label: 'Revenue share', need: ['revenue_share', 'read'] },
     { icon: 'payouts', href: '/finance/payouts', label: 'Payouts', need: ['payouts', 'read'] },
     { icon: 'refunds', href: '/finance/refunds', label: 'Refunds', need: ['refunds', 'read'] },
