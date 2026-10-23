@@ -66,6 +66,26 @@ export async function proposeAgreement(ctx: Ctx, b: { contractId: string; assign
   return row;
 }
 
+export async function listAgreements(ctx: Ctx, filters: { status?: string; professionalId?: string } = {}) {
+  allow(ctx, 'revenue_share', 'read');
+  const u = need(ctx).user;
+  const rows = await ctx.db.select().from(rsa);
+  // Row-scoped like payouts: a professional sees only agreements naming them (Directive §50).
+  const scoped = u.role === 'EXPERT' ? rows.filter((r) => r.professionalId === u.id) : rows;
+  return scoped.filter((r) => (!filters.status || r.status === filters.status) && (!filters.professionalId || r.professionalId === filters.professionalId));
+}
+
+export async function getAgreement(ctx: Ctx, agreementId: string) {
+  allow(ctx, 'revenue_share', 'read');
+  const u = need(ctx).user;
+  const [agreement] = await ctx.db.select().from(rsa).where(eq(rsa.id, agreementId)).limit(1);
+  if (!agreement) throw notFound('Revenue share agreement not found');
+  if (u.role === 'EXPERT' && agreement.professionalId !== u.id) throw forbidden();
+  const allocations = await ctx.db.select().from(rsal).where(eq(rsal.agreementId, agreementId));
+  const calculations = await ctx.db.select().from(rsc).where(eq(rsc.agreementId, agreementId));
+  return { agreement, allocations, calculations };
+}
+
 /**
  * Replaces an agreement's allocations wholesale, inside one transaction, so the (deferred) sum-to-100%
  * constraint trigger - checked at commit, not per row - sees the final set rather than a partial one.
