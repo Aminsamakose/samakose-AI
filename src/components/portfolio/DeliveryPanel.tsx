@@ -4,6 +4,7 @@ import { api, ApiFail, errText } from '@/lib/client/api';
 import { Async, Badge, Button, Card, Empty, Field, FormError, KV, useApi, useForm, useToast } from '@/components/ui';
 import { usePerms, UserSelect } from '@/components/portfolio/shared';
 import { OrgNameCell } from '@/components/portfolio/ParticipantsPanel';
+import { SessionCalendarSection, type CalendarEvent } from '@/components/portfolio/CalendarPanel';
 
 type Workspace = { id: string };
 type CohortLite = { id: string; name: string; code: string };
@@ -312,6 +313,8 @@ function OperationsSection({ cohortId, cohortParticipants, canManage }: { cohort
   const [busy, setBusy] = useState<string | null>(null);
   const activities = useApi<Activity[]>(`/cohorts/${cohortId}/activities`);
   const sessions = useApi<SessionRow[]>(`/cohorts/${cohortId}/delivery-sessions`);
+  const calEvents = useApi<CalendarEvent[]>(`/cohorts/${cohortId}/calendar-events`);
+  const eventBySession = new Map((calEvents.data ?? []).filter((e) => e.sessionId).map((e) => [e.sessionId as string, e]));
   const moveActivity = async (id: string, status: string) => { setBusy(id); try { await api.post(`/delivery-activities/${id}/status`, { status }); toast('Activity updated'); activities.reload(); } catch (e) { toast(errText(e)); } finally { setBusy(null); } };
   const moveSession = async (id: string, status: string) => { setBusy(id); try { await api.post(`/delivery-sessions/${id}/status`, { status }); toast('Session updated'); sessions.reload(); } catch (e) { toast(errText(e)); } finally { setBusy(null); } };
 
@@ -330,17 +333,18 @@ function OperationsSection({ cohortId, cohortParticipants, canManage }: { cohort
           </div>
           {schedulingFor === a.id && <SessionForm activityId={a.id} onDone={() => { setSchedulingFor(null); sessions.reload(); }} onCancel={() => setSchedulingFor(null)} />}
           {activitySessions.length === 0 ? <p className="small muted">No sessions scheduled.</p> :
-            <div className="table-wrap"><table><thead><tr><th>Starts</th><th>Mode</th><th>Status</th>{canManage && <th><span className="sr">Actions</span></th>}</tr></thead><tbody>
+            <div className="table-wrap"><table><thead><tr><th>Starts</th><th>Mode</th><th>Status</th><th>Calendar</th>{canManage && <th><span className="sr">Actions</span></th>}</tr></thead><tbody>
               {activitySessions.map((r) => <Fragment key={r.session.id}>
                 <tr>
                   <td>{new Date(r.session.startsAt).toLocaleString()}</td><td>{r.session.mode}{r.session.meetingUrl && <> · <a href={r.session.meetingUrl} target="_blank" rel="noreferrer">Join</a></>}</td>
                   <td><Badge tone={STATUS_TONE[r.session.status] ?? ''}>{r.session.status.replace('_', ' ')}</Badge></td>
+                  <td><SessionCalendarSection sessionId={r.session.id} event={eventBySession.get(r.session.id) ?? null} canManage={canManage} onChanged={calEvents.reload} /></td>
                   {canManage && <td className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
                     <StatusButtons all={SESSION_STATUSES} current={r.session.status} locked="COMPLETED" busy={busy === r.session.id} onMove={(s) => moveSession(r.session.id, s)} />
                     <Button size="sm" onClick={() => setExpanded(expanded === r.session.id ? null : r.session.id)}>{expanded === r.session.id ? 'Hide attendance' : 'Attendance'}</Button>
                   </td>}
                 </tr>
-                {expanded === r.session.id && <tr><td colSpan={canManage ? 4 : 3}><AttendanceSection sessionId={r.session.id} cohortParticipants={cohortParticipants} canManage={canManage} /></td></tr>}
+                {expanded === r.session.id && <tr><td colSpan={canManage ? 5 : 4}><AttendanceSection sessionId={r.session.id} cohortParticipants={cohortParticipants} canManage={canManage} /></td></tr>}
               </Fragment>)}
             </tbody></table></div>}
         </div>;

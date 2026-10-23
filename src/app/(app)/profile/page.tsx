@@ -6,6 +6,7 @@ import { useMe, useTitle } from '@/components/dash/common';
 import { OptionalCard } from '@/components/OptionalAnswers';
 import { RecoveryCodes } from '@/components/RecoveryCodes';
 import { PhotoCard, PractitionerProfileCard } from '@/components/PractitionerProfile';
+import { CalendarConnectionCard } from '@/components/portfolio/CalendarPanel';
 import { ROLE_LABEL } from '@/lib/rbac';
 import { ROLES, type Role } from '@/db/schema';
 
@@ -145,6 +146,7 @@ export default function ProfilePage() {
       <PhotoCard name={d.user.name} photoUrl={(d.user as any).photoUrl ?? null} onChanged={me.reload} />
       {d.user.role === 'EXPERT' && <PractitionerProfileCard onPhotoChange={me.reload} />}
       <OptionalCard />
+      <CalendarConnectionCard />
       <RolesCard />
       <Card title="Change password"><PasswordForm /></Card>
       <Card title="Two-step verification"><MfaSection enabled={d.user.mfaEnabled} recoveryLeft={(d as any).recoveryCodesLeft ?? 0} onChanged={me.reload} /></Card>
