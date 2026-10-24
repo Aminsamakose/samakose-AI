@@ -9,7 +9,7 @@ import type { Role } from '@/db/schema';
 export type Action = 'read' | 'create' | 'edit' | 'approve' | 'delete' | 'export' | 'override' | 'assign' | 'verify' | 'certify';
 export const RESOURCES = [
   'users', 'organisations', 'programmes', 'cohorts', 'cases', 'diagnostics', 'evidence', 'documents', 'scores', 'diagnoses',
-  'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments', 'discounts', 'revenue_share', 'payouts', 'approvals', 'tax_rules', 'tax_profiles', 'refunds',
+  'prescriptions', 'actions', 'kpis', 'sessions', 'risks', 'reports', 'plans', 'contracts', 'invoices', 'payments', 'discounts', 'revenue_share', 'payouts', 'approvals', 'tax_rules', 'tax_profiles', 'refunds', 'tax_reports',
   'audit', 'settings', 'dashboard', 'integrations', 'inquiries', 'content', 'site_settings', 'media', 'frameworks', 'agents', 'consent', 'role_mapping', 'team', 'feedback', 'practitioners', 'ratings', 'opportunities', 'referrals', 'messages', 'escalations', 'programme_workspaces', 'insights', 'notifications', 'monitoring',
   'library_resources', 'library_authors', 'library_entitlements', 'library_catalog', 'plan_catalog'
 ] as const;
@@ -23,7 +23,7 @@ const ADMIN: Grants = {
   cases: [R, C, E, X, S, T], diagnostics: [R, C], evidence: [R, C, E, D], documents: [R, C], scores: [R], diagnoses: [R, C],
   prescriptions: [R, C], actions: [R, C, E, X], kpis: [R, C, E], sessions: [R, C, E], risks: [R, E], reports: [R, C, X],
   plans: [R, C, E, D], contracts: [R, C, E, X], invoices: [R, C, E, D, X], payments: [R, C, X], discounts: [R, C, E, A],
-  revenue_share: [R, C, E, A], payouts: [R, C, E, A], approvals: [R, C, A], tax_rules: [R, C, E], tax_profiles: [R, C, E, V, D], refunds: [R, C, A],
+  revenue_share: [R, C, E, A], payouts: [R, C, E, A], approvals: [R, C, A], tax_rules: [R, C, E], tax_profiles: [R, C, E, V, D], refunds: [R, C, A], tax_reports: [R, C, E],
   audit: [R, X], settings: [R, C, E, D], dashboard: [R, X], integrations: [R, C, E], inquiries: [R, E, X],
   content: [R, C, E, A, D], site_settings: [R, E, A], media: [R, C, E, D],
   frameworks: [R, C, E, A], agents: [R, C, E, A], consent: [R, C, E, A], role_mapping: [R, C, E, A],
@@ -59,7 +59,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
   },
   FINANCE: {
     organisations: [R], plans: [R, C, E], contracts: [R, C, E, X], invoices: [R, C, E, X], payments: [R, C, X], discounts: [R, C, E],
-    revenue_share: [R, C, E], payouts: [R, C, E], approvals: [R, C, A], tax_rules: [R, C, E], tax_profiles: [R, C, E, V], refunds: [R, C, A], dashboard: [R], programme_workspaces: [R], notifications: [R],
+    revenue_share: [R, C, E], payouts: [R, C, E], approvals: [R, C, A], tax_rules: [R, C, E], tax_profiles: [R, C, E, V], refunds: [R, C, A], tax_reports: [R, C, E], dashboard: [R], programme_workspaces: [R], notifications: [R],
     library_resources: [R], library_entitlements: [R, X], library_catalog: [R]
   },
   OWNER: {

@@ -50,6 +50,13 @@
       "when": 1792845529090,
       "tag": "0006_document_extractions",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792846042565,
+      "tag": "0007_tax_certificates_remittances",
+      "breakpoints": true
     }
   ]
 }
