@@ -17,17 +17,10 @@
       "breakpoints": true
     },
     {
-      "idx": 38,
+      "idx": 2,
       "version": "7",
-      "when": 1792019624083,
-      "tag": "0038_scout_sites",
-      "breakpoints": true
-    },
-    {
-      "idx": 39,
-      "version": "7",
-      "when": 1792020624083,
-      "tag": "0039_programme_profile",
+      "when": 1792842808435,
+      "tag": "0002_scout_sites_and_programme_profile",
       "breakpoints": true
     }
   ]

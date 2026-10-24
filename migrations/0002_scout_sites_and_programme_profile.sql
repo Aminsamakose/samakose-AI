@@ -1,3 +1,4 @@
+SET search_path TO public;
 ALTER TABLE "programmes" ADD COLUMN "summary" text;--> statement-breakpoint
 ALTER TABLE "programmes" ADD COLUMN "objective" text;--> statement-breakpoint
 ALTER TABLE "programmes" ADD COLUMN "eligibility" text;--> statement-breakpoint
@@ -10,4 +11,6 @@ ALTER TABLE "programmes" ADD COLUMN "contact_name" text;--> statement-breakpoint
 ALTER TABLE "programmes" ADD COLUMN "contact_email" text;--> statement-breakpoint
 ALTER TABLE "programmes" ADD COLUMN "website" text;--> statement-breakpoint
 ALTER TABLE "programmes" ADD COLUMN "logo_media_id" uuid REFERENCES "media_assets"("id") ON DELETE SET NULL;--> statement-breakpoint
-ALTER TABLE "programmes" ADD CONSTRAINT "prog_target_valid" CHECK ("target_businesses" IS NULL OR "target_businesses" >= 0);
+ALTER TABLE "programmes" ADD CONSTRAINT "prog_target_valid" CHECK ("target_businesses" IS NULL OR "target_businesses" >= 0);--> statement-breakpoint
+ALTER TABLE "opportunity_sources" DROP CONSTRAINT "ops_kind_valid";--> statement-breakpoint
+ALTER TABLE "opportunity_sources" ADD CONSTRAINT "ops_kind_valid" CHECK ("kind" IN ('feed','page','query','site'));
