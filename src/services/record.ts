@@ -3,7 +3,7 @@
  * It reads what is already stored and invents nothing. Scope follows the same case rules as the rest of the platform.
  * Owners see their own organisation but not internal coaching notes or unreleased reports.
  */
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { forbidden } from '@/lib/errors';
@@ -49,8 +49,37 @@ export async function healthRecord(ctx: Ctx, orgId: string) {
   const internal = isInternal(u);
   const cases = await ctx.db.select().from(schema.cases).where(and(eq(schema.cases.orgId, orgId), caseScope(u))).orderBy(asc(schema.cases.createdAt));
   const ids = cases.map((c) => c.id);
-  const empty = { organisation: { id: org.id, code: org.code, name: org.name, type: org.type }, cases: [] as unknown[], timeline: [] as unknown[] };
-  if (!ids.length) return empty;
+  const [record] = await ctx.db.select().from(schema.businessHealthRecords)
+    .where(eq(schema.businessHealthRecords.orgId, orgId)).limit(1);
+  if (!record) throw new Error('Business Health Record anchor is missing for this organisation');
+
+  const eventScope = ids.length
+    ? or(isNull(schema.businessHealthRecordEvents.caseId), inArray(schema.businessHealthRecordEvents.caseId, ids))
+    : isNull(schema.businessHealthRecordEvents.caseId);
+  const eventRows = await ctx.db.select().from(schema.businessHealthRecordEvents)
+    .where(and(eq(schema.businessHealthRecordEvents.recordId, record.id), eventScope))
+    .orderBy(desc(schema.businessHealthRecordEvents.occurredAt)).limit(100);
+  const clientVisibleEventTypes = new Set([
+    'ORGANISATION_CREATED', 'ORGANISATION_UPDATED', 'CASE_OPENED', 'CASE_STATUS_CHANGED',
+    'DIAGNOSTIC_SUBMITTED', 'DIAGNOSTIC_UPDATED', 'SCORE_COMPUTED', 'DIAGNOSIS_CREATED',
+    'DIAGNOSIS_UPDATED', 'PRESCRIPTION_CREATED', 'PRESCRIPTION_UPDATED', 'INTERVENTION_CREATED',
+    'INTERVENTION_UPDATED', 'ACTION_CREATED', 'ACTION_UPDATED', 'EVIDENCE_ADDED',
+    'EVIDENCE_VERIFIED', 'DOCUMENT_UPLOADED', 'DOCUMENT_STATUS_CHANGED', 'KPI_CREATED',
+    'KPI_UPDATED', 'OUTCOME_READING_RECORDED', 'CERTIFICATE_PROPOSED',
+    'CERTIFICATE_STATUS_CHANGED', 'OPPORTUNITY_REFERRAL_STATUS_CHANGED', 'REPORT_RELEASED'
+  ]);
+  const timeline = eventRows.reverse()
+    .filter((e) => internal || clientVisibleEventTypes.has(e.eventType))
+    .map((e) => ({
+      id: e.id, eventType: e.eventType, sourceType: e.sourceType, sourceId: e.sourceId,
+      caseId: e.caseId, summary: e.summary, occurredAt: e.occurredAt, details: e.details
+    }));
+  const recordView = {
+    id: record.id, status: record.status, version: record.recordVersion, latestCaseId: record.latestCaseId,
+    firstAssessedAt: record.firstAssessedAt, lastActivityAt: record.lastActivityAt,
+    createdAt: record.createdAt, updatedAt: record.updatedAt
+  };
+  if (!ids.length) return { organisation: { id: org.id, code: org.code, name: org.name, type: org.type }, record: recordView, cases: [], timeline };
 
   const [diagnostics, scores, diagnoses, rxs, ivs, kpis, sessions, approvals, reports, versions] = await Promise.all([
     ctx.db.select().from(schema.diagnostics).where(inArray(schema.diagnostics.caseId, ids)).orderBy(asc(schema.diagnostics.createdAt)),
@@ -91,5 +120,5 @@ export async function healthRecord(ctx: Ctx, orgId: string) {
       reports: reports.filter((r) => r.caseId === c.id).map((r) => ({ id: r.id, code: r.code, title: r.title, status: r.status, releasedAt: r.releasedAt }))
     };
   });
-  return { organisation: { id: org.id, code: org.code, name: org.name, type: org.type }, cases: out };
+  return { organisation: { id: org.id, code: org.code, name: org.name, type: org.type }, record: recordView, cases: out, timeline };
 }

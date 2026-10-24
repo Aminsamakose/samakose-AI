@@ -36,6 +36,13 @@
       "when": 1792844056102,
       "tag": "0004_monitoring_performance",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792844462513,
+      "tag": "0005_business_health_record",
+      "breakpoints": true
     }
   ]
 }
