@@ -7,6 +7,7 @@ import * as discounts from '@/services/discounts';
 import * as rs from '@/services/revenue-share';
 import * as apr from '@/services/approvals';
 import * as tax from '@/services/tax';
+import * as taxp from '@/services/tax-profiles';
 import * as rfd from '@/services/refunds';
 import * as contracts from '@/services/contracts';
 import * as kobo from '@/services/kobo';
@@ -117,6 +118,12 @@ defineRoute({ method: 'GET', path: '/tax-rules', tag: F, summary: 'Tax/VAT/withh
 defineRoute({ method: 'POST', path: '/tax-rules', tag: F, summary: 'Open a new versioned tax rule for a (type, jurisdiction)', permission: ['tax_rules', 'create'], body: z.object({ type: z.enum(tax.TAX_RULE_TYPES), rate: z.number().min(0).max(100), jurisdiction: text(1, 40), inclusiveOfPrice: z.boolean().optional(), effectiveFrom: isoDate, effectiveTo: isoDate.nullish() }), handler: async ({ ctx, body }) => status(201, await tax.createTaxRule(ctx, body as any)) });
 defineRoute({ method: 'PATCH', path: '/tax-rules/:id/close', tag: F, summary: "Close a tax rule's effective range", permission: ['tax_rules', 'edit'], body: z.object({ effectiveTo: isoDate }), handler: ({ ctx, params, body }) => tax.closeTaxRule(ctx, params.id, body.effectiveTo) });
 defineRoute({ method: 'POST', path: '/tax-lines', tag: F, summary: 'Compute and apply tax for one invoice or payout against the rule in force today', permission: ['tax_rules', 'create'], body: z.object({ invoiceId: uuid.optional(), payoutId: uuid.optional(), type: z.enum(tax.TAX_RULE_TYPES), jurisdiction: text(1, 40), baseAmountGhs: money }), handler: async ({ ctx, body }) => { const line = await tax.applyTax(ctx, body as any); return line ? status(201, line) : line; } });
+
+/* ----------------------------- tax profiles ------------------------------ */
+defineRoute({ method: 'GET', path: '/tax-profiles/me', tag: F, summary: "The signed-in professional's own tax profile", permission: ['tax_profiles', 'read'], handler: ({ ctx }) => taxp.getMyTaxProfile(ctx) });
+defineRoute({ method: 'PUT', path: '/tax-profiles/me', tag: F, summary: 'Submit or correct my own tax identity (resets to Submitted)', permission: ['tax_profiles', 'create'], body: z.object({ partyType: z.enum(taxp.TAX_PROFILE_PARTY_TYPES), legalName: text(2, 200), taxIdentifier: text(2, 40), taxResidency: optText(10) }), handler: ({ ctx, body }) => taxp.submitMyTaxProfile(ctx, body) });
+defineRoute({ method: 'GET', path: '/tax-profiles', tag: F, summary: 'Tax profiles, optionally filtered by status (e.g. the Submitted queue awaiting verification)', permission: ['tax_profiles', 'read'], query: z.object({ status: z.string().max(20).optional() }), handler: ({ ctx, query }) => taxp.listTaxProfiles(ctx, query.status) });
+defineRoute({ method: 'POST', path: '/tax-profiles/:userId/verify', tag: F, summary: "Verify or reject a professional's tax identity (never their own)", permission: ['tax_profiles', 'verify'], body: z.object({ decision: z.enum(['Verified', 'Rejected']), note: optText(500) }), handler: ({ ctx, params, body }) => taxp.verifyTaxProfile(ctx, params.userId, body) });
 
 /* --------------------------- refunds & chargebacks ----------------------- */
 defineRoute({ method: 'GET', path: '/refunds', tag: F, summary: 'Refunds, optionally filtered by status/invoice', permission: ['refunds', 'read'], query: z.object({ status: z.string().max(20).optional(), invoiceId: uuid.optional() }), handler: ({ ctx, query }) => rfd.listRefunds(ctx, query) });
