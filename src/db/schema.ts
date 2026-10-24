@@ -720,6 +720,10 @@ export const professionalPayouts = pgTable('professional_payouts', {
   assignmentId: uuid('assignment_id').notNull().references(() => caseAssignments.id),
   contractId: uuid('contract_id').notNull().references(() => contracts.id),
   amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  /** Gross amount withheld as tax so far (0 until applyTax() posts a WITHHOLDING tax_line against this payout). */
+  taxWithheldGhs: numeric('tax_withheld_ghs', { precision: 12, scale: 2 }).notNull().default('0.00'),
+  /** What is actually disbursed on markPaid(): amountGhs - taxWithheldGhs. Defaults to the full gross amount. */
+  netAmountGhs: numeric('net_amount_ghs', { precision: 12, scale: 2 }).notNull(),
   currency: text('currency').notNull().default('GHS'),
   status: text('status').notNull().default('Earned'),
   payoutMethod: text('payout_method'),
