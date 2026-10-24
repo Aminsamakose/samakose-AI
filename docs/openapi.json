@@ -20633,7 +20633,8 @@
                     "enum": [
                       "feed",
                       "page",
-                      "query"
+                      "query",
+                      "site"
                     ]
                   },
                   "url": {
@@ -20714,6 +20715,54 @@
         ],
         "summary": "Add the starter search queries. Safe to repeat",
         "operationId": "post__opportunity_sources_starter",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-permission": "opportunities:create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Body is { data }"
+          },
+          "400": {
+            "description": "Validation failed. Body is { error: { code, message, details, requestId } }"
+          },
+          "401": {
+            "description": "Not signed in"
+          },
+          "403": {
+            "description": "Not allowed"
+          },
+          "404": {
+            "description": "Not found or outside your scope"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/opportunity-sources/sites": {
+      "post": {
+        "tags": [
+          "UNLOCK"
+        ],
+        "summary": "Add the worldwide list of funder, ministry, procurement and accelerator websites. Safe to repeat",
+        "operationId": "post__opportunity_sources_sites",
         "security": [
           {
             "cookieAuth": []
@@ -20843,7 +20892,8 @@
                     "enum": [
                       "feed",
                       "page",
-                      "query"
+                      "query",
+                      "site"
                     ]
                   },
                   "url": {
