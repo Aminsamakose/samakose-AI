@@ -15,7 +15,7 @@ beforeAll(async () => {
 describe('Business Health Record migration', () => {
   it('backfills source references and captures future changes without copying source facts', async () => {
     const fs = await import('node:fs/promises');
-    const sql = await fs.readFile('migrations/0049_business_health_record.sql', 'utf8');
+    const sql = await fs.readFile('migrations/0005_business_health_record.sql', 'utf8');
 
     expect(sql).toContain('create table if not exists public.business_health_records');
     expect(sql).toContain('create table if not exists public.business_health_record_events');
