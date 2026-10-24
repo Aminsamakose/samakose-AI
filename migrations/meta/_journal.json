@@ -85,6 +85,13 @@
       "when": 1792846813192,
       "tag": "0011_billing_credit_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792847088184,
+      "tag": "0012_contract_structural_depth",
+      "breakpoints": true
     }
   ]
 }
