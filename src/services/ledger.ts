@@ -24,7 +24,11 @@ export const CHART_OF_ACCOUNTS: { code: string; name: string; type: 'ASSET' | 'L
   { code: 'PAYABLE', name: 'Accounts Payable', type: 'LIABILITY' },
   { code: 'PROFESSIONAL_PAYABLE', name: 'Professional Payable', type: 'LIABILITY' },
   { code: 'TAX_PAYABLE', name: 'Tax Payable', type: 'LIABILITY' },
-  { code: 'DISCOUNT_CONTRA', name: 'Discounts Given', type: 'REVENUE' }
+  { code: 'DISCOUNT_CONTRA', name: 'Discounts Given', type: 'REVENUE' },
+  /** A credit note not yet applied against a future invoice: money Samakose owes back in service,
+   *  not cash owed - a liability distinct from CASH/PAYSTACK_CLEARING (refunds.ts) and from
+   *  PROFESSIONAL_PAYABLE (payouts). */
+  { code: 'CUSTOMER_CREDIT', name: 'Customer Credit Balance', type: 'LIABILITY' }
 ];
 
 /** Returns the id of the account with this chart-of-accounts code, or throws if seedReference() hasn't run. */

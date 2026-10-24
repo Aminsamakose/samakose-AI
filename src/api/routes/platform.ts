@@ -12,6 +12,7 @@ import * as taxp from '@/services/tax-profiles';
 import * as rfd from '@/services/refunds';
 import * as recon from '@/services/reconciliation';
 import { EXTERNAL_TRANSACTION_SETTLEMENT_STATUSES } from '@/db/schema';
+import * as crn from '@/services/credit-notes';
 import * as contracts from '@/services/contracts';
 import * as kobo from '@/services/kobo';
 import * as dash from '@/services/dashboards';
@@ -151,6 +152,13 @@ defineRoute({ method: 'POST', path: '/payout-adjustments/:id/approve-clawback', 
 defineRoute({ method: 'GET', path: '/chargebacks', tag: F, summary: 'Chargebacks, optionally filtered by status', permission: ['refunds', 'read'], query: z.object({ status: z.string().max(20).optional() }), handler: ({ ctx, query }) => rfd.listChargebacks(ctx, query) });
 defineRoute({ method: 'POST', path: '/chargebacks', tag: F, summary: 'Record a chargeback notification from the payment provider', permission: ['refunds', 'create'], body: z.object({ paymentId: uuid, amountGhs: money, provider: text(2, 40), providerReference: optText(120) }), handler: async ({ ctx, body }) => status(201, await rfd.recordChargeback(ctx, { ...body, providerReference: body.providerReference ?? undefined })) });
 defineRoute({ method: 'POST', path: '/chargebacks/:id/resolve', tag: F, summary: 'Resolve a chargeback as Won (funds recovered) or Lost', permission: ['refunds', 'approve'], body: z.object({ outcome: z.enum(['Won', 'Lost']) }), handler: ({ ctx, params, body }) => rfd.resolveChargeback(ctx, params.id, body.outcome) });
+
+/* ----------------------------- credit notes ------------------------------ */
+defineRoute({ method: 'GET', path: '/credit-notes', tag: F, summary: 'Credit notes, optionally filtered by status/invoice', permission: ['refunds', 'read'], query: z.object({ status: z.string().max(20).optional(), invoiceId: uuid.optional() }), handler: ({ ctx, query }) => crn.listCreditNotes(ctx, query) });
+defineRoute({ method: 'GET', path: '/credit-notes/:id/applications', tag: F, summary: 'Applications of a credit note against target invoices', permission: ['refunds', 'read'], handler: ({ ctx, params }) => crn.listCreditNoteApplications(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/credit-notes', tag: F, summary: 'Issue a credit note against an invoice, reducing what it owes without moving cash', permission: ['refunds', 'create'], body: z.object({ invoiceId: uuid, amountGhs: money, reason: text(3, 500) }), handler: async ({ ctx, body }) => status(201, await crn.issueCreditNote(ctx, body)) });
+defineRoute({ method: 'POST', path: '/credit-notes/:id/apply', tag: F, summary: "Apply some or all of a credit note's remaining balance against a target invoice", permission: ['refunds', 'approve'], body: z.object({ invoiceId: uuid, amountGhs: money }), handler: async ({ ctx, params, body }) => status(201, await crn.applyCreditNote(ctx, params.id, body)) });
+defineRoute({ method: 'POST', path: '/credit-notes/:id/void', tag: F, summary: 'Void a credit note that has not yet been applied against any invoice', permission: ['refunds', 'approve'], body: z.object({ reason: optText(500) }), handler: ({ ctx, params, body }) => crn.voidCreditNote(ctx, params.id, body.reason ?? undefined) });
 
 defineRoute({ method: 'POST', path: '/webhooks/paystack', tag: 'Integrations', summary: 'Paystack event receiver (HMAC-SHA512 signature)', auth: 'webhook', handler: ({ ctx, req, rawBody }) => fin.paystackWebhook(ctx, rawBody, req.headers.get('x-paystack-signature')) });
 defineRoute({ method: 'POST', path: '/integrations/kobo/webhook', tag: 'Integrations', summary: 'KoboToolbox REST service receiver (shared secret header)', auth: 'webhook', rateLimit: { key: 'kobo:ip:{ip}', limit: 600, windowSec: 60 },
