@@ -76,15 +76,30 @@ export function computeTaxAmount(baseAmountGhs: number, ratePct: number, inclusi
 
 /**
  * Computes and records a tax_lines row for one invoice or payout against the (type, jurisdiction) rule
- * in force today, and posts the balanced ledger entry (debit Samakose Revenue, credit Tax Payable per
- * the design doc's ledger table). Returns null, posting nothing, when no rule is configured for this
- * (type, jurisdiction) - an unconfigured jurisdiction is "no tax applied", not an error, since not every
- * jurisdiction Samakose operates in necessarily has a rule yet.
+ * in force today, and posts the matching balanced ledger entry. Returns null, posting nothing, when no
+ * rule is configured for this (type, jurisdiction) - an unconfigured jurisdiction is "no tax applied",
+ * not an error, since not every jurisdiction Samakose operates in necessarily has a rule yet.
+ *
+ * The two cases post different account pairs (#202), because they are different economic events:
+ *
+ * - Invoice tax (VAT): tax added on top of the price, charged to the customer, owed to GRA.
+ *   `debit REVENUE, credit TAX_PAYABLE` - Samakose's revenue is reduced and a new GRA liability appears.
+ * - Payout tax (WITHHOLDING): a deduction from an amount Samakose ALREADY owes the professional.
+ *   calculateRevenueShare() already posted `debit REVENUE, credit PROFESSIONAL_PAYABLE` for the full
+ *   gross amount, so withholding must not touch REVENUE again. It only moves part of that existing
+ *   liability from "owed to the professional" to "owed to GRA": `debit PROFESSIONAL_PAYABLE,
+ *   credit TAX_PAYABLE`. This also reduces the payout's netAmountGhs, which is what markPaid() actually
+ *   disburses, so the professional_payouts row and the ledger stay consistent with each other.
  */
 export async function applyTax(ctx: Ctx, args: { invoiceId?: string; payoutId?: string; type: TaxRuleType; jurisdiction: string; baseAmountGhs: number }) {
   if ((args.invoiceId ? 1 : 0) + (args.payoutId ? 1 : 0) !== 1) throw fieldError({ invoiceId: 'Specify exactly one of invoiceId or payoutId' });
   if (args.invoiceId) { const [i] = await ctx.db.select({ id: inv.id }).from(inv).where(eq(inv.id, args.invoiceId)).limit(1); if (!i) throw notFound('Invoice not found'); }
-  if (args.payoutId) { const [p] = await ctx.db.select({ id: pyo.id }).from(pyo).where(eq(pyo.id, args.payoutId)).limit(1); if (!p) throw notFound('Payout not found'); }
+  let payout: typeof pyo.$inferSelect | undefined;
+  if (args.payoutId) {
+    const [p] = await ctx.db.select().from(pyo).where(eq(pyo.id, args.payoutId)).limit(1);
+    if (!p) throw notFound('Payout not found');
+    payout = p;
+  }
   const rule = await activeTaxRule(ctx, args.type, args.jurisdiction, today());
   if (!rule) return null;
   const amountGhs = computeTaxAmount(args.baseAmountGhs, Number(rule.rate), rule.inclusiveOfPrice);
@@ -93,11 +108,22 @@ export async function applyTax(ctx: Ctx, args: { invoiceId?: string; payoutId?: 
     baseAmountGhs: dec(args.baseAmountGhs), amountGhs: dec(amountGhs), ruleVersion: rule.ruleVersion
   }).returning();
   if (amountGhs > 0) {
-    await postLedgerEntries(ctx, {
-      referenceType: args.invoiceId ? 'INVOICE' : 'PAYOUT', referenceId: (args.invoiceId ?? args.payoutId) as string,
-      description: `${rule.type} ${rule.rate}% (v${rule.ruleVersion}, ${rule.jurisdiction})`,
-      lines: [{ accountCode: 'REVENUE', debitGhs: amountGhs }, { accountCode: 'TAX_PAYABLE', creditGhs: amountGhs }]
-    });
+    if (payout) {
+      await postLedgerEntries(ctx, {
+        referenceType: 'PAYOUT', referenceId: payout.id,
+        description: `${rule.type} ${rule.rate}% withheld from payout ${payout.code} (v${rule.ruleVersion}, ${rule.jurisdiction})`,
+        lines: [{ accountCode: 'PROFESSIONAL_PAYABLE', debitGhs: amountGhs }, { accountCode: 'TAX_PAYABLE', creditGhs: amountGhs }]
+      });
+      const taxWithheldGhs = Number(payout.taxWithheldGhs) + amountGhs;
+      const netAmountGhs = Math.max(0, Number(payout.amountGhs) - taxWithheldGhs);
+      await ctx.db.update(pyo).set({ taxWithheldGhs: dec(taxWithheldGhs), netAmountGhs: dec(netAmountGhs), updatedAt: new Date() }).where(eq(pyo.id, payout.id));
+    } else {
+      await postLedgerEntries(ctx, {
+        referenceType: 'INVOICE', referenceId: args.invoiceId as string,
+        description: `${rule.type} ${rule.rate}% (v${rule.ruleVersion}, ${rule.jurisdiction})`,
+        lines: [{ accountCode: 'REVENUE', debitGhs: amountGhs }, { accountCode: 'TAX_PAYABLE', creditGhs: amountGhs }]
+      });
+    }
   }
   await audit(ctx, 'tax_line.applied', 'tax_lines', line.id, undefined, line);
   return line;
