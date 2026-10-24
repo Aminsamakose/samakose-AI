@@ -200,4 +200,16 @@ describe('cross-version comparison rule', () => {
     expect(ok.delta).toBe(10); expect(ok.comparable).toBe(true);
     expect(explainChange(side('x1', 50, v1), side('x1', 55, v1)).delta).toBe(5);
   });
+  it('#87: explainChange classifies the RE-CHECK transition from the same comparable delta, never from an incomparable one', () => {
+    const side = (id: string, overall: number, questions: QuestionLite[]) => ({ overall, dimensions: [{ dimension: 'D1', value: overall }], versionId: id, versionLabel: id, questions });
+    expect(explainChange(null as any, side('x1', 50, v1)).transition).toBeNull(); // first score ever
+    expect(explainChange(side('x1', 50, v1), side('x1', 56, v1)).transition).toBe('Progressing'); // +6, above the default 5-point band
+    expect(explainChange(side('x1', 50, v1), side('x1', 44, v1)).transition).toBe('Regressing'); // -6
+    expect(explainChange(side('x1', 50, v1), side('x1', 52, v1)).transition).toBe('Stable'); // +2, inside the band
+    expect(explainChange(side('x1', 50, v1), side('x1', 52, v1), { 'recheck.stable_band_points': 1 } as any).transition).toBe('Progressing'); // a tighter configured band
+    // A framework version change too different to compare drops 20 points of raw overall -- but it is
+    // never read as a regression, because explainChange never produces a delta for it to classify.
+    const incomparable = explainChange(side('x1', 70, v1), side('x2', 50, [mk('A1', 'D1', 5), mk('Z', 'D1', 5)]));
+    expect(incomparable.comparable).toBe(false); expect(incomparable.transition).toBeNull();
+  });
 });

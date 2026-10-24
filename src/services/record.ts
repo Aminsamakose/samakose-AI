@@ -10,21 +10,25 @@ import { forbidden } from '@/lib/errors';
 import { assertOrg, caseScope, isInternal } from '@/domain/scope';
 import { comparability, type Comparability } from '@/domain/bank';
 import type { QuestionLite, Rules } from '@/domain/logic';
+import { classifyTransition, DEFAULT_STABLE_BAND_POINTS, type Transition } from '@/domain/health-transition';
 import { allow, need, loadRules } from './common';
 import { questionsOf } from './frameworks';
 
 type Dim = { dimension: string; value: number };
 type Side = { overall: number; dimensions: Dim[]; versionId: string | null; versionLabel: string; questions?: QuestionLite[] };
 
-/** Plain-language reason a score moved. Facts only: the framework version and the dimension deltas. */
+/** Plain-language reason a score moved. Facts only: the framework version and the dimension deltas.
+ *  `transition` is the #87 RE-CHECK classification (Progressing/Regressing/Stable) of that same delta --
+ *  null whenever delta is null, so a framework-version change never gets silently called a regression. */
 export function explainChange(prev: Side | null, cur: Side, rules: Rules = {}) {
-  type Out = { delta: number | null; dimensions: { dimension: string; delta: number }[]; reason: string; comparable: boolean; comparability: Comparability | null };
-  if (!prev) return { delta: null, dimensions: [], reason: 'First score for this case.', comparable: true, comparability: null } as Out;
+  type Out = { delta: number | null; dimensions: { dimension: string; delta: number }[]; reason: string; comparable: boolean; comparability: Comparability | null; transition: Transition | null };
+  const bandPoints = Number(rules['recheck.stable_band_points'] ?? DEFAULT_STABLE_BAND_POINTS);
+  if (!prev) return { delta: null, dimensions: [], reason: 'First score for this case.', comparable: true, comparability: null, transition: null } as Out;
   const differs = prev.versionId !== cur.versionId;
   const cmp = differs && prev.questions && cur.questions ? comparability(prev.questions, cur.questions, rules) : null;
   if (cmp && !cmp.comparable) {
     const low = cmp.domains.filter((d) => !d.comparable).map((d) => d.dimension);
-    return { delta: null, dimensions: [], comparable: false, comparability: cmp,
+    return { delta: null, dimensions: [], comparable: false, comparability: cmp, transition: null,
       reason: `Not compared. ${prev.versionLabel} and ${cur.versionLabel} differ too much: ${Math.round(cmp.share * 100)}% of the weight is in unchanged questions, and at least ${Math.round(cmp.threshold * 100)}% is needed${low.length ? ` (below the line: ${low.join(', ')})` : ''}. Re-score the earlier answers under the new version to compare.` } as Out;
   }
   const pm = new Map(prev.dimensions.map((d) => [d.dimension, d.value]));
@@ -38,7 +42,7 @@ export function explainChange(prev: Side | null, cur: Side, rules: Rules = {}) {
     const top = [...dims].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 2).map((d) => `${d.dimension} ${d.delta > 0 ? '+' : ''}${d.delta}`);
     parts.push(`Largest movement: ${top.join(', ')}.`);
   }
-  return { delta, dimensions: dims, reason: parts.join(' '), comparable: true, comparability: cmp } as Out;
+  return { delta, dimensions: dims, reason: parts.join(' '), comparable: true, comparability: cmp, transition: classifyTransition(delta, bandPoints) } as Out;
 }
 
 export async function healthRecord(ctx: Ctx, orgId: string) {

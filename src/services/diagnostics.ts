@@ -7,8 +7,11 @@ import { assertCase, isInternal, assertLeadCase } from '@/domain/scope';
 import { confidenceClass, isConditional, NOT_APPLICABLE, scoreDiagnostic, validateSubmission, type ResponseLite } from '@/domain/logic';
 import { analyseBank } from '@/domain/bank';
 import { emitEvent } from '@/domain/events';
+import { RECHECK_CASE_STATES } from '@/domain/health-transition';
+import { notifyUsers } from '@/domain/notify';
 import { advanceCase, allow, latestDiagnostic, loadRules, need } from './common';
 import { formQuestionsOf, questionsOf, resolveVersion, rulesFor, versionForRow, type VersionRow } from './frameworks';
+import { explainChange } from './record';
 import { CASE_STATES, EVIDENCE_CLASSES, type EvidenceClass } from '@/db/schema';
 
 /** A rating from 0 to 4, or notApplicable for a conditional question that does not apply to this enterprise. */
@@ -59,7 +62,7 @@ export async function computeScore(ctx: Ctx, caseId: string, diagnosticId: strin
   const conf = confidenceClass(s.evidenceShare, ruleChecksPassed, true, rules);
   const [prev] = await ctx.db.select().from(schema.healthScores).where(eq(schema.healthScores.caseId, caseId)).orderBy(desc(schema.healthScores.createdAt)).limit(1);
   const [runRow] = await ctx.db.select({ n: sql<number>`coalesce(max(run),0)::int` }).from(schema.healthScores).where(eq(schema.healthScores.diagnosticId, diagnosticId));
-  const [caseRow] = await ctx.db.select({ status: schema.cases.status }).from(schema.cases).where(eq(schema.cases.id, caseId)).limit(1);
+  const [caseRow] = await ctx.db.select({ status: schema.cases.status, consultantId: schema.cases.consultantId, coachId: schema.cases.coachId }).from(schema.cases).where(eq(schema.cases.id, caseId)).limit(1);
   // The case's own lifecycle state at the moment of scoring decides the phase, not the run number --
   // a re-diagnostic mid-MONITORING should never be mistaken for a baseline or endline just because it
   // happens to be the first or latest run.
@@ -71,9 +74,28 @@ export async function computeScore(ctx: Ctx, caseId: string, diagnosticId: strin
   await audit(ctx, 'score.computed', 'health_score', row.id, undefined, { overall: s.overall, maturity: s.maturity, confidence: conf, run: row.run }, caseId);
   await emitEvent(ctx, 'HealthScoreChanged', { caseId, payload: { overall: s.overall, maturity: s.maturity, confidence_class: conf } });
   if (prev) {
-    const from = Number(prev.overall);
-    if (s.overall - from >= 5) await emitEvent(ctx, 'HealthImproved', { caseId, payload: { from, to: s.overall } });
-    if (from - s.overall >= 5) await emitEvent(ctx, 'HealthDeclined', { caseId, payload: { from, to: s.overall } });
+    // #87's RE-CHECK loop: classify this score's move against the previous one the same
+    // framework-comparability-aware way the Business Health Record already explains it
+    // (services/record.ts explainChange), instead of a raw overall-score subtraction -- a score move
+    // caused only by a framework version change must never be read as the business progressing or
+    // regressing.
+    const prevFv = prev.frameworkVersionId === fv.id ? fv : prev.frameworkVersionId ? await versionForRow(ctx.db, prev.frameworkVersionId) : null;
+    const why = explainChange(
+      { overall: Number(prev.overall), dimensions: prev.dimensions, versionId: prev.frameworkVersionId, versionLabel: '', questions: prevFv ? questionsOf(prevFv) : undefined },
+      { overall: s.overall, dimensions: s.dimensions, versionId: fv.id, versionLabel: '', questions: qs }, rules
+    );
+    if (why.transition === 'Progressing') await emitEvent(ctx, 'HealthImproved', { caseId, payload: { from: Number(prev.overall), to: s.overall } });
+    if (why.transition === 'Regressing') {
+      await emitEvent(ctx, 'HealthDeclined', { caseId, payload: { from: Number(prev.overall), to: s.overall } });
+      // Still being delivered to (a RE-CHECK, not the original baseline): a regression here is exactly
+      // the moment #87 wants to lead to a new prescription, not a note nobody acts on.
+      if (caseRow?.status && (RECHECK_CASE_STATES as readonly string[]).includes(caseRow.status)) {
+        await notifyUsers(ctx, [caseRow.consultantId, caseRow.coachId].filter(Boolean) as string[], {
+          kind: 'RecheckRegression', title: 'Business Health has regressed on RE-CHECK',
+          body: `Score moved from ${prev.overall} to ${s.overall}. Consider a new prescription for what changed.`, link: `/cases/${caseId}`, email: true
+        });
+      }
+    }
   }
   return row;
 }
