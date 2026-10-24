@@ -12,7 +12,8 @@ export const CODE_PREFIXES = {
   org: 'SME', prog: 'PRG', cohort: 'COH', case: 'CASE', diag: 'DIAG', ev: 'EVD', doc: 'DOC', dgn: 'DGN',
   rx: 'RX', iv: 'INT', act: 'ACT', risk: 'RISK', kpi: 'KPI', sess: 'SES', rep: 'REP', ai: 'AI',
   plan: 'PLN', con: 'CON', inv: 'INV', pay: 'PAY', usr: 'USR',
-  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD'
+  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD',
+  rsx: 'RSX'
 } as const;
 export type CodeKey = keyof typeof CODE_PREFIXES;
 
@@ -42,6 +43,7 @@ export const seq_rsa = pgSequence('seq_rsa');
 export const seq_rsc = pgSequence('seq_rsc');
 export const seq_pyo = pgSequence('seq_pyo');
 export const seq_rfd = pgSequence('seq_rfd');
+export const seq_rsx = pgSequence('seq_rsx');
 
 const codeCol = (k: CodeKey) =>
   text('code').notNull().unique().default(
@@ -709,6 +711,33 @@ export const revenueShareCalculations = pgTable('revenue_share_calculations', {
   approvedAt: timestamp('approved_at', { withTimezone: true }),
   createdAt: created()
 }, (t) => [index('rscalc_agreement_idx').on(t.agreementId), index('rscalc_invoice_idx').on(t.invoiceId)]);
+
+/* ----------------------- revenue-share agreement conflicts ----------------------- */
+export const AGREEMENT_CONFLICT_STATUSES = ['Open', 'Resolved'] as const;
+/**
+ * Two revenue-share agreements that could both apply to the same assignment, with overlapping
+ * effective dates (Developer Spec §5.3). Detected automatically; never resolved automatically - the
+ * system must not silently pick the newest agreement. One row per unresolved (or once-resolved) pair,
+ * keyed by the unordered pair so the same conflict is never logged twice.
+ */
+export const revenueShareAgreementConflicts = pgTable('revenue_share_agreement_conflicts', {
+  id: id(), code: codeCol('rsx'),
+  assignmentId: uuid('assignment_id').notNull().references(() => caseAssignments.id),
+  agreementId: uuid('agreement_id').notNull().references(() => revenueShareAgreements.id),
+  conflictingAgreementId: uuid('conflicting_agreement_id').notNull().references(() => revenueShareAgreements.id),
+  reason: text('reason').notNull(),
+  status: text('status').notNull().default('Open'),
+  resolvedBy: uuid('resolved_by').references(() => users.id),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  resolutionNote: text('resolution_note'),
+  /** Which of the two agreements governs going forward. Set only on resolution. */
+  prevailingAgreementId: uuid('prevailing_agreement_id').references((): any => revenueShareAgreements.id),
+  createdAt: created()
+}, (t) => [
+  uniqueIndex('rsac_pair_uq').on(t.assignmentId, t.agreementId, t.conflictingAgreementId),
+  index('rsac_assignment_idx').on(t.assignmentId, t.status),
+  index('rsac_conflicting_idx').on(t.conflictingAgreementId)
+]);
 
 export const PAYOUT_STATUSES = ['Earned', 'Reviewed', 'Approved', 'Payable', 'Payment initiated', 'Paid', 'Reconciled'] as const;
 

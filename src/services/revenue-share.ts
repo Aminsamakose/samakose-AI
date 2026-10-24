@@ -15,7 +15,7 @@
  * represents Samakose's own internal cut taken from that pool and intentionally gets no payout row - only
  * allocations with a professionalId are "paid allocatees" (Directive §35) and receive one.
  */
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, or } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -25,6 +25,7 @@ import { postLedgerEntries } from './ledger';
 import { isPayoutEligible } from './tax-profiles';
 
 const rsa = schema.revenueShareAgreements, rsal = schema.revenueShareAllocations, rsc = schema.revenueShareCalculations;
+const rsx = schema.revenueShareAgreementConflicts;
 const pyo = schema.professionalPayouts, ph = schema.payoutHolds, pa = schema.payoutAdjustments;
 const con = schema.contracts, asn = schema.caseAssignments, inv = schema.invoices, pay = schema.payments, pred = schema.promoRedemptions, usr = schema.users;
 const dec = (n: number) => n.toFixed(2);
@@ -151,6 +152,95 @@ export async function activateAgreement(ctx: Ctx, agreementId: string) {
   if (a.status !== 'Approved') throw unprocessable(`A ${a.status} agreement must be approved before it can be activated`);
   await ctx.db.update(rsa).set({ status: 'Active', updatedAt: new Date() }).where(eq(rsa.id, agreementId));
   await audit(ctx, 'revenue_share_agreement.activated', 'revenue_share_agreement', agreementId, { status: 'Approved' }, { status: 'Active' });
+  // Detected here, as early as possible, so the review queue is populated at activation rather than
+  // waiting for someone to first attempt a calculation (Developer Spec §5.3). Never resolved here.
+  const conflicts = await detectAgreementConflicts(ctx, { ...a, status: 'Active' });
+  return { ok: true, conflicts: conflicts.length };
+}
+
+/**
+ * Overlap test on effective dates, open-ended on either side. Deliberately a plain comparison, not a
+ * database range type, to keep the "null means open-ended" rule visible at the call site.
+ */
+function datesOverlap(aFrom: string | null, aTo: string | null, bFrom: string | null, bTo: string | null): boolean {
+  const aStart = aFrom ? new Date(aFrom).getTime() : -Infinity;
+  const aEnd = aTo ? new Date(aTo).getTime() : Infinity;
+  const bStart = bFrom ? new Date(bFrom).getTime() : -Infinity;
+  const bEnd = bTo ? new Date(bTo).getTime() : Infinity;
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
+/**
+ * Find every other Active agreement on the same assignment whose effective dates overlap this one's,
+ * and record each pair found (idempotent - an existing Open row for the same pair is never duplicated).
+ * Never silently selects a "winning" agreement; that is always a human decision via resolveAgreementConflict().
+ */
+async function detectAgreementConflicts(ctx: Ctx, agreement: Pick<typeof rsa.$inferSelect, 'id' | 'code' | 'status' | 'assignmentId' | 'effectiveFrom' | 'effectiveTo'>) {
+  if (agreement.status !== 'Active') return [];
+  const others = await ctx.db.select().from(rsa).where(and(eq(rsa.assignmentId, agreement.assignmentId), eq(rsa.status, 'Active')));
+  const found: (typeof rsx.$inferSelect)[] = [];
+  for (const other of others) {
+    if (other.id === agreement.id) continue;
+    if (!datesOverlap(agreement.effectiveFrom, agreement.effectiveTo, other.effectiveFrom, other.effectiveTo)) continue;
+    // Keyed by the unordered pair (lower id first) so detecting from either agreement's side finds the same row.
+    const [lo, hi] = agreement.id < other.id ? [agreement, other] : [other, agreement];
+    const existing = await ctx.db.select().from(rsx).where(and(eq(rsx.assignmentId, agreement.assignmentId), eq(rsx.agreementId, lo.id), eq(rsx.conflictingAgreementId, hi.id))).limit(1);
+    if (existing.length) { found.push(existing[0]); continue; }
+    const [row] = await ctx.db.insert(rsx).values({
+      assignmentId: agreement.assignmentId, agreementId: lo.id, conflictingAgreementId: hi.id,
+      reason: `Agreements ${lo.code} and ${hi.code} are both Active on the same assignment with overlapping effective dates`
+    }).returning();
+    found.push(row);
+    await audit(ctx, 'revenue_share_agreement.conflict_detected', 'revenue_share_agreement_conflict', row.id, undefined, { assignmentId: agreement.assignmentId, agreementId: lo.id, conflictingAgreementId: hi.id });
+  }
+  return found;
+}
+
+/**
+ * Blocks calculation while any conflict naming this agreement is unresolved, and - once a conflict is
+ * resolved - permanently blocks the agreement that lost it. "Permanently" because a resolution is a
+ * considered human decision about which agreement governs the assignment, not a snapshot that expires.
+ */
+async function assertNoBlockingConflicts(ctx: Ctx, agreement: typeof rsa.$inferSelect) {
+  await detectAgreementConflicts(ctx, agreement); // catches a conflict created by a second agreement activated after this one
+  const rows = await ctx.db.select().from(rsx).where(or(eq(rsx.agreementId, agreement.id), eq(rsx.conflictingAgreementId, agreement.id)));
+  for (const row of rows) {
+    if (row.status === 'Open') throw conflict(`This agreement conflicts with another active agreement on the same assignment (${row.code}). An authorised reviewer must resolve the conflict before revenue share can be calculated`);
+    if (row.status === 'Resolved' && row.prevailingAgreementId !== agreement.id) throw conflict(`A resolved conflict (${row.code}) determined that a different agreement governs this assignment. Calculate under that agreement instead`);
+  }
+}
+
+export async function listAgreementConflicts(ctx: Ctx, filters: { status?: string; assignmentId?: string } = {}) {
+  allow(ctx, 'revenue_share', 'read');
+  const u = need(ctx).user;
+  const rows = await ctx.db.select().from(rsx);
+  const filtered = rows.filter((r) => (!filters.status || r.status === filters.status) && (!filters.assignmentId || r.assignmentId === filters.assignmentId));
+  if (u.role !== 'EXPERT') return filtered;
+  // Row-scoped like every other revenue-share record a professional can see: only a conflict touching
+  // their own assignment (Directive §50), never a raw cross-professional query.
+  const own = await ctx.db.select({ id: asn.id }).from(asn).where(eq(asn.userId, u.id));
+  const ownAssignmentIds = new Set(own.map((a) => a.id));
+  return filtered.filter((r) => ownAssignmentIds.has(r.assignmentId));
+}
+
+/**
+ * Resolution is a human decision, never automatic: a reviewer with no stake in either agreement says
+ * which one governs. Four-eyes, extended to both sides of the conflict: whoever proposed or approved
+ * either agreement cannot be the one who decides between them.
+ */
+export async function resolveAgreementConflict(ctx: Ctx, conflictId: string, prevailingAgreementId: string, resolutionNote: string) {
+  allow(ctx, 'revenue_share', 'approve');
+  const u = need(ctx).user;
+  const [row] = await ctx.db.select().from(rsx).where(eq(rsx.id, conflictId)).limit(1);
+  if (!row) throw notFound('Conflict not found');
+  if (row.status !== 'Open') throw unprocessable(`A ${row.status} conflict cannot be resolved again`);
+  if (!resolutionNote?.trim()) throw fieldError({ resolutionNote: 'Required' });
+  if (![row.agreementId, row.conflictingAgreementId].includes(prevailingAgreementId)) throw fieldError({ prevailingAgreementId: 'Must be one of the two conflicting agreements' });
+  const [a1] = await ctx.db.select({ proposedBy: rsa.proposedBy, approvedBy: rsa.approvedBy }).from(rsa).where(eq(rsa.id, row.agreementId)).limit(1);
+  const [a2] = await ctx.db.select({ proposedBy: rsa.proposedBy, approvedBy: rsa.approvedBy }).from(rsa).where(eq(rsa.id, row.conflictingAgreementId)).limit(1);
+  if ([a1?.proposedBy, a1?.approvedBy, a2?.proposedBy, a2?.approvedBy].includes(u.id)) throw forbidden('Someone who proposed or approved either conflicting agreement cannot resolve the conflict between them');
+  await ctx.db.update(rsx).set({ status: 'Resolved', resolvedBy: u.id, resolvedAt: new Date(), resolutionNote, prevailingAgreementId }).where(eq(rsx.id, conflictId));
+  await audit(ctx, 'revenue_share_agreement.conflict_resolved', 'revenue_share_agreement_conflict', conflictId, { status: 'Open' }, { status: 'Resolved', prevailingAgreementId, resolutionNote });
   return { ok: true };
 }
 
@@ -185,6 +275,7 @@ export async function calculateRevenueShare(ctx: Ctx, agreementId: string, invoi
   const [a] = await ctx.db.select().from(rsa).where(eq(rsa.id, agreementId)).limit(1);
   if (!a) throw notFound('Revenue share agreement not found');
   if (a.status !== 'Active') throw unprocessable('Only an Active agreement can generate a calculation');
+  await assertNoBlockingConflicts(ctx, a);
   const [i] = await ctx.db.select().from(inv).where(eq(inv.id, invoiceId)).limit(1);
   if (!i) throw notFound('Invoice not found');
   if (i.status !== 'Paid') throw unprocessable('The invoice must be fully paid before revenue share can be calculated');
