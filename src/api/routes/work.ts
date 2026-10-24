@@ -11,6 +11,7 @@ import * as asg from '@/services/assignments';
 import * as diag from '@/services/diagnostics';
 import * as record from '@/services/record';
 import * as ev from '@/services/evidence';
+import * as dex from '@/services/document-intelligence';
 import * as clin from '@/services/clinical';
 import * as del from '@/services/delivery';
 import * as rep from '@/services/reports';
@@ -78,6 +79,8 @@ defineRoute({ method: 'DELETE', path: '/evidence/:id', tag: D, summary: 'Remove 
 defineRoute({ method: 'POST', path: '/documents', tag: D, summary: 'Upload a document (multipart: file, caseId or orgId)', permission: ['documents', 'create'], multipart: true, handler: async ({ ctx, req }) => { let form: FormData; try { form = await req.formData(); } catch { throw badRequest('Send the file as multipart form data'); } return status(201, await ev.uploadDocument(ctx, form)); } });
 defineRoute({ method: 'GET', path: '/documents', tag: D, summary: 'List documents for a case or organisation', permission: ['documents', 'read'], query: z.object({ caseId: z.string().optional(), orgId: z.string().optional() }), handler: ({ ctx, query }) => ev.listDocuments(ctx, query) });
 defineRoute({ method: 'GET', path: '/documents/:id/download', tag: D, summary: 'Download a document (checked against its fingerprint)', permission: ['documents', 'read'], handler: ({ ctx, params }) => ev.downloadDocument(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/cases/:id/extractions', tag: D, summary: 'Machine-read first pass over this case\'s uploaded documents, pending human review', permission: ['evidence', 'read'], query: z.object({ status: z.enum(['Pending', 'Accepted', 'Rejected']).optional() }), handler: ({ ctx, params, query }) => dex.listExtractions(ctx, params.id, query.status) });
+defineRoute({ method: 'POST', path: '/extractions/:id/review', tag: D, summary: 'Accept an extraction into evidence, or reject it', permission: ['evidence', 'create'], body: z.object({ decision: z.enum(['Accept', 'Reject']), description: text(3, 1000).optional(), kind: z.enum(['invoice', 'certificate', 'financial_statement', 'id_document', 'contract', 'other']).optional() }), handler: ({ ctx, params, body }) => dex.reviewExtraction(ctx, params.id, body) });
 
 /* --------------------- diagnosis, prescription, review ------------------ */
 const R = 'Diagnosis and prescription';

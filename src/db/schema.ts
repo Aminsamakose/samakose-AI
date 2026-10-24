@@ -12,7 +12,7 @@ export const CODE_PREFIXES = {
   org: 'SME', prog: 'PRG', cohort: 'COH', case: 'CASE', diag: 'DIAG', ev: 'EVD', doc: 'DOC', dgn: 'DGN',
   rx: 'RX', iv: 'INT', act: 'ACT', risk: 'RISK', kpi: 'KPI', sess: 'SES', rep: 'REP', ai: 'AI',
   plan: 'PLN', con: 'CON', inv: 'INV', pay: 'PAY', usr: 'USR',
-  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD'
+  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD', dex: 'DEX'
 } as const;
 export type CodeKey = keyof typeof CODE_PREFIXES;
 
@@ -42,6 +42,7 @@ export const seq_rsa = pgSequence('seq_rsa');
 export const seq_rsc = pgSequence('seq_rsc');
 export const seq_pyo = pgSequence('seq_pyo');
 export const seq_rfd = pgSequence('seq_rfd');
+export const seq_dex = pgSequence('seq_dex');
 
 const codeCol = (k: CodeKey) =>
   text('code').notNull().unique().default(
@@ -331,6 +332,29 @@ export const documents = pgTable('documents', {
   uploadedBy: uuid('uploaded_by'),
   createdAt: created()
 }, (t) => [index('doc_case_idx').on(t.caseId), index('doc_org_idx').on(t.orgId), index('doc_uploader_idx').on(t.orgId, t.uploadedBy)]);
+
+/**
+ * A machine-read first pass over an uploaded document: what kind of document it looks like, and any
+ * facts (dates, amounts, percentages) a cheap text pass could pull from it. Nothing here is trusted on
+ * its own -- it sits in 'Pending' until a human reviews it, and only on acceptance does it become real
+ * evidence (an `evidence` row linked to the same document). Rejecting it just closes the review with no
+ * evidence created. `extractedText` and `facts` are null/empty when the file format has no text layer we
+ * can read without OCR (images, scanned PDFs) -- that is a real, stated limit, not a bug.
+ */
+export const documentExtractions = pgTable('document_extractions', {
+  id: id(), code: codeCol('dex'),
+  documentId: uuid('document_id').notNull().references(() => documents.id),
+  caseId: uuid('case_id').references(() => cases.id),
+  orgId: uuid('org_id').notNull().references(() => organisations.id),
+  kind: text('kind').notNull().default('other'), // invoice | certificate | financial_statement | id_document | contract | other
+  extractedText: text('extracted_text'),
+  facts: jsonb('facts').notNull().default([]), // [{ label, value }]
+  status: text('status').notNull().default('Pending'), // Pending | Accepted | Rejected
+  evidenceId: uuid('evidence_id').references(() => evidence.id),
+  reviewedBy: uuid('reviewed_by'),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  createdAt: created()
+}, (t) => [index('dex_case_idx').on(t.caseId), index('dex_doc_idx').on(t.documentId), index('dex_status_idx').on(t.status)]);
 
 export const evidence = pgTable('evidence', {
   id: id(), code: codeCol('ev'),

@@ -43,6 +43,13 @@
       "when": 1792844462513,
       "tag": "0005_business_health_record",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792845529090,
+      "tag": "0006_document_extractions",
+      "breakpoints": true
     }
   ]
 }
