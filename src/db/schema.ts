@@ -13,7 +13,7 @@ export const CODE_PREFIXES = {
   rx: 'RX', iv: 'INT', act: 'ACT', risk: 'RISK', kpi: 'KPI', sess: 'SES', rep: 'REP', ai: 'AI',
   plan: 'PLN', con: 'CON', inv: 'INV', pay: 'PAY', usr: 'USR',
   rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD', dex: 'DEX', txc: 'TXC', txr: 'TXR',
-  xtx: 'XTX', rec: 'REC', rsx: 'RSX', crn: 'CRN', ctp: 'CTP', cdoc: 'CDOC'
+  xtx: 'XTX', rec: 'REC', rsx: 'RSX', crn: 'CRN', ctp: 'CTP', cdoc: 'CDOC', prc: 'PRC'
 } as const;
 export type CodeKey = keyof typeof CODE_PREFIXES;
 
@@ -52,6 +52,7 @@ export const seq_rsx = pgSequence('seq_rsx');
 export const seq_crn = pgSequence('seq_crn');
 export const seq_ctp = pgSequence('seq_ctp');
 export const seq_cdoc = pgSequence('seq_cdoc');
+export const seq_prc = pgSequence('seq_prc');
 
 const codeCol = (k: CodeKey) =>
   text('code').notNull().unique().default(
@@ -626,6 +627,79 @@ export const plans = pgTable('plans', {
   active: boolean('active').notNull().default(false),
   createdAt: created(), updatedAt: updated()
 });
+/* --------------------------- pricing management --------------------------- */
+/** Lifecycle of a pricing configuration revision. Only one row may ever hold 'published' at a
+ *  time (see the partial unique index below) - that row, and only that row, is what the
+ *  customer-facing flow and the server-side checkout calculator read. Everything else (draft,
+ *  pending_approval, approved-but-not-yet-published, rejected, superseded) is internal. */
+export const PRICING_STATUSES = ['draft', 'pending_approval', 'approved', 'rejected', 'published', 'superseded'] as const;
+export type PricingStatus = (typeof PRICING_STATUSES)[number];
+/** Which tools a programme cohort is buying, each with its own discount rate off the package's
+ *  per-business price. 'samakose_only' and 'both' are restricted to exactly one Samakose platform
+ *  (ORG_TYPES); 'partner_only' requires the partner to name its own tool(s) in partnerToolsLabel. */
+export const PROGRAMME_TOOL_SETUPS = ['samakose_only', 'partner_only', 'both'] as const;
+export type ProgrammeToolSetup = (typeof PROGRAMME_TOOL_SETUPS)[number];
+/** Customer-facing tax display mode. 'estimate' shows an illustrative, clearly-labelled estimate;
+ *  'confirmed' may only be set once Finance has confirmed registration/treatment/rate/effective date
+ *  (see service-layer validation); 'hidden' shows no tax line at all. Never applied to a live invoice
+ *  or payment request from this config alone - see pricing.ts's serverQuote(). */
+export const PRICING_TAX_MODES = ['estimate', 'confirmed', 'hidden'] as const;
+export type PricingTaxMode = (typeof PRICING_TAX_MODES)[number];
+
+/** The full shape of one pricing revision's `data` column. Kept as one versioned JSON document
+ *  (rather than a dozen normalised tables) because every field here changes together as a single
+ *  reviewable unit - that's the whole point of the draft/submit/approve/publish workflow: Finance
+ *  reviews one coherent proposal, not a scatter of independently-timestamped row edits. */
+export type PricingConfigData = {
+  /** Per-platform availability for customer selection (Platforms admin section). */
+  platforms: Record<(typeof ORG_TYPES)[number], { enabled: boolean }>;
+  /** One row per sellable package (Diagnostic, Transform Fix, Transform Build, Growth Access,
+   *  Growth Plus, or any future package), each with its own price PER PLATFORM so SME360,
+   *  AgriFood360 and ESO360 can diverge - they start equal but are never assumed to stay so. */
+  packages: Array<{
+    key: string; name: string; durationLabel: string; durationDays: number | null; sortOrder: number;
+    pricesGhs: Partial<Record<(typeof ORG_TYPES)[number], number>>;
+  }>;
+  /** One discount rule per tool setup. `discountPct` is 0-100. `oneSamakosePlatformOnly` records
+   *  the constraint for setups that carry it (samakose_only, both) - kept explicit in data rather
+   *  than inferred from the setup key, so a future setup can opt in or out without code changes. */
+  programmeRules: Array<{
+    setup: (typeof PROGRAMME_TOOL_SETUPS)[number]; discountPct: number; oneSamakosePlatformOnly: boolean;
+    partnerToolsNameRequired: boolean; customerFacingNote: string | null;
+  }>;
+  /** Future individual-entrepreneur diagnostics (e.g. SWOT, E-Readiness). `enabled: false` keeps a
+   *  type fully configured but still unavailable for purchase, matching "Individual - Coming soon". */
+  individualAssessments: Array<{ key: string; name: string; enabled: boolean; priceGhs: number | null }>;
+  tax: {
+    mode: (typeof PRICING_TAX_MODES)[number];
+    /** Each named component shown separately in the preview (e.g. VAT 15%, NHIL 2.5%, GETFund 2.5%),
+     *  applied AFTER the programme discount. Confirmation fields are who/when Finance signed off on
+     *  showing these as 'confirmed' rather than illustrative. */
+    components: Array<{ name: string; pct: number }>;
+    confirmedBy: string | null; confirmedAt: string | null;
+  };
+};
+
+export const pricingConfigs = pgTable('pricing_configs', {
+  id: id(), code: codeCol('prc'),
+  status: text('status').notNull().default('draft'),
+  data: jsonb('data').notNull().$type<PricingConfigData>(),
+  /** True only for the single currently-live row. A partial unique index (below) makes the database
+   *  itself the backstop against ever having two rows "published" at once, independent of any
+   *  application-level race. */
+  isPublished: boolean('is_published').notNull().default(false),
+  createdBy: uuid('created_by').references(() => users.id),
+  submittedBy: uuid('submitted_by').references(() => users.id), submittedAt: timestamp('submitted_at', { withTimezone: true }),
+  decidedBy: uuid('decided_by').references(() => users.id), decidedAt: timestamp('decided_at', { withTimezone: true }),
+  rejectionReason: text('rejection_reason'),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  supersedes: uuid('supersedes').references((): any => pricingConfigs.id),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [
+  uniqueIndex('prc_one_published_uq').on(t.isPublished).where(sql`${t.isPublished} = true`),
+  index('prc_status_idx').on(t.status)
+]);
+
 export const contracts = pgTable('contracts', {
   id: id(), code: codeCol('con'),
   orgId: uuid('org_id').notNull().references(() => organisations.id),

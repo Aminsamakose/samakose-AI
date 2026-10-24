@@ -37,7 +37,8 @@ const GROUPS: Group[] = [
     { icon: 'payments', href: '/finance/payments', label: 'Payments', need: ['payments', 'read'] },
     { icon: 'contracts', href: '/finance/contracts', label: 'Contracts', need: ['contracts', 'read'] },
     { icon: 'plans', href: '/finance/plans', label: 'Plans', need: ['plans', 'read'] },
-    { icon: 'discounts', href: '/finance/discounts', label: 'Discounts & promos', need: ['discounts', 'read'] }
+    { icon: 'discounts', href: '/finance/discounts', label: 'Discounts & promos', need: ['discounts', 'read'] },
+    { icon: 'plans', href: '/finance/pricing', label: 'Pricing console', need: ['pricing', 'read'] }
   ] },
   { title: 'Payouts & compliance', items: [
     { icon: 'approvals', href: '/finance/approvals', label: 'Approvals', need: ['approvals', 'read'] },

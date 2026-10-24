@@ -92,6 +92,13 @@
       "when": 1792847088184,
       "tag": "0012_contract_structural_depth",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792879746723,
+      "tag": "0013_pricing_management",
+      "breakpoints": true
     }
   ]
 }

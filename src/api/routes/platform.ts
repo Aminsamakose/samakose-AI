@@ -33,6 +33,8 @@ import * as inq from '@/services/inquiries';
 import * as fa from '@/services/publicAssessments';
 import * as rc from '@/services/registration-config';
 import * as planPurchases from '@/services/plan-purchases';
+import * as pricing from '@/services/pricing';
+import { ORG_TYPES, PROGRAMME_TOOL_SETUPS, PRICING_TAX_MODES } from '@/db/schema';
 import * as avalid from '@/services/assessment-validity';
 import { PLAN_SERVICE_TIERS, PLAN_PLATFORMS, PLAN_ENTITLEMENTS } from '@/domain/plan-catalog';
 import { getJob } from '@/domain/jobs';
@@ -69,6 +71,45 @@ defineRoute({ method: 'DELETE', path: '/plans/:id', tag: F, summary: 'Delete a p
  * published, fixed-price, confirmed plan can actually be bought this way. */
 defineRoute({ method: 'POST', path: '/plans/:id/purchase', tag: F, summary: 'Buy a published plan for your own organisation (starts a Paystack transaction, or the mock-payment path outside production)', permission: ['plan_catalog', 'read'],
   body: z.object({}).passthrough(), handler: ({ ctx, params }) => planPurchases.startPlanPurchase(ctx, params.id) });
+
+/* ----------------------------- pricing management ----------------------------- */
+const orgTypeEnum = z.enum(ORG_TYPES as unknown as [string, ...string[]]);
+const toolSetupEnum = z.enum(PROGRAMME_TOOL_SETUPS as unknown as [string, ...string[]]);
+const pricingDataSchema = z.object({
+  platforms: z.record(orgTypeEnum, z.object({ enabled: z.boolean() })),
+  packages: z.array(z.object({
+    key: z.string().min(1).max(60), name: z.string().min(1).max(120), durationLabel: z.string().min(1).max(60),
+    durationDays: z.number().int().min(1).max(3650).nullable(), sortOrder: z.number().int().min(0).max(1000),
+    pricesGhs: z.record(orgTypeEnum, z.number().min(0).max(100_000_000))
+  })).max(50),
+  programmeRules: z.array(z.object({
+    setup: toolSetupEnum, discountPct: z.number().min(0).max(100), oneSamakosePlatformOnly: z.boolean(),
+    partnerToolsNameRequired: z.boolean(), customerFacingNote: z.string().max(500).nullable()
+  })).max(10),
+  individualAssessments: z.array(z.object({
+    key: z.string().min(1).max(60), name: z.string().min(1).max(120), enabled: z.boolean(), priceGhs: z.number().min(0).max(100_000_000).nullable()
+  })).max(20),
+  tax: z.object({
+    mode: z.enum(PRICING_TAX_MODES as unknown as [string, ...string[]]),
+    components: z.array(z.object({ name: z.string().min(1).max(60), pct: z.number().min(0).max(100) })).max(10),
+    confirmedBy: z.string().max(200).nullable(), confirmedAt: z.string().nullable()
+  })
+});
+defineRoute({ method: 'GET', path: '/pricing/configs', tag: F, summary: 'Every pricing configuration revision (drafts, pending, approved, rejected, published, superseded)', permission: ['pricing', 'read'], handler: ({ ctx }) => pricing.listConfigs(ctx) });
+defineRoute({ method: 'GET', path: '/pricing/draft', tag: F, summary: 'The current editable draft, seeded from the published configuration if none exists yet', permission: ['pricing', 'read'], handler: ({ ctx }) => pricing.getOrCreateDraft(ctx) });
+defineRoute({ method: 'PATCH', path: '/pricing/configs/:id', tag: F, summary: 'Edit a draft (or a rejected configuration, to revise and resubmit)', permission: ['pricing', 'edit'], body: z.object({ data: pricingDataSchema }), handler: ({ ctx, params, body }) => pricing.updateDraft(ctx, params.id, body.data as any) });
+defineRoute({ method: 'POST', path: '/pricing/configs/:id/submit', tag: F, summary: 'Submit a draft for Finance approval', permission: ['pricing', 'edit'], body: z.object({}).passthrough(), handler: ({ ctx, params }) => pricing.submitDraft(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/pricing/configs/:id/approve', tag: F, summary: 'Approve a pending submission (the submitter may not approve their own)', permission: ['pricing', 'approve'], body: z.object({}).passthrough(), handler: ({ ctx, params }) => pricing.decideDraft(ctx, params.id, 'approved') });
+defineRoute({ method: 'POST', path: '/pricing/configs/:id/reject', tag: F, summary: 'Reject a pending submission with a recorded reason', permission: ['pricing', 'approve'], body: z.object({ reason: z.string().min(3).max(1000) }), handler: ({ ctx, params, body }) => pricing.decideDraft(ctx, params.id, 'rejected', body.reason) });
+defineRoute({ method: 'POST', path: '/pricing/configs/:id/publish', tag: F, summary: 'Publish an approved configuration, making it the live customer-facing pricing', permission: ['pricing', 'approve'], body: z.object({}).passthrough(), handler: ({ ctx, params }) => pricing.publishConfig(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/pricing/published', tag: F, summary: 'The current live pricing configuration (staff view; use /public/pricing for the customer-facing read)', permission: ['pricing', 'read'], handler: ({ ctx }) => pricing.getPublished(ctx) });
+defineRoute({ method: 'GET', path: '/public/pricing', tag: F, summary: 'The live published pricing configuration, for the customer-facing pricing page', auth: 'public', handler: async ({ ctx }) => (await pricing.getPublished(ctx))?.data ?? null });
+defineRoute({ method: 'GET', path: '/public/pricing/quote/one-business', tag: F, summary: 'Estimated price for a single-business purchase (estimate only; checkout computes the authoritative amount server-side at payment time)', auth: 'public',
+  query: z.object({ platform: orgTypeEnum, packageKey: z.string().min(1).max(60) }),
+  handler: async ({ ctx, query }) => { const pub = await pricing.getPublished(ctx); if (!pub) throw notFound('No pricing has been published yet'); return pricing.quoteOneBusiness(pub.data as any, query.platform as any, query.packageKey); } });
+defineRoute({ method: 'GET', path: '/public/pricing/quote/programme', tag: F, summary: 'Estimated price for a programme cohort purchase (estimate only)', auth: 'public',
+  query: z.object({ toolSetup: toolSetupEnum, platform: orgTypeEnum.optional(), packageKey: z.string().min(1).max(60), participantCount: z.coerce.number().int().min(1).max(100_000) }),
+  handler: async ({ ctx, query }) => { const pub = await pricing.getPublished(ctx); if (!pub) throw notFound('No pricing has been published yet'); return pricing.quoteProgramme(pub.data as any, { toolSetup: query.toolSetup as any, platform: query.platform as any, packageKey: query.packageKey, participantCount: query.participantCount }); } });
 defineRoute({ method: 'GET', path: '/contracts', tag: F, summary: 'Contracts', permission: ['contracts', 'read'], query: listQuery.extend({ status: z.string().optional(), orgId: z.string().optional() }), handler: ({ ctx, query }) => fin.listContracts(ctx, query) });
 defineRoute({ method: 'POST', path: '/contracts', tag: F, summary: 'Create a contract', permission: ['contracts', 'create'], body: z.object({ orgId: uuid, planId: uuid.nullish(), programmeId: uuid.nullish(), startDate: isoDate.nullish(), endDate: isoDate.nullish(), amountGhs: z.number().min(0).max(1e9).optional() }), handler: async ({ ctx, body }) => status(201, await fin.createContract(ctx, body)) });
 defineRoute({ method: 'PATCH', path: '/contracts/:id', tag: F, summary: 'Update terms or move status', permission: ['contracts', 'edit'], body: z.object({ status: z.enum(['Active', 'Expired', 'Cancelled']).optional(), startDate: isoDate.nullish(), endDate: isoDate.nullish(), amountGhs: z.number().min(0).max(1e9).optional() }), handler: ({ ctx, params, body }) => fin.updateContract(ctx, params.id, body) });

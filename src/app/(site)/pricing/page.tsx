@@ -4,6 +4,7 @@ import { Stagger, Item } from '@/components/site/motion';
 import { getSite, type PricingCard } from '@/lib/site-content';
 import { PLAN_SERVICE_TIERS } from '@/domain/plan-catalog';
 import { PlanBuyButton } from '@/components/site/PlanBuyButton';
+import { ProgrammePricingFlow } from '@/components/site/ProgrammePricingFlow';
 
 export const revalidate = 120;
 
@@ -47,6 +48,9 @@ export default async function PricingPage() {
   return (
     <>
       <PageHero eyebrow="Pricing and plans" title="Start with a diagnosis. Add support when it helps." intro="Each plan is a step on the same business health journey. You keep the score and report you have paid for, and you can move up when the diagnosis shows you need more." />
+      <Section>
+        <ProgrammePricingFlow />
+      </Section>
       <Section>
         {!pricing.confirmed && <div role="note" className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-gold bg-[color:var(--warn-soft)] p-4 text-sm text-[color:var(--warn)]"><span><strong>Pricing coming soon.</strong> {pricing.banner}</span><ButtonLink href={pricing.enquiryHref} variant="ghost">{pricing.enquiryLabel}</ButtonLink></div>}
         {/* Flex-wrap, not CSS Grid: a short last row (7 plans at 4-per-row leaves 3) needs to be
