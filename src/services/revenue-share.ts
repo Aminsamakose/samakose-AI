@@ -22,6 +22,7 @@ import { audit } from '@/lib/audit';
 import { allow, need } from './common';
 import { conflict, fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { postLedgerEntries } from './ledger';
+import { isPayoutEligible } from './tax-profiles';
 
 const rsa = schema.revenueShareAgreements, rsal = schema.revenueShareAllocations, rsc = schema.revenueShareCalculations;
 const pyo = schema.professionalPayouts, ph = schema.payoutHolds, pa = schema.payoutAdjustments;
@@ -277,10 +278,13 @@ export async function approvePayout(ctx: Ctx, id: string) {
   return { ok: true };
 }
 
+/** "Payout eligible" (Payouts & Compliance design, payout eligibility rules table): a payout cannot
+ *  reach Payable for a professional whose tax identity is missing, still Submitted, or Rejected. */
 export async function markPayable(ctx: Ctx, id: string) {
   allow(ctx, 'payouts', 'edit');
   const p = await loadPayout(ctx, id);
   if (p.status !== 'Approved') throw unprocessable(`A ${p.status} payout cannot move to Payable`);
+  if (!(await isPayoutEligible(ctx, p.professionalId))) throw unprocessable('This professional\'s tax profile is missing or not yet verified. A verified tax identifier is required before a payout can move to Payable.');
   await ctx.db.update(pyo).set({ status: 'Payable', updatedAt: new Date() }).where(eq(pyo.id, id));
   await audit(ctx, 'payout.payable', 'professional_payout', id, { status: 'Approved' }, { status: 'Payable' });
   return { ok: true };

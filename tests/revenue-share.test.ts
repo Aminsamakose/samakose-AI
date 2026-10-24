@@ -9,6 +9,13 @@ beforeAll(async () => {
   admin = await makeUser('ADMIN'); finance = await makeUser('FINANCE'); executive = await makeUser('EXECUTIVE');
   expert = await makeUser('EXPERT'); lead2 = await makeUser('EXPERT');
   const o = await makeOrg(admin); orgId = o.id;
+  // #201: a payout cannot reach Payable without a verified tax profile. Give both professionals one up
+  // front so this file's existing lifecycle tests exercise everything *after* that gate unmodified; the
+  // gate itself is covered on its own in tests/tax-profiles.test.ts.
+  for (const p of [expert, lead2]) {
+    await api(p).put('/tax-profiles/me', { partyType: 'INDIVIDUAL', legalName: p.email, taxIdentifier: `GHA-${uniq()}` });
+    await api(admin).post(`/tax-profiles/${p.userId}/verify`, { decision: 'Verified' });
+  }
 });
 
 /** A paid invoice (optionally discounted) on a fresh contract, with an Ended assignment for `expert`. */

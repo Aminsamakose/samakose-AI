@@ -763,6 +763,29 @@ export const payoutAdjustments = pgTable('payout_adjustments', {
   createdAt: created()
 }, (t) => [index('pa_payout_idx').on(t.payoutId)]);
 
+export const TAX_PROFILE_PARTY_TYPES = ['INDIVIDUAL', 'SOLE_PROPRIETOR', 'ORGANISATION'] as const;
+export const TAX_PROFILE_STATUSES = ['Submitted', 'Verified', 'Rejected'] as const;
+
+/** A professional's own tax identity (Payouts & Compliance design, Component 2): the Ghana Card PIN
+ *  (individual/sole proprietor) or organisational TIN a payout is actually made against, and whether
+ *  that identifier has been verified. Distinct from practitioner_profiles (vetting/skills) and from
+ *  tax_rules (the rates applied) -- this is *whose* identity a payout and any GRA return must carry.
+ *  One row per user: there is only ever one "current" identity on file, so a correction overwrites in
+ *  place and resets status to Submitted, unlike revenue_share_calculations' immutable-snapshot pattern. */
+export const taxProfiles = pgTable('tax_profiles', {
+  userId: uuid('user_id').primaryKey().references(() => users.id),
+  partyType: text('party_type').notNull(), // INDIVIDUAL | SOLE_PROPRIETOR | ORGANISATION
+  legalName: text('legal_name').notNull(),
+  taxIdentifier: text('tax_identifier').notNull(), // Ghana Card PIN or organisational TIN
+  taxResidency: text('tax_residency').notNull().default('GH'),
+  status: text('status').notNull().default('Submitted'), // Submitted | Verified | Rejected
+  submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
+  verifiedBy: uuid('verified_by').references(() => users.id),
+  verifiedAt: timestamp('verified_at', { withTimezone: true }),
+  verificationNote: text('verification_note'),
+  createdAt: created(), updatedAt: updated()
+}, (t) => [index('txp_status_idx').on(t.status)]);
+
 export const FINANCIAL_ACCOUNT_TYPES = ['ASSET', 'LIABILITY', 'REVENUE', 'EXPENSE', 'EQUITY'] as const;
 
 /** A small fixed chart of accounts. Rows are reference data, not transactions. */

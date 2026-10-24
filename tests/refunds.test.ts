@@ -8,6 +8,9 @@ beforeAll(async () => {
   await ensureReference();
   admin = await makeUser('ADMIN'); finance = await makeUser('FINANCE'); executive = await makeUser('EXECUTIVE'); expert = await makeUser('EXPERT');
   orgId = (await makeOrg(admin)).id;
+  // #201: a payout cannot reach Payable without a verified tax profile.
+  await api(expert).put('/tax-profiles/me', { partyType: 'INDIVIDUAL', legalName: expert.email, taxIdentifier: `GHA-${uniq()}` });
+  await api(admin).post(`/tax-profiles/${expert.userId}/verify`, { decision: 'Verified' });
 });
 
 /** A paid invoice + its succeeded payment, on a fresh contract. */
