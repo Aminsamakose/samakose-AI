@@ -12,7 +12,7 @@ export const CODE_PREFIXES = {
   org: 'SME', prog: 'PRG', cohort: 'COH', case: 'CASE', diag: 'DIAG', ev: 'EVD', doc: 'DOC', dgn: 'DGN',
   rx: 'RX', iv: 'INT', act: 'ACT', risk: 'RISK', kpi: 'KPI', sess: 'SES', rep: 'REP', ai: 'AI',
   plan: 'PLN', con: 'CON', inv: 'INV', pay: 'PAY', usr: 'USR',
-  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD'
+  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD', ctp: 'CTP', cdoc: 'CDOC'
 } as const;
 export type CodeKey = keyof typeof CODE_PREFIXES;
 
@@ -42,6 +42,8 @@ export const seq_rsa = pgSequence('seq_rsa');
 export const seq_rsc = pgSequence('seq_rsc');
 export const seq_pyo = pgSequence('seq_pyo');
 export const seq_rfd = pgSequence('seq_rfd');
+export const seq_ctp = pgSequence('seq_ctp');
+export const seq_cdoc = pgSequence('seq_cdoc');
 
 const codeCol = (k: CodeKey) =>
   text('code').notNull().unique().default(
@@ -611,6 +613,78 @@ export const contractAmendments = pgTable('contract_amendments', {
   createdBy: uuid('created_by').references(() => users.id),
   createdAt: created()
 }, (t) => [index('amend_contract_idx').on(t.contractId, t.createdAt)]);
+
+export const CONTRACT_TEMPLATE_STATUSES = ['Draft', 'Published', 'Retired'] as const;
+
+/**
+ * A contract wording template, versioned explicitly: editing never mutates a row in place - a new
+ * version is a new row (see newTemplateVersion() in contracts.ts), so a document generated from
+ * version 3 stays provably tied to the exact wording of version 3 even after version 4 is published.
+ * `name` is the family a version belongs to (e.g. "Standard SME Diagnostic Agreement"); at most one
+ * row per name may be Published at a time - publishing a new version retires the previous one.
+ */
+export const contractTemplates = pgTable('contract_templates', {
+  id: id(), code: codeCol('ctp'),
+  name: text('name').notNull(),
+  version: integer('version').notNull(),
+  status: text('status').notNull().default('Draft'),
+  // Markdown with {{placeholder}} tokens (contract.*, party.<ROLE>.*) - see renderTemplate() in contracts.ts.
+  bodyMarkdown: text('body_markdown').notNull(),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  publishedBy: uuid('published_by').references(() => users.id),
+  retiredAt: timestamp('retired_at', { withTimezone: true }),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: created()
+}, (t) => [
+  uniqueIndex('ctp_name_version_uq').on(t.name, t.version),
+  // Enforced again in the service (a race could otherwise publish two versions of the same name at
+  // once) - this index makes the invariant visible in the schema and gives Postgres a fast lookup.
+  index('ctp_name_status_idx').on(t.name, t.status)
+]);
+
+export const CONTRACT_PARTY_ROLES = ['CLIENT', 'SAMAKOSE', 'GUARANTOR', 'WITNESS'] as const;
+
+/**
+ * A distinct contracting party on a contract - who actually signs, as opposed to contracts.orgId
+ * (which identifies the business being served, and never changes meaning). Name/title are snapshot
+ * values captured at the time the party is added, so a later rename of the organisation or a change
+ * of staff member doesn't silently rewrite who is recorded as having agreed to a past contract.
+ */
+export const contractParties = pgTable('contract_parties', {
+  id: id(),
+  contractId: uuid('contract_id').notNull().references(() => contracts.id),
+  role: text('role').notNull(),
+  partyType: text('party_type').notNull(), // ORGANISATION | INDIVIDUAL
+  orgId: uuid('org_id').references(() => organisations.id),
+  userId: uuid('user_id').references(() => users.id),
+  name: text('name').notNull(),
+  title: text('title'),
+  email: text('email'),
+  phone: text('phone'),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: created()
+}, (t) => [index('ctpy_contract_idx').on(t.contractId)]);
+
+/**
+ * An immutable, generated snapshot of a contract's full wording at one moment - the template body
+ * with every {{placeholder}} substituted using the contract's own fields and its parties' frozen
+ * details at generation time. Once created a row is never edited: a later amendment or a new
+ * template version generates a NEW document rather than changing this one, so the full history of
+ * exactly what was presented to the business is preserved. contentHash lets anyone confirm a given
+ * rendering (e.g. a PDF export) matches what's on file, byte for byte.
+ */
+export const contractDocuments = pgTable('contract_documents', {
+  id: id(), code: codeCol('cdoc'),
+  contractId: uuid('contract_id').notNull().references(() => contracts.id),
+  templateId: uuid('template_id').references(() => contractTemplates.id),
+  templateVersion: integer('template_version'),
+  contentMarkdown: text('content_markdown').notNull(),
+  contentHash: text('content_hash').notNull(),
+  reason: text('reason').notNull(), // Issued | Amended | Renewed | Manual
+  generatedBy: uuid('generated_by').references(() => users.id),
+  generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow()
+}, (t) => [index('cdoc_contract_idx').on(t.contractId, t.generatedAt)]);
+
 export const invoices = pgTable('invoices', {
   id: id(), code: codeCol('inv'),
   contractId: uuid('contract_id').references(() => contracts.id),

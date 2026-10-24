@@ -1,13 +1,15 @@
-import { and, asc, eq, inArray, ne, or, sql } from 'drizzle-orm';
+import crypto from 'node:crypto';
+import { and, asc, desc, eq, inArray, ne, or, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
-import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
+import { conflict, fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { assertOrg, caseScope } from '@/domain/scope';
 import { notifyUsers } from '@/domain/notify';
 import { allow, need } from './common';
 
 const con = schema.contracts, am = schema.contractAmendments, inv = schema.invoices;
+const ctpy = schema.contractParties, cdoc = schema.contractDocuments, ctp = schema.contractTemplates, org = schema.organisations;
 const dec = (n: number) => n.toFixed(2);
 const addDays = (d: string, n: number) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
 const daysBetween = (a: string, b: string) => Math.round((new Date(b + 'T00:00:00Z').getTime() - new Date(a + 'T00:00:00Z').getTime()) / 86_400_000);
@@ -107,5 +109,112 @@ export async function renewContract(ctx: Ctx, id: string, b: { startDate?: strin
   const [row] = await ctx.db.insert(con).values({ orgId: old.orgId, planId: old.planId, programmeId: old.programmeId, startDate: start, endDate: end, amountGhs: dec(b.amountGhs ?? Number(old.amountGhs)), renewalOf: id }).returning({ id: con.id, code: con.code });
   await audit(ctx, 'contract.renewed', 'contract', id, undefined, { renewal: row.code });
   await audit(ctx, 'contract.created', 'contract', row.id, undefined, { renewalOf: old.code });
+  return row;
+}
+
+/* ------------------------------- contracting parties ------------------------------- */
+
+export const CONTRACT_PARTY_ROLES = ['CLIENT', 'SAMAKOSE', 'GUARANTOR', 'WITNESS'] as const;
+const SINGLE_PARTY_ROLES = new Set(['CLIENT', 'SAMAKOSE']);
+
+export async function listContractParties(ctx: Ctx, contractId: string) {
+  allow(ctx, 'contracts', 'read');
+  await load(ctx, contractId);
+  return ctx.db.select().from(ctpy).where(eq(ctpy.contractId, contractId)).orderBy(asc(ctpy.createdAt));
+}
+
+/**
+ * Records who is actually a party to the contract, distinct from contracts.orgId (the business
+ * being served). CLIENT and SAMAKOSE are singular - a contract has exactly one of each - while
+ * GUARANTOR and WITNESS may be added more than once. name/title/email/phone are captured as a
+ * snapshot at this moment, so a later change to the organisation's or user's own record never
+ * silently rewrites who is on record as having agreed to this contract.
+ */
+export async function addContractParty(ctx: Ctx, contractId: string, b: { role: string; partyType: 'ORGANISATION' | 'INDIVIDUAL'; orgId?: string; userId?: string; name: string; title?: string; email?: string; phone?: string }) {
+  allow(ctx, 'contracts', 'edit');
+  const u = need(ctx).user;
+  const c = await load(ctx, contractId);
+  if (!(CONTRACT_PARTY_ROLES as readonly string[]).includes(b.role)) throw fieldError({ role: `Must be one of ${CONTRACT_PARTY_ROLES.join(', ')}` });
+  if (!b.name.trim()) throw fieldError({ name: 'Required' });
+  if (SINGLE_PARTY_ROLES.has(b.role)) {
+    const [existing] = await ctx.db.select({ id: ctpy.id }).from(ctpy).where(and(eq(ctpy.contractId, contractId), eq(ctpy.role, b.role))).limit(1);
+    if (existing) throw conflict(`This contract already has a ${b.role} party. Remove it first if it needs to change`);
+  }
+  const [row] = await ctx.db.insert(ctpy).values({
+    contractId, role: b.role, partyType: b.partyType, orgId: b.orgId ?? null, userId: b.userId ?? null,
+    name: b.name.trim(), title: b.title?.trim() || null, email: b.email?.trim() || null, phone: b.phone?.trim() || null, createdBy: u.id
+  }).returning();
+  await audit(ctx, 'contract_party.added', 'contract_parties', row.id, undefined, row);
+  return row;
+}
+
+export async function removeContractParty(ctx: Ctx, contractId: string, partyId: string) {
+  allow(ctx, 'contracts', 'edit');
+  const [row] = await ctx.db.select().from(ctpy).where(and(eq(ctpy.id, partyId), eq(ctpy.contractId, contractId))).limit(1);
+  if (!row) throw notFound('Party not found on this contract');
+  await ctx.db.delete(ctpy).where(eq(ctpy.id, partyId));
+  await audit(ctx, 'contract_party.removed', 'contract_parties', partyId, row, undefined);
+  return { ok: true };
+}
+
+/* ------------------------------- generated documents ------------------------------- */
+
+/** Substitutes {{contract.*}}, {{org.*}} and {{party.<ROLE>.*}} tokens; anything unmatched becomes ''. */
+function renderTemplate(bodyMarkdown: string, data: Record<string, Record<string, unknown>>): { text: string; missing: string[] } {
+  const missing: string[] = [];
+  const text = bodyMarkdown.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (full, path: string) => {
+    const lastDot = path.lastIndexOf('.');
+    const group = path.slice(0, lastDot), field = path.slice(lastDot + 1);
+    const value = (data[group] as any)?.[field];
+    if (value === undefined || value === null || value === '') { missing.push(path); return ''; }
+    return String(value);
+  });
+  return { text, missing };
+}
+
+export async function listContractDocuments(ctx: Ctx, contractId: string) {
+  allow(ctx, 'contracts', 'read');
+  await load(ctx, contractId);
+  return ctx.db.select().from(cdoc).where(eq(cdoc.contractId, contractId)).orderBy(desc(cdoc.generatedAt));
+}
+
+/**
+ * Freezes a rendering of the contract's current terms and parties into an immutable document row.
+ * With no templateId, a minimal built-in layout is used so a document can still be generated for a
+ * contract that has no template assigned yet. A Retired template version may not be used to
+ * generate a NEW document (it's kept only so documents already generated from it remain readable),
+ * but Draft is allowed deliberately - staff reviewing a draft template often want to see it render
+ * against a real contract before publishing it.
+ */
+export async function generateContractDocument(ctx: Ctx, contractId: string, b: { templateId?: string; reason?: string } = {}) {
+  allow(ctx, 'contracts', 'create');
+  const u = need(ctx).user;
+  const c = await load(ctx, contractId);
+  let templateRow: typeof ctp.$inferSelect | undefined;
+  if (b.templateId) {
+    const [t] = await ctx.db.select().from(ctp).where(eq(ctp.id, b.templateId)).limit(1);
+    if (!t) throw notFound('Template not found');
+    if (t.status === 'Retired') throw unprocessable('A retired template version cannot be used to generate a new document. Use the current Published version, or a Draft under review');
+    templateRow = t;
+  }
+  const [orgRow] = await ctx.db.select({ name: org.name }).from(org).where(eq(org.id, c.orgId)).limit(1);
+  const parties = await ctx.db.select().from(ctpy).where(eq(ctpy.contractId, contractId));
+  const data: Record<string, Record<string, unknown>> = {
+    contract: { code: c.code, amountGhs: c.amountGhs, startDate: c.startDate, endDate: c.endDate, status: c.status },
+    org: { name: orgRow?.name ?? '' }
+  };
+  for (const role of CONTRACT_PARTY_ROLES) {
+    const p = parties.find((x) => x.role === role);
+    if (p) data[`party.${role}`] = { name: p.name, title: p.title ?? '', email: p.email ?? '', phone: p.phone ?? '' } as any;
+  }
+  const defaultBody = '# Contract {{contract.code}}\n\nBetween {{party.SAMAKOSE.name}} and {{party.CLIENT.name}}, for {{org.name}}.\n\nAmount: GHS {{contract.amountGhs}}\nPeriod: {{contract.startDate}} to {{contract.endDate}}';
+  const bodyMarkdown = templateRow?.bodyMarkdown ?? defaultBody;
+  const { text } = renderTemplate(bodyMarkdown, data);
+  const contentHash = crypto.createHash('sha256').update(text).digest('hex');
+  const [row] = await ctx.db.insert(cdoc).values({
+    contractId, templateId: templateRow?.id ?? null, templateVersion: templateRow?.version ?? null,
+    contentMarkdown: text, contentHash, reason: b.reason?.trim() || 'Manual', generatedBy: u.id
+  }).returning();
+  await audit(ctx, 'contract_document.generated', 'contract_documents', row.id, undefined, { contractId, templateId: templateRow?.id ?? null, version: templateRow?.version ?? null, contentHash });
   return row;
 }
