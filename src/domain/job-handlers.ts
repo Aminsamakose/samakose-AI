@@ -294,6 +294,49 @@ registerJob('recheck_scan', async () => tx(async (t) => {
   return { recheckDue: due.length, casesOwed: owed.length };
 }));
 
+/**
+ * #86: certificates.ts's effectiveStatus() correctly reports a certificate as Expired once its expiresAt
+ * passes, but only when someone looks -- nothing proactively told the business or case team beforehand.
+ * Mirrors recheck_scan's own pattern: once-ever notifications (by certificate id, in the event payload,
+ * since a case can hold more than one certificate over its life), not a recurring nag.
+ */
+registerJob('certificate_expiry_scan', async () => tx(async (t) => {
+  const ctx = systemCtx(t, 'scan');
+  const rules = await loadRules(t);
+  const warningDays = Number(rules['cert.expiry_warning_days'] ?? 30);
+  const c = schema.certificates, cs = schema.cases;
+
+  const soon = await t.select({ id: c.id, caseId: c.caseId, orgId: c.orgId, level: c.level, expiresAt: c.expiresAt, consultantId: cs.consultantId, coachId: cs.coachId })
+    .from(c).innerJoin(cs, eq(cs.id, c.caseId))
+    .where(and(eq(c.status, 'Certified'), sql`${c.revokedAt} is null`, sql`${c.expiresAt} is not null`,
+      sql`${c.expiresAt} between now() and now() + (${warningDays} || ' days')::interval`,
+      sql`not exists (select 1 from events e where e.type = 'CertificateExpiringSoon' and e.payload->>'certId' = ${c.id}::text)`));
+  for (const cert of soon) {
+    const owners = await t.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.orgId, cert.orgId), eq(schema.users.role, 'OWNER'), eq(schema.users.active, true)));
+    await emitEvent(ctx, 'CertificateExpiringSoon', { caseId: cert.caseId, orgId: cert.orgId, payload: { certId: cert.id, level: cert.level, expiresAt: cert.expiresAt } });
+    await notifyUsers(ctx, [...owners.map((o) => o.id), cert.consultantId, cert.coachId].filter(Boolean) as string[], {
+      kind: 'CertificateExpiringSoon', title: `${cert.level} certificate expires soon`,
+      body: `The ${cert.level} certificate expires on ${new Date(cert.expiresAt!).toISOString().slice(0, 10)}. Take a new Business Health check before then to keep it current.`,
+      link: `/cases/${cert.caseId}`, email: true
+    });
+  }
+
+  const expired = await t.select({ id: c.id, caseId: c.caseId, orgId: c.orgId, level: c.level, expiresAt: c.expiresAt, consultantId: cs.consultantId, coachId: cs.coachId })
+    .from(c).innerJoin(cs, eq(cs.id, c.caseId))
+    .where(and(eq(c.status, 'Certified'), sql`${c.revokedAt} is null`, sql`${c.expiresAt} is not null`, sql`${c.expiresAt} < now()`,
+      sql`not exists (select 1 from events e where e.type = 'CertificateExpired' and e.payload->>'certId' = ${c.id}::text)`));
+  for (const cert of expired) {
+    const owners = await t.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.orgId, cert.orgId), eq(schema.users.role, 'OWNER'), eq(schema.users.active, true)));
+    await emitEvent(ctx, 'CertificateExpired', { caseId: cert.caseId, orgId: cert.orgId, payload: { certId: cert.id, level: cert.level, expiresAt: cert.expiresAt } });
+    await notifyUsers(ctx, [...owners.map((o) => o.id), cert.consultantId, cert.coachId].filter(Boolean) as string[], {
+      kind: 'CertificateExpired', title: `${cert.level} certificate has expired`,
+      body: `The ${cert.level} certificate expired on ${new Date(cert.expiresAt!).toISOString().slice(0, 10)}. Take a new Business Health check to renew it.`,
+      link: `/cases/${cert.caseId}`, email: true
+    });
+  }
+  return { expiringSoon: soon.length, expired: expired.length };
+}));
+
 registerJob('expire_sessions', async () => {
   const s = await db().execute(sql`delete from sessions where expires_at < now()`);
   const t = await db().execute(sql`delete from user_tokens where expires_at < now() - interval '7 days'`);
