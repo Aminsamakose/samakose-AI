@@ -344,12 +344,7 @@ export async function markPaid(ctx: Ctx, id: string, paymentReference?: string) 
   return { ok: true };
 }
 
-/** Matched against the actual provider transaction - never assumed from a frontend callback. */
-export async function reconcilePayout(ctx: Ctx, id: string) {
-  allow(ctx, 'payouts', 'edit');
-  const p = await loadPayout(ctx, id);
-  if (p.status !== 'Paid') throw unprocessable(`A ${p.status} payout cannot be reconciled`);
-  await ctx.db.update(pyo).set({ status: 'Reconciled', reconciledAt: new Date(), updatedAt: new Date() }).where(eq(pyo.id, id));
-  await audit(ctx, 'payout.reconciled', 'professional_payout', id, { status: 'Paid' }, { status: 'Reconciled' });
-  return { ok: true };
-}
+// Reconciliation itself now lives in services/reconciliation.ts (matchPayout()). A payout must be
+// compared against a recorded external transaction before it can become Reconciled - a bare status
+// edit here would be exactly the "mark Paid as Reconciled" anti-pattern that evidence-based
+// reconciliation exists to remove (10/10 Blueprint §6).
