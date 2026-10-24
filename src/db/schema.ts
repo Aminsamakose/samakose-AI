@@ -12,7 +12,7 @@ export const CODE_PREFIXES = {
   org: 'SME', prog: 'PRG', cohort: 'COH', case: 'CASE', diag: 'DIAG', ev: 'EVD', doc: 'DOC', dgn: 'DGN',
   rx: 'RX', iv: 'INT', act: 'ACT', risk: 'RISK', kpi: 'KPI', sess: 'SES', rep: 'REP', ai: 'AI',
   plan: 'PLN', con: 'CON', inv: 'INV', pay: 'PAY', usr: 'USR',
-  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD'
+  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD', txc: 'TXC', txr: 'TXR'
 } as const;
 export type CodeKey = keyof typeof CODE_PREFIXES;
 
@@ -42,6 +42,8 @@ export const seq_rsa = pgSequence('seq_rsa');
 export const seq_rsc = pgSequence('seq_rsc');
 export const seq_pyo = pgSequence('seq_pyo');
 export const seq_rfd = pgSequence('seq_rfd');
+export const seq_txc = pgSequence('seq_txc');
+export const seq_txr = pgSequence('seq_txr');
 
 const codeCol = (k: CodeKey) =>
   text('code').notNull().unique().default(
@@ -898,6 +900,41 @@ export const refunds = pgTable('refunds', {
   ledgerEntryId: bigint('ledger_entry_id', { mode: 'number' }).references(() => financialLedgerEntries.id),
   createdAt: created()
 }, (t) => [index('rf_payment_idx').on(t.paymentId)]);
+
+/** A GRA withholding-tax certificate issued to one payee for one tax_line. One certificate per tax_line. */
+export const taxCertificates = pgTable('tax_certificates', {
+  id: id(), code: codeCol('txc'),
+  taxLineId: uuid('tax_line_id').notNull().unique().references(() => taxLines.id),
+  payeeId: uuid('payee_id').notNull().references(() => users.id),
+  periodLabel: text('period_label').notNull(),
+  amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  issuedBy: uuid('issued_by').references(() => users.id),
+  createdAt: created()
+}, (t) => [index('txc_payee_idx').on(t.payeeId)]);
+
+export const TAX_REMITTANCE_STATUSES = ['Pending', 'Remitted'] as const;
+
+/** A batch of tax_lines remitted to GRA together, by tax type and period. */
+export const taxRemittances = pgTable('tax_remittances', {
+  id: id(), code: codeCol('txr'),
+  periodLabel: text('period_label').notNull(),
+  type: text('type').notNull(), // VAT | WITHHOLDING | OTHER
+  totalAmountGhs: numeric('total_amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  status: text('status').notNull().default('Pending'),
+  paymentReference: text('payment_reference'),
+  createdBy: uuid('created_by').references(() => users.id),
+  remittedBy: uuid('remitted_by').references(() => users.id),
+  remittedAt: timestamp('remitted_at', { withTimezone: true }),
+  createdAt: created()
+}, (t) => [index('txr_status_idx').on(t.status)]);
+
+/** A tax_line included in a remittance batch. One tax_line can only be remitted once. */
+export const taxRemittanceLines = pgTable('tax_remittance_lines', {
+  id: id(),
+  remittanceId: uuid('remittance_id').notNull().references(() => taxRemittances.id),
+  taxLineId: uuid('tax_line_id').notNull().unique().references(() => taxLines.id),
+  createdAt: created()
+}, (t) => [index('trl_remittance_idx').on(t.remittanceId)]);
 
 export const chargebacks = pgTable('chargebacks', {
   id: id(),

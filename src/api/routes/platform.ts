@@ -5,6 +5,7 @@ import { email, isoDate, money, name, optText, text, uuid, empty } from '../sche
 import * as fin from '@/services/finance';
 import * as discounts from '@/services/discounts';
 import * as rs from '@/services/revenue-share';
+import * as taxr from '@/services/tax-reporting';
 import * as apr from '@/services/approvals';
 import * as tax from '@/services/tax';
 import * as rfd from '@/services/refunds';
@@ -100,6 +101,13 @@ defineRoute({ method: 'POST', path: '/revenue-share/agreements/:id/submit', tag:
 defineRoute({ method: 'POST', path: '/revenue-share/agreements/:id/approve', tag: F, summary: 'Approve an agreement (four-eyes and conflict-of-interest checked)', permission: ['revenue_share', 'approve'], body: empty, handler: ({ ctx, params }) => rs.approveAgreement(ctx, params.id) });
 defineRoute({ method: 'POST', path: '/revenue-share/agreements/:id/activate', tag: F, summary: 'Activate an approved agreement', permission: ['revenue_share', 'edit'], body: empty, handler: ({ ctx, params }) => rs.activateAgreement(ctx, params.id) });
 defineRoute({ method: 'POST', path: '/revenue-share/agreements/:id/calculate', tag: F, summary: 'Calculate revenue share for a paid invoice on this agreement, generating payouts', permission: ['revenue_share', 'edit'], body: z.object({ invoiceId: uuid }), handler: async ({ ctx, params, body }) => status(201, await rs.calculateRevenueShare(ctx, params.id, body.invoiceId)) });
+
+defineRoute({ method: 'POST', path: '/tax-certificates', tag: F, summary: 'Issue a withholding-tax certificate for a payout-side tax line', permission: ['tax_reports', 'create'], body: z.object({ taxLineId: uuid, periodLabel: z.string().min(1) }), handler: async ({ ctx, body }) => status(201, await taxr.issueCertificate(ctx, body)) });
+defineRoute({ method: 'GET', path: '/tax-certificates', tag: F, summary: 'List tax certificates, optionally by payee', permission: ['tax_reports', 'read'], query: z.object({ payeeId: uuid.optional() }), handler: ({ ctx, query }) => taxr.listCertificates(ctx, { payeeId: query.payeeId }) });
+defineRoute({ method: 'POST', path: '/tax-remittances', tag: F, summary: 'Bundle a set of not-yet-remitted tax lines of the same type into a GRA remittance batch', permission: ['tax_reports', 'create'], body: z.object({ periodLabel: z.string().min(1), type: z.string().min(1), taxLineIds: z.array(uuid).min(1) }), handler: async ({ ctx, body }) => status(201, await taxr.createRemittance(ctx, body)) });
+defineRoute({ method: 'GET', path: '/tax-remittances', tag: F, summary: 'List tax remittance batches', permission: ['tax_reports', 'read'], query: z.object({ status: z.string().optional() }), handler: ({ ctx, query }) => taxr.listRemittances(ctx, { status: query.status }) });
+defineRoute({ method: 'GET', path: '/tax-remittances/:id', tag: F, summary: 'One remittance batch with its tax lines', permission: ['tax_reports', 'read'], handler: ({ ctx, params }) => taxr.getRemittance(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/tax-remittances/:id/remit', tag: F, summary: 'Mark a pending remittance batch as paid to GRA', permission: ['tax_reports', 'edit'], body: z.object({ paymentReference: z.string().min(1) }), handler: ({ ctx, params, body }) => taxr.markRemitted(ctx, params.id, body) });
 
 defineRoute({ method: 'GET', path: '/payouts', tag: F, summary: 'Professional payouts (a professional sees only their own)', permission: ['payouts', 'read'], handler: ({ ctx }) => rs.listMyPayouts(ctx) });
 defineRoute({ method: 'POST', path: '/payouts/:id/review', tag: F, summary: 'Confirm deliverables and amount', permission: ['payouts', 'edit'], body: empty, handler: ({ ctx, params }) => rs.reviewPayout(ctx, params.id) });
