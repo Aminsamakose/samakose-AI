@@ -30,7 +30,13 @@ const GROUPS: Group[] = [
     { icon: 'organisations', href: '/organisations', label: 'Organisations', need: ['organisations', 'read'] },
     { icon: 'programmes', href: '/pathway', label: 'Opportunities', roles: ['OWNER'] },
     { icon: 'programmes', href: '/admin/opportunities', label: 'Opportunities', need: ['opportunities', 'create'] },
-    { icon: 'programmes', href: '/programmes', label: 'Programmes', need: ['programmes', 'read'] }
+    { icon: 'programmes', href: '/programmes', label: 'Programmes', need: ['programmes', 'read'] },
+    { icon: 'programmes', href: '/programme-command-centre', label: 'Programme command centre', need: ['programme_workspaces', 'read'] },
+    { icon: 'programmes', href: '/programme-monitoring', label: 'Programme monitoring', need: ['monitoring', 'read'] },
+    { icon: 'programmes', href: '/programme-outcomes', label: 'Programme outcomes & MEL', need: ['programme_workspaces', 'read'] },
+    { icon: 'programmes', href: '/programme-reporting', label: 'Programme reporting', need: ['programme_workspaces', 'read'] },
+    { icon: 'programmes', href: '/programme-calendar', label: 'Programme calendar', need: ['programme_workspaces', 'read'] },
+    { icon: 'programmes', href: '/provider-matching', label: 'Provider matching', need: ['programme_workspaces', 'read'] }
   ] },
   { title: 'Billing', items: [
     { icon: 'invoices', href: '/finance/invoices', label: 'Invoices', need: ['invoices', 'read'] },
