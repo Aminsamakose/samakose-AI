@@ -12,6 +12,7 @@ import { emitEvent } from '@/domain/events';
 import { env } from '@/lib/env';
 import { sha256 } from '@/lib/crypto';
 import { allow, need } from './common';
+import { scanFile } from '@/lib/file-scan';
 import { computeScore } from './diagnostics';
 import { advanceCase, latestDiagnostic } from './common';
 import type { EvidenceClass } from '@/db/schema';
@@ -120,6 +121,8 @@ export async function storeDocument(ctx: Ctx, form: FormData, orgId: string, cas
   if (!type) throw fieldError({ file: `This file type is not accepted. Use ${ALLOWED_EXTENSIONS.join(', ')}` });
   const buf = Buffer.from(await file.arrayBuffer());
   if (!type.magic(buf)) throw fieldError({ file: 'The file content does not match its type' });
+  const scan = scanFile(ext, buf);
+  if (!scan.clean) throw fieldError({ file: scan.reason });
   const now = new Date();
   const key = [String(now.getUTCFullYear()), String(now.getUTCMonth() + 1).padStart(2, '0'), crypto.randomUUID()].join('/');
   await storage().put(key, buf, type.mime);
