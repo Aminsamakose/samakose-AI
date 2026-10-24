@@ -12,7 +12,7 @@ export const CODE_PREFIXES = {
   org: 'SME', prog: 'PRG', cohort: 'COH', case: 'CASE', diag: 'DIAG', ev: 'EVD', doc: 'DOC', dgn: 'DGN',
   rx: 'RX', iv: 'INT', act: 'ACT', risk: 'RISK', kpi: 'KPI', sess: 'SES', rep: 'REP', ai: 'AI',
   plan: 'PLN', con: 'CON', inv: 'INV', pay: 'PAY', usr: 'USR',
-  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD'
+  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD', crn: 'CRN'
 } as const;
 export type CodeKey = keyof typeof CODE_PREFIXES;
 
@@ -42,6 +42,7 @@ export const seq_rsa = pgSequence('seq_rsa');
 export const seq_rsc = pgSequence('seq_rsc');
 export const seq_pyo = pgSequence('seq_pyo');
 export const seq_rfd = pgSequence('seq_rfd');
+export const seq_crn = pgSequence('seq_crn');
 
 const codeCol = (k: CodeKey) =>
   text('code').notNull().unique().default(
@@ -932,6 +933,45 @@ export const chargebacks = pgTable('chargebacks', {
   receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
   resolvedAt: timestamp('resolved_at', { withTimezone: true })
 }, (t) => [index('cb_payment_idx').on(t.paymentId)]);
+
+export const CREDIT_NOTE_STATUSES = ['Issued', 'Void'] as const;
+
+/**
+ * Reduces what's owed on an invoice without moving cash - distinct from a refund (refunds.ts),
+ * which always reduces cash. Issuing debits REVENUE and credits either RECEIVABLE (invoice still
+ * unpaid) or the CUSTOMER_CREDIT liability (invoice already paid - the customer is owed a credit
+ * balance they can apply against a future invoice via creditNoteApplications). "Applied" status is
+ * computed from creditNoteApplications, not stored here, so the remaining balance is always
+ * amountGhs - sum(applications). A credit note can only be voided before anything has been applied.
+ */
+export const creditNotes = pgTable('credit_notes', {
+  id: id(), code: codeCol('crn'),
+  invoiceId: uuid('invoice_id').notNull().references(() => invoices.id),
+  orgId: uuid('org_id').notNull().references(() => organisations.id),
+  amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  reason: text('reason').notNull(),
+  status: text('status').notNull().default('Issued'),
+  issuedBy: uuid('issued_by').references(() => users.id),
+  issuedAt: timestamp('issued_at', { withTimezone: true }).notNull().defaultNow(),
+  voidedBy: uuid('voided_by').references(() => users.id),
+  voidedAt: timestamp('voided_at', { withTimezone: true }),
+  // bigint, not uuid: financial_ledger_entries.id is a bigserial - see the matching comment on refunds.ledgerEntryId.
+  ledgerEntryId: bigint('ledger_entry_id', { mode: 'number' }).references(() => financialLedgerEntries.id),
+  createdAt: created()
+}, (t) => [index('crn_invoice_idx').on(t.invoiceId), index('crn_org_idx').on(t.orgId)]);
+
+/** One application of a credit note's remaining balance against a target invoice (which may differ
+ *  from the invoice that issued the credit note). Supports partial and multiple applications. */
+export const creditNoteApplications = pgTable('credit_note_applications', {
+  id: id(),
+  creditNoteId: uuid('credit_note_id').notNull().references(() => creditNotes.id),
+  invoiceId: uuid('invoice_id').notNull().references(() => invoices.id),
+  amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  appliedBy: uuid('applied_by').references(() => users.id),
+  appliedAt: timestamp('applied_at', { withTimezone: true }).notNull().defaultNow(),
+  ledgerEntryId: bigint('ledger_entry_id', { mode: 'number' }).references(() => financialLedgerEntries.id),
+  createdAt: created()
+}, (t) => [index('cna_credit_note_idx').on(t.creditNoteId), index('cna_invoice_idx').on(t.invoiceId)]);
 
 export const APPROVAL_ACTION_TYPES = [
   'DISCOUNT_EXCEPTION', 'REVENUE_SHARE_OVERRIDE', 'PAYOUT', 'REFUND', 'LEDGER_ADJUSTMENT', 'CONTRACT'
