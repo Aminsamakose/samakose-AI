@@ -31,6 +31,10 @@ export async function listMedia(ctx: Ctx, q: { q?: string; category?: string }) 
 
 export async function uploadMedia(ctx: Ctx, form: FormData) {
   allow(ctx, 'media', 'create');
+  return storeUpload(ctx, form);
+}
+/** Saves an uploaded image or PDF after checking size, type and content. Callers check their own permission first. */
+export async function storeUpload(ctx: Ctx, form: FormData) {
   const file = form.get('file');
   if (!(file instanceof File) || !file.size) throw fieldError({ file: 'Choose a file to upload' });
   if (file.size > Math.min(env.maxUploadBytes, 8 * 1048576)) throw fieldError({ file: 'Files can be at most 8 MB' });
@@ -67,6 +71,8 @@ export async function deleteMedia(ctx: Ctx, id: string) {
   allow(ctx, 'media', 'delete');
   const [r] = await ctx.db.select().from(m).where(eq(m.id, id)).limit(1);
   if (!r) throw notFound('File not found');
+  const [prog] = await ctx.db.select({ name: schema.programmes.name }).from(schema.programmes).where(eq(schema.programmes.logoMediaId, id)).limit(1);
+  if (prog) throw unprocessable(`This file is the logo of the programme ${prog.name}. Change the logo there first.`);
   const used = await ctx.db.execute(sql`select kind, title from content_docs where draft::text like ${'%/media/' + id + '%'} or live::text like ${'%/media/' + id + '%'} limit 3`);
   if (used.rows.length) throw unprocessable(`This file is still used by: ${used.rows.map((x: any) => x.title || x.kind).join(', ')}. Remove it there first.`);
   await ctx.db.delete(m).where(eq(m.id, id));
