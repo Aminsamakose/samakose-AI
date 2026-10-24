@@ -68,6 +68,7 @@ export const DEFAULT_RULES: Rules = {
   'ai.monthly_cost_cap_usd': 25,
   'recheck.interval_days': 180,
   'recheck.owed_case_days': 2,
+  'recheck.stable_band_points': 5,
   'ai.usd_per_million_input_tokens': 3,
   'ai.usd_per_million_output_tokens': 15,
   // Free preliminary assessment (public, anonymous, no evidence upload). Deliberately separate from
@@ -121,6 +122,7 @@ export const RULE_NOTES: Record<string, string> = {
   'freeAssessment.developing_below': 'Free assessment overall score below this is Developing, otherwise Strong Foundation',
   'recheck.interval_days': 'Days after the last health score before the case team and the owner are reminded to run a new check. The starting figure is a placeholder to confirm',
   'recheck.owed_case_days': 'Days an approved business owner may wait without a case before staff are alerted that one is owed',
+  'recheck.stable_band_points': 'A score move smaller than this many points, in either direction, counts as Stable rather than a real Progressing or Regressing change',
   'ai.monthly_cost_cap_usd': 'Most the live AI may cost in a calendar month, in US dollars, across all agents. New live tasks are refused once it is reached. 0 means no cap. The starting figure is a placeholder',
   'ai.usd_per_million_input_tokens': 'Estimated price per million input tokens, used only to estimate spend. Check it against your Anthropic invoice',
   'ai.usd_per_million_output_tokens': 'Estimated price per million output tokens, used only to estimate spend. Check it against your Anthropic invoice'
