@@ -231,7 +231,7 @@ export async function calculateRevenueShare(ctx: Ctx, agreementId: string, invoi
     if (amount <= 0) continue;
     const [row] = await ctx.db.insert(pyo).values({
       professionalId: alloc.professionalId!, calculationId: calc.id, assignmentId: a.assignmentId, contractId: a.contractId,
-      amountGhs: dec(amount), status: 'Earned'
+      amountGhs: dec(amount), netAmountGhs: dec(amount), status: 'Earned'
     }).returning();
     payouts.push(row);
   }
@@ -327,15 +327,20 @@ export async function initiatePayment(ctx: Ctx, id: string, payoutMethod: string
   return { ok: true };
 }
 
-/** Posts the Professional Payable -> Cash ledger entry for this payout's own amount (not the whole pool). */
+/** Posts the Professional Payable -> Cash ledger entry for the NET amount actually disbursed (gross minus
+ *  whatever tax.ts's applyTax() has withheld against this payout so far - see #202). A payout with no
+ *  withholding applied still has netAmountGhs === amountGhs, so this is unchanged for the common case. */
 export async function markPaid(ctx: Ctx, id: string, paymentReference?: string) {
   allow(ctx, 'payouts', 'edit');
   const p = await loadPayout(ctx, id);
   if (p.status !== 'Payment initiated') throw unprocessable(`A ${p.status} payout cannot be marked paid`);
+  const net = Number(p.netAmountGhs);
   await ctx.db.update(pyo).set({ status: 'Paid', paidAt: new Date(), paymentReference: paymentReference ?? null, updatedAt: new Date() }).where(eq(pyo.id, id));
-  await postLedgerEntries(ctx, { referenceType: 'PAYOUT', referenceId: id, description: `Payout ${p.code} paid`,
-    lines: [{ accountCode: 'PROFESSIONAL_PAYABLE', debitGhs: Number(p.amountGhs) }, { accountCode: 'CASH', creditGhs: Number(p.amountGhs) }] });
-  await audit(ctx, 'payout.paid', 'professional_payout', id, { status: 'Payment initiated' }, { status: 'Paid', paymentReference });
+  if (net > 0) {
+    await postLedgerEntries(ctx, { referenceType: 'PAYOUT', referenceId: id, description: `Payout ${p.code} paid`,
+      lines: [{ accountCode: 'PROFESSIONAL_PAYABLE', debitGhs: net }, { accountCode: 'CASH', creditGhs: net }] });
+  }
+  await audit(ctx, 'payout.paid', 'professional_payout', id, { status: 'Payment initiated' }, { status: 'Paid', paymentReference, netAmountGhs: dec(net) });
   return { ok: true };
 }
 
