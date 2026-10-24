@@ -16,4 +16,5 @@ import './library';
 import './outcome-verification';
 import './programme-expenditure';
 import './programme-version';
+import './programme-communications';
 export { routes } from '../framework';

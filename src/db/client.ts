@@ -13,8 +13,9 @@ import * as participantIdentitySchema from './participant-identity-schema';
 import * as outcomeVerificationSchema from './outcome-verification-schema';
 import * as programmeExpenditureSchema from './programme-expenditure-schema';
 import * as programmeVersionSchema from './programme-version-schema';
+import * as communicationsSchema from './programme-communications-schema';
 
-const schema = { ...baseSchema, ...frameworkArchitectureSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema, ...deliveryOperationsSchema, ...deliveryCoordinationSchema, ...programmeCalendarSchema, ...providerAssignmentSchema, ...participantIdentitySchema, ...outcomeVerificationSchema, ...programmeExpenditureSchema, ...programmeVersionSchema };
+const schema = { ...baseSchema, ...frameworkArchitectureSchema, ...workspaceSchema, ...workspaceConfigurationSchema, ...cohortConfigurationSchema, ...deliveryOperationsSchema, ...deliveryCoordinationSchema, ...programmeCalendarSchema, ...providerAssignmentSchema, ...participantIdentitySchema, ...outcomeVerificationSchema, ...programmeExpenditureSchema, ...programmeVersionSchema, ...communicationsSchema };
 type Db = NodePgDatabase<typeof schema>;
 const g = globalThis as unknown as { __pool?: Pool; __db?: Db; __poolUrl?: string };
 
