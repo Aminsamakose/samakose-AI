@@ -12,7 +12,8 @@ export const CODE_PREFIXES = {
   org: 'SME', prog: 'PRG', cohort: 'COH', case: 'CASE', diag: 'DIAG', ev: 'EVD', doc: 'DOC', dgn: 'DGN',
   rx: 'RX', iv: 'INT', act: 'ACT', risk: 'RISK', kpi: 'KPI', sess: 'SES', rep: 'REP', ai: 'AI',
   plan: 'PLN', con: 'CON', inv: 'INV', pay: 'PAY', usr: 'USR',
-  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD'
+  rsa: 'RSA', rsc: 'RSC', pyo: 'PYO', rfd: 'RFD',
+  xtx: 'XTX', rec: 'REC'
 } as const;
 export type CodeKey = keyof typeof CODE_PREFIXES;
 
@@ -42,6 +43,8 @@ export const seq_rsa = pgSequence('seq_rsa');
 export const seq_rsc = pgSequence('seq_rsc');
 export const seq_pyo = pgSequence('seq_pyo');
 export const seq_rfd = pgSequence('seq_rfd');
+export const seq_xtx = pgSequence('seq_xtx');
+export const seq_rec = pgSequence('seq_rec');
 
 const codeCol = (k: CodeKey) =>
   text('code').notNull().unique().default(
@@ -762,6 +765,57 @@ export const payoutAdjustments = pgTable('payout_adjustments', {
   ledgerEntryId: bigint('ledger_entry_id', { mode: 'number' }).references(() => financialLedgerEntries.id),
   createdAt: created()
 }, (t) => [index('pa_payout_idx').on(t.payoutId)]);
+
+/* --------------------- evidence-based payout reconciliation --------------------- */
+export const EXTERNAL_TRANSACTION_SETTLEMENT_STATUSES = ['Settled', 'Reversed', 'Pending'] as const;
+/**
+ * One row of evidence received *from outside the system* - a payment provider, bank statement or
+ * authorised transaction import - never created from the payout side. This is deliberately a separate
+ * table from `professional_payouts`: a payout is an instruction/attempt to pay; this is proof something
+ * actually happened externally. The two are only ever linked through `payout_reconciliations`, which
+ * records the comparison, never by mutating one into the other.
+ */
+export const payoutExternalTransactions = pgTable('payout_external_transactions', {
+  id: id(), code: codeCol('xtx'),
+  provider: text('provider').notNull(), // bank_transfer | mobile_money | paystack | manual_import
+  providerReference: text('provider_reference').notNull(),
+  /** Known only when the import/provider payload names a beneficiary account that maps to a user. Left null otherwise - absence is not treated as a match. */
+  payeeUserId: uuid('payee_user_id').references(() => users.id),
+  amountGhs: numeric('amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  currency: text('currency').notNull().default('GHS'),
+  transactionDate: date('transaction_date').notNull(),
+  feeGhs: numeric('fee_ghs', { precision: 12, scale: 2 }).notNull().default('0.00'),
+  settlementStatus: text('settlement_status').notNull().default('Settled'),
+  rawPayload: jsonb('raw_payload'),
+  importedBy: uuid('imported_by').references(() => users.id),
+  createdAt: created()
+}, (t) => [
+  uniqueIndex('pet_provider_ref_uq').on(t.provider, t.providerReference),
+  index('pet_payee_idx').on(t.payeeUserId)
+]);
+
+export const PAYOUT_RECONCILIATION_OUTCOMES = ['Matched', 'Partially matched', 'Amount mismatch', 'Duplicate', 'Reversed', 'Unmatched'] as const;
+/**
+ * The evidence-based decision that a payout corresponds (or does not) to one external transaction.
+ * This is the only path to `professional_payouts.status = 'Reconciled'` - never a bare status edit.
+ * Append-only: a payout already Reconciled is never re-matched; a wrong Matched outcome is corrected
+ * by a human reviewing the exception, not by deleting this row.
+ */
+export const payoutReconciliations = pgTable('payout_reconciliations', {
+  id: id(), code: codeCol('rec'),
+  payoutId: uuid('payout_id').notNull().references(() => professionalPayouts.id),
+  externalTransactionId: uuid('external_transaction_id').references(() => payoutExternalTransactions.id),
+  outcome: text('outcome').notNull(),
+  expectedAmountGhs: numeric('expected_amount_ghs', { precision: 12, scale: 2 }).notNull(),
+  matchedAmountGhs: numeric('matched_amount_ghs', { precision: 12, scale: 2 }),
+  discrepancyGhs: numeric('discrepancy_ghs', { precision: 12, scale: 2 }),
+  note: text('note'),
+  decidedBy: uuid('decided_by').notNull().references(() => users.id),
+  createdAt: created()
+}, (t) => [
+  index('prec_payout_idx').on(t.payoutId),
+  index('prec_external_idx').on(t.externalTransactionId)
+]);
 
 export const TAX_PROFILE_PARTY_TYPES = ['INDIVIDUAL', 'SOLE_PROPRIETOR', 'ORGANISATION'] as const;
 export const TAX_PROFILE_STATUSES = ['Submitted', 'Verified', 'Rejected'] as const;

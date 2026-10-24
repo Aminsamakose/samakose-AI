@@ -125,6 +125,7 @@ describe('professional payout lifecycle', () => {
     const { agreementId, invoiceId } = await activeAgreement({ amount: 1000, percentage: 30, basis: 'SHARE_ON_NET_PRICE' });
     const r = await api(finance).post(`/revenue-share/agreements/${agreementId}/calculate`, { invoiceId });
     const payoutId = r.data.payouts[0].id;
+    const payoutAmount = Number(r.data.payouts[0].amountGhs);
 
     expect((await api(expert).post(`/payouts/${payoutId}/review`, {})).status).toBe(403); // professional cannot review their own
     expect((await api(finance).post(`/payouts/${payoutId}/review`, {})).status).toBe(200);
@@ -145,7 +146,13 @@ describe('professional payout lifecycle', () => {
     expect(holdsAfter.data.find((h: any) => h.id === hold.id)?.resolvedAt).toBeTruthy();
     expect((await api(finance).post(`/payouts/${payoutId}/initiate`, { payoutMethod: 'bank' })).status).toBe(200);
     expect((await api(finance).post(`/payouts/${payoutId}/paid`, { paymentReference: `PAY-${uniq()}` })).status).toBe(200);
-    expect((await api(finance).post(`/payouts/${payoutId}/reconcile`, {})).status).toBe(200);
+
+    // Reconciliation now needs recorded external evidence, matched against the payout - never a bare status flip.
+    const tx = await api(finance).post('/external-transactions', { provider: 'bank_transfer', providerReference: `BANKTX-${uniq()}`, amountGhs: payoutAmount, transactionDate: '2026-01-15' });
+    expect(tx.status).toBe(201);
+    const reconciled = await api(finance).post(`/payouts/${payoutId}/reconcile`, { externalTransactionId: tx.data.id });
+    expect(reconciled.status, JSON.stringify(reconciled.error)).toBe(201);
+    expect(reconciled.data.outcome).toBe('Matched');
 
     const entries = await db().select().from(schema.financialLedgerEntries).where(eq(schema.financialLedgerEntries.referenceId, payoutId));
     expect(entries).toHaveLength(2);

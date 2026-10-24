@@ -9,6 +9,8 @@ import * as apr from '@/services/approvals';
 import * as tax from '@/services/tax';
 import * as taxp from '@/services/tax-profiles';
 import * as rfd from '@/services/refunds';
+import * as recon from '@/services/reconciliation';
+import { EXTERNAL_TRANSACTION_SETTLEMENT_STATUSES } from '@/db/schema';
 import * as contracts from '@/services/contracts';
 import * as kobo from '@/services/kobo';
 import * as dash from '@/services/dashboards';
@@ -111,7 +113,11 @@ defineRoute({ method: 'POST', path: '/payouts/:id/hold', tag: F, summary: 'Place
 defineRoute({ method: 'POST', path: '/payout-holds/:id/resolve', tag: F, summary: 'Resolve a payout hold', permission: ['payouts', 'edit'], body: z.object({ resolutionNote: optText(500) }), handler: ({ ctx, params, body }) => rs.resolvePayoutHold(ctx, params.id, body.resolutionNote ?? undefined) });
 defineRoute({ method: 'POST', path: '/payouts/:id/initiate', tag: F, summary: 'Initiate payment for a Payable payout (refused if an unresolved hold exists)', permission: ['payouts', 'edit'], body: z.object({ payoutMethod: text(2, 40) }), handler: ({ ctx, params, body }) => rs.initiatePayment(ctx, params.id, body.payoutMethod) });
 defineRoute({ method: 'POST', path: '/payouts/:id/paid', tag: F, summary: 'Mark a payout paid (posts the ledger entry)', permission: ['payouts', 'edit'], body: z.object({ paymentReference: optText(120) }), handler: ({ ctx, params, body }) => rs.markPaid(ctx, params.id, body.paymentReference ?? undefined) });
-defineRoute({ method: 'POST', path: '/payouts/:id/reconcile', tag: F, summary: 'Reconcile a paid payout against the provider transaction', permission: ['payouts', 'edit'], body: empty, handler: ({ ctx, params }) => rs.reconcilePayout(ctx, params.id) });
+defineRoute({ method: 'GET', path: '/payouts/:id/reconciliations', tag: F, summary: 'Every reconciliation decision recorded against this payout', permission: ['reconciliation', 'read'], handler: ({ ctx, params }) => recon.listPayoutReconciliations(ctx, params.id) });
+defineRoute({ method: 'POST', path: '/external-transactions', tag: F, summary: 'Record one piece of external payment evidence (provider export, bank statement or authorised import)', permission: ['reconciliation', 'create'], body: z.object({ provider: text(1, 40), providerReference: text(1, 120), amountGhs: money, currency: text(3, 3).optional(), transactionDate: isoDate, feeGhs: z.number().min(0).max(100_000_000).optional(), settlementStatus: z.enum(EXTERNAL_TRANSACTION_SETTLEMENT_STATUSES).optional(), payeeUserId: uuid.optional(), rawPayload: z.unknown().optional() }), handler: async ({ ctx, body }) => status(201, await recon.recordExternalTransaction(ctx, body)) });
+defineRoute({ method: 'GET', path: '/external-transactions', tag: F, summary: 'Imported external transactions, optionally filtered to those not yet matched to any payout', permission: ['reconciliation', 'read'], query: z.object({ unmatched: z.coerce.boolean().optional() }), handler: ({ ctx, query }) => recon.listExternalTransactions(ctx, { unmatched: query.unmatched }) });
+defineRoute({ method: 'GET', path: '/reconciliation/exceptions', tag: F, summary: 'Every reconciliation decision that was not a clean match, for investigation', permission: ['reconciliation', 'read'], handler: ({ ctx }) => recon.listReconciliationExceptions(ctx) });
+defineRoute({ method: 'POST', path: '/payouts/:id/reconcile', tag: F, summary: 'Compare a paid payout against one recorded external transaction and decide Matched, Partially matched, Amount mismatch, Duplicate, Reversed or Unmatched. Only a Matched outcome moves the payout to Reconciled', permission: ['reconciliation', 'edit'], body: z.object({ externalTransactionId: uuid, note: optText(500) }), handler: async ({ ctx, params, body }) => status(201, await recon.matchPayout(ctx, params.id, body.externalTransactionId, body.note ?? undefined)) });
 
 /* ------------------------------ tax rules ------------------------------- */
 defineRoute({ method: 'GET', path: '/tax-rules', tag: F, summary: 'Tax/VAT/withholding rules, versioned by type and jurisdiction', permission: ['tax_rules', 'read'], handler: ({ ctx }) => tax.listTaxRules(ctx) });
