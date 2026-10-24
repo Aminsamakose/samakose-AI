@@ -29,6 +29,13 @@
       "when": 1792843517153,
       "tag": "0003_programme_communications",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792844056102,
+      "tag": "0004_monitoring_performance",
+      "breakpoints": true
     }
   ]
 }

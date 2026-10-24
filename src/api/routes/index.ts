@@ -17,4 +17,5 @@ import './outcome-verification';
 import './programme-expenditure';
 import './programme-version';
 import './programme-communications';
+import './monitoring-performance';
 export { routes } from '../framework';
