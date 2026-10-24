@@ -9,6 +9,9 @@ beforeAll(async () => {
   await ensureReference();
   admin = await makeUser('ADMIN'); finance = await makeUser('FINANCE'); executive = await makeUser('EXECUTIVE'); expert = await makeUser('EXPERT');
   orgId = (await makeOrg(admin)).id;
+  // The payout-eligibility gate (#201 Phase 0) requires a Verified tax profile before /payable.
+  await api(expert).put('/tax-profiles/me', { partyType: 'INDIVIDUAL', legalName: expert.email, taxIdentifier: `GHA-${uniq()}` });
+  await api(admin).post(`/tax-profiles/${expert.userId}/verify`, { decision: 'Verified' });
 });
 
 /** An Approved (not yet Payable) payout held by `expert`, for amount*pct% of a fresh paid invoice. */
