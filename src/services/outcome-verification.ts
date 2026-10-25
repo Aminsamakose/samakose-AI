@@ -6,7 +6,7 @@ import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme, assertCase } from '@/domain/scope';
 import { allow, need } from './common';
 
-const D = schema.outcomeDefinitions, R = schema.outcomeRecords;
+const D = schema.outcomeDefinitions, R = schema.outcomeRecords, A = schema.outcomeAttributions;
 const isUnique = (e: any) => (e?.code ?? e?.cause?.code) === '23505';
 
 type DefInput = { name: string; unit: string; reportingPeriod?: string | null; source?: string | null; verificationRequired?: boolean };
@@ -147,4 +147,70 @@ export async function correctOutcome(ctx: Ctx, id: string, b: Partial<RecordInpu
   await ctx.db.update(R).set({ status: 'SUPERSEDED', updatedAt: new Date() }).where(eq(R.id, row.id));
   await audit(ctx, 'outcome_record.corrected', 'programme', def.programmeId, { recordId: row.id, status: row.status }, { correctedBy: created.id, reason: b.reason });
   return { id: created.id };
+}
+
+/* -------------------------------- #91: structural outcome attribution -------------------------------- */
+type AttributionInput = { interventionId: string; contributionWeight?: number; confidence?: typeof schema.ATTRIBUTION_CONFIDENCE[number]; note?: string | null };
+
+export async function listAttributions(ctx: Ctx, outcomeRecordId: string) {
+  allow(ctx, 'programmes', 'read');
+  await loadRecord(ctx, outcomeRecordId);
+  return ctx.db.select().from(A).where(eq(A.outcomeRecordId, outcomeRecordId)).orderBy(desc(A.createdAt));
+}
+
+/**
+ * Links a specific intervention to an outcome record's result, carrying its own weight and
+ * confidence -- this is the structural half of "distinguish correlation from verified attribution"
+ * that attributionNote (free text) could not provide on its own. The intervention must belong to the
+ * same case as the outcome record, checked here since Postgres cannot express a cross-table
+ * constraint between outcome_records.case_id and interventions.case_id directly.
+ */
+export async function addAttribution(ctx: Ctx, outcomeRecordId: string, b: AttributionInput) {
+  allow(ctx, 'programmes', 'edit');
+  const { row, def } = await loadRecord(ctx, outcomeRecordId);
+  if (row.status === 'SUPERSEDED') throw conflict('This record has been superseded; add the attribution to the correcting record instead');
+  const [iv] = await ctx.db.select().from(schema.interventions).where(eq(schema.interventions.id, b.interventionId)).limit(1);
+  if (!iv) throw notFound('Intervention not found');
+  if (iv.caseId !== row.caseId) throw fieldError({ interventionId: 'This intervention does not belong to the same enterprise as the outcome record' });
+  const weight = b.contributionWeight ?? 0;
+  if (weight < 0 || weight > 100) throw fieldError({ contributionWeight: 'Give a weight between 0 and 100' });
+  try {
+    const [created] = await ctx.db.insert(A).values({
+      outcomeRecordId, interventionId: b.interventionId, contributionWeight: String(weight),
+      confidence: b.confidence ?? 'Low', note: b.note?.trim() || null, createdBy: need(ctx).user.id,
+    }).returning({ id: A.id });
+    await audit(ctx, 'outcome_attribution.created', 'programme', def.programmeId, undefined, { outcomeRecordId, interventionId: b.interventionId, contributionWeight: weight, confidence: b.confidence ?? 'Low' });
+    return { id: created.id };
+  } catch (e) { if (isUnique(e)) throw conflict('This intervention is already linked to this outcome record'); throw e; }
+}
+
+async function loadAttribution(ctx: Ctx, id: string) {
+  const [row] = await ctx.db.select().from(A).where(eq(A.id, id)).limit(1);
+  if (!row) throw notFound('Attribution not found');
+  const { row: rec, def } = await loadRecord(ctx, row.outcomeRecordId);
+  return { row, rec, def };
+}
+
+export async function updateAttribution(ctx: Ctx, id: string, b: Partial<Omit<AttributionInput, 'interventionId'>>) {
+  allow(ctx, 'programmes', 'edit');
+  const { row, rec, def } = await loadAttribution(ctx, id);
+  if (rec.status === 'SUPERSEDED') throw conflict('This record has been superseded; edit the attribution on the correcting record instead');
+  if (b.contributionWeight !== undefined && (b.contributionWeight < 0 || b.contributionWeight > 100)) throw fieldError({ contributionWeight: 'Give a weight between 0 and 100' });
+  await ctx.db.update(A).set({
+    ...(b.contributionWeight !== undefined ? { contributionWeight: String(b.contributionWeight) } : {}),
+    ...(b.confidence !== undefined ? { confidence: b.confidence } : {}),
+    ...(b.note !== undefined ? { note: b.note?.trim() || null } : {}),
+    updatedAt: new Date(),
+  }).where(eq(A.id, id));
+  await audit(ctx, 'outcome_attribution.updated', 'programme', def.programmeId, { contributionWeight: row.contributionWeight, confidence: row.confidence }, b);
+  return { ok: true };
+}
+
+export async function removeAttribution(ctx: Ctx, id: string) {
+  allow(ctx, 'programmes', 'edit');
+  const { row, rec, def } = await loadAttribution(ctx, id);
+  if (rec.status === 'SUPERSEDED') throw conflict('This record has been superseded; nothing to remove here');
+  await ctx.db.delete(A).where(eq(A.id, id));
+  await audit(ctx, 'outcome_attribution.deleted', 'programme', def.programmeId, { interventionId: row.interventionId, contributionWeight: row.contributionWeight }, undefined);
+  return { ok: true };
 }

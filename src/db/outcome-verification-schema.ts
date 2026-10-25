@@ -1,6 +1,6 @@
 import { boolean, text, timestamp, uuid, numeric, date, index, uniqueIndex, pgTable, check } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { cases, documents, users, evidenceClassEnum } from './schema';
+import { cases, documents, users, evidenceClassEnum, interventions } from './schema';
 import { programmes } from './schema';
 
 const created = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -73,4 +73,37 @@ export const outcomeRecords = pgTable('outcome_records', {
   index('outcome_rec_supersedes_idx').on(t.supersedesId),
   check('outcome_rec_status_ck', sql`${t.status} in ('PENDING','VERIFIED','REJECTED','SUPERSEDED')`),
   check('outcome_rec_has_value_ck', sql`${t.baselineValue} is not null or ${t.followupValue} is not null`),
+]);
+
+export const ATTRIBUTION_CONFIDENCE = ['Low', 'Medium', 'High'] as const;
+
+/**
+ * #91 (MEL outcome attribution): outcome_records.attributionNote already lets a recorder say in
+ * prose whether a result is attributable to the programme -- requirement 9, never inferred
+ * automatically. This table makes that claim structural instead of a sentence: a named link from one
+ * outcome record to the specific intervention(s) the recorder believes contributed to it, each with
+ * its own weight and confidence, so "correlation" (an outcome record with no row here, or only
+ * low-confidence ones) and "verified attribution" (a high-confidence row the outcome's own
+ * verification has also passed) stop being the same thing in the data. An outcome can credit more
+ * than one intervention (contributionWeight splits credit across them; nothing forces the weights to
+ * sum to 100, since a recorder may legitimately not know the remainder, e.g. factors outside the
+ * programme). The linked intervention must belong to the same case as the outcome record -- enforced
+ * in the service layer, not by a cross-table check constraint, which Postgres cannot express here.
+ */
+export const outcomeAttributions = pgTable('outcome_attributions', {
+  id: id(),
+  outcomeRecordId: uuid('outcome_record_id').notNull().references(() => outcomeRecords.id),
+  interventionId: uuid('intervention_id').notNull().references(() => interventions.id),
+  contributionWeight: numeric('contribution_weight', { precision: 5, scale: 2 }).notNull().default('0'),
+  confidence: text('confidence').notNull().default('Low'),
+  note: text('note'),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: created(),
+  updatedAt: updated(),
+}, (t) => [
+  uniqueIndex('outcome_attr_rec_iv_uq').on(t.outcomeRecordId, t.interventionId),
+  index('outcome_attr_rec_idx').on(t.outcomeRecordId),
+  index('outcome_attr_iv_idx').on(t.interventionId),
+  check('outcome_attr_confidence_ck', sql`${t.confidence} in ('Low','Medium','High')`),
+  check('outcome_attr_weight_ck', sql`${t.contributionWeight} >= 0 and ${t.contributionWeight} <= 100`),
 ]);
