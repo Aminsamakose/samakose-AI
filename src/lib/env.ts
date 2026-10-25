@@ -34,7 +34,10 @@ export const env = {
   get koboToken() { return str('KOBO_TOKEN'); },
   get koboAsset() { return str('KOBO_ASSET_UID'); },
   // Trim whitespace and stray quotes: a pasted key often carries a trailing space or newline.
-  get paystackSecret() { return str('PAYSTACK_SECRET_KEY').trim().replace(/^["']|["']$/g, '').trim(); },
+  // Falls back to PAYSTACK_SECRET_KEY_1 because production's actual Vercel variable was created under that
+  // name (likely from a provider dashboard that appends a numeric suffix on a re-add) and was never renamed,
+  // which silently put every live payment into mock mode. Prefer the canonical name once it exists.
+  get paystackSecret() { return str('PAYSTACK_SECRET_KEY', str('PAYSTACK_SECRET_KEY_1')).trim().replace(/^["']|["']$/g, '').trim(); },
   get smtpHost() { return str('SMTP_HOST'); },
   get smtpPort() { return Number(str('SMTP_PORT', '587')); },
   get smtpUser() { return str('SMTP_USER'); },
