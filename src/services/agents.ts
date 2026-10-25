@@ -190,7 +190,7 @@ export async function agentsSummary(ctx: Ctx) {
 /**
  * Run the evaluation library against the live model for an agent's current version and record Passed or Failed.
  * Administrators start it; the result is decided by the checks, never by a person typing it in. A mock run never counts.
- * Only the diagnosis agent has an evaluation library today; the others report that plainly instead of passing.
+ * Not every built-in agent has an evaluation library (SUITES in @/domain/ai-eval); one without a suite reports that plainly instead of passing.
  */
 export async function evaluateAgent(ctx: Ctx, id: string, budgetUsd = 1) {
   allow(ctx, 'agents', 'approve');
