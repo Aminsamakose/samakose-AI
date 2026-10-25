@@ -33,5 +33,5 @@ export function mockInsight(question: string, s: Snapshot): InsightReply {
     return { answer: `Revenue recorded this month is GHS ${s.revenueThisMonthGhs.toFixed(2)} as of ${s.asOf}.`, caveat: null };
   if (q.includes('case') || q.includes('pipeline'))
     return { answer: `Case counts by status: ${Object.entries(s.casesByStatus).map(([k, v]) => `${k} ${v}`).join(', ') || 'none'} (as of ${s.asOf}).`, caveat: null };
-  return { answer: `Snapshot as of ${s.asOf}: cases ${Object.values(s.casesByStatus).reduce((a, b) => a + b, 0)}, overdue invoices ${s.overdueInvoices.count} (GHS ${s.overdueInvoices.totalGhs.toFixed(2)}), pending approvals ${s.pendingApprovals}, revenue this month GHS ${s.revenueThisMonthGhs.toFixed(2)}.`, caveat: 'Ask about cases, invoices, approvals or revenue for a more specific answer.' };
+  return { answer: `This snapshot does not cover that question. It only has: cases ${Object.values(s.casesByStatus).reduce((a, b) => a + b, 0)}, overdue invoices ${s.overdueInvoices.count} (GHS ${s.overdueInvoices.totalGhs.toFixed(2)}), pending approvals ${s.pendingApprovals}, revenue this month GHS ${s.revenueThisMonthGhs.toFixed(2)}, as of ${s.asOf}.`, caveat: 'Ask about cases, invoices, approvals or revenue for a more specific answer.' };
 }

@@ -140,11 +140,14 @@ describe('in-platform evaluation runner', () => {
     const { AI_CASES } = await import('@/domain/ai-eval-cases');
     const adm = await makeUser('ADMIN');
     const list = (await api(adm).get('/admin/agents')).data.agents as any[];
-    const diag = list.find((a) => a.code === 'diagnosis'), brief = list.find((a) => a.code === 'brief');
+    // library_draft is the one built-in agent with no evaluation suite yet, so it is the right fixture
+    // for "refuses agents with no cases" -- diagnosis, prescription, brief, enquiry, report and insights
+    // all have suites now (see src/domain/ai-eval.ts SUITES).
+    const diag = list.find((a) => a.code === 'diagnosis'), noSuite = list.find((a) => a.code === 'library_draft');
     setAiLiveOverride(false); setAiTransport(null);
     expect((await api(adm).post(`/admin/agents/${diag.id}/evaluate`, {})).status).toBe(422);
     setAiLiveOverride(true);
-    expect((await api(adm).post(`/admin/agents/${brief.id}/evaluate`, {})).text).toMatch(/no evaluation cases/);
+    expect((await api(adm).post(`/admin/agents/${noSuite.id}/evaluate`, {})).text).toMatch(/no evaluation cases/);
     const good = async (_s: string, user: string) => ({ text: JSON.stringify(mockDiagnosis(JSON.parse(user))), inputTokens: 100, outputTokens: 100 });
     setAiTransport(good as any);
     const ok = await api(adm).post(`/admin/agents/${diag.id}/evaluate`, {});
@@ -154,6 +157,45 @@ describe('in-platform evaluation runner', () => {
     const bad = await api(adm).post(`/admin/agents/${diag.id}/evaluate`, {});
     expect(bad.data.result).toBe('Failed');
     expect((await api(adm).get(`/admin/agents/${diag.id}`)).data.versions[0].evaluation).toBe('Failed');
+    setAiTransport(null); setAiLiveOverride(null);
+  });
+
+  // #157: prescription, brief, enquiry, report and insights previously had no evaluation suite at all
+  // (ai.evaluateAgent would refuse them outright, as library_draft still is above). This proves the new
+  // suites are wired through the real evaluator end to end, against each agent's actual output contract,
+  // not just unit-tested in isolation.
+  it('evaluates the newly-covered agents (prescription, brief, enquiry, report, insights) against their real validators', async () => {
+    const { setAiTransport, setAiLiveOverride } = await import('@/services/ai');
+    const { mockPrescription, mockBrief, mockReport } = await import('@/domain/mockai');
+    const { mockInsight } = await import('@/domain/insights');
+    const { mockAssistant } = await import('@/domain/assistant');
+    const { SUITES } = await import('@/domain/ai-eval');
+    const adm = await makeUser('ADMIN');
+    const list = (await api(adm).get('/admin/agents')).data.agents as any[];
+    setAiLiveOverride(true);
+    const mockFor: Record<string, (ctx: any) => unknown> = {
+      prescription: (ctx) => mockPrescription(ctx), brief: (ctx) => mockBrief(ctx), report: (ctx) => mockReport(ctx),
+      insights: (ctx) => mockInsight(ctx.question, ctx.snapshot), enquiry: (ctx) => mockAssistant(ctx.question, ctx.passages)
+    };
+    for (const code of Object.keys(mockFor)) {
+      const agent = list.find((a) => a.code === code);
+      // Another test in this file may have paused or capped this same seeded agent as a side effect
+      // (e.g. requestsPerDay: 1); clear that and resume it so this test is order-independent rather
+      // than relying on fixture ordering.
+      await api(adm).patch(`/admin/agents/${agent.id}`, { limits: DEFAULT_LIMITS }).catch(() => undefined);
+      await api(adm).post(`/admin/agents/${agent.id}/status`, { to: 'Resume', reason: 'Resume for evaluation test' }).catch(() => undefined);
+      let i = 0;
+      setAiTransport((async (_sys: string, user: string) => {
+        const cases = SUITES[code].cases;
+        const out = mockFor[code](cases[Math.min(i, cases.length - 1)].context);
+        i++;
+        return { text: JSON.stringify(out), inputTokens: 50, outputTokens: 50 };
+      }) as any);
+      const r = await api(adm).post(`/admin/agents/${agent.id}/evaluate`, {});
+      expect(r.status, `${code}: ${JSON.stringify(r.data)}`).toBe(200);
+      expect(r.data.result, `${code}: ${r.data.note}`).toBe('Passed');
+      expect((await api(adm).get(`/admin/agents/${agent.id}`)).data.versions[0].evaluation).toBe('Passed');
+    }
     setAiTransport(null); setAiLiveOverride(null);
   });
 });
