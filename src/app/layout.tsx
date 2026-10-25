@@ -6,6 +6,7 @@ import '@fontsource/dm-mono/500.css';
 import './globals.css';
 
 import { getSite } from '@/lib/site-content';
+import { DemoBanner } from '@/components/DemoBanner';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { brand, seo } = await getSite();
@@ -33,5 +34,5 @@ function brandCss(hex: unknown): string {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const css = brandCss((await getSite()).brand.primaryColour);
-  return <html lang="en-GH" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: NO_FLASH }} />{css && <style dangerouslySetInnerHTML={{ __html: css }} />}</head><body>{children}</body></html>;
+  return <html lang="en-GH" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: NO_FLASH }} />{css && <style dangerouslySetInnerHTML={{ __html: css }} />}</head><body><DemoBanner />{children}</body></html>;
 }
