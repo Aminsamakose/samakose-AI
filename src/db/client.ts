@@ -27,7 +27,9 @@ export function cleanDatabaseUrl(raw: string): string {
 }
 
 export function databaseUrl(): string {
-  const url = process.env.DATABASE_URL;
+  // Falls back to POSTGRES_URL (provisioned by the Supabase-Vercel integration, already
+  // pooled through Supavisor and already TLS-compatible) when DATABASE_URL isn't usable.
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   if (!url) throw new Error('DATABASE_URL is not set');
   const clean = cleanDatabaseUrl(url);
   if (!/^postgres(ql)?:\/\//i.test(clean)) throw new Error('DATABASE_URL must start with postgresql://');
