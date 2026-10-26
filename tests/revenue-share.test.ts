@@ -98,6 +98,25 @@ describe('revenue share agreements', () => {
     expect((await api(finance).post(`/revenue-share/agreements/${agreementId}/calculate`, { invoiceId })).status).toBe(409);
   });
 
+  it('two concurrent calculate requests for the same agreement and invoice only ever produce one calculation and one payout', async () => {
+    // Without the pg_advisory_xact_lock in calculateRevenueShare, both requests could pass the
+    // "not yet calculated" check before either transaction committed, each posting its own ledger
+    // entry and payout for the same invoice - double-paying the professional.
+    const { agreementId, invoiceId } = await activeAgreement({ amount: 1000, percentage: 30, basis: 'SHARE_ON_NET_PRICE' });
+    const [r1, r2] = await Promise.all([
+      api(finance).post(`/revenue-share/agreements/${agreementId}/calculate`, { invoiceId }),
+      api(finance).post(`/revenue-share/agreements/${agreementId}/calculate`, { invoiceId })
+    ]);
+    const statuses = [r1.status, r2.status].sort();
+    expect(statuses).toEqual([201, 409]);
+
+    const calcs = await db().select().from(schema.revenueShareCalculations).where(eq(schema.revenueShareCalculations.invoiceId, invoiceId));
+    expect(calcs).toHaveLength(1);
+    const payouts = await db().select().from(schema.professionalPayouts).where(eq(schema.professionalPayouts.calculationId, calcs[0].id));
+    expect(payouts).toHaveLength(1);
+    expect(payouts[0].amountGhs).toBe('300.00');
+  });
+
   it('computes a FIXED, HYBRID and TIERED model correctly', async () => {
     const fixed = await activeAgreement({ amount: 1000, model: 'FIXED', fixedAmountGhs: 250, basis: 'SHARE_ON_NET_PRICE' });
     const r1 = await api(finance).post(`/revenue-share/agreements/${fixed.agreementId}/calculate`, { invoiceId: fixed.invoiceId });

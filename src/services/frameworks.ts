@@ -326,6 +326,9 @@ export async function createDraft(ctx: Ctx, code: string, b: DraftInput) {
   const u = need(ctx).user;
   const [f] = await ctx.db.select().from(schema.frameworks).where(eq(schema.frameworks.code, code)).limit(1);
   if (!f) throw notFound('Framework not found');
+  // Advisory lock on this framework: without it, two concurrent "start a draft" calls could both pass
+  // the "no open draft" check below and both insert a version, violating the one-open-draft invariant.
+  await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtext('framework:draft:' || ${f.id}))`);
   const open = await ctx.db.select({ id: schema.frameworkVersions.id }).from(schema.frameworkVersions).where(and(eq(schema.frameworkVersions.frameworkId, f.id), eq(schema.frameworkVersions.status, 'Draft'))).limit(1);
   if (open.length) throw unprocessable('This framework already has an open draft. Edit or discard it first');
   let content: { questions: FrameworkQuestion[]; dimensions: string[] };

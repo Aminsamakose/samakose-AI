@@ -1,7 +1,9 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { api, call, ensureReference, makeUser, uniq, type Session } from './helpers';
 import { hmacHex } from '@/lib/crypto';
 import { setPaystackTransport } from '@/services/finance';
+import { db, schema } from '@/db/client';
 
 let admin: Session, editor: Session, owner: Session, authorId: string;
 beforeAll(async () => {
@@ -104,6 +106,28 @@ describe('Resource Library API', () => {
     expect(dl.status).toBe(404); // entitled, but no file was attached to this resource
     const status2 = await api(owner).get(`/library/purchases/${start.data.reference}/status`);
     expect(status2.data.status).toBe('Succeeded');
+  });
+
+  it('two concurrent mock-complete calls on the same purchase only ever grant one entitlement', async () => {
+    // Without the pg_advisory_xact_lock in settle(), both calls could read status 'Pending' before
+    // either transaction committed, each passing the "not already Succeeded" check and each granting
+    // the entitlement - relying only on resource_entitlements' unique index to avoid a duplicate row,
+    // which would surface as a crashed transaction rather than a clean idempotent response.
+    const r = await publishedPremium(25);
+    const start = await api(owner).post(`/library/resources/${r.id}/purchase`, {});
+    expect(start.status).toBe(200);
+    const [c1, c2] = await Promise.all([
+      api(owner).post(`/library/purchases/${start.data.reference}/mock-complete`, {}),
+      api(owner).post(`/library/purchases/${start.data.reference}/mock-complete`, {})
+    ]);
+    // settle() is idempotent once serialized by the lock, so both calls succeed (one genuinely
+    // settles, the other sees it already Succeeded) - what matters is a single entitlement, not a 409.
+    expect(c1.status).toBe(200);
+    expect(c2.status).toBe(200);
+    const status2 = await api(owner).get(`/library/purchases/${start.data.reference}/status`);
+    expect(status2.data.status).toBe('Succeeded');
+    const ents = await db().select().from(schema.resourceEntitlements).where(eq(schema.resourceEntitlements.resourceId, r.id));
+    expect(ents).toHaveLength(1);
   });
 
   it('starts a live purchase with Paystack and settles it only on a correctly signed webhook', async () => {

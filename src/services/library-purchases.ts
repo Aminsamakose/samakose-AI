@@ -5,7 +5,7 @@
  * On a confirmed payment, grants the entitlement through entitlements.ts; nothing here decides
  * who may read what - that stays entitlements.ts's job.
  */
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -48,6 +48,10 @@ async function ownPurchase(ctx: Ctx, reference: string) {
 }
 
 async function settle(db: Ctx['db'], paymentId: string, payload: unknown) {
+  // Advisory lock on this payment: without it, a webhook delivery and a concurrent mock-complete call
+  // (or two concurrent calls of either) could both pass the "not already Succeeded" check below and
+  // both grant the entitlement and run the succeeded side effects twice.
+  await db.execute(sql`select pg_advisory_xact_lock(hashtext('resource-payment:settle:' || ${paymentId}))`);
   const [p] = await db.select().from(rp).where(eq(rp.id, paymentId)).limit(1);
   if (!p) throw notFound('Purchase not found');
   if (p.status === 'Succeeded') return { status: 'Succeeded' as const, already: true };

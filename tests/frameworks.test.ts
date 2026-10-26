@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { answerSheet, api, ensureReference, makeOrg, makeUser, uniq, type Session } from './helpers';
 import { db, schema } from '@/db/client';
 import { resolveVersion, resolveFreeAssessmentVersion } from '@/services/frameworks';
@@ -82,6 +82,22 @@ describe('framework versions', () => {
     expect(draftRows.every((q) => q.status === 'Draft')).toBe(true);
     expect((await api(reviewer).post(`/settings/frameworks/versions/${d.data.id}/publish`, { note: 'try it on' })).status).toBe(403);
     expect((await api(admin).del(`/settings/frameworks/versions/${d.data.id}`)).status).toBe(200);
+  });
+
+  it('two concurrent "start a draft" calls on the same framework only ever leave one open draft', async () => {
+    // Without the pg_advisory_xact_lock in createDraft, both requests could pass the "no open draft"
+    // check before either transaction committed, each inserting its own Draft version and violating
+    // the one-open-draft-per-framework invariant.
+    const [r1, r2] = await Promise.all([
+      api(admin).post('/settings/frameworks/SME360/versions', { fromBank: true }),
+      api(admin).post('/settings/frameworks/SME360/versions', { fromBank: true })
+    ]);
+    const statuses = [r1.status, r2.status].sort();
+    expect(statuses).toEqual([201, 422]);
+    const winner = r1.status === 201 ? r1.data : r2.data;
+    const drafts = await db().select().from(schema.frameworkVersions).where(and(eq(schema.frameworkVersions.frameworkId, winner.frameworkId), eq(schema.frameworkVersions.status, 'Draft')));
+    expect(drafts).toHaveLength(1);
+    expect((await api(admin).del(`/settings/frameworks/versions/${winner.id}`)).status).toBe(200);
   });
 
   it('will not publish a specialised framework until every source is approved', async () => {
