@@ -6,6 +6,6 @@
 -- The service now enforces the configured limit itself (src/services/discounts.ts, applyPromoCode), guarded
 -- by a pg_advisory_xact_lock on (promo_code_id, customer_id) to keep concurrent requests race-safe, so the
 -- unique index must become non-unique to allow more than one redemption row per pair when the limit allows it.
-DROP INDEX IF EXISTS pr_code_customer_uq;
+ALTER TABLE public.promo_redemptions DROP CONSTRAINT IF EXISTS pr_code_customer_uq;
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS pr_code_customer_idx ON public.promo_redemptions (promo_code_id, customer_id);
