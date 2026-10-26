@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { WorkspaceSelect } from '@/components/portfolio/shared';
 
 type Provider = {
   provider: { id: string; name: string };
@@ -133,10 +134,10 @@ export default function ProviderPerformancePage() {
           <h1>Provider Performance & Service Quality</h1>
           <p className="muted">Evidence-backed operational performance for Experts and Coaches. Human Performance, Service Quality, Client Experience and Business Outcome remain separate.</p>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); void load(); }} className="page-actions">
-          <input aria-label="Programme workspace ID" placeholder="Workspace ID" value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} />
-          <button className="btn primary" type="submit" disabled={loading}>{loading ? 'Loading…' : 'Load workspace'}</button>
-        </form>
+        <div className="page-actions">
+          <WorkspaceSelect id="workspace-select" name="workspaceId" value={workspaceId} onChange={setWorkspaceId} />
+          {loading && <span className="muted small">Loading…</span>}
+        </div>
       </div>
 
       {message && <div role="status" className="notice">{message}</div>}

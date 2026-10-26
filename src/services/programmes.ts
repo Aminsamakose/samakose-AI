@@ -27,6 +27,19 @@ async function hideSmall<T extends Record<string, any>>(ctx: Ctx, rows: T[], key
   return rows.map((r) => { const o: any = { ...r }; for (const k of keys) if (Number(o[k]) < min) o[k] = null; return o; });
 }
 
+/** Cohorts across every programme the user can see, for search-as-you-type pickers (§3 ID-field standardisation).
+ *  Optionally narrowed to one programme. Scoped the same way as `listProgrammes` since a cohort is only
+ *  visible through the programme it belongs to. */
+export async function listCohorts(ctx: Ctx, q: ListQuery & { programmeId?: string }) {
+  allow(ctx, 'cohorts', 'read');
+  const cohortCols = { id: ch.id, code: ch.code, name: ch.name, programmeId: ch.programmeId, programmeName: p.name, startDate: ch.startDate, endDate: ch.endDate, status: ch.status };
+  const where = and(programmeScope(need(ctx).user), search(q.q, [ch.name, ch.code]), q.programmeId ? eq(ch.programmeId, q.programmeId) : undefined);
+  return respondList(ctx, 'cohorts', q,
+    async (limit, off) => ctx.db.select(cohortCols).from(ch).innerJoin(p, eq(p.id, ch.programmeId)).where(where).orderBy(orderBy(q, { name: ch.name, code: ch.code, start: ch.startDate, status: ch.status }, ch.createdAt)).limit(limit).offset(off),
+    async () => Number((await ctx.db.select({ n: countOf }).from(ch).innerJoin(p, eq(p.id, ch.programmeId)).where(where))[0].n),
+    { filename: 'cohorts.csv', columns: [['code', 'Code'], ['name', 'Name'], ['programmeName', 'Programme'], ['startDate', 'Start'], ['endDate', 'End'], ['status', 'Status']].map(([key, label]) => ({ key, label })) });
+}
+
 export async function listProgrammes(ctx: Ctx, q: ListQuery & { status?: string }) {
   allow(ctx, 'programmes', 'read');
   const where = and(programmeScope(need(ctx).user), search(q.q, [p.name, p.code, p.funder]), q.status ? eq(p.status, q.status) : undefined);
