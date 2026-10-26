@@ -174,6 +174,11 @@ export async function scheduleSession(ctx: Ctx, sessionId: string, input: { conn
  */
 export async function rescheduleEvent(ctx: Ctx, id: string, input: { startsAt: string; endsAt: string; timezone?: string }) {
   allow(ctx, 'programme_workspaces', 'edit');
+  // Locked on the event id: this reads the row, then makes an external provider call, then writes
+  // back - without a lock, two staff rescheduling the same event to different times concurrently
+  // could interleave so the database row ends up at one time while the actual live meeting (updated
+  // by whichever call reached the provider last) ends up at another. See directive #10.3.
+  await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtext('reschedule_event:' || ${id}))`);
   const [row] = await ctx.db.select().from(events).where(eq(events.id, id)).limit(1);
   if (!row) throw notFound('Calendar event not found');
   await getCohort(ctx, row.cohortId);

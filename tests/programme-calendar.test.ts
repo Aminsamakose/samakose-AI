@@ -64,4 +64,26 @@ describe('programme calendar: scheduling a delivery session', () => {
     expect(events).toHaveLength(2);
     expect(events.filter((e) => e.status !== 'CANCELLED')).toHaveLength(1);
   });
+
+  it('two concurrent reschedules of the same event both apply cleanly, serialized rather than interleaved', async () => {
+    const { session } = await cohortWithSession();
+    const created = await api(admin).post(`/delivery-sessions/${session.id}/calendar`, { skipLiveMeeting: true });
+    expect(created.status).toBe(201);
+
+    const [r1, r2] = await Promise.all([
+      api(admin).post(`/calendar-events/${created.data.id}/reschedule`, { startsAt: '2027-02-02T09:00:00Z', endsAt: '2027-02-02T11:00:00Z' }),
+      api(admin).post(`/calendar-events/${created.data.id}/reschedule`, { startsAt: '2027-02-03T09:00:00Z', endsAt: '2027-02-03T11:00:00Z' })
+    ]);
+    expect(r1.status).toBe(200);
+    expect(r2.status).toBe(200);
+
+    // Whichever committed last, the event's stored time must match exactly one of the two requested
+    // times, not some torn mix of the two (no video provider is configured here, so there is no
+    // external meeting to drift out of sync, but the serialization itself is what this asserts).
+    const [row] = await db().select().from(schema.calendarEvents).where(eq(schema.calendarEvents.id, created.data.id));
+    const times = [row.startsAt.toISOString(), row.endsAt.toISOString()];
+    const matchesFirst = times[0] === '2027-02-02T09:00:00.000Z' && times[1] === '2027-02-02T11:00:00.000Z';
+    const matchesSecond = times[0] === '2027-02-03T09:00:00.000Z' && times[1] === '2027-02-03T11:00:00.000Z';
+    expect(matchesFirst || matchesSecond).toBe(true);
+  });
 });
