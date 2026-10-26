@@ -19,8 +19,8 @@ import { eq } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
-import { allow, need } from './common';
-import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
+import { allow, lockCapacityScope, need } from './common';
+import { conflict, fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { postLedgerEntries } from './ledger';
 
 const crn = schema.creditNotes, cna = schema.creditNoteApplications, inv = schema.invoices, rfd = schema.refunds;
@@ -66,6 +66,11 @@ export async function issueCreditNote(ctx: Ctx, b: { invoiceId: string; amountGh
   const [i] = await ctx.db.select().from(inv).where(eq(inv.id, b.invoiceId)).limit(1);
   if (!i) throw notFound('Invoice not found');
   if (i.status === 'Void') throw unprocessable('A void invoice cannot carry a credit note');
+  // Serialize against any other concurrent credit note (or refund) issue/void on this invoice, so two
+  // concurrent issueCreditNote calls can't both read the same outstanding balance and both pass the
+  // ceiling check before either commits - a classic check-then-act race that would otherwise let the
+  // invoice carry more credit than it is actually owed.
+  await lockCapacityScope(ctx, `invoice-credit:${b.invoiceId}`);
   const outstanding = await outstandingOnInvoice(ctx, b.invoiceId);
   if (b.amountGhs > outstanding + CENT) throw fieldError({ amountGhs: `Cannot exceed the invoice's outstanding balance of GHS ${outstanding.toFixed(2)}` });
 
@@ -94,9 +99,17 @@ export async function applyCreditNote(ctx: Ctx, creditNoteId: string, b: { invoi
   allow(ctx, 'refunds', 'approve');
   const u = need(ctx).user;
   if (!(b.amountGhs > 0)) throw fieldError({ amountGhs: 'Must be a positive amount' });
+  // Serialize against any other concurrent apply/void of this same credit note *before* reading its
+  // status - taking the lock after the status check (as an earlier version of this fix did) still
+  // let a concurrent apply and void both read 'Issued' before either committed, each then passing
+  // its own check against that now-stale status once it got the lock.
+  await lockCapacityScope(ctx, `credit-note:${creditNoteId}`);
   const [note] = await ctx.db.select().from(crn).where(eq(crn.id, creditNoteId)).limit(1);
   if (!note) throw notFound('Credit note not found');
   if (note.status !== 'Issued') throw unprocessable(`A ${note.status.toLowerCase()} credit note cannot be applied`);
+  // Four-eyes: the person who issued a credit note may not be the one who applies it to move money,
+  // mirroring the requestedBy/approvedBy separation refunds.ts enforces on the same RBAC resource.
+  if (note.issuedBy === u.id) throw forbidden('The person who issued a credit note cannot apply it');
   const [target] = await ctx.db.select().from(inv).where(eq(inv.id, b.invoiceId)).limit(1);
   if (!target) throw notFound('Target invoice not found');
   if (target.status === 'Void') throw unprocessable('A credit note cannot be applied against a void invoice');
@@ -127,6 +140,11 @@ export async function applyCreditNote(ctx: Ctx, creditNoteId: string, b: { invoi
 export async function voidCreditNote(ctx: Ctx, creditNoteId: string, reason?: string) {
   allow(ctx, 'refunds', 'approve');
   const u = need(ctx).user;
+  // Same lock as applyCreditNote, on the same scope, taken before the status read for the same
+  // reason: otherwise a concurrent apply could commit its application between this status check and
+  // the void update below, leaving a Void credit note with money already applied against an invoice
+  // and no clean reversal path.
+  await lockCapacityScope(ctx, `credit-note:${creditNoteId}`);
   const [note] = await ctx.db.select().from(crn).where(eq(crn.id, creditNoteId)).limit(1);
   if (!note) throw notFound('Credit note not found');
   if (note.status !== 'Issued') throw conflict(`This credit note is already ${note.status.toLowerCase()}`);

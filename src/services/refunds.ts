@@ -23,7 +23,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
-import { allow, need } from './common';
+import { allow, lockCapacityScope, need } from './common';
 import { conflict, fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { postLedgerEntries } from './ledger';
 import { createApprovalRequest, requiredApproverRole } from './approvals';
@@ -53,6 +53,14 @@ export async function requestRefund(ctx: Ctx, b: { paymentId: string; amountGhs:
   const [i] = await ctx.db.select().from(inv).where(eq(inv.id, p.invoiceId)).limit(1);
   if (!i) throw notFound('Invoice not found');
   if (b.amountGhs > Number(p.amountGhs) + 0.005) throw fieldError({ amountGhs: `Cannot exceed the payment amount of GHS ${p.amountGhs}` });
+  // Serialize against any other concurrent refund request on this same payment, so two requests
+  // can't both read the same already-requested total and both pass the cap below before either
+  // commits - without this, several refunds each individually <= the payment amount could together
+  // refund more than was ever paid.
+  await lockCapacityScope(ctx, `payment-refund:${p.id}`);
+  const existing = await ctx.db.select({ amountGhs: rf.amountGhs }).from(rf).where(and(eq(rf.paymentId, p.id), inArray(rf.status, ['Requested', 'Approved', 'Processed'])));
+  const alreadyRequested = existing.reduce((s, r) => s + Number(r.amountGhs), 0);
+  if (alreadyRequested + b.amountGhs > Number(p.amountGhs) + 0.005) throw fieldError({ amountGhs: `This payment has GHS ${(Number(p.amountGhs) - alreadyRequested).toFixed(2)} left to refund` });
   const [row] = await ctx.db.insert(rf).values({ paymentId: p.id, invoiceId: i.id, amountGhs: dec(b.amountGhs), reason: b.reason.trim(), status: 'Requested', requestedBy: u.id }).returning();
   await audit(ctx, 'refund.requested', 'refunds', row.id, undefined, row);
   // Open a matching approval request so the Approval Matrix threshold (refund as % of invoice) is
@@ -72,7 +80,7 @@ export async function requestRefund(ctx: Ctx, b: { paymentId: string; amountGhs:
 export async function approveRefund(ctx: Ctx, refundId: string) {
   allow(ctx, 'refunds', 'approve');
   const u = need(ctx).user;
-  const [r] = await ctx.db.select().from(rf).where(eq(rf.id, refundId)).limit(1);
+  const [r] = await ctx.db.select().from(rf).where(eq(rf.id, refundId)).for('update').limit(1);
   if (!r) throw notFound('Refund not found');
   if (r.status !== 'Requested') throw unprocessable(`A ${r.status.toLowerCase()} refund cannot be approved`);
   if (r.requestedBy && r.requestedBy === u.id) throw forbidden('The person who requested a refund cannot approve it');
@@ -88,7 +96,7 @@ export async function approveRefund(ctx: Ctx, refundId: string) {
 export async function rejectRefund(ctx: Ctx, refundId: string, reason?: string) {
   allow(ctx, 'refunds', 'approve');
   const u = need(ctx).user;
-  const [r] = await ctx.db.select().from(rf).where(eq(rf.id, refundId)).limit(1);
+  const [r] = await ctx.db.select().from(rf).where(eq(rf.id, refundId)).for('update').limit(1);
   if (!r) throw notFound('Refund not found');
   if (r.status !== 'Requested') throw unprocessable(`A ${r.status.toLowerCase()} refund cannot be rejected`);
   if (r.requestedBy && r.requestedBy === u.id) throw forbidden('The person who requested a refund cannot decide it');
@@ -105,7 +113,11 @@ export async function rejectRefund(ctx: Ctx, refundId: string, reason?: string) 
  */
 export async function processRefund(ctx: Ctx, refundId: string) {
   allow(ctx, 'refunds', 'approve');
-  const [r] = await ctx.db.select().from(rf).where(eq(rf.id, refundId)).limit(1);
+  // Locks the refund row for the rest of this transaction. Without it, two concurrent calls to
+  // process the same refund could both read status 'Approved' and both post a ledger entry before
+  // either commits its status update - a duplicate refund posting, the highest-severity class of bug
+  // this audit is for.
+  const [r] = await ctx.db.select().from(rf).where(eq(rf.id, refundId)).for('update').limit(1);
   if (!r) throw notFound('Refund not found');
   if (r.status !== 'Approved') throw unprocessable('Only an approved refund can be processed');
   const [p] = await ctx.db.select().from(pay).where(eq(pay.id, r.paymentId)).limit(1);

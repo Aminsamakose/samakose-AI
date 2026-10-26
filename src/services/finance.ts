@@ -10,7 +10,7 @@ import { INVOICE_TRANSITIONS } from '@/domain/logic';
 import { env } from '@/lib/env';
 import { hmacHex, randomToken, safeEqual } from '@/lib/crypto';
 import { orderBy, search, countOf, type ListQuery } from '@/api/list';
-import { allow, need, respondList, today } from './common';
+import { allow, lockCapacityScope, need, respondList, today } from './common';
 import { contractScope } from './contracts';
 import { postLedgerEntries } from './ledger';
 import { bust as bustSiteContent } from './content';
@@ -185,7 +185,10 @@ export async function getInvoice(ctx: Ctx, id: string) {
   const payments = await ctx.db.select({ id: pay.id, code: pay.code, provider: pay.provider, reference: pay.reference, amountGhs: pay.amountGhs, status: pay.status, createdAt: pay.createdAt }).from(pay).where(eq(pay.invoiceId, id)).orderBy(desc(pay.createdAt));
   return { ...row, payments };
 }
-/** Invoices on a contract may not add up to more than the contract value. Void invoices do not count. */
+/** Invoices on a contract may not add up to more than the contract value. Void invoices do not count.
+ *  Callers must take lockContractInvoices(ctx, c.id) first - this is a check-then-act read with no
+ *  lock of its own, so two concurrent invoices on the same contract could otherwise both read the
+ *  same running total and both pass the ceiling check before either commits. */
 async function withinContract(ctx: Ctx, c: { id: string; amountGhs: string | number | null }, add: number, exceptInvoice?: string) {
   const [r] = await ctx.db.select({ s: sql<string>`coalesce(sum(${inv.amountGhs}), 0)` }).from(inv).where(and(eq(inv.contractId, c.id), sql`${inv.status} <> 'Void'`, exceptInvoice ? sql`${inv.id} <> ${exceptInvoice}` : undefined));
   const left = Number(c.amountGhs ?? 0) - Number(r.s);
@@ -196,6 +199,7 @@ export async function createInvoice(ctx: Ctx, b: { orgId: string; contractId?: s
   await assertOrg(ctx, b.orgId);
   if (b.contractId) {
     const [c] = await ctx.db.select().from(con).where(eq(con.id, b.contractId)).limit(1); if (!c || c.orgId !== b.orgId) throw fieldError({ contractId: 'Contract not found for this organisation' });
+    await lockCapacityScope(ctx, `contract-invoices:${c.id}`);
     await withinContract(ctx, c, b.amountGhs);
   }
   const [row] = await ctx.db.insert(inv).values({ orgId: b.orgId, contractId: b.contractId ?? null, amountGhs: dec(b.amountGhs), dueDate: b.dueDate }).returning({ id: inv.id, code: inv.code });
@@ -208,7 +212,7 @@ export async function updateInvoice(ctx: Ctx, id: string, b: { status?: 'Sent' |
   if (!before) throw notFound('Invoice not found');
   if ((b.amountGhs !== undefined) && before.status !== 'Draft') throw unprocessable('The amount can be changed while the invoice is a draft');
   if (b.dueDate !== undefined && ['Paid', 'Void'].includes(before.status)) throw unprocessable('This invoice is closed');
-  if (b.amountGhs !== undefined && before.contractId) { const [c] = await ctx.db.select().from(con).where(eq(con.id, before.contractId)).limit(1); if (c) await withinContract(ctx, c, b.amountGhs, id); }
+  if (b.amountGhs !== undefined && before.contractId) { const [c] = await ctx.db.select().from(con).where(eq(con.id, before.contractId)).limit(1); if (c) { await lockCapacityScope(ctx, `contract-invoices:${c.id}`); await withinContract(ctx, c, b.amountGhs, id); } }
   const patch: Partial<typeof inv.$inferInsert> = { updatedAt: new Date() };
   if (b.amountGhs !== undefined) patch.amountGhs = dec(b.amountGhs);
   if (b.dueDate !== undefined) patch.dueDate = b.dueDate;
