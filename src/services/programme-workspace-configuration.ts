@@ -3,7 +3,7 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { forbidden, notFound, unprocessable } from '@/lib/errors';
-import { need } from './common';
+import { lockCapacityScope, need } from './common';
 import { assertWorkspaceManager } from './programme-workspaces';
 import { assertConfigurationTransition, validateConfigurationForSubmission, type ProgrammeWorkspaceConfigurationInput } from '@/domain/programme-workspace-configuration';
 import type { ProgrammeWorkspaceConfigurationStatus } from '@/db/programme-workspace-configuration-schema';
@@ -100,8 +100,16 @@ export async function submitConfiguration(ctx: Ctx, workspaceId: string, version
 
 export async function approveConfiguration(ctx: Ctx, workspaceId: string, version: number) {
   await assertApprover(ctx, workspaceId);
+  // Same check-then-act race lockCapacityScope closes for cohort capacity and programme-version
+  // approval: two submitted configuration drafts for the same workspace could otherwise both be
+  // read as SUBMITTED and both approved concurrently, leaving two APPROVED rows.
+  await lockCapacityScope(ctx, `workspace-configuration-approval:${workspaceId}`);
   const draft = await getConfiguration(ctx, workspaceId, version);
   assertConfigurationTransition(draft.status as ProgrammeWorkspaceConfigurationStatus, 'APPROVED');
+  // Four-eyes: an ADMIN/EXECUTIVE holds both the manager access needed to draft a configuration and
+  // the approver role checked above, so without this, the same person could draft a workspace
+  // configuration and approve their own change.
+  if (draft.createdBy === need(ctx).user.id) throw forbidden('You cannot approve a workspace configuration you drafted yourself');
   const approvedAt = new Date();
   const [row] = await ctx.db.update(c).set({ status: 'APPROVED', approvedBy: need(ctx).user.id, approvedAt, rejectionReason: null, updatedAt: approvedAt }).where(eq(c.id, draft.id)).returning();
   await ctx.db.update(c).set({ status: 'SUPERSEDED', updatedAt: approvedAt }).where(and(eq(c.workspaceId, workspaceId), eq(c.status, 'APPROVED'), ne(c.id, row.id)));

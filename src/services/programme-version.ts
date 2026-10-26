@@ -4,7 +4,7 @@ import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { forbidden, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme } from '@/domain/scope';
-import { allow, need } from './common';
+import { allow, lockCapacityScope, need } from './common';
 import { assertProgrammeVersionTransition, validateProgrammeVersionForSubmission, type ProgrammeVersionInput } from '@/domain/programme-version';
 import type { ProgrammeVersionStatus } from '@/db/programme-version-schema';
 
@@ -82,8 +82,17 @@ export async function submitVersion(ctx: Ctx, programmeId: string, version: numb
 export async function approveVersion(ctx: Ctx, programmeId: string, version: number) {
   assertApprover(ctx);
   await assertProgramme(ctx, programmeId);
+  // Two submitted versions of the same programme could otherwise both be read as SUBMITTED and
+  // both approved concurrently, leaving two APPROVED rows (the same check-then-act race
+  // lockCapacityScope closes elsewhere -- see cohort-capacity-race.test.ts). Serialize approval
+  // per programme before re-reading the draft's status.
+  await lockCapacityScope(ctx, `programme-version-approval:${programmeId}`);
   const draft = await getVersion(ctx, programmeId, version);
   assertProgrammeVersionTransition(draft.status as ProgrammeVersionStatus, 'APPROVED');
+  // Four-eyes: an ADMIN holds both programmes:edit (to draft a version) and the approver role
+  // checked above, so without this, the same person could draft a programme version and approve
+  // their own change to budget/funder/dates.
+  if (draft.createdBy === need(ctx).user.id) throw forbidden('You cannot approve a programme version you drafted yourself');
   const approvedAt = new Date();
   const [row] = await ctx.db.update(v).set({ status: 'APPROVED', approvedBy: need(ctx).user.id, approvedAt, rejectionReason: null, updatedAt: approvedAt }).where(eq(v.id, draft.id)).returning();
   await ctx.db.update(v).set({ status: 'SUPERSEDED', updatedAt: approvedAt }).where(and(eq(v.programmeId, programmeId), eq(v.status, 'APPROVED'), ne(v.id, row.id)));
