@@ -142,7 +142,10 @@ export async function applyPromoCode(ctx: Ctx, invoiceId: string, b: { code: str
   try {
     await ctx.db.insert(pred).values({ promoCodeId: pc.id, invoiceId: i.id, customerId: b.customerId, discountAppliedGhs: dec(discount) });
   } catch (e) {
-    if ((e as { code?: string }).code === '23505') throw conflict('This customer has already used this promo code');
+    // drizzle-orm's node-postgres driver wraps the raw pg error (DrizzleQueryError), putting the
+    // original error on .cause - the real Postgres error code lives there, not on e.code directly.
+    const code = (e as { code?: string; cause?: { code?: string } })?.cause?.code ?? (e as { code?: string })?.code;
+    if (code === '23505') throw conflict('This customer has already used this promo code');
     throw e;
   }
   await ctx.db.update(inv).set({ amountGhs: dec(newAmount), updatedAt: new Date() }).where(eq(inv.id, i.id));
