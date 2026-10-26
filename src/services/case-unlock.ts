@@ -67,6 +67,13 @@ export async function unlockAssessmentForPurchase(ctx: Ctx, b: { orgId: string; 
   try { await resolveVersion(ctx.db, org.type); }
   catch { return { unlocked: false, reason: 'framework_not_ready' }; }
 
+  // Advisory lock on orgId: settle() locks per-payment, not per-org, so two settlements landing close
+  // together for the same org (two separate invoices, or a webhook racing fulfilment_reconciliation_scan)
+  // could otherwise both pass the "no existing case" check below and each open one - two cases for one
+  // organisation. No money is duplicated either way (this never touches payments/invoices), but the
+  // reuse-the-existing-case guarantee the docstring above promises only actually holds with this lock.
+  await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtext('case_unlock:' || ${b.orgId}))`);
+
   const [existing] = await ctx.db.select({ id: c.id, code: c.code }).from(c)
     .where(and(eq(c.orgId, b.orgId), sql`${c.status} <> 'GRADUATED'`)).limit(1);
   if (existing) {
