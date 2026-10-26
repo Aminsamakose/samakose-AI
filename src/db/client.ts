@@ -1,4 +1,5 @@
 import { Pool, type PoolClient } from 'pg';
+import { rootCertificates } from 'node:tls';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as baseSchema from './schema';
 import * as frameworkArchitectureSchema from './framework-architecture-schema';
@@ -44,10 +45,12 @@ export function databaseUrl(): string {
  * system trust store — and Supabase's chain isn't in it, hence SELF_SIGNED_CERT_IN_CHAIN.
  * Passing the real CA here gives proper verify-full validation without weakening anything.
  */
-export function sslConfig(): { ca: string; rejectUnauthorized: true } | undefined {
+export function sslConfig(): { ca: string[]; rejectUnauthorized: true } | undefined {
   const ca = process.env.DB_CA_CERT;
   if (!ca) return undefined;
-  return { ca: ca.replace(/\\n/g, '\n'), rejectUnauthorized: true };
+  // Passing `ca` alone REPLACES Node's default trust store rather than extending it, so we
+  // append Supabase's root CA to the existing bundle instead of swapping it out.
+  return { ca: [...rootCertificates, ca.replace(/\\n/g, '\n')], rejectUnauthorized: true };
 }
 
 /** Connection-level failures only (never a failed statement): auth timeout, dropped connection, connect timeout. */
