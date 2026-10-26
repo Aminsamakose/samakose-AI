@@ -11,12 +11,13 @@ import { db, schema } from '@/db/client';
  * or rejecting with a reason, and correcting a decided record without losing the original.
  */
 describe('outcome verification (results distinct from health-score delta)', () => {
-  let admin: Session;
+  let admin: Session, verifier: Session;
   let programmeId: string, caseId: string;
 
   beforeAll(async () => {
     await ensureReference();
     admin = await makeUser('ADMIN');
+    verifier = await makeUser('ADMIN');
     const prog = (await api(admin).post('/programmes', { name: `Outcomes ${uniq()}` })).data;
     programmeId = prog.id;
     const org = await makeOrg(admin);
@@ -55,17 +56,17 @@ describe('outcome verification (results distinct from health-score delta)', () =
     const def = (await api(admin).post(`/programmes/${programmeId}/outcome-definitions`, { name: `Profit margin ${uniq()}`, unit: '%' })).data;
     const rec = (await api(admin).post(`/outcome-definitions/${def.id}/records`, { caseId, followupValue: 18 })).data;
 
-    const verified = await api(admin).post(`/outcome-records/${rec.id}/verify`, { decision: 'VERIFIED', reason: 'Confirmed against bank statement' });
+    const verified = await api(verifier).post(`/outcome-records/${rec.id}/verify`, { decision: 'VERIFIED', reason: 'Confirmed against bank statement' });
     expect(verified.status, JSON.stringify(verified.error)).toBe(200);
 
-    const reVerify = await api(admin).post(`/outcome-records/${rec.id}/verify`, { decision: 'REJECTED', reason: 'Changed my mind' });
+    const reVerify = await api(verifier).post(`/outcome-records/${rec.id}/verify`, { decision: 'REJECTED', reason: 'Changed my mind' });
     expect(reVerify.status).toBe(422);
   });
 
   it('records a rejection separately rather than discarding it', async () => {
     const def = (await api(admin).post(`/programmes/${programmeId}/outcome-definitions`, { name: `Access to finance ${uniq()}`, unit: 'boolean' })).data;
     const rec = (await api(admin).post(`/outcome-definitions/${def.id}/records`, { caseId, followupValue: 0, evidenceClass: 'Unverified' })).data;
-    const rejected = await api(admin).post(`/outcome-records/${rec.id}/verify`, { decision: 'REJECTED', reason: 'No supporting document provided' });
+    const rejected = await api(verifier).post(`/outcome-records/${rec.id}/verify`, { decision: 'REJECTED', reason: 'No supporting document provided' });
     expect(rejected.status).toBe(200);
 
     const list = await api(admin).get(`/outcome-definitions/${def.id}/records`);
@@ -77,7 +78,7 @@ describe('outcome verification (results distinct from health-score delta)', () =
   it('corrects a decided record by superseding it, keeping the original intact', async () => {
     const def = (await api(admin).post(`/programmes/${programmeId}/outcome-definitions`, { name: `Employment count ${uniq()}`, unit: 'count' })).data;
     const rec = (await api(admin).post(`/outcome-definitions/${def.id}/records`, { caseId, followupValue: 3 })).data;
-    await api(admin).post(`/outcome-records/${rec.id}/verify`, { decision: 'VERIFIED', reason: 'Payroll checked' });
+    await api(verifier).post(`/outcome-records/${rec.id}/verify`, { decision: 'VERIFIED', reason: 'Payroll checked' });
 
     const corrected = await api(admin).post(`/outcome-records/${rec.id}/correct`, { followupValue: 5, reason: 'Payroll was re-run; two additional hires found' });
     expect(corrected.status, JSON.stringify(corrected.error)).toBe(201);
@@ -92,6 +93,16 @@ describe('outcome verification (results distinct from health-score delta)', () =
     expect(replacement.status).toBe('PENDING');
     expect(Number(replacement.followupValue)).toBe(5);
     expect(replacement.supersedesId).toBe(rec.id);
+  });
+
+  it('refuses to let the person who recorded a result verify it themselves', async () => {
+    const def = (await api(admin).post(`/programmes/${programmeId}/outcome-definitions`, { name: `Self-verify attempt ${uniq()}`, unit: 'GHS' })).data;
+    const rec = (await api(admin).post(`/outcome-definitions/${def.id}/records`, { caseId, followupValue: 42 })).data;
+    const selfVerify = await api(admin).post(`/outcome-records/${rec.id}/verify`, { decision: 'VERIFIED', reason: 'Confirmed by myself' });
+    expect(selfVerify.status).toBe(403);
+    // A different verifier still can.
+    const otherVerify = await api(verifier).post(`/outcome-records/${rec.id}/verify`, { decision: 'VERIFIED', reason: 'Confirmed independently' });
+    expect(otherVerify.status, JSON.stringify(otherVerify.error)).toBe(200);
   });
 
   it('cannot delete a definition that already has recorded results', async () => {
@@ -111,7 +122,7 @@ describe('outcome verification (results distinct from health-score delta)', () =
  * (closer to verified attribution).
  */
 describe('outcome attribution (structural link from an outcome to the intervention that produced it)', () => {
-  let admin: Session;
+  let admin: Session, verifier: Session;
   let programmeId: string, caseId: string, interventionId: string, otherCaseInterventionId: string;
 
   async function makeIntervention(cid: string) {
@@ -125,6 +136,7 @@ describe('outcome attribution (structural link from an outcome to the interventi
   beforeAll(async () => {
     await ensureReference();
     admin = await makeUser('ADMIN');
+    verifier = await makeUser('ADMIN');
     const prog = (await api(admin).post('/programmes', { name: `Attribution ${uniq()}` })).data;
     programmeId = prog.id;
     const org = await makeOrg(admin);
@@ -191,7 +203,7 @@ describe('outcome attribution (structural link from an outcome to the interventi
   it('refuses to attribute or edit on a record that has been superseded by a correction', async () => {
     const def = (await api(admin).post(`/programmes/${programmeId}/outcome-definitions`, { name: `Export sales ${uniq()}`, unit: 'GHS' })).data;
     const rec = (await api(admin).post(`/outcome-definitions/${def.id}/records`, { caseId, followupValue: 500 })).data;
-    await api(admin).post(`/outcome-records/${rec.id}/verify`, { decision: 'VERIFIED', reason: 'Checked against invoice' });
+    await api(verifier).post(`/outcome-records/${rec.id}/verify`, { decision: 'VERIFIED', reason: 'Checked against invoice' });
     const corrected = await api(admin).post(`/outcome-records/${rec.id}/correct`, { followupValue: 600, reason: 'Found one more invoice' });
     expect(corrected.status).toBe(201);
 

@@ -60,6 +60,17 @@ describe('credit note issuance', () => {
 });
 
 describe('applying a credit note', () => {
+  it('refuses to let the person who issued a credit note apply it themselves', async () => {
+    const issuingInvoiceId = await paidInvoice(1000);
+    const note = (await api(finance).post('/credit-notes', { invoiceId: issuingInvoiceId, amountGhs: 150, reason: 'Goodwill credit' })).data;
+    const targetInvoiceId = await unpaidInvoice(500);
+    const selfApply = await api(finance).post(`/credit-notes/${note.id}/apply`, { invoiceId: targetInvoiceId, amountGhs: 100 });
+    expect(selfApply.status).toBe(403);
+    // A different approver still can.
+    const otherApply = await api(admin).post(`/credit-notes/${note.id}/apply`, { invoiceId: targetInvoiceId, amountGhs: 100 });
+    expect(otherApply.status, JSON.stringify(otherApply.error)).toBe(201);
+  });
+
   it('reduces the target invoice (which may differ from the issuing invoice), partially then fully', async () => {
     const issuingInvoiceId = await paidInvoice(1000);
     const note = (await api(finance).post('/credit-notes', { invoiceId: issuingInvoiceId, amountGhs: 300, reason: 'Goodwill credit' })).data;
