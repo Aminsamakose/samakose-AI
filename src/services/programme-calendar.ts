@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -133,6 +133,13 @@ export async function createEvent(ctx: Ctx, cohortId: string, input: { title: st
 export async function scheduleSession(ctx: Ctx, sessionId: string, input: { connectionId?: string | null; provider?: 'GOOGLE' | 'MICROSOFT' | 'ICS' | 'INTERNAL' | 'ZOOM'; timezone?: string; skipLiveMeeting?: boolean }) {
   allow(ctx, 'programme_workspaces', 'edit');
   const { session, activity } = await getSession(ctx, sessionId);
+  // Advisory lock on sessionId: calendar_events carries no unique constraint on sessionId (a session
+  // can legitimately move to a fresh event after one is cancelled), so the "no existing active event"
+  // check below is a plain select-then-insert with nothing backing it up at the database level. Two
+  // concurrent calls for the same session (a double-click on Schedule, or a client retry after a slow
+  // video-provider response) could otherwise both pass the check and each go on to create its own
+  // calendar_events row AND its own live Zoom/Google Meet meeting for one delivery session.
+  await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtext('schedule_session:' || ${sessionId}))`);
   const existing = await ctx.db.select().from(events).where(eq(events.sessionId, sessionId)).limit(1);
   if (existing[0] && existing[0].status !== 'CANCELLED') throw conflict('This delivery session already has a calendar event');
   const event = await createEvent(ctx, activity.cohortId, {
