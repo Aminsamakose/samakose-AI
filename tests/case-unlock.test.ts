@@ -116,6 +116,30 @@ describe('self-serve plan purchase unlocks the purchased assessment', () => {
   });
 });
 
+describe('concurrent settlement cannot open two cases for one organisation', () => {
+  it('two purchases for the same org settling at the same instant still land on a single case', async () => {
+    const { org, owner } = await ownerWithOrg();
+    const planA = await publishedPlan();
+    const planB = await publishedPlan();
+
+    const refA = (await api(owner).post(`/plans/${planA}/purchase`, {})).data.reference as string;
+    const refB = (await api(owner).post(`/plans/${planB}/purchase`, {})).data.reference as string;
+
+    // Both settlements race unlockAssessmentForPurchase for the same orgId. Without the advisory
+    // lock in case-unlock.ts, both could pass the "no existing case" check before either insert
+    // committed, opening two cases for this one organisation.
+    const [doneA, doneB] = await Promise.all([
+      api(owner).post(`/payments/${refA}/mock-complete`, {}),
+      api(owner).post(`/payments/${refB}/mock-complete`, {})
+    ]);
+    expect(doneA.status).toBe(200);
+    expect(doneB.status).toBe(200);
+
+    const cases = await db().select().from(schema.cases).where(eq(schema.cases.orgId, org.id));
+    expect(cases).toHaveLength(1);
+  });
+});
+
 describe('product readiness: checkout is blocked for an assessment the system cannot deliver yet', () => {
   /** Whether a Published 'full' framework currently exists for this orgType -- queried live rather
    *  than assumed, because other test files (frameworks.test.ts's purpose-filter test, #133) publish
