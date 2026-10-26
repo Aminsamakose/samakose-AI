@@ -286,10 +286,28 @@ export async function register(ctx: Ctx, b: { name: string; email: string; passw
     const [o] = await ctx.db.insert(schema.organisations).values({ name: orgName, type: b.orgType ?? 'SME', contactName: name, contactEmail: email, consentAt: new Date(), consentBy: email, status: 'Pending verification' }).returning({ id: schema.organisations.id });
     orgId = o.id;
   }
-  const [row] = await ctx.db.insert(schema.users).values({
-    email, name, role: b.role, orgId, passwordHash: await hashPassword(b.password), mustChangePassword: false,
-    emailVerified: false, approvalStatus: 'pending', profileRequired: b.role === 'OWNER', signupOrgName: orgName, signupNote: b.note?.trim().slice(0, 1000) || null
-  }).returning({ id: schema.users.id });
+  let row: { id: string };
+  try {
+    [row] = await ctx.db.insert(schema.users).values({
+      email, name, role: b.role, orgId, passwordHash: await hashPassword(b.password), mustChangePassword: false,
+      emailVerified: false, approvalStatus: 'pending', profileRequired: b.role === 'OWNER', signupOrgName: orgName, signupNote: b.note?.trim().slice(0, 1000) || null
+    }).returning({ id: schema.users.id });
+  } catch (e) {
+    // The dupe check above is a plain select-then-insert with no lock: two near-simultaneous
+    // submissions of the same new signup (a double-click, a slow connection causing a resubmit)
+    // can both pass it, and the loser hits users_email_uq. That must still get the same {ok:true}
+    // this function always returns for an already-registered address - not a raw "duplicate" error -
+    // or the race itself becomes a (weak) signal that breaks the anti-enumeration design above.
+    if ((e as { code?: string }).code === '23505') {
+      // This whole request is one transaction, and it is about to commit normally (returning
+      // {ok:true} rather than throwing) - so an OWNER's organisation row, already inserted above
+      // before the user insert lost the race, must be removed here or it commits as an orphan
+      // with no user ever attached to it.
+      if (orgId) await ctx.db.delete(schema.organisations).where(eq(schema.organisations.id, orgId));
+      return { ok: true };
+    }
+    throw e;
+  }
   if (orgId) await ctx.db.update(schema.organisations).set({ countryCode: country, geoUnitId: b.geoUnitId ?? null }).where(eq(schema.organisations.id, orgId));
   await recordRegistrationConsents(ctx, row.id, orgId, country, new Set(['account', ...(b.consentPurposes ?? [])]), b.routing && b.role === 'OWNER' ? { platform: platformForOrgType(b.orgType), ...b.routing } : undefined);
   await issueVerification(ctx, row.id, email, name);
