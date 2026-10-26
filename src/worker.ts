@@ -2,6 +2,7 @@
 import { sql } from 'drizzle-orm';
 import { db, closeDb } from './db/client';
 import { drainJobs } from './domain/jobs';
+import { logServerError } from './lib/error-log';
 
 const RECURRING: [string, number][] = [['send_emails', 60], ['overdue_scan', 3600], ['assignment_scan', 3600], ['invoice_scan', 3600], ['fulfilment_reconciliation_scan', 1800], ['recheck_scan', 24 * 3600], ['scout_weekly', 24 * 3600], ['expire_sessions', 6 * 3600], ['content_scan', 900], ['session_reminder', 3600], ['escalation_scan', 3600], ['message_retention', 24 * 3600], ['kobo_pull', 900]];
 const last = new Map<string, number>();
@@ -20,7 +21,7 @@ async function tick() {
 async function main() {
   console.log('worker started');
   while (!stopping) {
-    try { await tick(); } catch (e) { console.error('worker tick failed', e); }
+    try { await tick(); } catch (e) { console.error('worker tick failed', e); logServerError('worker', e); }
     await new Promise((r) => setTimeout(r, 3000));
   }
   await closeDb();

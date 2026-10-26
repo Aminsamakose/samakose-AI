@@ -1339,6 +1339,21 @@ export const rateLimits = pgTable('rate_limits', {
   windowStart: timestamp('window_start', { withTimezone: true }).notNull().defaultNow()
 });
 
+/** Unhandled server errors (API 500s, failed after-commit hooks), captured so they are visible from
+ * the admin System page instead of only in Vercel/stdout logs. Never the request body or failing
+ * values -- just enough to recognise and triage a recurring failure (see api/framework.ts). */
+export const serverErrors = pgTable('server_errors', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  requestId: text('request_id'),
+  source: text('source').notNull(), // 'request' | 'after_commit' | 'worker'
+  method: text('method'),
+  path: text('path'),
+  name: text('name'),
+  code: text('code'),
+  message: text('message').notNull()
+}, (t) => [index('server_errors_at_idx').on(t.at)]);
+
 
 /** Public website enquiries (contact, demo, newsletter). Created by anonymous visitors through one rate-limited endpoint. */
 export const INQUIRY_KINDS = ['contact', 'demo', 'newsletter', 'assessment'] as const;

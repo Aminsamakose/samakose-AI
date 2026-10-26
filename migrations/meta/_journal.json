@@ -120,6 +120,13 @@
       "when": 1793068960238,
       "tag": "0016_promo_redemptions_per_customer_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793068960300,
+      "tag": "0017_server_errors_log",
+      "breakpoints": true
     }
   ]
 }

@@ -11,6 +11,7 @@ import { ApiError, forbidden, tooMany, unauthorized } from '@/lib/errors';
 import { COOKIE, loadSession, rateLimit } from '@/lib/session';
 import { env } from '@/lib/env';
 import { randomToken } from '@/lib/crypto';
+import { logServerError } from '@/lib/error-log';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
@@ -58,7 +59,7 @@ function json(status: number, body: unknown, headers: Record<string, string> = {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers } });
 }
 
-function errorResponse(e: unknown, requestId: string): Response {
+function errorResponse(e: unknown, requestId: string, method?: string, path?: string): Response {
   const h = { 'x-request-id': requestId };
   if (e instanceof ApiError) return json(e.status, { error: { code: e.code, message: e.message, details: e.details, requestId } }, h);
   if (e instanceof ZodError) {
@@ -74,6 +75,7 @@ function errorResponse(e: unknown, requestId: string): Response {
   if (code === '23514' || code === '23000') return json(422, { error: { code: 'rule_violation', message: 'The change breaks a data rule', requestId } }, h);
   // Database errors carry the failing values, which can be personal data. Log the kind and code only.
   console.error(`[${requestId}] ${(e as Error)?.name ?? 'Error'} ${code ?? ''} ${(pg as Error)?.constructor?.name ?? ''}`.trim());
+  logServerError('request', e, { requestId, method, path });
   return json(500, { error: { code: 'server_error', message: 'Something went wrong on our side', requestId } }, h);
 }
 
@@ -156,7 +158,7 @@ export async function dispatch(req: Request, basePath = '/api/v1'): Promise<Resp
     const args = (c: Ctx): HandlerArgs => ({ ctx: c, params, query, body, req, rawBody });
     const useTx = def.transactional ?? method !== 'GET';
     const result = useTx ? await tx((t) => def.handler(args(mk(t)))) : await def.handler(args(mk(db())));
-    for (const fn of afters) { try { await fn(); } catch (e) { console.error('after-commit', e); } }
+    for (const fn of afters) { try { await fn(); } catch (e) { console.error('after-commit', e); logServerError('after_commit', e, { requestId, method, path }); } }
 
     if (result instanceof Response) return result;
     if ((result as FileOut)?.__file) {
@@ -169,7 +171,7 @@ export async function dispatch(req: Request, basePath = '/api/v1'): Promise<Resp
     }
     return json(method === 'POST' && (result as any)?.__status ? (result as any).__status : 200, { data: (result as any)?.__status ? (result as any).data : result }, { 'x-request-id': requestId });
   } catch (e) {
-    return errorResponse(e, requestId);
+    return errorResponse(e, requestId, method, path);
   }
 }
 /** Wrap a result so the endpoint answers with a specific status (201 created, 202 accepted). */
