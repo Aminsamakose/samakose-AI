@@ -121,6 +121,64 @@ describe('delivery activities, sessions and attendance (real API + database)', (
     expect((await api(outsider).post(`/delivery-sessions/${sessionId}/attendance/${participantInCohort}`, { status: 'PRESENT' })).status).toBe(404);
   });
 
+  /**
+   * Directive #8.2/#9.1.E: the calendar must handle facilitator availability, but must not
+   * prohibit every overlap -- two sessions at the same time with different facilitators are fine.
+   */
+  describe('facilitator double-booking', () => {
+    let facilitator: Session;
+    beforeAll(async () => { facilitator = await makeUser('EXPERT'); });
+
+    it('refuses a second session for the same facilitator at an overlapping time', async () => {
+      const act = (await api(admin).post(`/cohorts/${cohortId}/activities`, { name: `Facilitator clash ${uniq()}` })).data;
+      const start = new Date(Date.now() + 10 * 3600_000);
+      const end = new Date(Date.now() + 11 * 3600_000);
+      const first = await api(admin).post(`/delivery-activities/${act.id}/sessions`, { facilitatorUserId: facilitator.userId, startsAt: start.toISOString(), endsAt: end.toISOString(), mode: 'IN_PERSON' });
+      expect(first.status, JSON.stringify(first.error)).toBe(201);
+
+      // Overlaps the middle of the first session, with a different activity.
+      const act2 = (await api(admin).post(`/cohorts/${cohortId}/activities`, { name: `Facilitator clash 2 ${uniq()}` })).data;
+      const overlapStart = new Date(start.getTime() + 30 * 60_000);
+      const overlapEnd = new Date(end.getTime() + 30 * 60_000);
+      const clash = await api(admin).post(`/delivery-activities/${act2.id}/sessions`, { facilitatorUserId: facilitator.userId, startsAt: overlapStart.toISOString(), endsAt: overlapEnd.toISOString(), mode: 'IN_PERSON' });
+      expect(clash.status).toBe(409);
+    });
+
+    it('allows two different facilitators at the exact same time', async () => {
+      const otherFacilitator = await makeUser('EXPERT');
+      const act = (await api(admin).post(`/cohorts/${cohortId}/activities`, { name: `Parallel sessions ${uniq()}` })).data;
+      const start = new Date(Date.now() + 20 * 3600_000);
+      const end = new Date(Date.now() + 21 * 3600_000);
+      const a = await api(admin).post(`/delivery-activities/${act.id}/sessions`, { facilitatorUserId: facilitator.userId, startsAt: start.toISOString(), endsAt: end.toISOString(), mode: 'IN_PERSON' });
+      expect(a.status, JSON.stringify(a.error)).toBe(201);
+      const b = await api(admin).post(`/delivery-activities/${act.id}/sessions`, { facilitatorUserId: otherFacilitator.userId, startsAt: start.toISOString(), endsAt: end.toISOString(), mode: 'IN_PERSON' });
+      expect(b.status, JSON.stringify(b.error)).toBe(201);
+    });
+
+    it('allows a new session for the same facilitator once the earlier one is cancelled', async () => {
+      const act = (await api(admin).post(`/cohorts/${cohortId}/activities`, { name: `Freed slot ${uniq()}` })).data;
+      const start = new Date(Date.now() + 30 * 3600_000);
+      const end = new Date(Date.now() + 31 * 3600_000);
+      const first = await api(admin).post(`/delivery-activities/${act.id}/sessions`, { facilitatorUserId: facilitator.userId, startsAt: start.toISOString(), endsAt: end.toISOString(), mode: 'IN_PERSON' });
+      expect(first.status).toBe(201);
+      await api(admin).post(`/delivery-sessions/${first.data.id}/status`, { status: 'CANCELLED' });
+      const again = await api(admin).post(`/delivery-activities/${act.id}/sessions`, { facilitatorUserId: facilitator.userId, startsAt: start.toISOString(), endsAt: end.toISOString(), mode: 'IN_PERSON' });
+      expect(again.status, JSON.stringify(again.error)).toBe(201);
+    });
+
+    it('two concurrent bookings for the same facilitator at overlapping times only let one through', async () => {
+      const act = (await api(admin).post(`/cohorts/${cohortId}/activities`, { name: `Race ${uniq()}` })).data;
+      const act2 = (await api(admin).post(`/cohorts/${cohortId}/activities`, { name: `Race 2 ${uniq()}` })).data;
+      const raceFacilitator = await makeUser('EXPERT');
+      const start = new Date(Date.now() + 40 * 3600_000);
+      const end = new Date(Date.now() + 41 * 3600_000);
+      const book = (activityId: string) => api(admin).post(`/delivery-activities/${activityId}/sessions`, { facilitatorUserId: raceFacilitator.userId, startsAt: start.toISOString(), endsAt: end.toISOString(), mode: 'IN_PERSON' });
+      const [r1, r2] = await Promise.all([book(act.id), book(act2.id)]);
+      const statuses = [r1.status, r2.status].sort();
+      expect(statuses).toEqual([201, 409]);
+    });
+  });
+
   it('a cancelled activity refuses a new session', async () => {
     const act = (await api(admin).post(`/cohorts/${cohortId}/activities`, { name: `Cancel me ${uniq()}` })).data;
     await api(admin).post(`/delivery-activities/${act.id}/status`, { status: 'CANCELLED' });
