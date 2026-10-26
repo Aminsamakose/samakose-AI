@@ -20,7 +20,7 @@
  * bank for them); without this gate, an AgriFood or ESO owner could pay in full for an assessment
  * that would then be undeliverable, or impossible to score correctly, the moment they tried to take it.
  */
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -66,6 +66,13 @@ export async function startPlanPurchase(ctx: Ctx, planId: string) {
   const [org] = await ctx.db.select({ type: o.type }).from(o).where(eq(o.id, u.orgId)).limit(1);
   if (!org) throw notFound('Organisation not found');
   await checkPlanReadiness(ctx, p, org.type);
+
+  // Advisory lock on (orgId, planId) so two concurrent checkouts (a double-click, or a client retry
+  // after a slow response) cannot both pass the "no existing Draft contract" check below before
+  // either has inserted its row. Without this, each would create its own contract + Sent invoice and
+  // post its own ledger entries - double revenue booking for a single purchase. See discounts.ts's
+  // applyPromoCode() for the same pattern against the same class of race.
+  await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${u.orgId} || ':' || ${planId}, 0))`);
 
   let [c] = await ctx.db.select().from(con).where(and(eq(con.orgId, u.orgId), eq(con.planId, planId), eq(con.status, 'Draft'))).limit(1);
   if (!c) {
