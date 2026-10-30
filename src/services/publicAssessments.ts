@@ -123,8 +123,13 @@ export async function completeFreeAssessment(ctx: Ctx, input: { email: string; f
     });
     return { eligible: true as const, id: row.id, platform: input.platform, fullName: input.fullName.trim(), ...input.result };
   } catch (error) {
-    const e = error as { code?: string; constraint?: string };
-    if (e.code === '23505' && e.constraint === 'free_assessment_results_email_platform_uq') {
+    // drizzle-orm's node-postgres driver wraps the raw pg error (DrizzleQueryError), putting the
+    // original error on .cause - the real Postgres error code/constraint live there, not on the
+    // top-level error directly.
+    const top = error as { code?: string; constraint?: string; cause?: { code?: string; constraint?: string } };
+    const code = top.cause?.code ?? top.code;
+    const constraint = top.cause?.constraint ?? top.constraint;
+    if (code === '23505' && constraint === 'free_assessment_results_email_platform_uq') {
       return { eligible: false as const, ...ALREADY_USED_MESSAGE };
     }
     throw error;

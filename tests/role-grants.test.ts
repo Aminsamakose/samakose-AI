@@ -79,6 +79,23 @@ describe('additional roles (role grants)', () => {
     expect(meFinal.data.user.role).toBe('OWNER');
   });
 
+  it('an administrator cannot approve or reject their own additional-role request (four-eyes)', async () => {
+    const admin2 = await makeUser('ADMIN');
+    const req = await api(admin2).post('/me/roles/request', { role: 'FINANCE' });
+    expect(req.status).toBe(201);
+
+    const approveSelf = await api(admin2).post(`/role-grants/${req.data.id}/approve`);
+    expect(approveSelf.status).toBe(403);
+    const rejectSelf = await api(admin2).post(`/role-grants/${req.data.id}/reject`);
+    expect(rejectSelf.status).toBe(403);
+
+    // Still pending, and untouched: a different administrator can decide it normally.
+    const pending = await api(admin).get('/role-grants');
+    expect(pending.data.find((x: any) => x.id === req.data.id)?.role).toBe('FINANCE');
+    const approve = await api(admin).post(`/role-grants/${req.data.id}/approve`);
+    expect(approve.status).toBe(200);
+  });
+
   it('a rejected request can be asked again', async () => {
     const r1 = await api(expert).post('/me/roles/request', { role: 'PROGRAMME_MANAGER' });
     expect(r1.status).toBe(201);

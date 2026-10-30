@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ProgrammeSelect } from '@/components/portfolio/shared';
 
 type Indicator={id:string;name:string;metric:string;metricLabel:string;unit:string;target:number;value:number|null;pct:number|null;status:string;level:string;dueDate?:string|null;note?:string|null};
 const API='/api/v1';
@@ -15,7 +16,7 @@ export default function ProgrammeOutcomesPage(){
  useEffect(()=>{if(programmeId)void load()},[programmeId]);
  const avg=indicators.length?indicators.reduce((n,i)=>n+(i.pct??0),0)/indicators.length:0;
  return <main className="content" style={{maxWidth:1280,margin:'0 auto'}}>
-  <div className="page-head"><div><div className="crumbs">Programme / Outcomes & MEL</div><h1>Programme Outcomes & MEL</h1><p className="muted">Track programme targets against live, privacy-aware Business Health evidence. Indicator values are calculated from authoritative programme records.</p></div><form className="page-actions" onSubmit={e=>{e.preventDefault();void load()}}><input aria-label="Programme ID" placeholder="Programme ID" value={programmeId} onChange={e=>setProgrammeId(e.target.value)}/><button className="btn primary" disabled={loading}>{loading?'Loading…':'Load outcomes'}</button></form></div>
+  <div className="page-head"><div><div className="crumbs">Programme / Outcomes & MEL</div><h1>Programme Outcomes & MEL</h1><p className="muted">Track programme targets against live, privacy-aware Business Health evidence. Indicator values are calculated from authoritative programme records.</p></div><div className="page-actions"><ProgrammeSelect id="programme-select" name="programmeId" value={programmeId} onChange={setProgrammeId} />{loading&&<span className="muted small">Loading…</span>}</div></div>
   {error&&<div className="notice">{error}</div>}
   <section className="metrics"><article className="metric"><span>Indicators</span><strong>{indicators.length}</strong><small>configured targets</small></article><article className="metric"><span>Average progress</span><strong>{indicators.length?avg.toFixed(0)+'%':'—'}</strong><small>across loaded indicators</small></article><article className="metric"><span>On track</span><strong>{indicators.filter(i=>i.status==='On track').length}</strong><small>current indicator status</small></article><article className="metric"><span>At risk</span><strong>{indicators.filter(i=>/risk|late/i.test(i.status)).length}</strong><small>requires attention</small></article></section>
   <section className="panel"><div className="panel-head"><h2>Indicator register</h2><p className="muted small">Outcome reporting should use these governed targets rather than manually reconstructed numbers.</p></div>

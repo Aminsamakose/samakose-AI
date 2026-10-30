@@ -63,6 +63,21 @@ describe('programme version (approval and versioning of the programme definition
     expect(Number(programme.data.budgetGhs)).toBe(15000);
   });
 
+  it('refuses to let the administrator who drafted a version approve it themselves', async () => {
+    // Own programme, so this doesn't leave an extra APPROVED/SUPERSEDED version behind that would
+    // confuse the shared `programmeId`'s own version-history tests below.
+    // Only ADMIN/PROGRAMME_MANAGER hold programmes:edit (to draft); EXECUTIVE can approve but
+    // never drafts, so the realistic self-approval case is an ADMIN doing both.
+    const prog = (await api(admin).post('/programmes', { name: `Self-approval ${uniq()}`, budgetGhs: 12000 })).data;
+    const draft = (await api(admin).post(`/programmes/${prog.id}/versions`, { name: 'Self-approval attempt', budgetGhs: 12000 })).data;
+    await api(admin).post(`/programmes/${prog.id}/versions/${draft.version}/submit`, {});
+    const selfApprove = await api(admin).post(`/programmes/${prog.id}/versions/${draft.version}/approve`, {});
+    expect(selfApprove.status).toBe(403);
+    // A different approver still can.
+    const otherApprove = await api(exec).post(`/programmes/${prog.id}/versions/${draft.version}/approve`, {});
+    expect(otherApprove.status, JSON.stringify(otherApprove.error)).toBe(200);
+  });
+
   it('approving a new version supersedes the prior approved one', async () => {
     const draft = (await api(admin).post(`/programmes/${programmeId}/versions`, { name: 'Phase 3', budgetGhs: 20000 })).data;
     await api(admin).post(`/programmes/${programmeId}/versions/${draft.version}/submit`, {});

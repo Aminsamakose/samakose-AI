@@ -13,7 +13,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
-import { allow, need } from './common';
+import { allow, lockCapacityScope, need } from './common';
 import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
 
 const pyo = schema.professionalPayouts, pet = schema.payoutExternalTransactions, prec = schema.payoutReconciliations;
@@ -78,6 +78,10 @@ export async function listReconciliationExceptions(ctx: Ctx) {
 export async function matchPayout(ctx: Ctx, payoutId: string, externalTransactionId: string, note?: string) {
   allow(ctx, 'reconciliation', 'edit');
   const u = need(ctx).user;
+  // Serialize against any other concurrent match attempt on this same payout, so two different pieces
+  // of external evidence can't both be matched (and both flip status to Reconciled) against the same
+  // payout before either commits - a check-then-act race that would otherwise double-reconcile it.
+  await lockCapacityScope(ctx, `payout-reconcile:${payoutId}`);
   const [p] = await ctx.db.select().from(pyo).where(eq(pyo.id, payoutId)).limit(1);
   if (!p) throw notFound('Payout not found');
   if (p.status !== 'Paid') throw unprocessable(`A ${p.status} payout cannot be reconciled. It must be Paid first, and a payout already Reconciled is never re-matched`);

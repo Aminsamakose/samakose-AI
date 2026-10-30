@@ -146,6 +146,15 @@ export async function systemStatus(ctx: Ctx) {
     runtime: { node: process.version, uptimeSec: Math.round(process.uptime()), env: env.nodeEnv }
   };
 }
+/** Recent unhandled server errors (API 500s, failed after-commit hooks, failed worker ticks), so they
+ * are visible from inside the app instead of only in Vercel/stdout logs. */
+export async function recentServerErrors(ctx: Ctx, limit = 50) {
+  allow(ctx, 'integrations', 'read');
+  const t = schema.serverErrors;
+  const rows = await ctx.db.select().from(t).orderBy(desc(t.id)).limit(Math.min(Math.max(limit, 1), 200));
+  const [{ last24h }] = (await ctx.db.execute(sql`select count(*)::int last24h from server_errors where at > now() - interval '24 hours'`)).rows as { last24h: number }[];
+  return { items: rows, last24h };
+}
 export async function retryJob(ctx: Ctx, id: string) {
   allow(ctx, 'integrations', 'edit');
   const r = await ctx.db.update(schema.jobs).set({ status: 'queued', attempts: 0, runAt: new Date(), lastError: null, updatedAt: new Date() }).where(and(eq(schema.jobs.id, id), eq(schema.jobs.status, 'failed'))).returning({ id: schema.jobs.id });
@@ -236,7 +245,9 @@ export async function commandCentre(ctx: Ctx) {
     (select count(*)::int from content_docs where status = 'Scheduled') content_scheduled,
     (select coalesce(sum(size),0)::bigint from documents) + (select coalesce(sum(size),0)::bigint from media_assets) storage_bytes`);
   const recent = (await ctx.db.execute(sql`select at, actor_email, action, entity from audit_log where action not like 'export.%' order by id desc limit 8`)).rows;
+  const serverErrors24h = Number((await one(sql`select count(*)::int n from server_errors where at > now() - interval '24 hours'`)).n ?? 0);
   const alerts: { tone: string; text: string; href: string }[] = [];
+  if (serverErrors24h > 0) alerts.push({ tone: 'bad', text: `${serverErrors24h} server error${serverErrors24h === 1 ? '' : 's'} in the last 24 hours`, href: '/admin/system' });
   if (c.pending_orgs > 0) alerts.push({ tone: 'warn', text: `${c.pending_orgs} organisation${c.pending_orgs === 1 ? '' : 's'} waiting for verification`, href: '/organisations' });
   if (c.pending_registrations > 0) alerts.push({ tone: 'warn', text: `${c.pending_registrations} registration${c.pending_registrations === 1 ? '' : 's'} waiting for approval`, href: '/admin/registrations' });
   if (c.failed_jobs > 0) alerts.push({ tone: 'bad', text: `${c.failed_jobs} background job${c.failed_jobs === 1 ? '' : 's'} failed`, href: '/admin/system' });

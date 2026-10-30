@@ -61,7 +61,7 @@ function CalendarConnectionCardInner({ canManage }: { canManage: boolean }) {
 }
 
 function RescheduleForm({ event, onDone, onCancel }: { event: CalendarEvent; onDone: () => void; onCancel: () => void }) {
-  const toLocal = (iso: string) => new Date(iso).toISOString().slice(0, 16);
+  const toLocal = (iso: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 16); };
   const f = useForm({ startsAt: toLocal(event.startsAt), endsAt: toLocal(event.endsAt) },
     (v) => api.post(`/calendar-events/${event.id}/reschedule`, { startsAt: new Date(v.startsAt).toISOString(), endsAt: new Date(v.endsAt).toISOString() }),
     { onDone, success: 'Calendar event moved' });

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, lt, ne, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -89,6 +89,17 @@ export async function createSession(ctx: Ctx, activityId: string, input: {
   if (activity.status === 'CANCELLED') throw unprocessable('A cancelled activity cannot receive a session');
   const startsAt = new Date(input.startsAt); const endsAt = new Date(input.endsAt);
   if (!(endsAt > startsAt)) throw unprocessable('Session end time must be after start time');
+  // Directive #8.2/#9.1.E: do not block every overlapping session, only double-booking the SAME
+  // facilitator - two sessions at the same time with different facilitators are fine. Locked on
+  // the facilitator so two concurrent bookings for them cannot both pass this check before either
+  // commits (the same race shape as every other check-then-insert fixed elsewhere in this audit).
+  if (input.facilitatorUserId) {
+    await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtext('facilitator_schedule:' || ${input.facilitatorUserId}))`);
+    const clash = await ctx.db.select({ id: sessions.id, startsAt: sessions.startsAt, endsAt: sessions.endsAt }).from(sessions)
+      .where(and(eq(sessions.facilitatorUserId, input.facilitatorUserId), ne(sessions.status, 'CANCELLED'), lt(sessions.startsAt, endsAt), gt(sessions.endsAt, startsAt)))
+      .limit(1);
+    if (clash.length) throw conflict('This facilitator is already booked for an overlapping session');
+  }
   const mode = input.mode ?? 'HYBRID';
   let meetingUrl = input.meetingUrl ?? null;
   let metadata = (input.metadata as Record<string, unknown> | undefined) ?? {};

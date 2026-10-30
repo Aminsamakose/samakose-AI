@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { WorkspaceSelect } from '@/components/portfolio/shared';
 
 type Workspace = { id:string; programmeId:string; name:string; status:string; providerSource:string; participantConsentRequired:boolean; funderReportingEnabled:boolean };
 type Summary = { participants:{total:number;active:number}; delivery:{sessionCompletionRate:number|null;attendanceRate:number|null}; coordination:{openTasks:number;openExceptions:number;criticalExceptions:number}; providers:{activeAssignments:number} };
@@ -43,7 +44,7 @@ export default function ProgrammeCommandCentrePage(){
  return <main className="content" style={{maxWidth:1320,margin:'0 auto'}}>
   <div className="page-head">
    <div><div className="crumbs">Programme Workspace / Command Centre</div><h1>Programme Command Centre</h1><p className="muted">One operational view of the programme workspace: configuration, participants, delivery health, coordination and provider capacity.</p></div>
-   <form className="page-actions" onSubmit={e=>{e.preventDefault();void load()}}><input aria-label="Programme workspace ID" placeholder="Workspace ID" value={id} onChange={e=>setId(e.target.value)}/><button className="btn primary" disabled={loading}>{loading?'Loading…':'Open workspace'}</button></form>
+   <div className="page-actions"><WorkspaceSelect id="workspace-select" name="workspaceId" value={id} onChange={setId} />{loading&&<span className="muted small">Loading…</span>}</div>
   </div>
   {error&&<div className="notice">{error}</div>}
   {workspace&&<section className="panel"><div className="panel-head"><div><h2>{workspace.name}</h2><p className="muted small">Workspace {workspace.id} · Programme {workspace.programmeId}</p></div><span className="badge">{workspace.status}</span></div><div className="command-meta"><span>Provider source <strong>{workspace.providerSource}</strong></span><span>Participant consent <strong>{workspace.participantConsentRequired?'Required':'Not required'}</strong></span><span>Funder reporting <strong>{workspace.funderReportingEnabled?'Enabled':'Disabled'}</strong></span></div></section>}

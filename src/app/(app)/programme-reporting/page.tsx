@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { ProgrammeSelect } from '@/components/portfolio/shared';
 
 type Report={programme:{id:string;code:string;name:string;funder?:string|null;status:string;startDate?:string|null;endDate?:string|null};total:number|null;byState:{key:string;n:number|null}[];maturity:{key:string;n:number|null}[];scoreChange:{n:number|null;average:number|null};dimensions:{dimension:string;avg_value?:number;avgValue?:number|null;n?:number}[];cohorts:{id:string;name:string;capacity:number;enrolled:number|null}[];indicators:any[];suppressed:boolean;minGroupSize:number};
 const API='/api/v1';
@@ -11,9 +12,10 @@ export default function ProgrammeReportingPage(){
  const [loading,setLoading]=useState(false);
  const [error,setError]=useState('');
  async function load(){if(!id)return;setLoading(true);setError('');try{const r=await fetch(API+'/programmes/'+id+'/dashboard',{credentials:'include'});if(!r.ok)throw new Error('Unable to load the programme report.');const body=await r.json();setReport(body.data??body)}catch(e){setError(e instanceof Error?e.message:'Unable to load report.');setReport(null)}finally{setLoading(false)}}
+ useEffect(()=>{if(id)void load();else setReport(null)},[id]);
  function exportCsv(){window.location.assign(API+'/programmes/'+id+'/export')}
  return <main className="content" style={{maxWidth:1280,margin:'0 auto'}}>
-  <div className="page-head"><div><div className="crumbs">Programme / Reporting</div><h1>Programme Reporting</h1><p className="muted">A report view generated from authoritative programme records, indicators and Business Health results.</p></div><form className="page-actions" onSubmit={e=>{e.preventDefault();void load()}}><input aria-label="Programme ID" placeholder="Programme ID" value={id} onChange={e=>setId(e.target.value)}/><button className="btn primary" disabled={loading}>{loading?'Generating…':'Generate report'}</button>{report&&<button className="btn" type="button" onClick={exportCsv}>Export CSV</button>}</form></div>
+  <div className="page-head"><div><div className="crumbs">Programme / Reporting</div><h1>Programme Reporting</h1><p className="muted">A report view generated from authoritative programme records, indicators and Business Health results.</p></div><div className="page-actions"><ProgrammeSelect id="programme-select" name="programmeId" value={id} onChange={setId} />{loading&&<span className="muted small">Generating…</span>}{report&&<button className="btn" type="button" onClick={exportCsv}>Export CSV</button>}</div></div>
   {error&&<div className="notice">{error}</div>}
   {report&&<><section className="report-header panel"><div><h2>{report.programme.name}</h2><p className="muted">{report.programme.code} · {report.programme.status}{report.programme.funder?' · '+report.programme.funder:''}</p></div><span className="badge">{report.suppressed?'FUNDER-SAFE VIEW':'FULL PROGRAMME VIEW'}</span></section>
   <section className="metrics"><article className="metric"><span>Businesses</span><strong>{report.total==null?'—':report.total}</strong><small>{report.suppressed?'privacy threshold applied':'programme total'}</small></article><article className="metric"><span>Score change</span><strong>{report.scoreChange.average==null?'—':(report.scoreChange.average>0?'+':'')+report.scoreChange.average}</strong><small>{report.scoreChange.n??0} businesses re-scored</small></article><article className="metric"><span>Indicators</span><strong>{report.indicators.length}</strong><small>governed targets</small></article><article className="metric"><span>Cohorts</span><strong>{report.cohorts.length}</strong><small>programme cohorts</small></article></section>

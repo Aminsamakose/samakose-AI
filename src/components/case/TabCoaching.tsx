@@ -7,7 +7,10 @@ import { JobStatus, useJob, useMe } from './clinical/common';
 
 type Sess = { id: string; code: string; scheduledAt: string; status: string; notes: string | null; brief: string | null };
 const tone = (s: string) => (s === 'Held' ? 'ok' : s === 'Scheduled' ? 'info' : s === 'Missed' ? 'warn' : 'bad');
-const localInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+// Guarded the same way as the Programme Calendar's equivalent helper: called eagerly during render
+// (inside useForm's initial-state argument below), outside any try/catch, so an invalid date here would
+// throw an uncaught RangeError and crash to the error boundary instead of just leaving the field blank.
+const localInput = (d: Date) => Number.isNaN(d.getTime()) ? '' : new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
 export default function TabCoaching({ caseId, caseData, reload }: TabProps) {
   const list = useApi<Sess[]>(`/sessions?caseId=${caseId}`);

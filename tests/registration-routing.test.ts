@@ -58,6 +58,25 @@ describe('consent-first registration', () => {
       expect((await consentsOf(u.id)).map((c) => c.purpose)).toEqual(['account']);
       expect((await q(`select 1 from registration_answers where user_id=$1`, [u.id])).rowCount).toBe(0);
     });
+    it('two concurrent submissions of the same new signup both succeed cleanly, with exactly one account and no orphan organisation', async () => {
+      const b = reg({ routing: ROUTING, consentPurposes: ['assessment'] });
+      // The dupe-email check is a plain select-then-insert with no lock, so a double-click (or a
+      // slow connection causing a resubmit) races the users_email_uq constraint. The loser must get
+      // the same {ok:true} every registration gets - never the raw "duplicate" 409 a bare insert
+      // failure would otherwise surface - and must not leave behind an organisation row with no
+      // user ever attached to it (see register()'s compensating delete on that race).
+      const [r1, r2] = await Promise.all([call('POST', '/auth/register', { body: b }), call('POST', '/auth/register', { body: b })]);
+      expect(r1.status).toBe(200);
+      expect(r2.status).toBe(200);
+      expect(r1.data).toEqual({ ok: true });
+      expect(r2.data).toEqual({ ok: true });
+
+      const users = (await q(`select id, org_id from users where email=$1`, [b.email.toLowerCase()])).rows;
+      expect(users).toHaveLength(1);
+      const orphanOrgs = (await q(`select o.id from organisations o where o.contact_email=$1 and o.id <> $2`, [b.email.toLowerCase(), users[0].org_id])).rows;
+      expect(orphanOrgs).toHaveLength(0);
+    });
+
     it('still refuses registration without the consent box', async () => {
       const r = await call('POST', '/auth/register', { body: reg({ consent: false }) }); expect(r.status).toBe(400);
     });

@@ -6,7 +6,7 @@ import { audit } from '@/lib/audit';
 import { conflict, fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { assertOrg, caseScope } from '@/domain/scope';
 import { notifyUsers } from '@/domain/notify';
-import { allow, need } from './common';
+import { allow, lockCapacityScope, need } from './common';
 
 const con = schema.contracts, am = schema.contractAmendments, inv = schema.invoices;
 const ctpy = schema.contractParties, cdoc = schema.contractDocuments, ctp = schema.contractTemplates, org = schema.organisations;
@@ -137,6 +137,10 @@ export async function addContractParty(ctx: Ctx, contractId: string, b: { role: 
   if (!(CONTRACT_PARTY_ROLES as readonly string[]).includes(b.role)) throw fieldError({ role: `Must be one of ${CONTRACT_PARTY_ROLES.join(', ')}` });
   if (!b.name.trim()) throw fieldError({ name: 'Required' });
   if (SINGLE_PARTY_ROLES.has(b.role)) {
+    // Serialize against any other concurrent add of this same singular role on this contract (there
+    // is no DB-level uniqueness on (contractId, role) backing this), so two concurrent requests can't
+    // both pass the "none exists yet" check before either commits and both insert a CLIENT/SAMAKOSE party.
+    await lockCapacityScope(ctx, `contract-party:${contractId}:${b.role}`);
     const [existing] = await ctx.db.select({ id: ctpy.id }).from(ctpy).where(and(eq(ctpy.contractId, contractId), eq(ctpy.role, b.role))).limit(1);
     if (existing) throw conflict(`This contract already has a ${b.role} party. Remove it first if it needs to change`);
   }

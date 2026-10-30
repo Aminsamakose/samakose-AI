@@ -15,7 +15,7 @@
  * represents Samakose's own internal cut taken from that pool and intentionally gets no payout row - only
  * allocations with a professionalId are "paid allocatees" (Directive §35) and receive one.
  */
-import { and, eq, isNull, or } from 'drizzle-orm';
+import { and, eq, isNull, or, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -272,6 +272,10 @@ function professionalShare(model: string, basisAmount: number, percentage: strin
  */
 export async function calculateRevenueShare(ctx: Ctx, agreementId: string, invoiceId: string) {
   allow(ctx, 'revenue_share', 'edit');
+  // Advisory lock on the (agreementId, invoiceId) pair: without it, two concurrent requests to
+  // calculate the same agreement/invoice could both pass the "not yet calculated" check below and
+  // both post the ledger entry and create payouts, double-paying the professional pool.
+  await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtext('revenue-share:calc:' || ${agreementId} || ':' || ${invoiceId}))`);
   const [a] = await ctx.db.select().from(rsa).where(eq(rsa.id, agreementId)).limit(1);
   if (!a) throw notFound('Revenue share agreement not found');
   if (a.status !== 'Active') throw unprocessable('Only an Active agreement can generate a calculation');

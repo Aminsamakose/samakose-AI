@@ -14,7 +14,7 @@ import { assertCase, caseScope } from '@/domain/scope';
 import { assignability } from '@/domain/practitioners';
 import { rankMatches, scoreMatch, type Match, type MatchNeed, type MatchProfile } from '@/domain/matching';
 import { platformForOrgType } from '@/domain/routing';
-import { allow, loadRules, need } from './common';
+import { allow, loadRules, lockCapacityScope, need } from './common';
 import { approvedPractitioners, loadFor } from './practitioners';
 import { photoUrl } from './auth';
 
@@ -121,6 +121,13 @@ export async function place(ctx: Ctx, caseId: string, p: Placement): Promise<{ i
   const [cs] = await ctx.db.select().from(c).where(eq(c.id, caseId)).limit(1);
   if (!cs) throw notFound('Case not found');
   const field = p.fn === 'lead' ? 'consultantId' : p.fn === 'coach' ? 'coachId' : p.fn === 'reviewer' ? 'reviewerId' : 'userId';
+  // Single-seat functions (lead/coach/reviewer) read the currently Active assignment and then
+  // replace it with a new one. Without a lock, two concurrent placements for the same case+fn
+  // (two different people accepting/being given the same slot) could both read the same `cur`,
+  // both mark it Replaced and both insert a new Active row -- two Active assignments for one
+  // seat. `specialist` has no such seat (several specialists can be active at once), so it is
+  // excluded, matching the dup-check already below for it.
+  if (p.fn !== 'specialist') await lockCapacityScope(ctx, `case-assignment:${caseId}:${p.fn}`);
   const [cur] = p.fn === 'specialist' ? [undefined] : await ctx.db.select().from(a).where(and(eq(a.caseId, caseId), eq(a.fn, p.fn), eq(a.status, 'Active'))).limit(1);
   if (cur && p.userId === cur.userId) return { id: cur.id, warnings: [] };
   const reason = p.reason?.trim() || null;
@@ -143,6 +150,9 @@ export async function place(ctx: Ctx, caseId: string, p: Placement): Promise<{ i
     }
     await independence(ctx, caseId, p.fn, p.userId);
     if (p.fn === 'specialist') {
+      // Two concurrent addSpecialist calls for the same case+person could otherwise both pass
+      // this "already active?" read before either insert commits, adding the same person twice.
+      await lockCapacityScope(ctx, `case-specialist:${caseId}:${p.userId}`);
       const dup = await ctx.db.select({ id: a.id }).from(a).where(and(eq(a.caseId, caseId), eq(a.userId, p.userId), eq(a.status, 'Active'), eq(a.fn, 'specialist'))).limit(1);
       if (dup.length) return { id: dup[0].id, warnings };
       if (cs.consultantId === p.userId) throw fieldError({ userId: 'This person is already the lead expert' });

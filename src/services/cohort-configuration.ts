@@ -4,7 +4,7 @@ import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { conflict, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme } from '@/domain/scope';
-import { allow, need } from './common';
+import { allow, lockCapacityScope, need } from './common';
 
 const cc = schema.cohortConfigurations;
 const cohorts = schema.cohorts;
@@ -82,9 +82,16 @@ export async function approveCohortConfiguration(ctx: Ctx, cohortId: string, ver
   allow(ctx, 'programme_workspaces', 'edit');
   assertApprover(ctx);
   await getCohort(ctx, cohortId);
+  // Two submitted versions of the same cohort's configuration could otherwise both be read as
+  // SUBMITTED and both approved concurrently, leaving two APPROVED rows (the same check-then-act
+  // race lockCapacityScope closes for cohort capacity elsewhere).
+  await lockCapacityScope(ctx, `cohort-configuration-approval:${cohortId}`);
   const [row] = await ctx.db.select().from(cc).where(and(eq(cc.cohortId, cohortId), eq(cc.version, version))).limit(1);
   if (!row) throw notFound('Cohort configuration not found');
   if (row.status !== 'SUBMITTED') throw conflict(`Only a submitted configuration can be approved; current status is ${row.status}`);
+  // Four-eyes: an ADMIN holds both programme_workspaces:edit (to draft) and the approver role checked
+  // above, so without this, the same person could draft a cohort configuration and approve it themselves.
+  if (row.createdBy === need(ctx).user.id) throw forbidden('You cannot approve a cohort configuration you drafted yourself');
   await ctx.db.transaction(async (tx) => {
     await tx.update(cc).set({ status: 'SUPERSEDED', updatedAt: new Date() }).where(and(eq(cc.cohortId, cohortId), eq(cc.status, 'APPROVED')));
     await tx.update(cc).set({ status: 'APPROVED', approvedBy: need(ctx).user.id, approvedAt: new Date(), updatedAt: new Date() }).where(eq(cc.id, row.id));

@@ -5,7 +5,7 @@
  * nothing here enforces that at the database level the way migration 0051 does for approval_decisions, so
  * the check lives in approveDiscountRule() itself and must stay there.
  */
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
@@ -120,6 +120,14 @@ export async function applyPromoCode(ctx: Ctx, invoiceId: string, b: { code: str
     const [{ n }] = await ctx.db.select({ n: countOf }).from(pred).where(eq(pred.promoCodeId, pc.id));
     if (Number(n) >= pc.maxRedemptions) throw conflict('This promo code has reached its redemption limit');
   }
+  // Advisory lock on (promoCodeId, customerId) so two concurrent requests for the same pair cannot both
+  // pass the per-customer-limit count check below before either has inserted its row (the same race the
+  // old unconditional unique index on promo_redemptions used to close, at the cost of also closing off any
+  // perCustomerLimit above 1 - see migration 0016).
+  await ctx.db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${pc.id} || ':' || ${b.customerId}, 0))`);
+  const limit = pc.perCustomerLimit ?? 1;
+  const [{ n: usedByCustomer }] = await ctx.db.select({ n: countOf }).from(pred).where(and(eq(pred.promoCodeId, pc.id), eq(pred.customerId, b.customerId)));
+  if (Number(usedByCustomer) >= limit) throw conflict(limit === 1 ? 'This customer has already used this promo code' : `This customer has already used this promo code ${limit} time${limit === 1 ? '' : 's'}`);
   const amount = Number(i.amountGhs);
   if (pc.minPurchaseGhs != null && amount < Number(pc.minPurchaseGhs)) throw fieldError({ code: `This code requires a minimum purchase of GHS ${pc.minPurchaseGhs}` });
 
@@ -134,7 +142,10 @@ export async function applyPromoCode(ctx: Ctx, invoiceId: string, b: { code: str
   try {
     await ctx.db.insert(pred).values({ promoCodeId: pc.id, invoiceId: i.id, customerId: b.customerId, discountAppliedGhs: dec(discount) });
   } catch (e) {
-    if ((e as { code?: string }).code === '23505') throw conflict('This customer has already used this promo code');
+    // drizzle-orm's node-postgres driver wraps the raw pg error (DrizzleQueryError), putting the
+    // original error on .cause - the real Postgres error code lives there, not on e.code directly.
+    const code = (e as { code?: string; cause?: { code?: string } })?.cause?.code ?? (e as { code?: string })?.code;
+    if (code === '23505') throw conflict('This customer has already used this promo code');
     throw e;
   }
   await ctx.db.update(inv).set({ amountGhs: dec(newAmount), updatedAt: new Date() }).where(eq(inv.id, i.id));

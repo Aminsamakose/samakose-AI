@@ -36,6 +36,76 @@ export function UserSelect({ id, name, value, onChange, invalid, describedBy }: 
   </div>;
 }
 
+export type ProgrammeRow = { id: string; name: string; code: string; status: string };
+/** Searchable programme picker backed by GET /programmes. */
+export function ProgrammeSelect({ id, name, value, onChange, invalid, describedBy }: { id: string; name: string; value: string; onChange: (v: string) => void; invalid?: boolean; describedBy?: string }) {
+  const [q, setQ] = useState(''); const [dq, setDq] = useState('');
+  useEffect(() => { const t = setTimeout(() => setDq(q), 300); return () => clearTimeout(t); }, [q]);
+  const st = useApi<{ items: ProgrammeRow[] }>('/programmes' + qs({ q: dq, pageSize: 50, sort: 'name', dir: 'asc' }));
+  const items = st.data?.items ?? [];
+  return <div className="stack" style={{ gap: 6 }}>
+    <input type="search" aria-label="Search programmes" placeholder="Search programmes" value={q} onChange={(e) => setQ(e.target.value)} />
+    <select id={id} name={name} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid ? true : undefined} aria-describedby={describedBy}>
+      <option value="">{st.loading && !st.data ? 'Loading programmes' : items.length ? 'Choose a programme' : 'No programmes found'}</option>
+      {items.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.code}) · {p.status}</option>)}
+    </select>
+    {st.error && <span className="err" role="alert">{st.error}</span>}
+  </div>;
+}
+
+export type CohortRow = { id: string; name: string; code: string; programmeId: string; programmeName: string; status: string };
+/** Searchable cohort picker backed by GET /cohorts. Narrowed to one programme when `programmeId` is given. */
+export function CohortSelect({ id, name, value, onChange, programmeId, invalid, describedBy }: { id: string; name: string; value: string; onChange: (v: string) => void; programmeId?: string; invalid?: boolean; describedBy?: string }) {
+  const [q, setQ] = useState(''); const [dq, setDq] = useState('');
+  useEffect(() => { const t = setTimeout(() => setDq(q), 300); return () => clearTimeout(t); }, [q]);
+  const st = useApi<{ items: CohortRow[] }>('/cohorts' + qs({ q: dq, programmeId: programmeId || undefined, pageSize: 50, sort: 'name', dir: 'asc' }));
+  const items = st.data?.items ?? [];
+  return <div className="stack" style={{ gap: 6 }}>
+    <input type="search" aria-label="Search cohorts" placeholder="Search cohorts" value={q} onChange={(e) => setQ(e.target.value)} />
+    <select id={id} name={name} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid ? true : undefined} aria-describedby={describedBy}>
+      <option value="">{st.loading && !st.data ? 'Loading cohorts' : items.length ? 'Choose a cohort' : 'No cohorts found'}</option>
+      {items.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.code}) — {c.programmeName} · {c.status}</option>)}
+    </select>
+    {st.error && <span className="err" role="alert">{st.error}</span>}
+  </div>;
+}
+
+export type WorkspaceRow = { id: string; programmeId: string; name: string; status: string };
+/** Searchable programme-workspace picker. GET /programme-workspaces returns every workspace the user
+ *  can see in one unpaginated list (there is one workspace per programme, so this stays small), so the
+ *  search box here filters client-side rather than querying the API again on every keystroke. */
+export function WorkspaceSelect({ id, name, value, onChange, invalid, describedBy }: { id: string; name: string; value: string; onChange: (v: string) => void; invalid?: boolean; describedBy?: string }) {
+  const [q, setQ] = useState('');
+  const st = useApi<{ items: WorkspaceRow[] } | WorkspaceRow[]>('/programme-workspaces');
+  const all = Array.isArray(st.data) ? st.data : st.data?.items ?? [];
+  const items = q.trim() ? all.filter((w) => w.name.toLowerCase().includes(q.trim().toLowerCase())) : all;
+  return <div className="stack" style={{ gap: 6 }}>
+    <input type="search" aria-label="Search programme workspaces" placeholder="Search programme workspaces" value={q} onChange={(e) => setQ(e.target.value)} />
+    <select id={id} name={name} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid ? true : undefined} aria-describedby={describedBy}>
+      <option value="">{st.loading && !st.data ? 'Loading workspaces' : items.length ? 'Choose a workspace' : 'No workspaces found'}</option>
+      {items.map((w) => <option key={w.id} value={w.id}>{w.name} · {w.status}</option>)}
+    </select>
+    {st.error && <span className="err" role="alert">{st.error}</span>}
+  </div>;
+}
+
+export type CaseRow = { id: string; code: string; status: string };
+/** Searchable case picker backed by GET /cases. */
+export function CaseSelect({ id, name, value, onChange, invalid, describedBy }: { id: string; name: string; value: string; onChange: (v: string) => void; invalid?: boolean; describedBy?: string }) {
+  const [q, setQ] = useState(''); const [dq, setDq] = useState('');
+  useEffect(() => { const t = setTimeout(() => setDq(q), 300); return () => clearTimeout(t); }, [q]);
+  const st = useApi<{ items: CaseRow[] }>('/cases' + qs({ q: dq, pageSize: 50 }));
+  const items = st.data?.items ?? [];
+  return <div className="stack" style={{ gap: 6 }}>
+    <input type="search" aria-label="Search cases" placeholder="Search cases by code" value={q} onChange={(e) => setQ(e.target.value)} />
+    <select id={id} name={name} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid ? true : undefined} aria-describedby={describedBy}>
+      <option value="">{st.loading && !st.data ? 'Loading cases' : items.length ? 'Choose a case' : 'No cases found'}</option>
+      {items.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.status}</option>)}
+    </select>
+    {st.error && <span className="err" role="alert">{st.error}</span>}
+  </div>;
+}
+
 export type OrgRow = { id: string; name: string; code: string };
 /** Searchable organisation picker backed by GET /organisations. */
 export function OrgSelect({ id, name, value, onChange, invalid, describedBy }: { id: string; name: string; value: string; onChange: (v: string) => void; invalid?: boolean; describedBy?: string }) {

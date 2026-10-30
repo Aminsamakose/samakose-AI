@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { CohortSelect } from '@/components/portfolio/shared';
 const API='/api/v1';
 type Conn={id:string;provider:string;accountLabel?:string|null;externalCalendarId?:string|null;status?:string};
 type Event={id:string;title:string;startsAt:string;endsAt:string;provider:string;location?:string|null;meetingUrl?:string|null;status?:string};
@@ -19,6 +20,6 @@ export default function ProgrammeCalendarPage(){
   <div className="page-head"><div><div className="crumbs">Programme / Calendar</div><h1>Calendar & Scheduling</h1><p className="muted">Provider-neutral scheduling for programme delivery. Delivery sessions remain authoritative; calendar events are synchronized representations.</p></div></div>
   {error&&<div className="notice">{error}</div>}{message&&<div className="notice">{message}</div>}
   <div className="two-col"><section className="panel"><div className="panel-head"><h2>Calendar connections</h2></div><form className="connection-form" onSubmit={connect}><label>Provider<select name="provider" defaultValue="INTERNAL"><option>INTERNAL</option><option>GOOGLE</option><option>MICROSOFT</option><option>ICS</option></select></label><label>Account label<input name="accountLabel" placeholder="e.g. Programme team calendar"/></label><button className="btn primary">Save connection</button></form><div className="status-list">{connections.map(c=><div key={c.id}><span><strong>{c.provider}</strong>{c.accountLabel?' · '+c.accountLabel:''}</span><button className="btn" type="button" onClick={()=>void disconnect(c.id)}>Disconnect</button></div>)}{!connections.length&&<p className="empty">No calendar connections configured.</p>}</div></section>
-  <section className="panel"><div className="panel-head"><h2>Cohort calendar</h2><p className="muted small">Enter a cohort ID to view its scheduled events.</p></div><form className="connection-form" onSubmit={e=>{e.preventDefault();void load()}}><label>Cohort ID<input value={cohortId} onChange={e=>setCohortId(e.target.value)} placeholder="Cohort UUID"/></label><button className="btn primary">Load events</button></form><div className="status-list">{events.map(e=><div key={e.id}><span><strong>{e.title}</strong><small className="muted"> · {new Date(e.startsAt).toLocaleString()}</small></span><span>{e.provider}</span></div>)}{cohortId&&!events.length&&<p className="empty">No calendar events found.</p>}</div></section></div>
+  <section className="panel"><div className="panel-head"><h2>Cohort calendar</h2><p className="muted small">Search for a cohort to view its scheduled events.</p></div><div className="connection-form"><label htmlFor="cohort-select">Cohort<CohortSelect id="cohort-select" name="cohortId" value={cohortId} onChange={setCohortId} /></label></div><div className="status-list">{events.map(e=><div key={e.id}><span><strong>{e.title}</strong><small className="muted"> · {new Date(e.startsAt).toLocaleString()}</small></span><span>{e.provider}</span></div>)}{cohortId&&!events.length&&<p className="empty">No calendar events found.</p>}</div></section></div>
  </main>;
 }

@@ -54,6 +54,12 @@ export async function decideRoleGrant(ctx: Ctx, id: string, approve: boolean) {
   const [row] = await ctx.db.select().from(g).where(eq(g.id, id)).limit(1);
   if (!row) throw notFound('Request not found');
   if (row.status !== 'pending') throw conflict('This request was already decided');
+  // Four-eyes: an administrator may not decide their own additional-role request. Without this,
+  // anyone holding users:edit could request a role for themselves (POST /me/roles/request) and
+  // immediately approve it (POST /role-grants/:id/approve), self-granting an elevated role with
+  // no independent review -- the same self-approval gap approveDiscountRule() already guards
+  // against for discount rules.
+  if (row.userId === admin.id) throw forbidden('You cannot decide your own additional-role request');
   await ctx.db.update(g).set({ status: approve ? 'approved' : 'rejected', decidedBy: admin.id, decidedAt: new Date(), updatedAt: new Date() }).where(eq(g.id, id));
   await audit(ctx, approve ? 'role_grant.approved' : 'role_grant.rejected', 'user', row.userId, undefined, { role: row.role });
   return { ok: true };

@@ -2,7 +2,7 @@ import { and, asc, desc, eq } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
-import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
+import { conflict, fieldError, forbidden, notFound, unprocessable } from '@/lib/errors';
 import { assertProgramme, assertCase } from '@/domain/scope';
 import { allow, need } from './common';
 
@@ -115,9 +115,14 @@ async function loadRecord(ctx: Ctx, id: string) {
  */
 export async function verifyOutcome(ctx: Ctx, id: string, b: { decision: 'VERIFIED' | 'REJECTED'; reason: string }) {
   allow(ctx, 'programmes', 'edit');
+  const u = need(ctx).user;
   const { row, def } = await loadRecord(ctx, id);
   if (row.status !== 'PENDING') throw unprocessable(`This record was already decided (${row.status}); correct it instead of re-verifying`);
-  await ctx.db.update(R).set({ status: b.decision, decision: b.decision, reason: b.reason.trim(), verifiedBy: need(ctx).user.id, verifiedAt: new Date(), updatedAt: new Date() }).where(eq(R.id, id));
+  // Four-eyes: whoever recorded this outcome result may not be the one who verifies it. Without this,
+  // anyone holding programmes:edit could both record a result and immediately verify it themselves,
+  // defeating the independent sign-off this function's own docstring (Requirement 5/7) calls for.
+  if (row.createdBy === u.id) throw forbidden('You cannot verify an outcome record you recorded yourself');
+  await ctx.db.update(R).set({ status: b.decision, decision: b.decision, reason: b.reason.trim(), verifiedBy: u.id, verifiedAt: new Date(), updatedAt: new Date() }).where(eq(R.id, id));
   await audit(ctx, 'outcome_record.verified', 'programme', def.programmeId, { status: row.status }, { decision: b.decision, reason: b.reason });
   return { ok: true };
 }

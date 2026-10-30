@@ -210,7 +210,18 @@ export async function addParticipant(ctx: Ctx, workspaceId: string, input: { org
   }
   const status = input.status ?? 'APPLICATION';
   if (!['APPLICATION','ELIGIBILITY','SELECTED','INVITED','CONSENTED','ONBOARDED','COHORT_ASSIGNED','ACTIVE','COMPLETING','COMPLETED','WITHDRAWN','REJECTED'].includes(status)) throw unprocessable('Invalid participant status');
-  const [row] = await ctx.db.insert(pt).values({ programmeId: workspace.programmeId, workspaceId, organisationId: input.organisationId, cohortId: input.cohortId ?? null, status, metadata: input.metadata ?? {} }).returning();
+  let row: typeof pt.$inferSelect;
+  try {
+    [row] = await ctx.db.insert(pt).values({ programmeId: workspace.programmeId, workspaceId, organisationId: input.organisationId, cohortId: input.cohortId ?? null, status, metadata: input.metadata ?? {} }).returning();
+  } catch (e) {
+    // `existing` was checked above, before the capacity lock -- two concurrent adds for the same
+    // organisation can still both pass that read. programme_participant_programme_org_uq (DB
+    // unique index) is the actual backstop; drizzle-orm's node-postgres driver wraps the raw pg
+    // error on .cause, so the real code must be read from there, not from e.code directly.
+    const code = (e as { code?: string; cause?: { code?: string } })?.cause?.code ?? (e as { code?: string })?.code;
+    if (code === '23505') throw conflict('This organisation is already a participant in the programme');
+    throw e;
+  }
   await audit(ctx, 'programme_participant.created', 'programme_participant', row.id, undefined, { workspaceId, organisationId: input.organisationId, status });
   return row;
 }

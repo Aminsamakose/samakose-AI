@@ -6,7 +6,7 @@ import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
 import { fieldError, notFound } from '@/lib/errors';
-import { allow, need } from '@/services/common';
+import { allow, lockCapacityScope, need } from '@/services/common';
 import { assertWorkspaceAccess, assertWorkspaceManager } from '@/services/programme-workspaces';
 
 const pp = schema.programmeParticipantPeople;
@@ -51,6 +51,12 @@ export async function addPerson(ctx: Ctx, programmeParticipantId: string, input:
     const [existing] = await ctx.db.select({ id: person.id }).from(person).where(eq(person.id, participantId)).limit(1);
     if (!existing) throw notFound('Participant not found');
   }
+
+  // Two concurrent addPerson calls on the same enrolment could otherwise both read "no existing
+  // primary yet" (or both race to flip the primary flag) and both insert as primary, violating
+  // "exactly one primary person per enrolment" -- the same check-then-act race lockCapacityScope
+  // closes elsewhere. Serialize per enrolment before any of the reads below.
+  await lockCapacityScope(ctx, `participant-people:${programmeParticipantId}`);
 
   const [existingLink] = await ctx.db.select({ id: pp.id }).from(pp).where(and(eq(pp.programmeParticipantId, programmeParticipantId), eq(pp.participantId, participantId))).limit(1);
   if (existingLink) throw fieldError({ participantId: 'This person is already linked to this enrolment' });

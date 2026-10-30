@@ -1,4 +1,5 @@
 import { Pool, type PoolClient } from 'pg';
+import { rootCertificates } from 'node:tls';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as baseSchema from './schema';
 import * as frameworkArchitectureSchema from './framework-architecture-schema';
@@ -27,11 +28,29 @@ export function cleanDatabaseUrl(raw: string): string {
 }
 
 export function databaseUrl(): string {
-  const url = process.env.DATABASE_URL;
+  // DATABASE_URL points at Supabase's Supavisor transaction pooler, verified directly against
+  // the project's own dashboard connection details. POSTGRES_URL (the Supabase-Vercel
+  // integration's string) is kept only as a fallback if DATABASE_URL is ever unset.
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   if (!url) throw new Error('DATABASE_URL is not set');
   const clean = cleanDatabaseUrl(url);
   if (!/^postgres(ql)?:\/\//i.test(clean)) throw new Error('DATABASE_URL must start with postgresql://');
   return clean;
+}
+
+/**
+ * TLS config for the pool. We verify the server certificate against Supabase's own published
+ * root CA (DB_CA_CERT, the project's "prod-ca-2021.crt") rather than relying on sslmode query
+ * params, which modern pg/pg-connection-string versions alias to verify-full against the
+ * system trust store — and Supabase's chain isn't in it, hence SELF_SIGNED_CERT_IN_CHAIN.
+ * Passing the real CA here gives proper verify-full validation without weakening anything.
+ */
+export function sslConfig(): { ca: string[]; rejectUnauthorized: true } | undefined {
+  const ca = process.env.DB_CA_CERT;
+  if (!ca) return undefined;
+  // Passing `ca` alone REPLACES Node's default trust store rather than extending it, so we
+  // append Supabase's root CA to the existing bundle instead of swapping it out.
+  return { ca: [...rootCertificates, ca.replace(/\\n/g, '\n')], rejectUnauthorized: true };
 }
 
 /** Connection-level failures only (never a failed statement): auth timeout, dropped connection, connect timeout. */
@@ -44,7 +63,7 @@ export function isConnectFailure(e: unknown): boolean {
 export function pool(): Pool {
   const url = databaseUrl();
   if (!g.__pool || g.__poolUrl !== url) {
-    const p = new Pool({ connectionString: url, max: Number(process.env.DB_POOL_MAX ?? 5), idleTimeoutMillis: 20_000, connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS ?? 10_000), statement_timeout: 30_000 });
+    const p = new Pool({ connectionString: url, ssl: sslConfig(), max: Number(process.env.DB_POOL_MAX ?? 5), idleTimeoutMillis: 20_000, connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS ?? 10_000), statement_timeout: 30_000 });
     p.on('error', () => {});
     const connect = p.connect.bind(p) as (...a: any[]) => any;
     (p as any).connect = (...args: any[]) => {

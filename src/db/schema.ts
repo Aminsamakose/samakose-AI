@@ -1063,8 +1063,10 @@ export const promoCodes = pgTable('promo_codes', {
   createdAt: created()
 }, (t) => [index('pc_campaign_idx').on(t.campaignId)]);
 
-/** One successful redemption. Unique per (promoCodeId, customerId) when the code is single-use-per-customer,
- *  enforced server-side inside the same transaction that discounts the invoice (prevents a double-redeem race). */
+/** One successful redemption. Capped per (promoCodeId, customerId) at the code's perCustomerLimit (default 1),
+ *  enforced in applyPromoCode() under a pg_advisory_xact_lock on the same pair to keep it race-safe - not by
+ *  a unique index, since perCustomerLimit can be set above 1 (migration 0016 dropped the old unconditional
+ *  unique constraint that made that silently impossible). */
 export const promoRedemptions = pgTable('promo_redemptions', {
   id: id(),
   promoCodeId: uuid('promo_code_id').notNull().references(() => promoCodes.id),
@@ -1072,7 +1074,7 @@ export const promoRedemptions = pgTable('promo_redemptions', {
   customerId: uuid('customer_id').notNull().references(() => users.id),
   discountAppliedGhs: numeric('discount_applied_ghs', { precision: 12, scale: 2 }).notNull(),
   redeemedAt: timestamp('redeemed_at', { withTimezone: true }).notNull().defaultNow()
-}, (t) => [uniqueIndex('pr_code_customer_uq').on(t.promoCodeId, t.customerId)]);
+}, (t) => [index('pr_code_customer_idx').on(t.promoCodeId, t.customerId)]);
 
 /** A configurable tax/VAT/withholding rule. Replaces the single flat org-wide rate in billing.ts with
  *  versioned, jurisdiction-aware rules, without assuming any specific rate is applicable. */
@@ -1336,6 +1338,21 @@ export const rateLimits = pgTable('rate_limits', {
   count: integer('count').notNull().default(0),
   windowStart: timestamp('window_start', { withTimezone: true }).notNull().defaultNow()
 });
+
+/** Unhandled server errors (API 500s, failed after-commit hooks), captured so they are visible from
+ * the admin System page instead of only in Vercel/stdout logs. Never the request body or failing
+ * values -- just enough to recognise and triage a recurring failure (see api/framework.ts). */
+export const serverErrors = pgTable('server_errors', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  requestId: text('request_id'),
+  source: text('source').notNull(), // 'request' | 'after_commit' | 'worker'
+  method: text('method'),
+  path: text('path'),
+  name: text('name'),
+  code: text('code'),
+  message: text('message').notNull()
+}, (t) => [index('server_errors_at_idx').on(t.at)]);
 
 
 /** Public website enquiries (contact, demo, newsletter). Created by anonymous visitors through one rate-limited endpoint. */

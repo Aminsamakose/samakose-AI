@@ -9,7 +9,7 @@ import { and, desc, eq, max } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Ctx } from '@/lib/context';
 import { audit } from '@/lib/audit';
-import { allow, need } from './common';
+import { allow, lockCapacityScope, need } from './common';
 import { conflict, fieldError, notFound, unprocessable } from '@/lib/errors';
 
 const ctp = schema.contractTemplates;
@@ -79,6 +79,10 @@ export async function publishTemplate(ctx: Ctx, id: string) {
   const [row] = await ctx.db.select().from(ctp).where(eq(ctp.id, id)).limit(1);
   if (!row) throw notFound('Template not found');
   if (row.status !== 'Draft') throw unprocessable(`A ${row.status.toLowerCase()} version cannot be published`);
+  // Serialize against any other concurrent publish of this same template family (schema.ts's own
+  // comment on ctp_name_status_idx flags this exact race: two Draft versions published at once could
+  // otherwise both read "no current Published version" and both end up Published).
+  await lockCapacityScope(ctx, `template-publish:${row.name}`);
   const [current] = await ctx.db.select().from(ctp).where(and(eq(ctp.name, row.name), eq(ctp.status, 'Published'))).limit(1);
   if (current && current.id === row.id) throw conflict('This version is already published');
   if (current) await ctx.db.update(ctp).set({ status: 'Retired', retiredAt: new Date() }).where(eq(ctp.id, current.id));
